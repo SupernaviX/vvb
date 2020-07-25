@@ -1,0 +1,12 @@
+[package]
+name = "vvb"
+version = "0.1.0"
+authors = ["Simon Gellis <simongellis@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+jni = "0.17.0"
+
+[lib]
+name = "vvb"
+crate-type = ["dylib"]
