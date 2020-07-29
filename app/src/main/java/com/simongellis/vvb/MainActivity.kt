@@ -9,7 +9,12 @@ import kotlinx.android.synthetic.main.activity_main.*
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
+const val TAG = "MainActivity";
+
+@Suppress("unused")
 class MainActivity : AppCompatActivity() {
+    private var _rendererPtr = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -18,25 +23,38 @@ class MainActivity : AppCompatActivity() {
         surface_view.setEGLContextClientVersion(2)
         surface_view.setRenderer(Renderer())
         surface_view.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+    }
 
-        Log.d("MainActivity", stringFromRust())
+    override fun onDestroy() {
+        super.onDestroy()
+        nativeOnDestroy()
     }
 
     inner class Renderer : GLSurfaceView.Renderer {
         override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-            // TODO("Not yet implemented")
+            Log.d(TAG, "onSurfaceCreated start")
+            nativeOnSurfaceCreated()
+            Log.d(TAG, "onSurfaceCreated end")
         }
 
         override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
-            // TODO("Not yet implemented")
+            Log.d(TAG, "onSurfaceChanged start")
+            nativeOnSurfaceChanged(width, height)
+            Log.d(TAG, "onSurfaceChanged end")
         }
 
         override fun onDrawFrame(gl: GL10?) {
-            // TODO("Not yet implemented")
+            Log.d(TAG, "onDrawFrame start")
+            nativeOnDrawFrame()
+            Log.d(TAG, "onDrawFrame end")
         }
     }
 
-    private external fun stringFromRust(): String
+    private external fun nativeOnCreate()
+    private external fun nativeOnDestroy()
+    private external fun nativeOnSurfaceCreated()
+    private external fun nativeOnSurfaceChanged(width: Int, height: Int)
+    private external fun nativeOnDrawFrame()
 
     companion object {
         init {
