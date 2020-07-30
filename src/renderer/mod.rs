@@ -1,14 +1,19 @@
-// extern crate opengles;
-// use opengles::glesv2 as gl;
-
-#[link(name="GLESv2")]
-extern {}
+#[cfg(target_os = "android")]
 mod gl {
+    #[link(name="GLESv2")]
+    extern {}
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
+
+#[cfg(target_os = "windows")]
+mod gl_bindings;
+#[cfg(target_os = "windows")]
+mod gl {
+    pub use super::gl_bindings::*;
+}
+
 use gl::types::{GLboolean,GLint,GLuint,GLchar,GLsizei,GLsizeiptr,GLvoid,GLfloat,GLenum};
 use std::ffi::{CString};
-use std::ptr::null;
 
 const GL_TRUE: GLboolean = 0;
 const GL_FALSE: GLboolean = 0;
@@ -89,18 +94,6 @@ unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint, String> {
     gl::CompileShader(shader_id);
     check_error("compile a shader")?;
     Ok(shader_id)
-}
-
-unsafe fn check_shader(shader: GLuint) -> Result<(), String> {
-    let mut params: [GLint;1] = [0];
-    gl::GetShaderiv(shader, gl::COMPILE_STATUS, params.as_mut_ptr());
-    if params[0] == GL_TRUE {
-        return Ok(())
-    }
-    gl::GetShaderiv(shader, gl::INFO_LOG_LENGTH, params.as_mut_ptr());
-    // TODO
-    gl::GetShaderInfoLog(shader, params[0] as GLsizei, null(), )
-    Ok(())
 }
 
 fn check_error(action: &str) -> Result<(), String> {
