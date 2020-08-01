@@ -12,9 +12,8 @@ mod gl {
     pub use super::gl_bindings::*;
 }
 
-use gl::types::{GLboolean,GLuint,GLsizei,GLchar,GLvoid,GLfloat,GLenum};
+use gl::types::{GLboolean,GLshort,GLuint,GLint,GLsizei,GLchar,GLvoid,GLfloat,GLenum};
 use std::ffi::{CStr,CString};
-use std::ptr::{null_mut, null};
 // use log::{debug};
 
 const GL_TRUE: GLboolean = 1;
@@ -32,31 +31,57 @@ fn gl_temp_array<T: Copy + Default, F: FnOnce(*mut T) -> ()>(cb: F) -> T {
     tmp_array[0]
 }
 
-const VERTEX_SHADER: &str = "
+trait AsVoidptr {
+    fn as_voidptr(&self) -> *const GLvoid;
+    fn as_mut_voidptr(&mut self) -> *mut GLvoid;
+}
+
+impl<T> AsVoidptr for [T] {
+    fn as_voidptr(&self) -> *const GLvoid {
+        self.as_ptr() as *const GLvoid
+    }
+
+    fn as_mut_voidptr(&mut self) -> *mut GLvoid {
+        self.as_mut_ptr() as *mut GLvoid
+    }
+}
+
+const VERTEX_SHADER: &str = "\
 attribute vec4 a_Pos;
+attribute vec2 a_TexCoord;
+varying vec2 v_TexCoord;
 void main() {
     gl_Position = a_Pos;
+    v_TexCoord = a_TexCoord;
 }
 ";
 
 const FRAGMENT_SHADER: &str = "\
 precision mediump float;
+varying vec2 v_TexCoord;
+uniform sampler2D s_Texture;
 void main() {
-    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    gl_FragColor = texture2D(s_Texture, v_TexCoord);
 }
 ";
 
-const SQUARE_VERTICES: [GLfloat; 18] = [
-    0.5, 0.5, 0.0,
-    0.5, -0.5, 0.0,
-    -0.5, 0.5, 0.0,
-
-    0.5, -0.5, 0.0,
-    -0.5, -0.5, 0.0,
-    -0.5, 0.5, 0.0
+const POS_VERTICES: [GLfloat; 8] = [
+    -0.5, 0.5,
+    -0.5, -0.5,
+    0.5, -0.5,
+    0.5, 0.5
+];
+const TEX_VERTICES: [GLfloat; 8] = [
+    0.0, 0.0,
+    0.0, 1.0,
+    1.0, 1.0,
+    1.0, 0.0
 ];
 
-const VERTEX_SIZE: GLsizei = 3;
+const SQUARE_INDICES: [GLshort; 6] = [0, 1, 2, 0, 2, 3];
+
+const VERTEX_SIZE: GLsizei = 2;
+const VERTEX_STRIDE: GLsizei = 0;
 
 const VB_WIDTH: i32 = 384;
 const VB_HEIGHT: i32 = 224;
@@ -65,13 +90,16 @@ const TEXTURE_SIZE: usize = (VB_WIDTH * VB_HEIGHT * 2 * 3) as usize;
 pub struct Renderer {
     program_id: GLuint,
     position_location: GLuint,
+    tex_coord_location: GLuint,
+    texture_location: GLint,
+    texture_id: GLuint
 }
 
 unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint, String> {
     let shader_id = gl::CreateShader(type_);
     let shader_str = c_string!(source)?;
     let shader_source = [shader_str.as_ptr()].as_ptr();
-    gl::ShaderSource(shader_id, 1, shader_source, null());
+    gl::ShaderSource(shader_id, 1, shader_source, 0 as *const _);
     check_error("load a shader's source")?;
     gl::CompileShader(shader_id);
     check_error("compile a shader")?;
@@ -97,13 +125,13 @@ unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<(), String> {
     }
     let mut buf = vec!(0; length as usize);
     let buf_ptr = buf.as_mut_ptr() as *mut GLchar;
-    gl::GetShaderInfoLog(shader_id, length, null_mut(), buf_ptr);
+    gl::GetShaderInfoLog(shader_id, length, 0 as *mut _, buf_ptr);
     let cstr = CStr::from_bytes_with_nul(buf.as_slice())
         .map_err(|err| { err.to_string() })?;
 
     let log = cstr.to_str()
         .map_err(|err| { err.to_string() })?;
-    Err(format!("Error compiling shader type {}! <{}>", type_, log))
+    Err(format!("Error compiling shader type {:04X}! <{}>", type_, log.trim()))
 }
 
 fn check_error(action: &str) -> Result<(), String> {
@@ -114,19 +142,37 @@ fn check_error(action: &str) -> Result<(), String> {
     }
 }
 
-#[allow(dead_code)]
-fn load_texture() -> Result<Vec<GLfloat>, String> {
-    let mut texture_data = vec![0.0; TEXTURE_SIZE];
-    // TODO: load texture
+fn load_texture() -> Result<Vec<u8>, String> {
+    // TODO: read bytes from a file
+    // then eventually from memory
+    let mut texture_data = vec![0; TEXTURE_SIZE];
     for r in (0..TEXTURE_SIZE).step_by(3) {
         let i = r / 3;
         let checker_x = (i / 16) % 2;
         let checker_y = 1 - ((i / 224) / 16) % 2;
         if checker_x != checker_y {
-            texture_data[r] = 1.0;
+            texture_data[r] = 0xff;
         }
     }
     Ok(texture_data)
+}
+
+fn create_texture() -> Result<GLuint, String> {
+    let texture_data = load_texture()?;
+    unsafe {
+        gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
+        let texture_id = gl_temp_array(|ptr| {
+            gl::GenTextures(1, ptr);
+        });
+        check_error("generate a texture")?;
+        gl::BindTexture(gl::TEXTURE_2D, texture_id);
+        gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as GLint, VB_WIDTH, VB_HEIGHT, 0, gl::RGB, gl::UNSIGNED_BYTE, texture_data.as_voidptr());
+        check_error("load a texture")?;
+
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as GLint);
+        Ok(texture_id)
+    }
 }
 
 impl Renderer {
@@ -149,7 +195,11 @@ impl Renderer {
             gl::UseProgram(program_id);
             check_error("build a program")?;
 
-            let position_location = gl::GetAttribLocation(program_id, c_string!("a_Pos")?.as_ptr()) as u32;
+            let position_location = gl::GetAttribLocation(program_id, c_string!("a_Pos")?.as_ptr()) as GLuint;
+            let tex_coord_location = gl::GetAttribLocation(program_id, c_string!("a_TexCoord")?.as_ptr()) as GLuint;
+            let texture_location= gl::GetUniformLocation(program_id, c_string!("s_Texture")?.as_ptr());
+
+            let texture_id = create_texture()?;
 
             gl::ClearColor(0.0, 0.0, 1.0, 1.0);
             check_error("set the clear color")?;
@@ -157,6 +207,9 @@ impl Renderer {
             Renderer {
                 program_id,
                 position_location,
+                tex_coord_location,
+                texture_location,
+                texture_id
             }
         };
 
@@ -176,12 +229,23 @@ impl Renderer {
             gl::UseProgram(self.program_id);
             check_error("use the program")?;
 
-            gl::VertexAttribPointer(self.position_location, VERTEX_SIZE, gl::FLOAT, gl::FALSE, 0, SQUARE_VERTICES.as_ptr() as *const GLvoid);
+            let pos_pointer = POS_VERTICES.as_voidptr();
+            gl::VertexAttribPointer(self.position_location, VERTEX_SIZE, gl::FLOAT, gl::FALSE, VERTEX_STRIDE, pos_pointer);
             check_error("pass position data to the shader")?;
-            gl::EnableVertexAttribArray(self.position_location);
-            check_error("enable the VAO for position data")?;
 
-            gl::DrawArrays(gl::TRIANGLES, 0, SQUARE_VERTICES.len() as GLsizei / VERTEX_SIZE);
+            let tex_pointer = TEX_VERTICES.as_voidptr();
+            gl::VertexAttribPointer(self.tex_coord_location, VERTEX_SIZE, gl::FLOAT, gl::FALSE, VERTEX_STRIDE, tex_pointer);
+            check_error("pass texture data to the shader")?;
+
+            gl::EnableVertexAttribArray(self.position_location);
+            gl::EnableVertexAttribArray(self.tex_coord_location);
+
+            gl::ActiveTexture(gl::TEXTURE0);
+            gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
+
+            gl::Uniform1i(self.texture_location, 0);
+
+            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_SHORT, SQUARE_INDICES.as_voidptr());
             check_error("draw the actual shape")?;
 
             Ok(())
