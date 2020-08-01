@@ -1,7 +1,7 @@
 // This is the output of build.rs, but with Generator::Global instead of Generator::Static.
 // It's copied here so windows builds and autocomplete can work.
 
-#![cfg(target_os == "windows")]
+#![cfg(target_os = "windows")]
 
 mod __gl_imports {
     pub use std::mem;

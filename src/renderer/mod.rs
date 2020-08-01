@@ -14,10 +14,11 @@ mod gl {
 
 use gl::types::{GLboolean,GLshort,GLuint,GLint,GLsizei,GLchar,GLvoid,GLfloat,GLenum};
 use std::ffi::{CStr,CString};
-// use log::{debug};
+use cgmath::{self,Matrix4,SquareMatrix,vec4};
+use log::{debug};
 
 const GL_TRUE: GLboolean = 1;
-// const GL_FALSE: GLboolean = 0;
+const GL_FALSE: GLboolean = 0;
 
 macro_rules! c_string {
     ($string:expr) => {
@@ -49,9 +50,10 @@ impl<T> AsVoidptr for [T] {
 const VERTEX_SHADER: &str = "\
 attribute vec4 a_Pos;
 attribute vec2 a_TexCoord;
+uniform mat4 u_MV;
 varying vec2 v_TexCoord;
 void main() {
-    gl_Position = a_Pos;
+    gl_Position = u_MV * a_Pos;
     v_TexCoord = a_TexCoord;
 }
 ";
@@ -59,11 +61,16 @@ void main() {
 const FRAGMENT_SHADER: &str = "\
 precision mediump float;
 varying vec2 v_TexCoord;
-uniform sampler2D s_Texture;
+uniform sampler2D u_Texture;
 void main() {
-    gl_FragColor = texture2D(s_Texture, v_TexCoord);
+    gl_FragColor = texture2D(u_Texture, v_TexCoord);
 }
 ";
+
+const VB_WIDTH: i32 = 384;
+const VB_HEIGHT: i32 = 224;
+const TEXTURE_WIDTH: GLfloat = (VB_WIDTH * 2) as GLfloat;
+const TEXTURE_HEIGHT: GLfloat = VB_HEIGHT as GLfloat;
 
 const POS_VERTICES: [GLfloat; 8] = [
     -0.5, 0.5,
@@ -71,6 +78,7 @@ const POS_VERTICES: [GLfloat; 8] = [
     0.5, -0.5,
     0.5, 0.5
 ];
+
 const TEX_VERTICES: [GLfloat; 8] = [
     0.0, 0.0,
     0.0, 1.0,
@@ -83,16 +91,16 @@ const SQUARE_INDICES: [GLshort; 6] = [0, 1, 2, 0, 2, 3];
 const VERTEX_SIZE: GLsizei = 2;
 const VERTEX_STRIDE: GLsizei = 0;
 
-const VB_WIDTH: i32 = 384;
-const VB_HEIGHT: i32 = 224;
-const TEXTURE_SIZE: usize = (VB_WIDTH * VB_HEIGHT * 2 * 3) as usize;
+const TEXTURE_SIZE: usize = (TEXTURE_WIDTH * TEXTURE_HEIGHT) as usize * 3;
 
 pub struct Renderer {
     program_id: GLuint,
     position_location: GLuint,
     tex_coord_location: GLuint,
+    modelview_location : GLint,
     texture_location: GLint,
-    texture_id: GLuint
+    texture_id: GLuint,
+    modelview: Vec<GLfloat>
 }
 
 unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint, String> {
@@ -149,7 +157,7 @@ fn load_texture() -> Result<Vec<u8>, String> {
     for r in (0..TEXTURE_SIZE).step_by(3) {
         let i = r / 3;
         let checker_x = (i / 16) % 2;
-        let checker_y = 1 - ((i / 224) / 16) % 2;
+        let checker_y = 1 - ((i / TEXTURE_WIDTH as usize) / 16) % 2;
         if checker_x != checker_y {
             texture_data[r] = 0xff;
         }
@@ -166,13 +174,22 @@ fn create_texture() -> Result<GLuint, String> {
         });
         check_error("generate a texture")?;
         gl::BindTexture(gl::TEXTURE_2D, texture_id);
-        gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as GLint, VB_WIDTH, VB_HEIGHT, 0, gl::RGB, gl::UNSIGNED_BYTE, texture_data.as_voidptr());
+        gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as GLint, TEXTURE_WIDTH as GLsizei, TEXTURE_HEIGHT as GLsizei, 0, gl::RGB, gl::UNSIGNED_BYTE, texture_data.as_voidptr());
         check_error("load a texture")?;
 
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
         gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as GLint);
         Ok(texture_id)
     }
+}
+
+fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
+    let mut res = Vec::with_capacity(16);
+    let rows: [[S;4];4] = mat.into();
+    for row in rows.iter() {
+        res.extend_from_slice(row);
+    }
+    res
 }
 
 impl Renderer {
@@ -197,7 +214,8 @@ impl Renderer {
 
             let position_location = gl::GetAttribLocation(program_id, c_string!("a_Pos")?.as_ptr()) as GLuint;
             let tex_coord_location = gl::GetAttribLocation(program_id, c_string!("a_TexCoord")?.as_ptr()) as GLuint;
-            let texture_location= gl::GetUniformLocation(program_id, c_string!("s_Texture")?.as_ptr());
+            let modelview_location = gl::GetUniformLocation(program_id, c_string!("u_MV")?.as_ptr());
+            let texture_location= gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
 
             let texture_id = create_texture()?;
 
@@ -208,18 +226,36 @@ impl Renderer {
                 program_id,
                 position_location,
                 tex_coord_location,
+                modelview_location,
                 texture_location,
-                texture_id
+                texture_id,
+                modelview: as_vec(Matrix4::identity())
             }
         };
 
         Ok(state)
     }
 
-    pub fn on_surface_changed(&mut self, width: i32, height: i32) {
+    pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) {
         unsafe {
-            gl::Viewport(0, 0, width, height);
+            gl::Viewport(0, 0, screen_width, screen_height);
         }
+        let hsw = screen_width as GLfloat / 2.0;
+        let hsh = screen_height as GLfloat / 2.0;
+        let htw = TEXTURE_WIDTH / 2.0;
+        let hth = TEXTURE_HEIGHT / 2.0;
+
+        let projection = cgmath::ortho(-hsw, hsw, -hsh, hsh, -100.0, 100.0);
+
+        // The texture should take up as much of the screen as possible
+        let scale_to_fit = (hsw / htw).min(hsh / hth);
+
+        let vm = projection * Matrix4::from_nonuniform_scale(TEXTURE_WIDTH * scale_to_fit, TEXTURE_HEIGHT * scale_to_fit, 0.0);
+
+        let bottom_left = vm * vec4(-htw, -hth, 0.0, 1.0);
+        let top_right = vm * vec4(htw, hth, 0.0, 1.0);
+        debug!("Screen stretches from from {:?} to {:?}", bottom_left, top_right);
+        self.modelview = as_vec(vm);
     }
 
     pub fn on_draw_frame(&self) -> Result<(), String> {
@@ -239,6 +275,8 @@ impl Renderer {
 
             gl::EnableVertexAttribArray(self.position_location);
             gl::EnableVertexAttribArray(self.tex_coord_location);
+
+            gl::UniformMatrix4fv(self.modelview_location, 1, GL_FALSE, self.modelview.as_ptr());
 
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
