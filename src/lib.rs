@@ -8,6 +8,8 @@ use jni::sys::{jint};
 use jni::errors::Error as JNIError;
 use std::sync::MutexGuard;
 use renderer::Renderer;
+use log::{debug,Level};
+use android_logger::{self,Config};
 
 const STATE_FIELD: &str = "_rendererPtr";
 
@@ -31,6 +33,13 @@ fn read_state<F: FnOnce(MutexGuard<Renderer>) -> Result<(), String>>(env: &JNIEn
         .and_then(|state: MutexGuard<Renderer>| { action(state) })
         .to_java_exception(&env);
 }
+
+#[no_mangle]
+pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnCreate() -> () {
+    android_logger::init_once(Config::default().with_min_level(Level::Debug));
+    debug!("Hello from vvb");
+}
+
 
 #[no_mangle]
 pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnDestroy(env: JNIEnv, this: JObject) -> () {

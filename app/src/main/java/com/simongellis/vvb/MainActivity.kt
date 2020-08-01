@@ -17,6 +17,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        nativeOnCreate()
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setContentView(R.layout.activity_main)
 
@@ -44,9 +45,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         override fun onDrawFrame(gl: GL10?) {
-            Log.d(TAG, "onDrawFrame start")
             nativeOnDrawFrame()
-            Log.d(TAG, "onDrawFrame end")
         }
     }
 
