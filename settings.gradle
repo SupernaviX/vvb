@@ -1,2 +1,3 @@
+include ':cardboard-sdk'
 include ':app'
 rootProject.name = "Virtual Virtual Boy"
