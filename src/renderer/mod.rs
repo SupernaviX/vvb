@@ -91,8 +91,6 @@ const SQUARE_INDICES: [GLshort; 6] = [0, 1, 2, 0, 2, 3];
 const VERTEX_SIZE: GLsizei = 2;
 const VERTEX_STRIDE: GLsizei = 0;
 
-const TEXTURE_SIZE: usize = (TEXTURE_WIDTH * TEXTURE_HEIGHT) as usize * 3;
-
 pub struct Renderer {
     program_id: GLuint,
     position_location: GLuint,
@@ -150,37 +148,21 @@ fn check_error(action: &str) -> Result<(), String> {
     }
 }
 
-fn load_texture() -> Result<Vec<u8>, String> {
-    // TODO: read bytes from a file
-    // then eventually from memory
-    let mut texture_data = vec![0; TEXTURE_SIZE];
-    for r in (0..TEXTURE_SIZE).step_by(3) {
-        let i = r / 3;
-        let checker_x = (i / 16) % 2;
-        let checker_y = 1 - ((i / TEXTURE_WIDTH as usize) / 16) % 2;
-        if checker_x != checker_y {
-            texture_data[r] = 0xff;
-        }
-    }
-    Ok(texture_data)
-}
+unsafe fn create_gl_texture(data: &[u8]) -> Result<GLuint, String> {
+    gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
+    let texture_id = gl_temp_array(|ptr| {
+        gl::GenTextures(1, ptr);
+    });
+    check_error("generate a texture")?;
+    gl::BindTexture(gl::TEXTURE_2D, texture_id);
+    gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as GLint, TEXTURE_WIDTH as GLsizei, TEXTURE_HEIGHT as GLsizei, 0, gl::RGBA, gl::UNSIGNED_BYTE, data.as_voidptr());
+    check_error("load a texture")?;
 
-fn create_texture() -> Result<GLuint, String> {
-    let texture_data = load_texture()?;
-    unsafe {
-        gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
-        let texture_id = gl_temp_array(|ptr| {
-            gl::GenTextures(1, ptr);
-        });
-        check_error("generate a texture")?;
-        gl::BindTexture(gl::TEXTURE_2D, texture_id);
-        gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as GLint, TEXTURE_WIDTH as GLsizei, TEXTURE_HEIGHT as GLsizei, 0, gl::RGB, gl::UNSIGNED_BYTE, texture_data.as_voidptr());
-        check_error("load a texture")?;
-
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as GLint);
-        Ok(texture_id)
-    }
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as GLint);
+    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as GLint);
+    Ok(texture_id)
 }
 
 fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
@@ -194,7 +176,7 @@ fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
 
 impl Renderer {
 
-    pub fn new() -> Result<Renderer, String> {
+    pub fn new(title_screen: &[u8]) -> Result<Renderer, String> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
             check_error("create a program")?;
@@ -217,9 +199,9 @@ impl Renderer {
             let modelview_location = gl::GetUniformLocation(program_id, c_string!("u_MV")?.as_ptr());
             let texture_location= gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
 
-            let texture_id = create_texture()?;
+            let texture_id = create_gl_texture(title_screen)?;
 
-            gl::ClearColor(0.0, 0.0, 1.0, 1.0);
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             check_error("set the clear color")?;
 
             Renderer {

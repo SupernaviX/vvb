@@ -3,13 +3,13 @@
 mod renderer;
 
 use jni::JNIEnv;
-use jni::objects::JObject;
-use jni::sys::{jint};
+use jni::sys::{jint,jobject};
 use jni::errors::Error as JNIError;
 use std::sync::MutexGuard;
 use renderer::Renderer;
 use log::{debug,Level};
 use android_logger::{self,Config};
+use jni::objects::JByteBuffer;
 
 const STATE_FIELD: &str = "_rendererPtr";
 
@@ -27,8 +27,8 @@ impl<T, E> ResultExt<T, E> for Result<T, E> where E: ToString {
     }
 }
 
-fn read_state<F: FnOnce(MutexGuard<Renderer>) -> Result<(), String>>(env: &JNIEnv, this: &JObject, action: F) -> () {
-    env.get_rust_field(*this, STATE_FIELD)
+fn read_state<F: FnOnce(MutexGuard<Renderer>) -> Result<(), String>>(env: &JNIEnv, this: jobject, action: F) -> () {
+    env.get_rust_field(this, STATE_FIELD)
         .map_err(|err| { err.to_string() })
         .and_then(|state: MutexGuard<Renderer>| { action(state) })
         .to_java_exception(&env);
@@ -42,33 +42,33 @@ pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnCreate() -> (
 
 
 #[no_mangle]
-pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnDestroy(env: JNIEnv, this: JObject) -> () {
+pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnDestroy(env: JNIEnv, this: jobject) -> () {
     let res: Result<Renderer, JNIError> = env.take_rust_field(this, STATE_FIELD);
     res.to_java_exception(&env);
 }
 
 #[no_mangle]
-pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnSurfaceCreated(env: JNIEnv, this: JObject) -> () {
-    Renderer::new()
+pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnSurfaceCreated(env: JNIEnv, this: jobject, title_screen: JByteBuffer) -> () {
+    env.get_direct_buffer_address(title_screen).map_err(|err| { err.to_string() })
+        .and_then(|title_screen| { Renderer::new(title_screen) })
         .and_then(|state| {
-            env.set_rust_field(this, STATE_FIELD, state)
-                .map_err(|err| { err.to_string() })
+            env.set_rust_field(this, STATE_FIELD, state).map_err(|err| { err.to_string() })
         })
         .to_java_exception(&env);
 }
 
 
 #[no_mangle]
-pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnSurfaceChanged(env: JNIEnv, this: JObject, width: jint, height: jint) -> () {
-    read_state(&env, &this, |mut state| {
+pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnSurfaceChanged(env: JNIEnv, this: jobject, width: jint, height: jint) -> () {
+    read_state(&env, this, |mut state| {
         state.on_surface_changed(width, height);
         Ok(())
     });
 }
 
 #[no_mangle]
-pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnDrawFrame(env: JNIEnv, this: JObject) -> () {
-    read_state(&env, &this, |state| {
+pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnDrawFrame(env: JNIEnv, this: jobject) -> () {
+    read_state(&env, this, |state| {
         state.on_draw_frame()
     });
 }
