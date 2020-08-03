@@ -7,7 +7,7 @@ use jni::sys::{jint,jobject};
 use jni::errors::Error as JNIError;
 use std::sync::MutexGuard;
 use renderer::Renderer;
-use log::{debug,Level};
+use log::{debug,error,Level};
 use android_logger::{self,Config};
 use jni::objects::JByteBuffer;
 
@@ -21,7 +21,14 @@ impl<T, E> ResultExt<T, E> for Result<T, E> where E: ToString {
         match self {
             Ok(_) => (),
             Err(error) => {
-                env.throw(error.to_string()).expect("Throwing an error itself caused an error");
+                let str = error.to_string();
+                error!("{}", str);
+                match env.throw(str) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        error!("Throwing an error itself caused an error! {}", e.to_string());
+                    }
+                }
             }
         }
     }
@@ -35,9 +42,12 @@ fn read_state<F: FnOnce(MutexGuard<Renderer>) -> Result<(), String>>(env: &JNIEn
 }
 
 #[no_mangle]
-pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnCreate() -> () {
+pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnCreate(env: JNIEnv, this: jobject) -> () {
     android_logger::init_once(Config::default().with_min_level(Level::Debug));
     debug!("Hello from vvb");
+    env.get_java_vm()
+        .map(|vm| { renderer::initialize(vm.get_java_vm_pointer(), this) })
+        .to_java_exception(&env);
 }
 
 

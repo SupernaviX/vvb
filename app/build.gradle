@@ -30,7 +30,15 @@ apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 // so grab the right library for the toolchain we're compiling now
 def includeCardboardSdk(spec, toolchain) {
     def folder = toolchain.folder - ~/^android\//
-    spec.environment("RUSTFLAGS", "-L ${project.rootDir}/app/libraries/jni/${folder}")
+    def cardboardSdkLocation = "${project.rootDir}/app/libraries/jni/${folder}"
+    spec.environment("RUSTFLAGS", "-L ${cardboardSdkLocation}")
+
+    // Copy the right SDK into the project as well
+    copy { copySpec ->
+        copySpec.from(cardboardSdkLocation)
+        copySpec.into("${buildDir}/rustJniLibs/${toolchain.folder}")
+        copySpec.include("lib*.so")
+    }
 }
 
 cargo {
@@ -49,6 +57,7 @@ task extractNdk(type: Copy)  {
             from zipTree("${project.rootDir}/cardboard-sdk/sdk-release.aar")
             into "libraries/"
             include "jni/**/libcardboard_api.so"
+            include "jni/**/libc++_shared.so"
         }
         copy {
             from "${project.rootDir}/cardboard-sdk/include/cardboard.h"

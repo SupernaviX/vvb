@@ -4,9 +4,8 @@ mod gl {
     extern {}
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
-#[cfg(target_os = "android")]
-#[link(name="cardboard_api")]
-extern {}
+mod cardboard_api;
+pub use cardboard_api::initialize;
 
 #[cfg(target_os = "windows")]
 mod gl_bindings;
@@ -178,7 +177,6 @@ fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
 }
 
 impl Renderer {
-
     pub fn new(title_screen: &[u8]) -> Result<Renderer, String> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
