@@ -6,7 +6,7 @@ use jni::JNIEnv;
 use jni::sys::{jint,jobject};
 use jni::errors::Error as JNIError;
 use std::sync::MutexGuard;
-use renderer::Renderer;
+use renderer::{Renderer, Cardboard};
 use log::{debug,error,Level};
 use android_logger::{self,Config};
 use jni::objects::JByteBuffer;
@@ -46,7 +46,7 @@ pub unsafe extern fn Java_com_simongellis_vvb_MainActivity_nativeOnCreate(env: J
     android_logger::init_once(Config::default().with_min_level(Level::Debug));
     debug!("Hello from vvb");
     env.get_java_vm()
-        .map(|vm| { renderer::initialize(vm.get_java_vm_pointer(), this) })
+        .map(|vm| { Cardboard::initialize(vm.get_java_vm_pointer(), this) })
         .to_java_exception(&env);
 }
 

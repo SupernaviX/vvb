@@ -4,15 +4,16 @@ mod gl {
     extern {}
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
-mod cardboard_api;
-pub use cardboard_api::initialize;
-
 #[cfg(target_os = "windows")]
 mod gl_bindings;
 #[cfg(target_os = "windows")]
 mod gl {
     pub use super::gl_bindings::*;
 }
+
+mod cardboard_api;
+pub use cardboard_api::Cardboard;
+use cardboard_api::{CardboardQrCode};
 
 use gl::types::{GLboolean,GLshort,GLuint,GLint,GLsizei,GLchar,GLvoid,GLfloat,GLenum};
 use std::ffi::{CStr,CString};
@@ -93,16 +94,6 @@ const SQUARE_INDICES: [GLshort; 6] = [0, 1, 2, 0, 2, 3];
 const VERTEX_SIZE: GLsizei = 2;
 const VERTEX_STRIDE: GLsizei = 0;
 
-pub struct Renderer {
-    program_id: GLuint,
-    position_location: GLuint,
-    tex_coord_location: GLuint,
-    modelview_location : GLint,
-    texture_location: GLint,
-    texture_id: GLuint,
-    modelview: Vec<GLfloat>
-}
-
 unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint, String> {
     let shader_id = gl::CreateShader(type_);
     let shader_str = c_string!(source)?;
@@ -176,6 +167,15 @@ fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
     res
 }
 
+pub struct Renderer {
+    program_id: GLuint,
+    position_location: GLuint,
+    tex_coord_location: GLuint,
+    modelview_location : GLint,
+    texture_location: GLint,
+    texture_id: GLuint,
+    modelview: Vec<GLfloat>
+}
 impl Renderer {
     pub fn new(title_screen: &[u8]) -> Result<Renderer, String> {
         let state = unsafe {
@@ -204,6 +204,9 @@ impl Renderer {
 
             gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             check_error("set the clear color")?;
+
+            let device_params = CardboardQrCode::get_saved_device_params();
+            debug!("{:?}", device_params);
 
             Renderer {
                 program_id,
