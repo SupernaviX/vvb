@@ -9,5 +9,12 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
+    <style name="UiButton">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">@drawable/rippleable</item>
+        <item name="android:padding">9dip</item>
+        <item name="android:scaleType">fitCenter</item>
+    </style>
 
 </resources>

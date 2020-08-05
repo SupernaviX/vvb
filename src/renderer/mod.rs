@@ -13,12 +13,13 @@ mod gl {
 
 mod cardboard_api;
 pub use cardboard_api::Cardboard;
-use cardboard_api::{CardboardQrCode};
+use cardboard_api::{QrCode,LensDistortion,DistortionRenderer};
 
 use gl::types::{GLboolean,GLshort,GLuint,GLint,GLsizei,GLchar,GLvoid,GLfloat,GLenum};
 use std::ffi::{CStr,CString};
 use cgmath::{self,Matrix4,SquareMatrix,vec4};
-use log::{debug};
+use log::{debug,error};
+use crate::renderer::cardboard_api::{TextureDescription, CardboardEye};
 
 const GL_TRUE: GLboolean = 1;
 const GL_FALSE: GLboolean = 0;
@@ -167,17 +168,109 @@ fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
     res
 }
 
-pub struct Renderer {
+pub struct CardboardRenderer {
+    #[allow(dead_code)]
+    lens_distortion: LensDistortion,
+    distortion_renderer: DistortionRenderer,
+    texture: GLuint,
+    framebuffer: GLuint,
+    screen_size: (i32, i32),
+    left_eye: TextureDescription,
+    right_eye: TextureDescription
+}
+impl CardboardRenderer {
+    pub fn new(screen_size: (i32, i32)) -> Result<Option<CardboardRenderer>, String> {
+        let params = QrCode::get_saved_device_params();
+        if let None = params {
+            return Ok(None);
+        }
+        let params = params.unwrap();
+
+        let texture = unsafe { gl_temp_array(|ptr| { gl::GenTextures(1, ptr) })};
+        check_error("create a texture for cardboard")?;
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as GLint);
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as GLint);
+            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as GLint, screen_size.0, screen_size.1, 0, gl::RGB, gl::UNSIGNED_BYTE, 0 as *const _);
+        }
+        check_error("prepare a texture for cardboard")?;
+
+        let framebuffer = unsafe { gl_temp_array(|ptr| { gl::GenTextures(1, ptr) })};
+        check_error("create a framebuffer for cardboard")?;
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer);
+            gl::FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::TEXTURE_2D, texture, 0);
+        }
+        check_error("prepare a renderbuffer for cardboard")?;
+
+        let lens_distortion = LensDistortion::create(&params, screen_size.0, screen_size.1);
+        let left_mesh = lens_distortion.get_distortion_mesh(CardboardEye::kLeft);
+        let right_mesh = lens_distortion.get_distortion_mesh(CardboardEye::kRight);
+
+        let distortion_renderer = DistortionRenderer::create();
+        distortion_renderer.set_mesh(&left_mesh, CardboardEye::kLeft);
+        distortion_renderer.set_mesh(&right_mesh, CardboardEye::kRight);
+
+        Ok(Some(CardboardRenderer {
+            lens_distortion,
+            distortion_renderer,
+            texture,
+            framebuffer,
+            screen_size,
+            left_eye: TextureDescription {
+                texture,
+                left_u: 0.0,
+                right_u: 0.5,
+                top_v: 1.0,
+                bottom_v: 0.0
+            },
+            right_eye: TextureDescription {
+                texture,
+                left_u: 0.5,
+                right_u: 1.0,
+                top_v: 1.0,
+                bottom_v: 0.0
+            },
+        }))
+    }
+
+    pub fn render<F: FnOnce() -> Result<(), String>>(&self, render_contents: F) -> Result<(), String> {
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer);
+        }
+        render_contents()?;
+        self.distortion_renderer.render_eye_to_display(0, 0, 0, self.screen_size.0, self.screen_size.1, &self.left_eye, &self.right_eye);
+        return check_error("render to cardboard");
+    }
+}
+impl Drop for CardboardRenderer {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteFramebuffers(1, &self.framebuffer);
+            gl::DeleteTextures(1, &self.texture);
+
+            // Can't return a result from a Drop,
+            // so just log if anything goes awry
+            if let Err(message) = check_error("cleaning up a CardboardRenderer") {
+                error!("{}", message);
+            }
+        }
+    }
+}
+struct VBScreenRenderer {
     program_id: GLuint,
     position_location: GLuint,
     tex_coord_location: GLuint,
-    modelview_location : GLint,
+    modelview_location: GLint,
     texture_location: GLint,
     texture_id: GLuint,
-    modelview: Vec<GLfloat>
+    modelview: Vec<GLfloat>,
 }
-impl Renderer {
-    pub fn new(title_screen: &[u8]) -> Result<Renderer, String> {
+impl VBScreenRenderer {
+    pub fn new(title_screen: &[u8]) -> Result<VBScreenRenderer, String> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
             check_error("create a program")?;
@@ -202,23 +295,19 @@ impl Renderer {
 
             let texture_id = create_gl_texture(title_screen)?;
 
-            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
-            check_error("set the clear color")?;
+            let device_params = QrCode::get_saved_device_params();
+            debug!("Device params: {:?}", device_params);
 
-            let device_params = CardboardQrCode::get_saved_device_params();
-            debug!("{:?}", device_params);
-
-            Renderer {
+            VBScreenRenderer {
                 program_id,
                 position_location,
                 tex_coord_location,
                 modelview_location,
                 texture_location,
                 texture_id,
-                modelview: as_vec(Matrix4::identity())
+                modelview: as_vec(Matrix4::identity()),
             }
         };
-
         Ok(state)
     }
 
@@ -244,8 +333,9 @@ impl Renderer {
         self.modelview = as_vec(vm);
     }
 
-    pub fn on_draw_frame(&self) -> Result<(), String> {
+    pub fn render(&self) -> Result<(), String> {
         unsafe {
+            gl::ClearColor(0.0, 0.0, 1.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
             check_error("clear the screen")?;
             gl::UseProgram(self.program_id);
@@ -271,8 +361,85 @@ impl Renderer {
 
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_SHORT, SQUARE_INDICES.as_voidptr());
             check_error("draw the actual shape")?;
-
             Ok(())
+        }
+    }
+}
+pub struct Renderer {
+    screen_size: (i32, i32),
+    vb_screen: Option<VBScreenRenderer>,
+    cardboard: Option<CardboardRenderer>,
+    cardboard_stale: bool
+}
+impl Renderer {
+    pub fn new() -> Renderer {
+        Renderer {
+            screen_size: (0, 0),
+            vb_screen: None,
+            cardboard: None,
+            cardboard_stale: true
+        }
+    }
+    pub fn on_surface_created(&mut self, title_screen: &[u8]) -> Result<(), String> {
+        self.cardboard_stale = true;
+        self.vb_screen = Some(VBScreenRenderer::new(title_screen)?);
+
+        let device_params = QrCode::get_saved_device_params();
+        debug!("Device params: {:?}", device_params);
+
+        Ok(())
+    }
+
+    pub fn on_resume(&mut self) {
+        self.cardboard_stale = true;
+        if let None = QrCode::get_saved_device_params() {
+            QrCode::scan_qr_code_and_save_device_params();
+        }
+    }
+
+    pub fn switch_viewer(&mut self) {
+        self.cardboard_stale = true;
+        QrCode::scan_qr_code_and_save_device_params();
+    }
+
+    pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) {
+        self.screen_size = (screen_width, screen_height);
+        match self.vb_screen.as_mut() {
+            Some(screen) => { screen.on_surface_changed(screen_width, screen_height) },
+            None => { }
+        }
+        self.cardboard_stale = true;
+    }
+
+    pub fn on_draw_frame(&mut self) -> Result<(), String> {
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+        }
+        if !self.update_device_params()? {
+            return Ok(())
+        }
+        self.cardboard.as_ref().unwrap().render(|| {
+            self.vb_screen.as_ref().unwrap().render()
+        })?;
+        Ok(())
+    }
+
+    fn update_device_params(&mut self) -> Result<bool, String> {
+        if !self.cardboard_stale {
+            return Ok(true)
+        }
+        match CardboardRenderer::new(self.screen_size) {
+            Ok(Some(cardboard)) => {
+                self.cardboard = Some(cardboard);
+                self.cardboard_stale = false;
+                Ok(true)
+            },
+            Ok(None) => {
+                self.cardboard = None;
+                Ok(false)
+            },
+            Err(err) => Err(err)
         }
     }
 }

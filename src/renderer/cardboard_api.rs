@@ -1,13 +1,45 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
+#![allow(non_camel_case_types)]
 
 use jni::sys::{JavaVM, jobject};
 use std::os::raw::*;
 
 mod sys {
+    use std::os::raw::{c_float, c_int};
+
     #[repr(C)]
     pub struct CardboardLensDistortion { private: [u8; 0] }
+    #[repr(C)]
+    pub struct CardboardDistortionRenderer { private: [u8; 0] }
+
+    #[repr(C)]
+    pub struct CardboardEyeTextureDescription {
+        pub texture: u32, // assuming C's uint32_t will reliably be a u32
+        pub left_u: c_float,
+        pub right_u: c_float,
+        pub top_v: c_float,
+        pub bottom_v: c_float
+    }
+
+    #[repr(C)]
+    pub struct CardboardMesh {
+        pub indices: *const c_int,
+        pub n_indices: c_int,
+        pub vertices: *const c_float,
+        pub uvs: *const c_float,
+        pub n_vertices: c_int,
+    }
+
+    #[repr(C)]
+    pub enum CardboardEye {
+        kLeft = 0,
+        kRight = 1
+    }
 }
+
+pub use sys::CardboardEyeTextureDescription as TextureDescription;
+pub use sys::{CardboardEye,CardboardMesh};
 
 #[cfg(target_os = "android")]
 #[link(name="cardboard_api")]
@@ -19,6 +51,17 @@ extern "C" {
     pub fn CardboardLensDistortion_create(encoded_device_params: *const c_uchar, size: c_int, display_width: c_int, display_height: c_int) -> *mut sys::CardboardLensDistortion;
     #[link_name="CardboardLensDistortion_destroy"]
     pub fn CardboardLensDistortion_destroy(lens_distortion: *mut sys::CardboardLensDistortion);
+    #[link_name="CardboardLensDistortion_getDistortionMesh"]
+    pub fn CardboardLensDistortion_getDistortionMesh(lens_distortion: *mut sys::CardboardLensDistortion, eye: sys::CardboardEye, mesh: *mut sys::CardboardMesh);
+
+    #[link_name="CardboardDistortionRenderer_create"]
+    pub fn CardboardDistortionRenderer_create() -> *mut sys::CardboardDistortionRenderer;
+    #[link_name="CardboardDistortionRenderer_destroy"]
+    pub fn CardboardDistortionRenderer_destroy(renderer: *mut sys::CardboardDistortionRenderer);
+    #[link_name="CardboardDistortionRenderer_renderEyeToDisplay"]
+    pub fn CardboardDistortionRenderer_renderEyeToDisplay(renderer: *mut sys::CardboardDistortionRenderer, target_display: c_int, x: c_int, y: c_int, width: c_int, height: c_int, left_eye: *const TextureDescription, right_eye: *const TextureDescription);
+    #[link_name="CardboardDistortionRenderer_setMesh"]
+    pub fn CardboardDistortionRenderer_setMesh(renderer: *mut sys::CardboardDistortionRenderer, mesh: *const CardboardMesh, eye: CardboardEye);
 
     #[link_name="CardboardQrCode_destroy"]
     pub fn CardboardQrCode_destroy(encoded_device_params: *const c_uchar);
@@ -38,19 +81,36 @@ impl Cardboard {
     }
 }
 
-pub struct CardboardLensDistortion(*mut sys::CardboardLensDistortion);
-impl CardboardLensDistortion {
-    pub fn create(encoded_device_params: &EncodedDeviceParams, width: i32, height: i32) -> CardboardLensDistortion {
+pub struct LensDistortion(*mut sys::CardboardLensDistortion);
+impl LensDistortion {
+    pub fn create(encoded_device_params: &DeviceParams, width: i32, height: i32) -> LensDistortion {
         #[cfg(target_os = "android")]
         let raw = unsafe {
             CardboardLensDistortion_create(encoded_device_params.buffer, encoded_device_params.size, width, height)
         };
         #[cfg(not(target_os = "android"))]
         let raw = 0 as *mut sys::CardboardLensDistortion;
-        CardboardLensDistortion(raw)
+        LensDistortion(raw)
+    }
+    #[allow(unused_mut)]
+    pub fn get_distortion_mesh(&self, eye: CardboardEye) -> CardboardMesh {
+        let mut mesh = CardboardMesh {
+            indices: 0 as *const _,
+            n_indices: 0,
+            vertices: 0 as *const _,
+            uvs: 0 as *const _,
+            n_vertices: 0
+        };
+        #[cfg(target_os = "android")]
+        unsafe {
+            CardboardLensDistortion_getDistortionMesh(self.0, eye, &mut mesh);
+        }
+        mesh
     }
 }
-impl Drop for CardboardLensDistortion {
+unsafe impl Send for LensDistortion {}
+unsafe impl Sync for LensDistortion {}
+impl Drop for LensDistortion {
     fn drop(&mut self) {
         #[cfg(target_os = "android")]
         unsafe {
@@ -59,10 +119,48 @@ impl Drop for CardboardLensDistortion {
     }
 }
 
-pub struct CardboardQrCode;
-impl CardboardQrCode {
+pub struct DistortionRenderer(*mut sys::CardboardDistortionRenderer);
+impl DistortionRenderer {
+    pub fn create() -> DistortionRenderer {
+        #[cfg(target_os = "android")]
+        let raw = unsafe {
+            CardboardDistortionRenderer_create()
+        };
+        #[cfg(not(target_os = "android"))]
+        let raw = 0 as *mut sys::CardboardDistortionRenderer;
+        DistortionRenderer(raw)
+    }
+
+    pub fn set_mesh(&self, mesh: &CardboardMesh, eye: CardboardEye) {
+        #[cfg(target_os = "android")]
+        unsafe {
+            CardboardDistortionRenderer_setMesh(self.0, mesh, eye);
+        }
+    }
+
+    pub fn render_eye_to_display(&self, target_display: i32, x: i32, y: i32, width: i32, height: i32, left_eye: &TextureDescription, right_eye: &TextureDescription) {
+        #[cfg(target_os = "android")]
+        unsafe {
+            CardboardDistortionRenderer_renderEyeToDisplay(self.0, target_display, x, y, width, height, left_eye, right_eye);
+        }
+    }
+}
+unsafe impl Send for DistortionRenderer {}
+unsafe impl Sync for DistortionRenderer {}
+impl Drop for DistortionRenderer {
+    fn drop(&mut self) {
+        #[cfg(target_os = "android")]
+        unsafe {
+            CardboardDistortionRenderer_destroy(self.0);
+        }
+    }
+}
+
+
+pub struct QrCode;
+impl QrCode {
     #[allow(unused_mut)]
-    pub fn get_saved_device_params() -> Option<EncodedDeviceParams> {
+    pub fn get_saved_device_params() -> Option<DeviceParams> {
         let mut buffer= 0 as *const c_uchar;
         let mut size: c_int = 0;
         #[cfg(target_os = "android")]
@@ -71,7 +169,7 @@ impl CardboardQrCode {
         }
         match size {
             0 => None,
-            _ => Some(EncodedDeviceParams{ buffer, size })
+            _ => Some(DeviceParams{ buffer, size })
         }
     }
 
@@ -84,11 +182,13 @@ impl CardboardQrCode {
 }
 
 #[derive(Debug)]
-pub struct EncodedDeviceParams {
+pub struct DeviceParams {
     buffer: *const c_uchar,
     size: c_int
 }
-impl Drop for EncodedDeviceParams {
+unsafe impl Send for DeviceParams {}
+unsafe impl Sync for DeviceParams {}
+impl Drop for DeviceParams {
     fn drop(&mut self) {
         #[cfg(target_os = "android")]
         unsafe {

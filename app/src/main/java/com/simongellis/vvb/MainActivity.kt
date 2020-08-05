@@ -6,6 +6,11 @@ import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
+import android.view.View
+import android.widget.PopupMenu
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.android.synthetic.main.activity_main.*
 import java.nio.ByteBuffer
 import javax.microedition.khronos.egl.EGLConfig
@@ -14,7 +19,7 @@ import javax.microedition.khronos.opengles.GL10
 const val TAG = "MainActivity"
 
 @Suppress("unused")
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
     private var _rendererPtr = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +31,11 @@ class MainActivity : AppCompatActivity() {
         surface_view.setEGLContextClientVersion(2)
         surface_view.setRenderer(Renderer())
         surface_view.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+    }
+
+    override fun onResume() {
+        super.onResume()
+        nativeOnResume()
     }
 
     override fun onDestroy() {
@@ -51,6 +61,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun showSettings(view: View) {
+        val popup = PopupMenu(this, view)
+        popup.menuInflater.inflate(R.menu.settings_menu, popup.menu)
+        popup.setOnMenuItemClickListener(this)
+        popup.show()
+    }
+
+    override fun onMenuItemClick(item: MenuItem): Boolean {
+        if (item.itemId == R.id.switch_viewer) {
+            val play = GoogleApiAvailability.getInstance()
+            val availability = play.isGooglePlayServicesAvailable(this)
+            if (availability != ConnectionResult.SUCCESS) {
+                play.getErrorDialog(this, availability, 420691337).show()
+            } else {
+                nativeSwitchViewer()
+            }
+            return true
+        }
+        return false
+    }
+
     private fun loadTitleScreen(): ByteBuffer {
         val options = BitmapFactory.Options()
         options.inScaled = false
@@ -62,7 +93,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private external fun nativeOnCreate()
+    private external fun nativeOnResume()
     private external fun nativeOnDestroy()
+    private external fun nativeSwitchViewer()
     private external fun nativeOnSurfaceCreated(titleScreen: ByteBuffer)
     private external fun nativeOnSurfaceChanged(width: Int, height: Int)
     private external fun nativeOnDrawFrame()
