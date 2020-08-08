@@ -1,7 +1,7 @@
 #[cfg(target_os = "android")]
 mod gl {
-    #[link(name="GLESv2")]
-    extern {}
+    #[link(name = "GLESv2")]
+    extern "C" {}
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
 #[cfg(target_os = "windows")]
@@ -13,25 +13,25 @@ mod gl {
 
 mod cardboard_api;
 pub use cardboard_api::Cardboard;
-use cardboard_api::{QrCode,LensDistortion,DistortionRenderer};
+use cardboard_api::{DistortionRenderer, LensDistortion, QrCode};
 
-use gl::types::{GLboolean,GLshort,GLuint,GLint,GLsizei,GLchar,GLvoid,GLfloat,GLenum};
-use std::ffi::{CStr,CString};
-use cgmath::{self,Matrix4,SquareMatrix,vec4};
-use log::{debug,error};
-use crate::renderer::cardboard_api::{TextureDescription, CardboardEye};
+use crate::renderer::cardboard_api::{CardboardEye, TextureDescription};
+use cgmath::{self, vec4, Matrix4, SquareMatrix};
+use gl::types::{GLboolean, GLchar, GLenum, GLfloat, GLint, GLshort, GLsizei, GLuint, GLvoid};
+use log::{debug, error};
+use std::ffi::{CStr, CString};
 
 const GL_TRUE: GLboolean = 1;
 const GL_FALSE: GLboolean = 0;
 
 macro_rules! c_string {
     ($string:expr) => {
-        CString::new($string).map_err(|_| { "Could not build c string!" })
+        CString::new($string).map_err(|_| "Could not build c string!")
     };
 }
 
 fn gl_temp_array<T: Copy + Default, F: FnOnce(*mut T) -> ()>(cb: F) -> T {
-    let mut tmp_array: [T;1] = Default::default();
+    let mut tmp_array: [T; 1] = Default::default();
     cb(tmp_array.as_mut_ptr());
     tmp_array[0]
 }
@@ -76,6 +76,7 @@ const VB_HEIGHT: i32 = 224;
 const TEXTURE_WIDTH: GLfloat = (VB_WIDTH * 2) as GLfloat;
 const TEXTURE_HEIGHT: GLfloat = VB_HEIGHT as GLfloat;
 
+#[rustfmt::skip]
 const POS_VERTICES: [GLfloat; 8] = [
     -0.5, 0.5,
     -0.5, -0.5,
@@ -83,6 +84,7 @@ const POS_VERTICES: [GLfloat; 8] = [
     0.5, 0.5
 ];
 
+#[rustfmt::skip]
 const TEX_VERTICES: [GLfloat; 8] = [
     0.0, 0.0,
     0.0, 1.0,
@@ -108,9 +110,8 @@ unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint, String> {
 }
 
 unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<(), String> {
-    let status = gl_temp_array(|ptr| {
-        gl::GetShaderiv(shader_id, gl::COMPILE_STATUS, ptr)
-    }) as GLboolean;
+    let status =
+        gl_temp_array(|ptr| gl::GetShaderiv(shader_id, gl::COMPILE_STATUS, ptr)) as GLboolean;
     check_error("checking compile status of a shader")?;
     if status == GL_TRUE {
         return Ok(());
@@ -123,22 +124,27 @@ unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<(), String> {
     if length < 0 {
         return Err("Invalid shader info log length")?;
     }
-    let mut buf = vec!(0; length as usize);
+    let mut buf = vec![0; length as usize];
     let buf_ptr = buf.as_mut_ptr() as *mut GLchar;
     gl::GetShaderInfoLog(shader_id, length, 0 as *mut _, buf_ptr);
-    let cstr = CStr::from_bytes_with_nul(buf.as_slice())
-        .map_err(|err| { err.to_string() })?;
+    let cstr = CStr::from_bytes_with_nul(buf.as_slice()).map_err(|err| err.to_string())?;
 
-    let log = cstr.to_str()
-        .map_err(|err| { err.to_string() })?;
-    Err(format!("Error compiling shader type {:04X}! <{}>", type_, log.trim()))
+    let log = cstr.to_str().map_err(|err| err.to_string())?;
+    Err(format!(
+        "Error compiling shader type {:04X}! <{}>",
+        type_,
+        log.trim()
+    ))
 }
 
 fn check_error(action: &str) -> Result<(), String> {
     let error = unsafe { gl::GetError() };
     match error {
         gl::NO_ERROR => Ok(()),
-        _ => Err(format!("OpenGL threw code 0x{:04X} while trying to {}!", error, action))
+        _ => Err(format!(
+            "OpenGL threw code 0x{:04X} while trying to {}!",
+            error, action
+        )),
     }
 }
 
@@ -149,19 +155,37 @@ unsafe fn create_gl_texture(data: &[u8]) -> Result<GLuint, String> {
     });
     check_error("generate a texture")?;
     gl::BindTexture(gl::TEXTURE_2D, texture_id);
-    gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGBA as GLint, TEXTURE_WIDTH as GLsizei, TEXTURE_HEIGHT as GLsizei, 0, gl::RGBA, gl::UNSIGNED_BYTE, data.as_voidptr());
+    gl::TexImage2D(
+        gl::TEXTURE_2D,
+        0,
+        gl::RGBA as GLint,
+        TEXTURE_WIDTH as GLsizei,
+        TEXTURE_HEIGHT as GLsizei,
+        0,
+        gl::RGBA,
+        gl::UNSIGNED_BYTE,
+        data.as_voidptr(),
+    );
     check_error("load a texture")?;
 
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as GLint);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as GLint);
+    gl::TexParameteri(
+        gl::TEXTURE_2D,
+        gl::TEXTURE_WRAP_S,
+        gl::CLAMP_TO_EDGE as GLint,
+    );
+    gl::TexParameteri(
+        gl::TEXTURE_2D,
+        gl::TEXTURE_WRAP_T,
+        gl::CLAMP_TO_EDGE as GLint,
+    );
     Ok(texture_id)
 }
 
 fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
     let mut res = Vec::with_capacity(16);
-    let rows: [[S;4];4] = mat.into();
+    let rows: [[S; 4]; 4] = mat.into();
     for row in rows.iter() {
         res.extend_from_slice(row);
     }
@@ -176,7 +200,7 @@ pub struct CardboardRenderer {
     framebuffer: GLuint,
     screen_size: (i32, i32),
     left_eye: TextureDescription,
-    right_eye: TextureDescription
+    right_eye: TextureDescription,
 }
 impl CardboardRenderer {
     pub fn new(screen_size: (i32, i32)) -> Result<Option<CardboardRenderer>, String> {
@@ -186,23 +210,48 @@ impl CardboardRenderer {
         }
         let params = params.unwrap();
 
-        let texture = unsafe { gl_temp_array(|ptr| { gl::GenTextures(1, ptr) })};
+        let texture = unsafe { gl_temp_array(|ptr| gl::GenTextures(1, ptr)) };
         check_error("create a texture for cardboard")?;
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, texture);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::LINEAR as GLint);
             gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::CLAMP_TO_EDGE as GLint);
-            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::CLAMP_TO_EDGE as GLint);
-            gl::TexImage2D(gl::TEXTURE_2D, 0, gl::RGB as GLint, screen_size.0, screen_size.1, 0, gl::RGB, gl::UNSIGNED_BYTE, 0 as *const _);
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_S,
+                gl::CLAMP_TO_EDGE as GLint,
+            );
+            gl::TexParameteri(
+                gl::TEXTURE_2D,
+                gl::TEXTURE_WRAP_T,
+                gl::CLAMP_TO_EDGE as GLint,
+            );
+            gl::TexImage2D(
+                gl::TEXTURE_2D,
+                0,
+                gl::RGB as GLint,
+                screen_size.0,
+                screen_size.1,
+                0,
+                gl::RGB,
+                gl::UNSIGNED_BYTE,
+                0 as *const _,
+            );
         }
         check_error("prepare a texture for cardboard")?;
 
-        let framebuffer = unsafe { gl_temp_array(|ptr| { gl::GenTextures(1, ptr) })};
+        let framebuffer = unsafe { gl_temp_array(|ptr| gl::GenTextures(1, ptr)) };
         check_error("create a framebuffer for cardboard")?;
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer);
-            gl::FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::TEXTURE_2D, texture, 0);
+            gl::FramebufferTexture2D(
+                gl::FRAMEBUFFER,
+                gl::COLOR_ATTACHMENT0,
+                gl::TEXTURE_2D,
+                texture,
+                0,
+            );
+            gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
         }
         check_error("prepare a renderbuffer for cardboard")?;
 
@@ -225,24 +274,38 @@ impl CardboardRenderer {
                 left_u: 0.0,
                 right_u: 0.5,
                 top_v: 1.0,
-                bottom_v: 0.0
+                bottom_v: 0.0,
             },
             right_eye: TextureDescription {
                 texture,
                 left_u: 0.5,
                 right_u: 1.0,
                 top_v: 1.0,
-                bottom_v: 0.0
+                bottom_v: 0.0,
             },
         }))
     }
 
-    pub fn render<F: FnOnce() -> Result<(), String>>(&self, render_contents: F) -> Result<(), String> {
+    pub fn render<F: FnOnce() -> Result<(), String>>(
+        &self,
+        render_contents: F,
+    ) -> Result<(), String> {
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer);
         }
         render_contents()?;
-        self.distortion_renderer.render_eye_to_display(0, 0, 0, self.screen_size.0, self.screen_size.1, &self.left_eye, &self.right_eye);
+        self.distortion_renderer.render_eye_to_display(
+            0,
+            0,
+            0,
+            self.screen_size.0,
+            self.screen_size.1,
+            &self.left_eye,
+            &self.right_eye,
+        );
+        unsafe {
+            gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
+        }
         return check_error("render to cardboard");
     }
 }
@@ -288,10 +351,14 @@ impl VBScreenRenderer {
             gl::UseProgram(program_id);
             check_error("build a program")?;
 
-            let position_location = gl::GetAttribLocation(program_id, c_string!("a_Pos")?.as_ptr()) as GLuint;
-            let tex_coord_location = gl::GetAttribLocation(program_id, c_string!("a_TexCoord")?.as_ptr()) as GLuint;
-            let modelview_location = gl::GetUniformLocation(program_id, c_string!("u_MV")?.as_ptr());
-            let texture_location= gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
+            let position_location =
+                gl::GetAttribLocation(program_id, c_string!("a_Pos")?.as_ptr()) as GLuint;
+            let tex_coord_location =
+                gl::GetAttribLocation(program_id, c_string!("a_TexCoord")?.as_ptr()) as GLuint;
+            let modelview_location =
+                gl::GetUniformLocation(program_id, c_string!("u_MV")?.as_ptr());
+            let texture_location =
+                gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
 
             let texture_id = create_gl_texture(title_screen)?;
 
@@ -325,11 +392,19 @@ impl VBScreenRenderer {
         // The texture should take up as much of the screen as possible
         let scale_to_fit = (hsw / htw).min(hsh / hth);
 
-        let vm = projection * Matrix4::from_nonuniform_scale(TEXTURE_WIDTH * scale_to_fit, TEXTURE_HEIGHT * scale_to_fit, 0.0);
+        let vm = projection
+            * Matrix4::from_nonuniform_scale(
+                TEXTURE_WIDTH * scale_to_fit,
+                TEXTURE_HEIGHT * scale_to_fit,
+                0.0,
+            );
 
         let bottom_left = vm * vec4(-htw, -hth, 0.0, 1.0);
         let top_right = vm * vec4(htw, hth, 0.0, 1.0);
-        debug!("Screen stretches from from {:?} to {:?}", bottom_left, top_right);
+        debug!(
+            "Screen stretches from from {:?} to {:?}",
+            bottom_left, top_right
+        );
         self.modelview = as_vec(vm);
     }
 
@@ -342,24 +417,48 @@ impl VBScreenRenderer {
             check_error("use the program")?;
 
             let pos_pointer = POS_VERTICES.as_voidptr();
-            gl::VertexAttribPointer(self.position_location, VERTEX_SIZE, gl::FLOAT, gl::FALSE, VERTEX_STRIDE, pos_pointer);
+            gl::VertexAttribPointer(
+                self.position_location,
+                VERTEX_SIZE,
+                gl::FLOAT,
+                gl::FALSE,
+                VERTEX_STRIDE,
+                pos_pointer,
+            );
             check_error("pass position data to the shader")?;
 
             let tex_pointer = TEX_VERTICES.as_voidptr();
-            gl::VertexAttribPointer(self.tex_coord_location, VERTEX_SIZE, gl::FLOAT, gl::FALSE, VERTEX_STRIDE, tex_pointer);
+            gl::VertexAttribPointer(
+                self.tex_coord_location,
+                VERTEX_SIZE,
+                gl::FLOAT,
+                gl::FALSE,
+                VERTEX_STRIDE,
+                tex_pointer,
+            );
             check_error("pass texture data to the shader")?;
 
             gl::EnableVertexAttribArray(self.position_location);
             gl::EnableVertexAttribArray(self.tex_coord_location);
 
-            gl::UniformMatrix4fv(self.modelview_location, 1, GL_FALSE, self.modelview.as_ptr());
+            gl::UniformMatrix4fv(
+                self.modelview_location,
+                1,
+                GL_FALSE,
+                self.modelview.as_ptr(),
+            );
 
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
 
             gl::Uniform1i(self.texture_location, 0);
 
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_SHORT, SQUARE_INDICES.as_voidptr());
+            gl::DrawElements(
+                gl::TRIANGLES,
+                6,
+                gl::UNSIGNED_SHORT,
+                SQUARE_INDICES.as_voidptr(),
+            );
             check_error("draw the actual shape")?;
             Ok(())
         }
@@ -369,7 +468,7 @@ pub struct Renderer {
     screen_size: (i32, i32),
     vb_screen: Option<VBScreenRenderer>,
     cardboard: Option<CardboardRenderer>,
-    cardboard_stale: bool
+    cardboard_stale: bool,
 }
 impl Renderer {
     pub fn new() -> Renderer {
@@ -377,7 +476,7 @@ impl Renderer {
             screen_size: (0, 0),
             vb_screen: None,
             cardboard: None,
-            cardboard_stale: true
+            cardboard_stale: true,
         }
     }
     pub fn on_surface_created(&mut self, title_screen: &[u8]) -> Result<(), String> {
@@ -405,41 +504,41 @@ impl Renderer {
     pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) {
         self.screen_size = (screen_width, screen_height);
         match self.vb_screen.as_mut() {
-            Some(screen) => { screen.on_surface_changed(screen_width, screen_height) },
-            None => { }
+            Some(screen) => screen.on_surface_changed(screen_width, screen_height),
+            None => {}
         }
         self.cardboard_stale = true;
     }
 
     pub fn on_draw_frame(&mut self) -> Result<(), String> {
         unsafe {
-            gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
         }
         if !self.update_device_params()? {
-            return Ok(())
+            return Ok(());
         }
-        self.cardboard.as_ref().unwrap().render(|| {
-            self.vb_screen.as_ref().unwrap().render()
-        })?;
+        self.cardboard
+            .as_ref()
+            .unwrap()
+            .render(|| self.vb_screen.as_ref().unwrap().render())?;
         Ok(())
     }
 
     fn update_device_params(&mut self) -> Result<bool, String> {
         if !self.cardboard_stale {
-            return Ok(true)
+            return Ok(true);
         }
         match CardboardRenderer::new(self.screen_size) {
             Ok(Some(cardboard)) => {
                 self.cardboard = Some(cardboard);
                 self.cardboard_stale = false;
                 Ok(true)
-            },
+            }
             Ok(None) => {
                 self.cardboard = None;
                 Ok(false)
-            },
-            Err(err) => Err(err)
+            }
+            Err(err) => Err(err),
         }
     }
 }
