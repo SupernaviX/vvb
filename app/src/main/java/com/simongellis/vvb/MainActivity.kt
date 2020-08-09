@@ -33,8 +33,14 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
         surface_view.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
     }
 
+    override fun onPause() {
+        super.onPause()
+        surface_view.onPause()
+    }
+
     override fun onResume() {
         super.onResume()
+        surface_view.onResume()
         nativeOnResume()
     }
 
