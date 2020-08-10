@@ -489,14 +489,14 @@ impl Renderer {
         Ok(())
     }
 
-    pub fn on_resume(&mut self) {
+    pub fn ensure_device_params(&mut self) {
         self.cardboard_stale = true;
         if let None = QrCode::get_saved_device_params() {
             QrCode::scan_qr_code_and_save_device_params();
         }
     }
 
-    pub fn switch_viewer(&mut self) {
+    pub fn change_device_params(&mut self) {
         self.cardboard_stale = true;
         QrCode::scan_qr_code_and_save_device_params();
     }
@@ -540,5 +540,77 @@ impl Renderer {
             }
             Err(err) => Err(err),
         }
+    }
+}
+
+#[rustfmt::skip::macros(java_func)]
+pub mod jni {
+    use super::Renderer;
+    use crate::{java_func, jni_helpers};
+    use jni::objects::JByteBuffer;
+    use jni::sys::{jint, jobject};
+    use jni::JNIEnv;
+    use paste::paste;
+
+    fn get_renderer<'a>(
+        env: &'a JNIEnv,
+        this: jobject,
+    ) -> jni_helpers::JavaGetResult<'a, Renderer> {
+        jni_helpers::java_get(env, this)
+    }
+
+    java_func!(Renderer_nativeConstructor, constructor);
+    fn constructor(env: &JNIEnv, this: jobject) -> Result<(), String> {
+        jni_helpers::java_init(env, this, Renderer::new())
+    }
+
+    java_func!(Renderer_nativeDestructor, destructor);
+    fn destructor(env: &JNIEnv, this: jobject) -> Result<(), String> {
+        jni_helpers::java_take::<Renderer>(env, this)
+    }
+
+    java_func!(Renderer_nativeOnSurfaceCreated, on_surface_created, JByteBuffer);
+    fn on_surface_created(
+        env: &JNIEnv,
+        this: jobject,
+        title_screen: JByteBuffer,
+    ) -> Result<(), String> {
+        let buf = env
+            .get_direct_buffer_address(title_screen)
+            .map_err(|err| err.to_string())?;
+        let mut this = get_renderer(env, this)?;
+        this.on_surface_created(buf)
+    }
+
+    java_func!(Renderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
+    fn on_surface_changed(
+        env: &JNIEnv,
+        this: jobject,
+        width: jint,
+        height: jint,
+    ) -> Result<(), String> {
+        let mut this = get_renderer(env, this)?;
+        this.on_surface_changed(width, height);
+        Ok(())
+    }
+
+    java_func!(Renderer_nativeOnDrawFrame, on_draw_frame);
+    fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<(), String> {
+        let mut this = get_renderer(env, this)?;
+        this.on_draw_frame()
+    }
+
+    java_func!(Renderer_nativeEnsureDeviceParams, ensure_device_params);
+    fn ensure_device_params(env: &JNIEnv, this: jobject) -> Result<(), String> {
+        let mut this = get_renderer(env, this)?;
+        this.ensure_device_params();
+        Ok(())
+    }
+
+    java_func!(Renderer_nativeChangeDeviceParams, change_device_params);
+    fn change_device_params(env: &JNIEnv, this: jobject) -> Result<(), String> {
+        let mut this = get_renderer(env, this)?;
+        this.change_device_params();
+        Ok(())
     }
 }
