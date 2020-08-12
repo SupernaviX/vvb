@@ -1,3 +1,4 @@
+use anyhow::Result;
 use jni::sys::jobject;
 use jni::JNIEnv;
 use log::error;
@@ -24,21 +25,19 @@ where
 }
 
 const POINTER_FIELD: &str = "_pointer";
-pub type JavaGetResult<'a, T> = Result<MutexGuard<'a, T>, String>;
+pub type JavaGetResult<'a, T> = Result<MutexGuard<'a, T>>;
 
-pub fn java_init<T: 'static + Send>(env: &JNIEnv, this: jobject, value: T) -> Result<(), String> {
-    env.set_rust_field(this, POINTER_FIELD, value)
-        .map_err(|err| err.to_string())
+pub fn java_init<T: 'static + Send>(env: &JNIEnv, this: jobject, value: T) -> Result<()> {
+    env.set_rust_field(this, POINTER_FIELD, value)?;
+    Ok(())
 }
 pub fn java_get<'a, T: 'static + Send>(env: &'a JNIEnv, this: jobject) -> JavaGetResult<'a, T> {
-    let res: MutexGuard<T> = env
-        .get_rust_field(this, POINTER_FIELD)
-        .map_err(|err| err.to_string())?;
+    let res: MutexGuard<T> = env.get_rust_field(this, POINTER_FIELD)?;
     Ok(res)
 }
-pub fn java_take<T: 'static + Send>(env: &JNIEnv, this: jobject) -> Result<(), String> {
-    env.take_rust_field(this, POINTER_FIELD)
-        .map_err(|err| err.to_string())
+pub fn java_take<T: 'static + Send>(env: &JNIEnv, this: jobject) -> Result<()> {
+    env.take_rust_field(this, POINTER_FIELD)?;
+    Ok(())
 }
 
 #[macro_export]

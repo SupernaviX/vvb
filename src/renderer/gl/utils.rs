@@ -1,13 +1,15 @@
 use super::types::GLvoid;
 use super::{GetError, NO_ERROR};
+use anyhow::Result;
 
-pub fn check_error(action: &str) -> Result<(), String> {
+pub fn check_error(action: &str) -> Result<()> {
     let error = unsafe { GetError() };
     match error {
         NO_ERROR => Ok(()),
-        _ => Err(format!(
+        _ => Err(anyhow::anyhow!(
             "OpenGL threw code 0x{:04X} while trying to {}!",
-            error, action
+            error,
+            action
         )),
     }
 }

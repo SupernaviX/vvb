@@ -1,4 +1,5 @@
 use self::video::{Eye, EyeBuffer, Frame, FrameChannel, FRAME_SIZE};
+use anyhow::Result;
 use std::sync::{mpsc, Arc, Mutex};
 
 pub mod video {
@@ -44,33 +45,30 @@ impl Emulator {
         rx
     }
 
-    pub fn load_image(&self, left_eye: &[u8], right_eye: &[u8]) -> Result<(), String> {
-        self.load_frame(Eye::Left, left_eye)?;
+    pub fn load_image(&self, left_eye: &[u8], right_eye: &[u8]) -> Result<()> {
+        self.load_frame(Eye::Left, left_eye);
         self.send_frame(Eye::Left)?;
-        self.load_frame(Eye::Right, right_eye)?;
+        self.load_frame(Eye::Right, right_eye);
         self.send_frame(Eye::Right)?;
         Ok(())
     }
 
-    fn load_frame(&self, eye: Eye, image: &[u8]) -> Result<(), String> {
+    fn load_frame(&self, eye: Eye, image: &[u8]) {
         let mut buffer = self.buffers[eye as usize]
             .lock()
-            .map_err(|err| err.to_string())?;
+            .expect("Buffer lock was poisoned!");
         for (place, data) in buffer.iter_mut().zip(image.iter()) {
             *place = *data;
         }
-        Ok(())
     }
 
-    fn send_frame(&self, eye: Eye) -> Result<(), String> {
+    fn send_frame(&self, eye: Eye) -> Result<()> {
         if let Some(channel) = self.frame_channel.as_ref() {
             let buffer = &self.buffers[eye as usize];
-            channel
-                .send(Frame {
-                    eye,
-                    buffer: Arc::clone(buffer),
-                })
-                .map_err(|err| err.to_string())?;
+            channel.send(Frame {
+                eye,
+                buffer: Arc::clone(buffer),
+            })?;
         }
         Ok(())
     }
@@ -80,6 +78,7 @@ impl Emulator {
 pub mod jni {
     use super::Emulator;
     use crate::{java_func, jni_helpers};
+    use anyhow::Result;
     use jni::objects::JByteBuffer;
     use jni::sys::jobject;
     use jni::JNIEnv;
@@ -93,12 +92,12 @@ pub mod jni {
     }
 
     java_func!(Emulator_nativeConstructor, constructor);
-    fn constructor(env: &JNIEnv, this: jobject) -> Result<(), String> {
+    fn constructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_init(env, this, Emulator::new())
     }
 
     java_func!(Emulator_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: jobject) -> Result<(), String> {
+    fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<Emulator>(env, this)
     }
 
@@ -108,13 +107,9 @@ pub mod jni {
         this: jobject,
         left_eye: JByteBuffer,
         right_eye: JByteBuffer,
-    ) -> Result<(), String> {
-        let left_eye = env
-            .get_direct_buffer_address(left_eye)
-            .map_err(|err| err.to_string())?;
-        let right_eye = env
-            .get_direct_buffer_address(right_eye)
-            .map_err(|err| err.to_string())?;
+    ) -> Result<()> {
+        let left_eye = env.get_direct_buffer_address(left_eye)?;
+        let right_eye = env.get_direct_buffer_address(right_eye)?;
         let this = get_emulator(env, this)?;
         this.load_image(left_eye, right_eye)
     }

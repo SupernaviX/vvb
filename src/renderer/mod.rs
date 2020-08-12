@@ -10,6 +10,7 @@ mod gl;
 mod screen;
 use screen::VBScreenRenderer;
 
+use anyhow::Result;
 use log::debug;
 use std::sync::mpsc::TryRecvError;
 
@@ -31,7 +32,7 @@ impl Renderer {
         }
     }
 
-    pub fn on_surface_created(&mut self) -> Result<(), String> {
+    pub fn on_surface_created(&mut self) -> Result<()> {
         self.cardboard_stale = true;
         self.vb_screen = Some(VBScreenRenderer::new()?);
 
@@ -62,7 +63,7 @@ impl Renderer {
         self.cardboard_stale = true;
     }
 
-    pub fn on_draw_frame(&mut self) -> Result<(), String> {
+    pub fn on_draw_frame(&mut self) -> Result<()> {
         self.update_screen()?;
         if !self.update_device_params()? {
             return Ok(());
@@ -74,15 +75,15 @@ impl Renderer {
         Ok(())
     }
 
-    fn update_screen(&self) -> Result<(), String> {
+    fn update_screen(&self) -> Result<()> {
         match self.frame_channel.try_recv() {
             Ok(frame) => self.vb_screen.as_ref().unwrap().update(frame),
             Err(TryRecvError::Empty) => Ok(()),
-            Err(TryRecvError::Disconnected) => Err(String::from("Emulator has shut down")),
+            Err(TryRecvError::Disconnected) => Err(anyhow::anyhow!("Emulator has shut down")),
         }
     }
 
-    fn update_device_params(&mut self) -> Result<bool, String> {
+    fn update_device_params(&mut self) -> Result<bool> {
         if !self.cardboard_stale {
             return Ok(true);
         }
@@ -106,6 +107,7 @@ pub mod jni {
     use super::Renderer;
     use crate::emulator::Emulator;
     use crate::{java_func, jni_helpers};
+    use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
     use paste::paste;
@@ -118,50 +120,45 @@ pub mod jni {
     }
 
     java_func!(Renderer_nativeConstructor, constructor, jobject);
-    fn constructor(env: &JNIEnv, this: jobject, emulator: jobject) -> Result<(), String> {
+    fn constructor(env: &JNIEnv, this: jobject, emulator: jobject) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
         let renderer = Renderer::new(emulator.get_frame_channel());
         jni_helpers::java_init(env, this, renderer)
     }
 
     java_func!(Renderer_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: jobject) -> Result<(), String> {
+    fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<Renderer>(env, this)
     }
 
     java_func!(Renderer_nativeOnSurfaceCreated, on_surface_created);
-    fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<(), String> {
+    fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
     java_func!(Renderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
-    fn on_surface_changed(
-        env: &JNIEnv,
-        this: jobject,
-        width: jint,
-        height: jint,
-    ) -> Result<(), String> {
+    fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height);
         Ok(())
     }
 
     java_func!(Renderer_nativeOnDrawFrame, on_draw_frame);
-    fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<(), String> {
+    fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()
     }
 
     java_func!(Renderer_nativeEnsureDeviceParams, ensure_device_params);
-    fn ensure_device_params(env: &JNIEnv, this: jobject) -> Result<(), String> {
+    fn ensure_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.ensure_device_params();
         Ok(())
     }
 
     java_func!(Renderer_nativeChangeDeviceParams, change_device_params);
-    fn change_device_params(env: &JNIEnv, this: jobject) -> Result<(), String> {
+    fn change_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.change_device_params();
         Ok(())

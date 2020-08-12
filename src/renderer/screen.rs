@@ -2,6 +2,7 @@ use super::gl;
 use super::gl::types::{GLboolean, GLchar, GLenum, GLfloat, GLint, GLshort, GLsizei, GLuint};
 use super::gl::utils::{check_error, temp_array, AsVoidptr};
 use crate::emulator::video::{Eye, Frame};
+use anyhow::Result;
 use cgmath::{self, vec4, Matrix4, SquareMatrix};
 use log::debug;
 use std::ffi::{CStr, CString};
@@ -37,7 +38,7 @@ const VERTEX_STRIDE: GLsizei = 0;
 
 macro_rules! c_string {
     ($string:expr) => {
-        CString::new($string).map_err(|_| "Could not build c string!")
+        CString::new($string).map_err(|_| anyhow::anyhow!("Could not build c string!"))
     };
 }
 
@@ -70,7 +71,7 @@ void main() {
 }
 ";
 
-unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint, String> {
+unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint> {
     let shader_id = gl::CreateShader(type_);
     let shader_str = c_string!(source)?;
     let shader_source = [shader_str.as_ptr()].as_ptr();
@@ -82,7 +83,7 @@ unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint, String> {
     Ok(shader_id)
 }
 
-unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<(), String> {
+unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<()> {
     let status = temp_array(|ptr| gl::GetShaderiv(shader_id, gl::COMPILE_STATUS, ptr)) as GLboolean;
     check_error("checking compile status of a shader")?;
     if status == GL_TRUE {
@@ -94,22 +95,22 @@ unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<(), String> {
     });
     check_error("finding info log length for a shader")?;
     if length < 0 {
-        return Err("Invalid shader info log length")?;
+        return Err(anyhow::anyhow!("Invalid shader info log length"));
     }
     let mut buf = vec![0; length as usize];
     let buf_ptr = buf.as_mut_ptr() as *mut GLchar;
     gl::GetShaderInfoLog(shader_id, length, 0 as *mut _, buf_ptr);
-    let cstr = CStr::from_bytes_with_nul(buf.as_slice()).map_err(|err| err.to_string())?;
+    let cstr = CStr::from_bytes_with_nul(buf.as_slice())?;
 
-    let log = cstr.to_str().map_err(|err| err.to_string())?;
-    Err(format!(
+    let log = cstr.to_str()?;
+    Err(anyhow::anyhow!(
         "Error compiling shader type {:04X}! <{}>",
         type_,
         log.trim()
     ))
 }
 
-unsafe fn create_gl_texture() -> Result<GLuint, String> {
+unsafe fn create_gl_texture() -> Result<GLuint> {
     gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
     let texture_id = temp_array(|ptr| {
         gl::GenTextures(1, ptr);
@@ -154,7 +155,7 @@ pub struct VBScreenRenderer {
     modelview: Vec<GLfloat>,
 }
 impl VBScreenRenderer {
-    pub fn new() -> Result<VBScreenRenderer, String> {
+    pub fn new() -> Result<VBScreenRenderer> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
             check_error("create a program")?;
@@ -226,15 +227,12 @@ impl VBScreenRenderer {
         self.modelview = as_vec(vm);
     }
 
-    pub fn update(&self, frame: Frame) -> Result<(), String> {
+    pub fn update(&self, frame: Frame) -> Result<()> {
         let x = match frame.eye {
             Eye::Left => 0,
             Eye::Right => VB_WIDTH,
         };
-        let data = match frame.buffer.lock() {
-            Ok(buffer) => buffer,
-            Err(err) => return Err(err.to_string()),
-        };
+        let data = frame.buffer.lock().expect("Buffer lock was poisoned!");
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
             gl::TexSubImage2D(
@@ -253,7 +251,7 @@ impl VBScreenRenderer {
         Ok(())
     }
 
-    pub fn render(&self) -> Result<(), String> {
+    pub fn render(&self) -> Result<()> {
         unsafe {
             gl::ClearColor(0.0, 0.0, 1.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);

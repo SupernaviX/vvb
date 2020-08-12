@@ -5,6 +5,7 @@ use super::gl::utils::{check_error, temp_array};
 pub mod api;
 use api::{CardboardEye, DistortionRenderer, LensDistortion, QrCode, TextureDescription};
 
+use anyhow::Result;
 use log::error;
 
 pub struct CardboardRenderer {
@@ -18,7 +19,7 @@ pub struct CardboardRenderer {
     right_eye: TextureDescription,
 }
 impl CardboardRenderer {
-    pub fn new(screen_size: (i32, i32)) -> Result<Option<CardboardRenderer>, String> {
+    pub fn new(screen_size: (i32, i32)) -> Result<Option<CardboardRenderer>> {
         let params = QrCode::get_saved_device_params();
         if let None = params {
             return Ok(None);
@@ -101,10 +102,7 @@ impl CardboardRenderer {
         }))
     }
 
-    pub fn render<F: FnOnce() -> Result<(), String>>(
-        &self,
-        render_contents: F,
-    ) -> Result<(), String> {
+    pub fn render<F: FnOnce() -> Result<()>>(&self, render_contents: F) -> Result<()> {
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer);
         }
