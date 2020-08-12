@@ -1,18 +1,18 @@
 package com.simongellis.vvb
 
-import android.content.res.Resources
-import android.graphics.BitmapFactory
 import android.opengl.GLSurfaceView
-import java.nio.ByteBuffer
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class Renderer(resources: Resources) : GLSurfaceView.Renderer {
+class Renderer(emulator: Emulator) : GLSurfaceView.Renderer {
     private var _pointer = 0L
-    private var _resources = resources
 
     init {
-        nativeConstructor()
+        nativeConstructor(emulator)
+    }
+
+    fun finalize() {
+        destroy()
     }
 
     fun destroy() {
@@ -22,7 +22,7 @@ class Renderer(resources: Resources) : GLSurfaceView.Renderer {
     }
 
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
-        nativeOnSurfaceCreated(loadTitleScreen())
+        nativeOnSurfaceCreated()
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
@@ -41,19 +41,9 @@ class Renderer(resources: Resources) : GLSurfaceView.Renderer {
         nativeChangeDeviceParams()
     }
 
-    private fun loadTitleScreen(): ByteBuffer {
-        val options = BitmapFactory.Options()
-        options.inScaled = false
-        val bmp = BitmapFactory.decodeResource(_resources, R.drawable.vbtitlescreen, options)
-        val buffer = ByteBuffer.allocateDirect(bmp.byteCount)
-        bmp.copyPixelsToBuffer(buffer)
-        buffer.rewind()
-        return buffer
-    }
-
-    private external fun nativeConstructor()
+    private external fun nativeConstructor(emulator: Emulator)
     private external fun nativeDestructor()
-    private external fun nativeOnSurfaceCreated(titleScreen: ByteBuffer)
+    private external fun nativeOnSurfaceCreated()
     private external fun nativeOnSurfaceChanged(width: Int, height: Int)
     private external fun nativeOnDrawFrame()
     private external fun nativeEnsureDeviceParams()

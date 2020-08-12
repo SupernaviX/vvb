@@ -1,3 +1,4 @@
+mod emulator;
 mod jni_helpers;
 mod renderer;
 
@@ -6,8 +7,10 @@ use jni::sys::jobject;
 use jni::JNIEnv;
 use log::{debug, Level};
 use paste::paste;
-pub use renderer::jni::*;
 use renderer::Cardboard;
+
+pub use emulator::jni::*;
+pub use renderer::jni::*;
 
 java_func!(MainActivity_nativeInitialize, init);
 fn init(env: &JNIEnv, this: jobject) -> Result<(), String> {

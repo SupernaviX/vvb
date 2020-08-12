@@ -1,3 +1,5 @@
+use crate::emulator::video::FrameChannel;
+
 mod cardboard;
 pub use cardboard::api::Cardboard;
 use cardboard::api::QrCode;
@@ -9,25 +11,29 @@ mod screen;
 use screen::VBScreenRenderer;
 
 use log::debug;
+use std::sync::mpsc::TryRecvError;
 
 pub struct Renderer {
     screen_size: (i32, i32),
     vb_screen: Option<VBScreenRenderer>,
     cardboard: Option<CardboardRenderer>,
     cardboard_stale: bool,
+    frame_channel: FrameChannel,
 }
 impl Renderer {
-    pub fn new() -> Renderer {
+    pub fn new(frame_channel: FrameChannel) -> Renderer {
         Renderer {
             screen_size: (0, 0),
             vb_screen: None,
             cardboard: None,
             cardboard_stale: true,
+            frame_channel,
         }
     }
-    pub fn on_surface_created(&mut self, title_screen: &[u8]) -> Result<(), String> {
+
+    pub fn on_surface_created(&mut self) -> Result<(), String> {
         self.cardboard_stale = true;
-        self.vb_screen = Some(VBScreenRenderer::new(title_screen)?);
+        self.vb_screen = Some(VBScreenRenderer::new()?);
 
         let device_params = QrCode::get_saved_device_params();
         debug!("Device params: {:?}", device_params);
@@ -57,9 +63,7 @@ impl Renderer {
     }
 
     pub fn on_draw_frame(&mut self) -> Result<(), String> {
-        unsafe {
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-        }
+        self.update_screen()?;
         if !self.update_device_params()? {
             return Ok(());
         }
@@ -68,6 +72,14 @@ impl Renderer {
             .unwrap()
             .render(|| self.vb_screen.as_ref().unwrap().render())?;
         Ok(())
+    }
+
+    fn update_screen(&self) -> Result<(), String> {
+        match self.frame_channel.try_recv() {
+            Ok(frame) => self.vb_screen.as_ref().unwrap().update(frame),
+            Err(TryRecvError::Empty) => Ok(()),
+            Err(TryRecvError::Disconnected) => Err(String::from("Emulator has shut down")),
+        }
     }
 
     fn update_device_params(&mut self) -> Result<bool, String> {
@@ -92,8 +104,8 @@ impl Renderer {
 #[rustfmt::skip::macros(java_func)]
 pub mod jni {
     use super::Renderer;
+    use crate::emulator::Emulator;
     use crate::{java_func, jni_helpers};
-    use jni::objects::JByteBuffer;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
     use paste::paste;
@@ -105,9 +117,11 @@ pub mod jni {
         jni_helpers::java_get(env, this)
     }
 
-    java_func!(Renderer_nativeConstructor, constructor);
-    fn constructor(env: &JNIEnv, this: jobject) -> Result<(), String> {
-        jni_helpers::java_init(env, this, Renderer::new())
+    java_func!(Renderer_nativeConstructor, constructor, jobject);
+    fn constructor(env: &JNIEnv, this: jobject, emulator: jobject) -> Result<(), String> {
+        let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
+        let renderer = Renderer::new(emulator.get_frame_channel());
+        jni_helpers::java_init(env, this, renderer)
     }
 
     java_func!(Renderer_nativeDestructor, destructor);
@@ -115,17 +129,10 @@ pub mod jni {
         jni_helpers::java_take::<Renderer>(env, this)
     }
 
-    java_func!(Renderer_nativeOnSurfaceCreated, on_surface_created, JByteBuffer);
-    fn on_surface_created(
-        env: &JNIEnv,
-        this: jobject,
-        title_screen: JByteBuffer,
-    ) -> Result<(), String> {
-        let buf = env
-            .get_direct_buffer_address(title_screen)
-            .map_err(|err| err.to_string())?;
+    java_func!(Renderer_nativeOnSurfaceCreated, on_surface_created);
+    fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<(), String> {
         let mut this = get_renderer(env, this)?;
-        this.on_surface_created(buf)
+        this.on_surface_created()
     }
 
     java_func!(Renderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);

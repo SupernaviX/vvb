@@ -12,18 +12,23 @@ import com.google.android.gms.common.GoogleApiAvailability
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
+    private lateinit var _emulator: Emulator
     private lateinit var _renderer: Renderer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         nativeInitialize()
-        _renderer = Renderer(resources)
+        _emulator = Emulator(resources)
+        _renderer = Renderer(_emulator)
+
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setContentView(R.layout.activity_main)
 
         surface_view.setEGLContextClientVersion(2)
         surface_view.setRenderer(_renderer)
         surface_view.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+
+        _emulator.loadImage()
     }
 
     override fun onPause() {
@@ -40,6 +45,7 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
     override fun onDestroy() {
         super.onDestroy()
         _renderer.destroy()
+        _emulator.destroy()
     }
 
     fun showSettings(view: View) {

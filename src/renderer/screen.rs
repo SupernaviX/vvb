@@ -1,6 +1,7 @@
 use super::gl;
 use super::gl::types::{GLboolean, GLchar, GLenum, GLfloat, GLint, GLshort, GLsizei, GLuint};
 use super::gl::utils::{check_error, temp_array, AsVoidptr};
+use crate::emulator::video::{Eye, Frame};
 use cgmath::{self, vec4, Matrix4, SquareMatrix};
 use log::debug;
 use std::ffi::{CStr, CString};
@@ -108,7 +109,7 @@ unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<(), String> {
     ))
 }
 
-unsafe fn create_gl_texture(data: &[u8]) -> Result<GLuint, String> {
+unsafe fn create_gl_texture() -> Result<GLuint, String> {
     gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
     let texture_id = temp_array(|ptr| {
         gl::GenTextures(1, ptr);
@@ -124,7 +125,7 @@ unsafe fn create_gl_texture(data: &[u8]) -> Result<GLuint, String> {
         0,
         gl::RGBA,
         gl::UNSIGNED_BYTE,
-        data.as_voidptr(),
+        0 as *const _,
     );
     check_error("load a texture")?;
 
@@ -153,7 +154,7 @@ pub struct VBScreenRenderer {
     modelview: Vec<GLfloat>,
 }
 impl VBScreenRenderer {
-    pub fn new(title_screen: &[u8]) -> Result<VBScreenRenderer, String> {
+    pub fn new() -> Result<VBScreenRenderer, String> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
             check_error("create a program")?;
@@ -180,7 +181,7 @@ impl VBScreenRenderer {
             let texture_location =
                 gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
 
-            let texture_id = create_gl_texture(title_screen)?;
+            let texture_id = create_gl_texture()?;
 
             VBScreenRenderer {
                 program_id,
@@ -223,6 +224,33 @@ impl VBScreenRenderer {
             bottom_left, top_right
         );
         self.modelview = as_vec(vm);
+    }
+
+    pub fn update(&self, frame: Frame) -> Result<(), String> {
+        let x = match frame.eye {
+            Eye::Left => 0,
+            Eye::Right => VB_WIDTH,
+        };
+        let data = match frame.buffer.lock() {
+            Ok(buffer) => buffer,
+            Err(err) => return Err(err.to_string()),
+        };
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
+            gl::TexSubImage2D(
+                gl::TEXTURE_2D,
+                0,
+                x,
+                0,
+                VB_WIDTH,
+                VB_HEIGHT,
+                gl::RGBA,
+                gl::UNSIGNED_BYTE,
+                data.as_voidptr(),
+            );
+        }
+        check_error("Update part of the screen")?;
+        Ok(())
     }
 
     pub fn render(&self) -> Result<(), String> {
