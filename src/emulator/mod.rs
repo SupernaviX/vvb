@@ -1,4 +1,7 @@
+mod memory;
+
 use self::video::{Eye, EyeBuffer, Frame, FrameChannel, FRAME_SIZE};
+use crate::emulator::memory::Memory;
 use anyhow::Result;
 use std::sync::{mpsc, Arc, Mutex};
 
@@ -25,12 +28,14 @@ pub mod video {
 }
 
 pub struct Emulator {
+    memory: Memory,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
 impl Emulator {
     fn new() -> Emulator {
         Emulator {
+            memory: Memory::new(),
             frame_channel: None,
             buffers: [
                 Arc::new(Mutex::new([0; FRAME_SIZE])),
