@@ -2,55 +2,26 @@ mod cpu;
 use cpu::CPU;
 mod storage;
 use storage::Storage;
+pub mod video;
+use video::{Eye, FrameChannel, Video};
 
-use self::video::{Eye, EyeBuffer, Frame, FrameChannel, FRAME_SIZE};
 use anyhow::Result;
 use log::debug;
-use std::sync::{mpsc, Arc, Mutex};
-
-pub mod video {
-    use std::sync::{Arc, Mutex};
-
-    pub const VB_WIDTH: usize = 384;
-    pub const VB_HEIGHT: usize = 224;
-    pub const FRAME_SIZE: usize = VB_WIDTH * VB_HEIGHT * 4;
-
-    #[derive(Copy, Clone)]
-    pub enum Eye {
-        Left,
-        Right,
-    }
-    pub type EyeBuffer = [u8; FRAME_SIZE];
-
-    pub struct Frame {
-        pub eye: Eye,
-        pub buffer: Arc<Mutex<EyeBuffer>>,
-    }
-
-    pub type FrameChannel = std::sync::mpsc::Receiver<Frame>;
-}
 
 pub struct Emulator {
     storage: Storage,
-    frame_channel: Option<mpsc::Sender<Frame>>,
-    buffers: [Arc<Mutex<EyeBuffer>>; 2],
+    video: Video,
 }
 impl Emulator {
     fn new() -> Emulator {
         Emulator {
             storage: Storage::new(),
-            frame_channel: None,
-            buffers: [
-                Arc::new(Mutex::new([0; FRAME_SIZE])),
-                Arc::new(Mutex::new([0; FRAME_SIZE])),
-            ],
+            video: Video::new(),
         }
     }
 
     pub fn get_frame_channel(&mut self) -> FrameChannel {
-        let (tx, rx) = mpsc::channel();
-        self.frame_channel = Some(tx);
-        rx
+        self.video.get_frame_channel()
     }
 
     pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
@@ -83,30 +54,10 @@ impl Emulator {
     }
 
     pub fn load_image(&self, left_eye: &[u8], right_eye: &[u8]) -> Result<()> {
-        self.load_frame(Eye::Left, left_eye);
-        self.send_frame(Eye::Left)?;
-        self.load_frame(Eye::Right, right_eye);
-        self.send_frame(Eye::Right)?;
-        Ok(())
-    }
-
-    fn load_frame(&self, eye: Eye, image: &[u8]) {
-        let mut buffer = self.buffers[eye as usize]
-            .lock()
-            .expect("Buffer lock was poisoned!");
-        for (place, data) in buffer.iter_mut().zip(image.iter()) {
-            *place = *data;
-        }
-    }
-
-    fn send_frame(&self, eye: Eye) -> Result<()> {
-        if let Some(channel) = self.frame_channel.as_ref() {
-            let buffer = &self.buffers[eye as usize];
-            channel.send(Frame {
-                eye,
-                buffer: Arc::clone(buffer),
-            })?;
-        }
+        self.video.load_frame(Eye::Left, left_eye);
+        self.video.send_frame(Eye::Left)?;
+        self.video.load_frame(Eye::Right, right_eye);
+        self.video.send_frame(Eye::Right)?;
         Ok(())
     }
 }
