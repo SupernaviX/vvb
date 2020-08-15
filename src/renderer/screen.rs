@@ -310,8 +310,9 @@ impl VBScreenRenderer {
 impl Drop for VBScreenRenderer {
     fn drop(&mut self) {
         unsafe {
-            gl::DeleteProgram(self.program_id);
-            gl::GetError(); // Ignore errors from this, deleting already-deleted programs errors
+            if gl::IsProgram(self.program_id) == GL_TRUE {
+                gl::DeleteProgram(self.program_id);
+            }
 
             gl::DeleteTextures(1, &self.texture_id);
 
