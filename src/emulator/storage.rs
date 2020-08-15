@@ -6,14 +6,18 @@ enum Address {
     Unmapped,
 }
 
-pub struct Memory {
-    contents: Vec<u8>,
+pub struct Storage {
+    pub pc: usize,
+    pub registers: [i32; 32],
+    memory: Vec<u8>,
     rom_mask: usize,
 }
-impl Memory {
-    pub fn new() -> Memory {
-        Memory {
-            contents: vec![0; 0x07FFFFFF],
+impl Storage {
+    pub fn new() -> Storage {
+        Storage {
+            pc: 0xFFFFFFF0,
+            registers: [0; 32],
+            memory: vec![0; 0x07FFFFFF],
             rom_mask: 0,
         }
     }
@@ -27,19 +31,19 @@ impl Memory {
             return Err(anyhow::anyhow!("ROM size must be <= 16Mb"));
         }
         self.rom_mask = 0x07000000 + rom_size - 1;
-        self.contents[0x07000000..0x07000000 + rom_size].copy_from_slice(rom);
+        self.memory[0x07000000..0x07000000 + rom_size].copy_from_slice(rom);
         Ok(())
     }
 
     pub fn write_byte(&mut self, address: usize, value: u8) {
         if let Address::Mapped(resolved) = self.resolve_address(address) {
-            self.contents[resolved] = value;
+            self.memory[resolved] = value;
         }
     }
 
     pub fn read_byte(&self, address: usize) -> u8 {
         match self.resolve_address(address) {
-            Address::Mapped(resolved) => self.contents[resolved],
+            Address::Mapped(resolved) => self.memory[resolved],
             Address::Unmapped => 0,
         }
     }
@@ -49,7 +53,7 @@ impl Memory {
             Address::Mapped(resolved) => resolved,
             Address::Unmapped => return 0,
         };
-        let bytes: &[u8; 2] = self.contents[address..address + 2].try_into().unwrap();
+        let bytes: &[u8; 2] = self.memory[address..address + 2].try_into().unwrap();
         i16::from_le_bytes(*bytes)
     }
 
@@ -58,7 +62,7 @@ impl Memory {
             Address::Mapped(resolved) => resolved,
             Address::Unmapped => return 0,
         };
-        let bytes: &[u8; 4] = self.contents[address..address + 4].try_into().unwrap();
+        let bytes: &[u8; 4] = self.memory[address..address + 4].try_into().unwrap();
         i32::from_le_bytes(*bytes)
     }
 
@@ -101,115 +105,119 @@ impl Memory {
 
 #[cfg(test)]
 mod tests {
-    use crate::emulator::memory::Memory;
+    use crate::emulator::storage::Storage;
 
     #[test]
     fn can_create() {
-        Memory::new();
+        Storage::new();
     }
 
     #[test]
     fn can_write_byte() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x00000000, 0x42);
+        let mut storage = Storage::new();
+        storage.write_byte(0x00000000, 0x42);
     }
 
     #[test]
     fn can_read_byte() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x00000000, 0x42);
-        assert_eq!(memory.read_byte(0x00000000), 0x42);
+        let mut storage = Storage::new();
+        storage.write_byte(0x00000000, 0x42);
+        assert_eq!(storage.read_byte(0x00000000), 0x42);
     }
 
     #[test]
     fn can_read_halfword() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x00000000, 0x34);
-        memory.write_byte(0x00000001, 0x12);
-        assert_eq!(memory.read_halfword(0x00000000), 0x1234);
+        let mut storage = Storage::new();
+        storage.write_byte(0x00000000, 0x34);
+        storage.write_byte(0x00000001, 0x12);
+        assert_eq!(storage.read_halfword(0x00000000), 0x1234);
     }
 
     #[test]
     fn can_read_word() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x00000000, 0x78);
-        memory.write_byte(0x00000001, 0x56);
-        memory.write_byte(0x00000002, 0x34);
-        memory.write_byte(0x00000003, 0x12);
-        assert_eq!(memory.read_word(0x00000000), 0x12345678);
+        let mut storage = Storage::new();
+        storage.write_byte(0x00000000, 0x78);
+        storage.write_byte(0x00000001, 0x56);
+        storage.write_byte(0x00000002, 0x34);
+        storage.write_byte(0x00000003, 0x12);
+        assert_eq!(storage.read_word(0x00000000), 0x12345678);
     }
 
     #[test]
     fn high_addresses_are_mirrored() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x10000000, 0xFF);
-        assert_eq!(memory.read_byte(0x00000000), 0xFF);
+        let mut storage = Storage::new();
+        storage.write_byte(0x10000000, 0xFF);
+        assert_eq!(storage.read_byte(0x00000000), 0xFF);
     }
 
     #[test]
     fn frame_buffers_are_mirrored() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x00000000, 0xFF);
-        assert_eq!(memory.read_byte(0x00080000), 0xFF);
-        assert_eq!(memory.read_byte(0x00100000), 0xFF);
+        let mut storage = Storage::new();
+        storage.write_byte(0x00000000, 0xFF);
+        assert_eq!(storage.read_byte(0x00080000), 0xFF);
+        assert_eq!(storage.read_byte(0x00100000), 0xFF);
     }
 
     #[test]
     fn character_tables_are_mirrored() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x00006000, 0x01);
-        memory.write_byte(0x0000E000, 0x02);
-        memory.write_byte(0x00016000, 0x03);
-        memory.write_byte(0x0001E000, 0x04);
-        assert_eq!(memory.read_byte(0x00078000), 0x01);
-        assert_eq!(memory.read_byte(0x0007A000), 0x02);
-        assert_eq!(memory.read_byte(0x0007C000), 0x03);
-        assert_eq!(memory.read_byte(0x0007E000), 0x04);
+        let mut storage = Storage::new();
+        storage.write_byte(0x00006000, 0x01);
+        storage.write_byte(0x0000E000, 0x02);
+        storage.write_byte(0x00016000, 0x03);
+        storage.write_byte(0x0001E000, 0x04);
+        assert_eq!(storage.read_byte(0x00078000), 0x01);
+        assert_eq!(storage.read_byte(0x0007A000), 0x02);
+        assert_eq!(storage.read_byte(0x0007C000), 0x03);
+        assert_eq!(storage.read_byte(0x0007E000), 0x04);
     }
 
     #[test]
     fn wram_is_mirrored() {
-        let mut memory = Memory::new();
-        memory.write_byte(0x05123456, 0x63);
-        assert_eq!(memory.read_byte(0x05F23456), 0x63);
+        let mut storage = Storage::new();
+        storage.write_byte(0x05123456, 0x63);
+        assert_eq!(storage.read_byte(0x05F23456), 0x63);
     }
 
     #[test]
     fn can_load_game_pak_rom() {
-        let mut memory = Memory::new();
-        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
+        let mut storage = Storage::new();
+        storage
+            .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12])
+            .unwrap();
     }
 
     #[test]
     #[should_panic(expected = "ROM size must be a power of two")]
     fn asserts_rom_is_power_of_two() {
-        let mut memory = Memory::new();
-        memory.load_game_pak_rom(&[0x78, 0x56, 0x34]).unwrap();
+        let mut storage = Storage::new();
+        storage.load_game_pak_rom(&[0x78, 0x56, 0x34]).unwrap();
     }
 
     #[test]
     #[should_panic(expected = "ROM size must be <= 16Mb")]
     fn asserts_rom_is_small_enough() {
-        let mut memory = Memory::new();
+        let mut storage = Storage::new();
         let too_much_rom = vec![0u8; 0x01000000];
-        memory.load_game_pak_rom(too_much_rom.as_slice()).unwrap();
+        storage.load_game_pak_rom(too_much_rom.as_slice()).unwrap();
     }
 
     #[test]
     fn can_read_game_pak_rom() {
-        let mut memory = Memory::new();
-        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
-        assert_eq!(memory.read_word(0x07000000), 0x12345678);
+        let mut storage = Storage::new();
+        storage
+            .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12])
+            .unwrap();
+        assert_eq!(storage.read_word(0x07000000), 0x12345678);
     }
 
     #[test]
     fn can_read_game_pak_rom_mirrored_by_size() {
-        let mut memory = Memory::new();
-        memory
+        let mut storage = Storage::new();
+        storage
             .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12, 0x89, 0x57, 0x34, 0x06])
             .unwrap();
-        assert_eq!(memory.read_word(0x07000000), 0x12345678);
-        assert_eq!(memory.read_word(0x07000004), 0x06345789);
-        assert_eq!(memory.read_word(0x07000008), 0x12345678);
+        assert_eq!(storage.read_word(0x07000000), 0x12345678);
+        assert_eq!(storage.read_word(0x07000004), 0x06345789);
+        assert_eq!(storage.read_word(0x07000008), 0x12345678);
     }
 }

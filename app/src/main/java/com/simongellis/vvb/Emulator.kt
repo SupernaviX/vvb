@@ -28,6 +28,10 @@ class Emulator(context: Context) {
         nativeLoadGamePakRom(rom)
     }
 
+    fun run() {
+        nativeRun()
+    }
+
     fun loadImage() {
         nativeLoadImage(
             loadResource(R.drawable.vbtitlescreen_left),
@@ -57,5 +61,6 @@ class Emulator(context: Context) {
     private external fun nativeConstructor()
     private external fun nativeDestructor()
     private external fun nativeLoadGamePakRom(rom: ByteBuffer)
+    private external fun nativeRun()
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
 }

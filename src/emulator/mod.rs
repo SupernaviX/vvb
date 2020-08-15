@@ -1,8 +1,11 @@
-mod memory;
+mod cpu;
+use cpu::CPU;
+mod storage;
+use storage::Storage;
 
 use self::video::{Eye, EyeBuffer, Frame, FrameChannel, FRAME_SIZE};
-use crate::emulator::memory::Memory;
 use anyhow::Result;
+use log::debug;
 use std::sync::{mpsc, Arc, Mutex};
 
 pub mod video {
@@ -28,14 +31,14 @@ pub mod video {
 }
 
 pub struct Emulator {
-    memory: Memory,
+    storage: Storage,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
 impl Emulator {
     fn new() -> Emulator {
         Emulator {
-            memory: Memory::new(),
+            storage: Storage::new(),
             frame_channel: None,
             buffers: [
                 Arc::new(Mutex::new([0; FRAME_SIZE])),
@@ -51,17 +54,30 @@ impl Emulator {
     }
 
     pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
-        self.memory.load_game_pak_rom(rom)?;
+        self.storage.load_game_pak_rom(rom)?;
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
-            self.memory.read_halfword(0xfffffff0),
-            self.memory.read_halfword(0xfffffff2),
-            self.memory.read_halfword(0xfffffff4),
-            self.memory.read_halfword(0xfffffff6),
-            self.memory.read_halfword(0xfffffff7),
-            self.memory.read_halfword(0xfffffffa),
-            self.memory.read_halfword(0xfffffffc),
-            self.memory.read_halfword(0xfffffffe),
+            self.storage.read_halfword(0xfffffff0),
+            self.storage.read_halfword(0xfffffff2),
+            self.storage.read_halfword(0xfffffff4),
+            self.storage.read_halfword(0xfffffff6),
+            self.storage.read_halfword(0xfffffff7),
+            self.storage.read_halfword(0xfffffffa),
+            self.storage.read_halfword(0xfffffffc),
+            self.storage.read_halfword(0xfffffffe),
+        );
+        Ok(())
+    }
+
+    pub fn run(&mut self) -> Result<()> {
+        debug!(
+            "Before: PC=0x{:08x} registers={:x?}",
+            self.storage.pc, self.storage.registers
+        );
+        CPU::run(&mut self.storage, 5)?;
+        debug!(
+            "After:  PC=0x{:08x} registers={:x?}",
+            self.storage.pc, self.storage.registers
         );
         Ok(())
     }
@@ -127,6 +143,12 @@ pub mod jni {
         let rom = env.get_direct_buffer_address(rom)?;
         let mut this = get_emulator(env, this)?;
         this.load_game_pak_rom(rom)
+    }
+
+    java_func!(Emulator_nativeRun, run);
+    fn run(env: &JNIEnv, this: jobject) -> Result<()> {
+        let mut this = get_emulator(env, this)?;
+        this.run()
     }
 
     java_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);

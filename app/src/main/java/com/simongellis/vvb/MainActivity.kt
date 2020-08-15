@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
         super.onResume()
         surface_view.onResume()
         _renderer.ensureDeviceParams()
+        _emulator.loadImage()
     }
 
     override fun onDestroy() {
@@ -85,6 +86,7 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
         if (requestCode == GAME_CHOSEN && resultCode == Activity.RESULT_OK) {
             data?.data?.also { uri ->
                 _emulator.loadGamePak(uri)
+                _emulator.run()
             }
         }
     }
