@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::convert::TryInto;
 
 enum Address {
@@ -7,29 +8,44 @@ enum Address {
 
 pub struct Memory {
     contents: Vec<u8>,
+    rom_mask: usize,
 }
 impl Memory {
     pub fn new() -> Memory {
         Memory {
             contents: vec![0; 0x07FFFFFF],
+            rom_mask: 0,
         }
     }
 
+    pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
+        let rom_size = rom.len();
+        if rom_size.count_ones() != 1 {
+            return Err(anyhow::anyhow!("ROM size must be a power of two"));
+        }
+        if rom_size > 0x00FFFFFF {
+            return Err(anyhow::anyhow!("ROM size must be <= 16Mb"));
+        }
+        self.rom_mask = 0x07000000 + rom_size - 1;
+        self.contents[0x07000000..0x07000000 + rom_size].copy_from_slice(rom);
+        Ok(())
+    }
+
     pub fn write_byte(&mut self, address: usize, value: u8) {
-        if let Address::Mapped(resolved) = Memory::resolve_address(address) {
+        if let Address::Mapped(resolved) = self.resolve_address(address) {
             self.contents[resolved] = value;
         }
     }
 
     pub fn read_byte(&self, address: usize) -> u8 {
-        match Memory::resolve_address(address) {
+        match self.resolve_address(address) {
             Address::Mapped(resolved) => self.contents[resolved],
             Address::Unmapped => 0,
         }
     }
 
     pub fn read_halfword(&self, address: usize) -> i16 {
-        let address = match Memory::resolve_address(address) {
+        let address = match self.resolve_address(address) {
             Address::Mapped(resolved) => resolved,
             Address::Unmapped => return 0,
         };
@@ -38,7 +54,7 @@ impl Memory {
     }
 
     pub fn read_word(&self, address: usize) -> i32 {
-        let address = match Memory::resolve_address(address) {
+        let address = match self.resolve_address(address) {
             Address::Mapped(resolved) => resolved,
             Address::Unmapped => return 0,
         };
@@ -46,22 +62,22 @@ impl Memory {
         i32::from_le_bytes(*bytes)
     }
 
-    fn resolve_address(address: usize) -> Address {
+    fn resolve_address(&self, address: usize) -> Address {
         let address = address & 0x07FFFFFF;
         match address {
-            0x00000000..=0x00FFFFFF => Memory::resolve_vip_address(address),
+            0x00000000..=0x00FFFFFF => self.resolve_vip_address(address),
             0x01000000..=0x01FFFFFF => Address::Unmapped, // TODO: VSU
             0x02000000..=0x02FFFFFF => Address::Unmapped, // TODO: hardware
             0x03000000..=0x03FFFFFF => Address::Unmapped,
             0x04000000..=0x04FFFFFF => Address::Unmapped, // Game Pak Expansion, never used
-            0x05000000..=0x05FFFFFF => Memory::resolve_wram_address(address),
+            0x05000000..=0x05FFFFFF => self.resolve_wram_address(address),
             0x06000000..=0x06FFFFFF => Address::Unmapped, // TODO: Game Pak RAM
-            0x07000000..=0x07FFFFFF => Address::Unmapped, // TODO: Game Pak ROM
+            0x07000000..=0x07FFFFFF => self.resolve_game_pak_rom_address(address),
             _ => unreachable!("Math broke"),
         }
     }
 
-    fn resolve_vip_address(address: usize) -> Address {
+    fn resolve_vip_address(&self, address: usize) -> Address {
         let address = address & 0x0007FFFF;
         match address {
             0x00000000..=0x00077FFF => Address::Mapped(address),
@@ -74,8 +90,12 @@ impl Memory {
         }
     }
 
-    fn resolve_wram_address(address: usize) -> Address {
+    fn resolve_wram_address(&self, address: usize) -> Address {
         Address::Mapped(address & 0x0500FFFF)
+    }
+
+    fn resolve_game_pak_rom_address(&self, address: usize) -> Address {
+        Address::Mapped(address & self.rom_mask)
     }
 }
 
@@ -152,5 +172,44 @@ mod tests {
         let mut memory = Memory::new();
         memory.write_byte(0x05123456, 0x63);
         assert_eq!(memory.read_byte(0x05F23456), 0x63);
+    }
+
+    #[test]
+    fn can_load_game_pak_rom() {
+        let mut memory = Memory::new();
+        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "ROM size must be a power of two")]
+    fn asserts_rom_is_power_of_two() {
+        let mut memory = Memory::new();
+        memory.load_game_pak_rom(&[0x78, 0x56, 0x34]).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "ROM size must be <= 16Mb")]
+    fn asserts_rom_is_small_enough() {
+        let mut memory = Memory::new();
+        let too_much_rom = vec![0u8; 0x01000000];
+        memory.load_game_pak_rom(too_much_rom.as_slice()).unwrap();
+    }
+
+    #[test]
+    fn can_read_game_pak_rom() {
+        let mut memory = Memory::new();
+        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
+        assert_eq!(memory.read_word(0x07000000), 0x12345678);
+    }
+
+    #[test]
+    fn can_read_game_pak_rom_mirrored_by_size() {
+        let mut memory = Memory::new();
+        memory
+            .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12, 0x89, 0x57, 0x34, 0x06])
+            .unwrap();
+        assert_eq!(memory.read_word(0x07000000), 0x12345678);
+        assert_eq!(memory.read_word(0x07000004), 0x06345789);
+        assert_eq!(memory.read_word(0x07000008), 0x12345678);
     }
 }

@@ -50,6 +50,22 @@ impl Emulator {
         rx
     }
 
+    pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
+        self.memory.load_game_pak_rom(rom)?;
+        log::debug!(
+            "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
+            self.memory.read_halfword(0xfffffff0),
+            self.memory.read_halfword(0xfffffff2),
+            self.memory.read_halfword(0xfffffff4),
+            self.memory.read_halfword(0xfffffff6),
+            self.memory.read_halfword(0xfffffff7),
+            self.memory.read_halfword(0xfffffffa),
+            self.memory.read_halfword(0xfffffffc),
+            self.memory.read_halfword(0xfffffffe),
+        );
+        Ok(())
+    }
+
     pub fn load_image(&self, left_eye: &[u8], right_eye: &[u8]) -> Result<()> {
         self.load_frame(Eye::Left, left_eye);
         self.send_frame(Eye::Left)?;
@@ -104,6 +120,13 @@ pub mod jni {
     java_func!(Emulator_nativeDestructor, destructor);
     fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<Emulator>(env, this)
+    }
+
+    java_func!(Emulator_nativeLoadGamePakRom, load_game_pak_rom, JByteBuffer);
+    fn load_game_pak_rom(env: &JNIEnv, this: jobject, rom: JByteBuffer) -> Result<()> {
+        let rom = env.get_direct_buffer_address(rom)?;
+        let mut this = get_emulator(env, this)?;
+        this.load_game_pak_rom(rom)
     }
 
     java_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);
