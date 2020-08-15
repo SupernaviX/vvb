@@ -33,8 +33,15 @@ impl Renderer {
     }
 
     pub fn on_surface_created(&mut self) -> Result<()> {
-        self.cardboard_stale = true;
+        // If vb_screen or cardboard are already initialized, drop them.
+        // This method is called when the GLSurfaceView is first initialized,
+        // so if they already have values then those values reference already-freed resources,
+        // and freeing them AFTER creating new ones will drop resources the new ones are using.
+        self.vb_screen.take();
+        self.cardboard.take();
+
         self.vb_screen = Some(VBScreenRenderer::new()?);
+        self.cardboard_stale = true;
 
         let device_params = QrCode::get_saved_device_params();
         debug!("Device params: {:?}", device_params);
@@ -56,10 +63,10 @@ impl Renderer {
 
     pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) {
         self.screen_size = (screen_width, screen_height);
-        match self.vb_screen.as_mut() {
-            Some(screen) => screen.on_surface_changed(screen_width, screen_height),
-            None => {}
-        }
+        self.vb_screen
+            .as_mut()
+            .unwrap()
+            .on_surface_changed(screen_width, screen_height);
         self.cardboard_stale = true;
     }
 

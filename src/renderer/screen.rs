@@ -4,7 +4,7 @@ use super::gl::utils::{check_error, temp_array, AsVoidptr};
 use crate::emulator::video::{Eye, Frame};
 use anyhow::Result;
 use cgmath::{self, vec4, Matrix4, SquareMatrix};
-use log::debug;
+use log::{debug, error};
 use std::ffi::{CStr, CString};
 
 const GL_TRUE: GLboolean = 1;
@@ -304,6 +304,22 @@ impl VBScreenRenderer {
             );
             check_error("draw the actual shape")?;
             Ok(())
+        }
+    }
+}
+impl Drop for VBScreenRenderer {
+    fn drop(&mut self) {
+        unsafe {
+            gl::DeleteProgram(self.program_id);
+            gl::GetError(); // Ignore errors from this, deleting already-deleted programs errors
+
+            gl::DeleteTextures(1, &self.texture_id);
+
+            // Can't return a result from a Drop,
+            // so just log if anything goes awry
+            if let Err(message) = check_error("cleaning up a VBScreenRenderer") {
+                error!("{}", message);
+            }
         }
     }
 }
