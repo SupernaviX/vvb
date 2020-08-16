@@ -50,6 +50,9 @@ impl<'a> CPUProcess<'a> {
                 0b010001 => self.add_i(instr),
                 0b000001 => self.add_r(instr),
                 0b101001 => self.addi(instr),
+                0b000011 => self.cmp_r(instr),
+                0b010011 => self.cmp_i(instr),
+                0b000010 => self.sub(instr),
 
                 0b000110 => self.jmp(instr),
                 _ => return Err(anyhow::anyhow!("Unrecognized opcode {:06b}", opcode)),
@@ -150,6 +153,28 @@ impl<'a> CPUProcess<'a> {
         self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
         self.cycle += 1;
     }
+    fn cmp_r(&mut self, instr: i16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let (value, ov) = old_value.overflowing_sub(self.storage.registers[reg1]);
+        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.cycle += 1;
+    }
+    fn cmp_i(&mut self, instr: i16) {
+        let (reg2, imm) = self.parse_format_ii_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let (value, ov) = old_value.overflowing_sub(imm);
+        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.cycle += 1;
+    }
+    fn sub(&mut self, instr: i16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let (value, ov) = old_value.overflowing_sub(self.storage.registers[reg1]);
+        self.storage.registers[reg2] = value;
+        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.cycle += 1;
+    }
 
     fn jmp(&mut self, instr: i16) {
         let (_, reg1) = self.parse_format_i_opcode(instr);
@@ -230,6 +255,8 @@ mod tests {
     fn st_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110100, r2, r1, disp) }
     fn add_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010001, r2, imm) }
     fn addi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101001, r2, r1, imm) }
+    fn cmp_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000011, r2, r1) }
+    fn sub(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000010, r2, r1) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
 
     fn rom(instructions: &[Vec<u8>]) -> Storage {
@@ -373,6 +400,32 @@ mod tests {
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[31], 9);
         assert_eq!(storage.registers[PSW] & 0xF, 0b0000);
+    }
+
+    #[test]
+    fn does_subtraction() {
+        let mut storage = rom(&[
+            movea(31, 0, 4),
+            movea(30, 0, 5),
+            sub(31,30),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 3).unwrap();
+        assert_eq!(storage.registers[31], -1);
+        assert_eq!(storage.registers[PSW] & 0xF, 0b1010);
+    }
+
+    #[test]
+    fn does_cmp() {
+        let mut storage = rom(&[
+            movea(31, 0, 4),
+            movea(30, 0, 5),
+            cmp_r(31,30),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 3).unwrap();
+        assert_eq!(storage.registers[31], 4);
+        assert_eq!(storage.registers[PSW] & 0xF, 0b1010);
     }
 
     #[test]
