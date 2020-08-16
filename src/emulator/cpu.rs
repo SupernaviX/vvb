@@ -33,6 +33,10 @@ impl<'a> CPUProcess<'a> {
         while self.cycle < until_cycle {
             let instr = self.read_pc();
             let opcode = (instr >> 10) & 0x003F;
+            if (instr as u16) & 0xe000 == 0x8000 {
+                self.bcond(instr);
+                continue;
+            }
             match opcode {
                 0b010000 => self.mov_i(instr),
                 0b000000 => self.mov_r(instr),
@@ -176,6 +180,36 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 1;
     }
 
+    fn bcond(&mut self, instr: i16) {
+        let (negate, cond, disp) = self.parse_format_iii_opcode(instr);
+        let psw = self.storage.sys_registers[PSW];
+        let cy = (psw & 0x8) != 0;
+        let ov = (psw & 0x4) != 0;
+        let s = (psw & 0x2) != 0;
+        let z = (psw & 0x1) != 0;
+        let mut result = match cond {
+            0 => ov,
+            1 => cy,
+            2 => z,
+            3 => cy || z,
+            4 => s,
+            5 => true,
+            6 => ov || s,
+            7 => ((ov != s) || z),
+            _ => unreachable!("impossible"),
+        };
+        if negate {
+            result = !result;
+        }
+        if result {
+            // jump is relative to start of instruction
+            self.storage.pc = (self.storage.pc as i32 + disp - 2) as usize;
+            self.cycle += 3;
+        } else {
+            self.cycle += 1;
+        }
+    }
+
     fn jmp(&mut self, instr: i16) {
         let (_, reg1) = self.parse_format_i_opcode(instr);
         self.storage.pc = self.storage.registers[reg1] as usize;
@@ -192,6 +226,12 @@ impl<'a> CPUProcess<'a> {
         let imm = (instr & 0x001F).wrapping_shl(11).wrapping_shr(11) as i32;
         (reg2, imm)
     }
+    fn parse_format_iii_opcode(&self, instr: i16) -> (bool, u8, i32) {
+        let negate = (instr & 0x1000) != 0;
+        let cond = ((instr >> 9) & 0x07) as u8;
+        let disp = (instr & 0x01ff).wrapping_shl(7).wrapping_shr(7) as i32;
+        (negate, cond, disp)
+    }
     fn parse_format_v_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
         let reg2 = (instr & 0x03E0) as usize >> 5;
         let reg1 = (instr & 0x001F) as usize;
@@ -206,7 +246,7 @@ impl<'a> CPUProcess<'a> {
     }
 
     fn update_status_flags(&mut self, z: bool, s: bool, ov: bool, cy: bool) {
-        let mut psw = self.storage.registers[PSW];
+        let mut psw = self.storage.sys_registers[PSW];
         psw ^= psw & 0x0000000F;
         if z {
             psw += 1;
@@ -220,7 +260,7 @@ impl<'a> CPUProcess<'a> {
         if cy {
             psw += 8;
         }
-        self.storage.registers[PSW] = psw;
+        self.storage.sys_registers[PSW] = psw;
     }
 }
 
@@ -235,6 +275,12 @@ mod tests {
     }
     fn _op_2(opcode: u8, r2: u8, imm: i8) -> Vec<u8> {
         vec![(r2 << 5) | ((imm as u8) & 0x1f), (opcode << 2) | (r2 >> 3)]
+    }
+    fn _op_3(opcode: u8, cond: u8, disp: i16) -> Vec<u8> {
+        vec![
+            (disp & 0xff) as u8,
+            (opcode << 5) | (cond << 1) | if disp < 0 { 1 } else { 0 },
+        ]
     }
 
     fn _op_5(opcode: u8, r2: u8, r1: u8, imm: i16) -> Vec<u8> {
@@ -257,6 +303,7 @@ mod tests {
     fn addi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101001, r2, r1, imm) }
     fn cmp_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000011, r2, r1) }
     fn sub(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000010, r2, r1) }
+    fn bcond(cond: u8, disp: i16) -> Vec<u8> { _op_3(0b100, cond, disp) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
 
     fn rom(instructions: &[Vec<u8>]) -> Storage {
@@ -399,7 +446,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[31], 9);
-        assert_eq!(storage.registers[PSW] & 0xF, 0b0000);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b0000);
     }
 
     #[test]
@@ -412,7 +459,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 3).unwrap();
         assert_eq!(storage.registers[31], -1);
-        assert_eq!(storage.registers[PSW] & 0xF, 0b1010);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1010);
     }
 
     #[test]
@@ -425,7 +472,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 3).unwrap();
         assert_eq!(storage.registers[31], 4);
-        assert_eq!(storage.registers[PSW] & 0xF, 0b1010);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1010);
     }
 
     #[test]
@@ -443,6 +490,38 @@ mod tests {
         cpu.run(&mut storage, 4).unwrap();
         assert_eq!(storage.registers[29], i32::MAX);
         assert_eq!(storage.registers[31], i32::MIN);
-        assert_eq!(storage.registers[PSW] & 0xF, 0b1110);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1110);
+    }
+
+    #[test]
+    fn handles_bcond_true() {
+        let mut storage = rom(&[
+            movea(31, 0, 4),
+            movea(30, 0, 5),
+            cmp_r(31, 30),
+            bcond(3, 6),
+            movea(1, 0, 1),
+            movea(2, 0, 1),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 7).unwrap();
+        assert_eq!(storage.registers[1], 0);
+        assert_eq!(storage.registers[2], 1);
+    }
+
+    #[test]
+    fn handles_bcond_false() {
+        let mut storage = rom(&[
+            movea(31, 0, 4),
+            movea(30, 0, 5),
+            cmp_r(31, 30),
+            bcond(11, 6),
+            movea(1, 0, 1),
+            movea(2, 0, 1),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 5).unwrap();
+        assert_eq!(storage.registers[1], 1);
+        assert_eq!(storage.registers[2], 0);
     }
 }
