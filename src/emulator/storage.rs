@@ -35,15 +35,27 @@ impl Storage {
         Ok(())
     }
 
-    pub fn write_byte(&mut self, address: usize, value: u8) {
+    pub fn write_byte(&mut self, address: usize, value: i8) {
         if let Address::Mapped(resolved) = self.resolve_address(address) {
-            self.memory[resolved] = value;
+            self.memory[resolved] = value as u8;
         }
     }
 
-    pub fn read_byte(&self, address: usize) -> u8 {
+    pub fn write_halfword(&mut self, address: usize, value: i16) {
+        if let Address::Mapped(resolved) = self.resolve_address(address) {
+            self.memory[resolved..resolved + 2].copy_from_slice(&value.to_le_bytes());
+        }
+    }
+
+    pub fn write_word(&mut self, address: usize, value: i32) {
+        if let Address::Mapped(resolved) = self.resolve_address(address) {
+            self.memory[resolved..resolved + 4].copy_from_slice(&value.to_le_bytes());
+        }
+    }
+
+    pub fn read_byte(&self, address: usize) -> i8 {
         match self.resolve_address(address) {
-            Address::Mapped(resolved) => self.memory[resolved],
+            Address::Mapped(resolved) => self.memory[resolved] as i8,
             Address::Unmapped => 0,
         }
     }
@@ -104,6 +116,7 @@ impl Storage {
 }
 
 #[cfg(test)]
+#[allow(overflowing_literals)] // 0xFF is -1, this is not a logical error
 mod tests {
     use crate::emulator::storage::Storage;
 
@@ -113,33 +126,29 @@ mod tests {
     }
 
     #[test]
-    fn can_write_byte() {
-        let mut storage = Storage::new();
-        storage.write_byte(0x00000000, 0x42);
-    }
-
-    #[test]
-    fn can_read_byte() {
+    fn can_read_and_write_byte() {
         let mut storage = Storage::new();
         storage.write_byte(0x00000000, 0x42);
         assert_eq!(storage.read_byte(0x00000000), 0x42);
     }
 
     #[test]
-    fn can_read_halfword() {
+    fn can_read_and_write_halfword() {
         let mut storage = Storage::new();
-        storage.write_byte(0x00000000, 0x34);
-        storage.write_byte(0x00000001, 0x12);
+        storage.write_halfword(0x00000000, 0x1234);
+        assert_eq!(storage.read_byte(0x00000000), 0x34);
+        assert_eq!(storage.read_byte(0x00000001), 0x12);
         assert_eq!(storage.read_halfword(0x00000000), 0x1234);
     }
 
     #[test]
-    fn can_read_word() {
+    fn can_read_and_write_word() {
         let mut storage = Storage::new();
-        storage.write_byte(0x00000000, 0x78);
-        storage.write_byte(0x00000001, 0x56);
-        storage.write_byte(0x00000002, 0x34);
-        storage.write_byte(0x00000003, 0x12);
+        storage.write_word(0x00000000, 0x12345678);
+        assert_eq!(storage.read_byte(0x00000000), 0x78);
+        assert_eq!(storage.read_byte(0x00000001), 0x56);
+        assert_eq!(storage.read_byte(0x00000002), 0x34);
+        assert_eq!(storage.read_byte(0x00000003), 0x12);
         assert_eq!(storage.read_word(0x00000000), 0x12345678);
     }
 
