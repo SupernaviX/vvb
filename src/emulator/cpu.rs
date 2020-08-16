@@ -1,24 +1,44 @@
 use super::storage::Storage;
 use anyhow::Result;
 
-pub struct CPU<'a> {
+pub struct CPU {
+    cycle: u32,
+}
+impl CPU {
+    pub fn new() -> CPU {
+        CPU { cycle: 0 }
+    }
+    pub fn run(&mut self, storage: &mut Storage, until_cycle: u32) -> Result<()> {
+        let cycles = CPUProcess {
+            cycle: self.cycle,
+            storage,
+        }
+        .run(until_cycle)?;
+        self.cycle = cycles;
+        Ok(())
+    }
+    pub fn reset(&mut self) {
+        self.cycle = 0;
+    }
+}
+
+pub struct CPUProcess<'a> {
     cycle: u32,
     storage: &'a mut Storage,
 }
-impl<'a> CPU<'a> {
-    pub fn run(storage: &mut Storage, cycles: u32) -> Result<()> {
-        let mut cpu = CPU { cycle: 0, storage };
-        while cpu.cycle < cycles {
-            let instr = cpu.read_pc();
+impl<'a> CPUProcess<'a> {
+    pub fn run(&mut self, until_cycle: u32) -> Result<u32> {
+        while self.cycle < until_cycle {
+            let instr = self.read_pc();
             let opcode = (instr >> 10) & 0x003F;
             match opcode {
-                0b101111 => cpu.movhi(instr),
-                0b101000 => cpu.movea(instr),
-                0b000110 => cpu.jmp(instr),
+                0b101111 => self.movhi(instr),
+                0b101000 => self.movea(instr),
+                0b000110 => self.jmp(instr),
                 _ => return Err(anyhow::anyhow!("Unrecognized opcode {:06b}", opcode)),
             };
         }
-        Ok(())
+        Ok(self.cycle)
     }
 
     fn read_pc(&mut self) -> i16 {
@@ -110,8 +130,37 @@ mod tests {
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        CPU::run(&mut storage, 0).unwrap();
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 0).unwrap();
         assert_eq!(storage.pc, 0x07000000);
+    }
+
+    #[test]
+    fn runs_one_cycle_at_a_time() {
+        let mut storage = rom(&[
+            movhi(31, 0, 0x0700),
+            movea(31, 31, 0x0420),
+            jmp(31),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 1).unwrap();
+        assert_eq!(storage.registers[31], 0x07000000);
+        cpu.run(&mut storage, 2).unwrap();
+        assert_eq!(storage.registers[31], 0x07000420);
+    }
+
+    #[test]
+    fn does_nothing_when_ahead_of_current_cycle() {
+        let mut storage = rom(&[
+            movhi(31, 0, 0x0700),
+            movea(31, 31, 0x0420),
+            jmp(31),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 1).unwrap();
+        assert_eq!(storage.registers[31], 0x07000000);
+        cpu.run(&mut storage, 1).unwrap();
+        assert_eq!(storage.registers[31], 0x07000000);
     }
 
     #[test]
@@ -121,7 +170,8 @@ mod tests {
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        CPU::run(&mut storage, 5).unwrap();
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 5).unwrap();
         assert_eq!(storage.pc, 0x07000420);
     }
 }

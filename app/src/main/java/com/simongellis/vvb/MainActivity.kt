@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
     private lateinit var _emulator: Emulator
     private lateinit var _renderer: Renderer
 
-    val GAME_CHOSEN = 2
+    private val GAME_CHOSEN = 2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
     override fun onPause() {
         super.onPause()
         surface_view.onPause()
+        _emulator.pause()
     }
 
     override fun onResume() {
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
         surface_view.onResume()
         _renderer.ensureDeviceParams()
         _emulator.loadImage()
+        _emulator.resume()
     }
 
     override fun onDestroy() {
@@ -86,7 +88,6 @@ class MainActivity : AppCompatActivity(), PopupMenu.OnMenuItemClickListener {
         if (requestCode == GAME_CHOSEN && resultCode == Activity.RESULT_OK) {
             data?.data?.also { uri ->
                 _emulator.loadGamePak(uri)
-                _emulator.run()
             }
         }
     }

@@ -9,13 +9,17 @@ use anyhow::Result;
 use log::debug;
 
 pub struct Emulator {
+    cycle: u32,
     storage: Storage,
+    cpu: CPU,
     video: Video,
 }
 impl Emulator {
     fn new() -> Emulator {
         Emulator {
+            cycle: 0,
             storage: Storage::new(),
+            cpu: CPU::new(),
             video: Video::new(),
         }
     }
@@ -26,6 +30,13 @@ impl Emulator {
 
     pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
         self.storage.load_game_pak_rom(rom)?;
+        self.reset();
+        Ok(())
+    }
+
+    pub fn reset(&mut self) {
+        self.cycle = 0;
+        self.cpu.reset();
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
             self.storage.read_halfword(0xfffffff0),
@@ -37,15 +48,17 @@ impl Emulator {
             self.storage.read_halfword(0xfffffffc),
             self.storage.read_halfword(0xfffffffe),
         );
-        Ok(())
     }
 
-    pub fn run(&mut self) -> Result<()> {
+    pub fn tick(&mut self, nanoseconds: u32) -> Result<()> {
+        let cycles = nanoseconds / 50;
+        debug!("Running {} cycle(s)", cycles);
+        self.cycle += cycles;
         debug!(
             "Before: PC=0x{:08x} registers={:x?}",
             self.storage.pc, self.storage.registers
         );
-        CPU::run(&mut self.storage, 5)?;
+        self.cpu.run(&mut self.storage, self.cycle)?;
         debug!(
             "After:  PC=0x{:08x} registers={:x?}",
             self.storage.pc, self.storage.registers
@@ -68,7 +81,7 @@ pub mod jni {
     use crate::{java_func, jni_helpers};
     use anyhow::Result;
     use jni::objects::JByteBuffer;
-    use jni::sys::jobject;
+    use jni::sys::{jint, jobject};
     use jni::JNIEnv;
     use paste::paste;
 
@@ -96,10 +109,10 @@ pub mod jni {
         this.load_game_pak_rom(rom)
     }
 
-    java_func!(Emulator_nativeRun, run);
-    fn run(env: &JNIEnv, this: jobject) -> Result<()> {
+    java_func!(Emulator_nativeTick, tick, jint);
+    fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
-        this.run()
+        this.tick(nanoseconds as u32)
     }
 
     java_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);

@@ -3,11 +3,16 @@ package com.simongellis.vvb
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.SystemClock
 import java.nio.ByteBuffer
+import kotlin.concurrent.thread
 
 class Emulator(context: Context) {
     private var _pointer = 0L
     private var _context = context
+    private var _thread: Thread? = null
+    private var _running = false
+    private var _gameLoaded = false
 
     init {
         nativeConstructor()
@@ -25,11 +30,10 @@ class Emulator(context: Context) {
 
     fun loadGamePak(file: Uri) {
         val rom = loadFile(file)
+        pause()
         nativeLoadGamePakRom(rom)
-    }
-
-    fun run() {
-        nativeRun()
+        _gameLoaded = true
+        resume()
     }
 
     fun loadImage() {
@@ -37,6 +41,28 @@ class Emulator(context: Context) {
             loadResource(R.drawable.vbtitlescreen_left),
             loadResource(R.drawable.vbtitlescreen_right)
         )
+    }
+
+    fun resume() {
+        if (!_gameLoaded) {
+            return
+        }
+        _running = true
+        _thread = thread(name = "EmulatorThread") { run() }
+    }
+
+    fun pause() {
+        _running = false
+        _thread?.join()
+    }
+
+    private fun run() {
+        var then = SystemClock.elapsedRealtimeNanos()
+        while (_running) {
+            val now = SystemClock.elapsedRealtimeNanos()
+            nativeTick((now - then).toInt())
+            then = now
+        }
     }
 
     private fun loadFile(file: Uri): ByteBuffer {
@@ -61,6 +87,6 @@ class Emulator(context: Context) {
     private external fun nativeConstructor()
     private external fun nativeDestructor()
     private external fun nativeLoadGamePakRom(rom: ByteBuffer)
-    private external fun nativeRun()
+    private external fun nativeTick(nanoseconds: Int)
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
 }
