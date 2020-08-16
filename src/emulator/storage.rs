@@ -9,17 +9,25 @@ enum Address {
 pub struct Storage {
     pub pc: usize,
     pub registers: [i32; 32],
+    pub sys_registers: [i32; 32],
     memory: Vec<u8>,
     rom_mask: usize,
 }
 impl Storage {
     pub fn new() -> Storage {
-        Storage {
+        let mut storage = Storage {
             pc: 0xFFFFFFF0,
             registers: [0; 32],
+            sys_registers: [0; 32],
             memory: vec![0; 0x07FFFFFF],
             rom_mask: 0,
-        }
+        };
+        storage.sys_registers[4] = 0x0000fff0; // ECR
+        storage.sys_registers[5] = 0x00008000; // PSW
+        storage.sys_registers[6] = 0x00005346; // PIR
+        storage.sys_registers[7] = 0x000000E0; // TKCW
+        storage.sys_registers[30] = 0x00000004; // it is a mystery
+        storage
     }
 
     pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {

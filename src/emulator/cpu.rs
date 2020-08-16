@@ -22,6 +22,8 @@ impl CPU {
     }
 }
 
+const PSW: usize = 5;
+
 pub struct CPUProcess<'a> {
     cycle: u32,
     storage: &'a mut Storage,
@@ -36,12 +38,19 @@ impl<'a> CPUProcess<'a> {
                 0b000000 => self.mov_r(instr),
                 0b101111 => self.movhi(instr),
                 0b101000 => self.movea(instr),
+
                 0b110000 => self.ld_b(instr),
                 0b110001 => self.ld_h(instr),
                 0b110011 => self.ld_w(instr),
+
                 0b110100 => self.st_b(instr),
                 0b110101 => self.st_h(instr),
                 0b110111 => self.st_w(instr),
+
+                0b010001 => self.add_i(instr),
+                0b000001 => self.add_r(instr),
+                0b101001 => self.addi(instr),
+
                 0b000110 => self.jmp(instr),
                 _ => return Err(anyhow::anyhow!("Unrecognized opcode {:06b}", opcode)),
             };
@@ -57,64 +66,89 @@ impl<'a> CPUProcess<'a> {
 
     fn mov_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        self.storage.registers[reg2] = imm as i32;
+        self.storage.registers[reg2] = imm;
         self.cycle += 1;
     }
     fn mov_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_ii_opcode(instr);
-        self.storage.registers[reg2] = self.storage.registers[reg1 as usize];
+        self.storage.registers[reg2] = self.storage.registers[(reg1 & 0x1f) as usize];
         self.cycle += 1;
     }
     fn movhi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.storage.registers[reg2] = self.storage.registers[reg1] + ((imm as i32) << 16);
+        self.storage.registers[reg2] = self.storage.registers[reg1] + (imm << 16);
         self.cycle += 1;
     }
     fn movea(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.storage.registers[reg2] = self.storage.registers[reg1] + (imm as i32);
+        self.storage.registers[reg2] = self.storage.registers[reg1] + imm;
         self.cycle += 1;
     }
 
     fn ld_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let addr = self.storage.registers[reg1] + disp as i32;
-        self.storage.registers[reg2] = self.storage.read_byte(addr as usize) as i32;
+        let address = (self.storage.registers[reg1] + disp) as usize;
+        self.storage.registers[reg2] = self.storage.read_byte(address) as i32;
         self.cycle += 5;
     }
     fn ld_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let addr = self.storage.registers[reg1] + disp as i32;
-        self.storage.registers[reg2] = self.storage.read_halfword(addr as usize) as i32;
+        let address = (self.storage.registers[reg1] + disp) as usize;
+        self.storage.registers[reg2] = self.storage.read_halfword(address) as i32;
         self.cycle += 5;
     }
     fn ld_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let addr = self.storage.registers[reg1] + disp as i32;
-        self.storage.registers[reg2] = self.storage.read_word(addr as usize) as i32;
+        let address = (self.storage.registers[reg1] + disp) as usize;
+        self.storage.registers[reg2] = self.storage.read_word(address);
         self.cycle += 5;
     }
 
     fn st_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let addr = self.storage.registers[reg1] + disp as i32;
+        let address = (self.storage.registers[reg1] + disp) as usize;
         self.storage
-            .write_byte(addr as usize, self.storage.registers[reg2] as i8);
+            .write_byte(address, self.storage.registers[reg2] as i8);
         self.cycle += 4;
     }
     fn st_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let addr = self.storage.registers[reg1] + disp as i32;
+        let address = (self.storage.registers[reg1] + disp) as usize;
         self.storage
-            .write_halfword(addr as usize, self.storage.registers[reg2] as i16);
+            .write_halfword(address, self.storage.registers[reg2] as i16);
         self.cycle += 4;
     }
     fn st_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let addr = self.storage.registers[reg1] + disp as i32;
+        let address = (self.storage.registers[reg1] + disp) as usize;
         self.storage
-            .write_word(addr as usize, self.storage.registers[reg2]);
+            .write_word(address, self.storage.registers[reg2]);
         self.cycle += 4;
+    }
+
+    fn add_r(&mut self, instr: i16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let (value, ov) = old_value.overflowing_add(self.storage.registers[reg1]);
+        self.storage.registers[reg2] = value;
+        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.cycle += 1;
+    }
+    fn add_i(&mut self, instr: i16) {
+        let (reg2, imm) = self.parse_format_ii_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let (value, ov) = old_value.overflowing_add(imm);
+        self.storage.registers[reg2] = value;
+        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.cycle += 1;
+    }
+    fn addi(&mut self, instr: i16) {
+        let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let (value, ov) = self.storage.registers[reg1].overflowing_add(imm);
+        self.storage.registers[reg2] = value;
+        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.cycle += 1;
     }
 
     fn jmp(&mut self, instr: i16) {
@@ -124,43 +158,64 @@ impl<'a> CPUProcess<'a> {
     }
 
     fn parse_format_i_opcode(&self, instr: i16) -> (usize, usize) {
-        let reg2 = (instr & 0x03E0) >> 5;
-        let reg1 = instr & 0x001F;
-        (reg2 as usize, reg1 as usize)
+        let reg2 = (instr & 0x03E0) as usize >> 5;
+        let reg1 = (instr & 0x001F) as usize;
+        (reg2, reg1)
     }
-    fn parse_format_ii_opcode(&self, instr: i16) -> (usize, i16) {
-        let reg2 = (instr & 0x03E0) >> 5;
-        let imm = instr & 0x001F;
-        (reg2 as usize, imm)
+    fn parse_format_ii_opcode(&self, instr: i16) -> (usize, i32) {
+        let reg2 = (instr & 0x03E0) as usize >> 5;
+        let imm = (instr & 0x001F).wrapping_shl(11).wrapping_shr(11) as i32;
+        (reg2, imm)
     }
-    fn parse_format_v_opcode(&mut self, instr: i16) -> (usize, usize, i16) {
-        let reg2 = (instr & 0x03E0) >> 5;
-        let reg1 = instr & 0x001F;
-        let imm = self.read_pc();
-        (reg2 as usize, reg1 as usize, imm)
+    fn parse_format_v_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
+        let reg2 = (instr & 0x03E0) as usize >> 5;
+        let reg1 = (instr & 0x001F) as usize;
+        let imm = self.read_pc() as i32;
+        (reg2, reg1, imm)
     }
-    fn parse_format_vi_opcode(&mut self, instr: i16) -> (usize, usize, i16) {
-        let reg2 = (instr & 0x03E0) >> 5;
-        let reg1 = instr & 0x001F;
-        let disp = self.read_pc();
-        (reg2 as usize, reg1 as usize, disp)
+    fn parse_format_vi_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
+        let reg2 = (instr & 0x03E0) as usize >> 5;
+        let reg1 = (instr & 0x001F) as usize;
+        let disp = self.read_pc() as i32;
+        (reg2, reg1, disp)
+    }
+
+    fn update_status_flags(&mut self, z: bool, s: bool, ov: bool, cy: bool) {
+        let mut psw = self.storage.registers[PSW];
+        psw ^= psw & 0x0000000F;
+        if z {
+            psw += 1;
+        }
+        if s {
+            psw += 2;
+        }
+        if ov {
+            psw += 4;
+        }
+        if cy {
+            psw += 8;
+        }
+        self.storage.registers[PSW] = psw;
     }
 }
 
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::CPU;
+    use crate::emulator::cpu::{CPU, PSW};
     use crate::emulator::storage::Storage;
 
     fn _op_1(opcode: u8, r2: u8, r1: u8) -> Vec<u8> {
-        vec![(r2 << 5) + r1, (opcode << 2) + (r2 >> 3)]
+        vec![(r2 << 5) | r1, (opcode << 2) | (r2 >> 3)]
+    }
+    fn _op_2(opcode: u8, r2: u8, imm: i8) -> Vec<u8> {
+        vec![(r2 << 5) | ((imm as u8) & 0x1f), (opcode << 2) | (r2 >> 3)]
     }
 
     fn _op_5(opcode: u8, r2: u8, r1: u8, imm: i16) -> Vec<u8> {
         vec![
-            (r2 << 5) + r1,
-            (opcode << 2) + (r2 >> 3),
+            (r2 << 5) | r1,
+            (opcode << 2) | (r2 >> 3),
             imm as u8,
             (imm >> 8) as u8,
         ]
@@ -173,6 +228,8 @@ mod tests {
     fn movea(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101000, r2, r1, imm) }
     fn ld_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110000, r2, r1, disp) }
     fn st_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110100, r2, r1, disp) }
+    fn add_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010001, r2, imm) }
+    fn addi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101001, r2, r1, imm) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
 
     fn rom(instructions: &[Vec<u8>]) -> Storage {
@@ -304,5 +361,35 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 7).unwrap();
         assert_eq!(storage.read_byte(0x07000052), 1);
+    }
+
+    #[test]
+    fn does_addition() {
+        let mut storage = rom(&[
+            movea(29, 0, 4),
+            addi(31, 29, 5)
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 2).unwrap();
+        assert_eq!(storage.registers[31], 9);
+        assert_eq!(storage.registers[PSW] & 0xF, 0b0000);
+    }
+
+    #[test]
+    fn handles_overflow() {
+        let mut storage = rom(&[
+            // most straightforward way I can find to set a register to i32::MAX
+            movhi(29, 0, 0x0001),
+            add_i(29, -1),
+            movhi(29, 29, 0x7fff),
+
+            // i32::MAX + 1 == i32.min
+            addi(31, 29, 1),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 4).unwrap();
+        assert_eq!(storage.registers[29], i32::MAX);
+        assert_eq!(storage.registers[31], i32::MIN);
+        assert_eq!(storage.registers[PSW] & 0xF, 0b1110);
     }
 }
