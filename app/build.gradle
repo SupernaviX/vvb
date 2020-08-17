@@ -45,6 +45,7 @@ cargo {
     module = ".."
     libname = "vvb"
     targets = ['arm', 'arm64', 'x86', 'x86_64']
+    profile = "release"
     prebuiltToolchains = true
     exec { spec, target -> includeCardboardSdk (spec, target) }
 }

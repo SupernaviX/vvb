@@ -74,7 +74,8 @@ void main() {
 unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint> {
     let shader_id = gl::CreateShader(type_);
     let shader_str = c_string!(source)?;
-    let shader_source = [shader_str.as_ptr()].as_ptr();
+    let shader_arr = [shader_str.as_ptr()];
+    let shader_source = shader_arr.as_ptr();
     gl::ShaderSource(shader_id, 1, shader_source, 0 as *const _);
     check_error("load a shader's source")?;
     gl::CompileShader(shader_id);
