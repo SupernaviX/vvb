@@ -58,7 +58,9 @@ impl<'a> CPUProcess<'a> {
                 0b010011 => self.cmp_i(instr),
                 0b000010 => self.sub(instr),
 
+                0b101011 => self.jal(instr),
                 0b000110 => self.jmp(instr),
+                0b101010 => self.jr(instr),
                 _ => return Err(anyhow::anyhow!("Unrecognized opcode {:06b}", opcode)),
             };
         }
@@ -210,9 +212,20 @@ impl<'a> CPUProcess<'a> {
         }
     }
 
+    fn jal(&mut self, instr: i16) {
+        let disp = self.parse_format_iv_opcode(instr);
+        self.storage.registers[31] = self.storage.pc as i32;
+        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize;
+        self.cycle += 3;
+    }
     fn jmp(&mut self, instr: i16) {
         let (_, reg1) = self.parse_format_i_opcode(instr);
         self.storage.pc = self.storage.registers[reg1] as usize;
+        self.cycle += 3;
+    }
+    fn jr(&mut self, instr: i16) {
+        let disp = self.parse_format_iv_opcode(instr);
+        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize;
         self.cycle += 3;
     }
 
@@ -231,6 +244,11 @@ impl<'a> CPUProcess<'a> {
         let cond = ((instr >> 9) & 0x07) as u8;
         let disp = (instr & 0x01ff).wrapping_shl(7).wrapping_shr(7) as i32;
         (negate, cond, disp)
+    }
+    fn parse_format_iv_opcode(&mut self, instr: i16) -> i32 {
+        let mut disp: i32 = (instr as i32).wrapping_shl(24).wrapping_shr(8);
+        disp |= self.read_pc() as i32;
+        disp
     }
     fn parse_format_v_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
         let reg2 = (instr & 0x03E0) as usize >> 5;
@@ -282,7 +300,14 @@ mod tests {
             (opcode << 5) | (cond << 1) | if disp < 0 { 1 } else { 0 },
         ]
     }
-
+    fn _op_4(opcode: u8, disp: i32) -> Vec<u8> {
+        vec![
+            ((disp & 0x00ff0000) >> 16) as u8,
+            (opcode << 2) | ((disp & 0x03000000) > 24) as u8,
+            (disp & 0x000000ff) as u8,
+            ((disp & 0x0000ff00) >> 8) as u8,
+        ]
+    }
     fn _op_5(opcode: u8, r2: u8, r1: u8, imm: i16) -> Vec<u8> {
         vec![
             (r2 << 5) | r1,
@@ -304,7 +329,9 @@ mod tests {
     fn cmp_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000011, r2, r1) }
     fn sub(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000010, r2, r1) }
     fn bcond(cond: u8, disp: i16) -> Vec<u8> { _op_3(0b100, cond, disp) }
+    fn jal(disp: i32) -> Vec<u8> { _op_4(0b101011, disp) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
+    fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
 
     fn rom(instructions: &[Vec<u8>]) -> Storage {
         let mut storage = Storage::new();
@@ -523,5 +550,26 @@ mod tests {
         cpu.run(&mut storage, 5).unwrap();
         assert_eq!(storage.registers[1], 1);
         assert_eq!(storage.registers[2], 0);
+    }
+
+    #[test]
+    fn can_jump_relative() {
+        let mut storage = rom(&[
+            jr(0x123456),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 3).unwrap();
+        assert_eq!(storage.pc, 0x07123456);
+    }
+
+    #[test]
+    fn can_jump_and_link() {
+        let mut storage = rom(&[
+            jal(0x123456),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 3).unwrap();
+        assert_eq!(storage.registers[31], 0x07000004);
+        assert_eq!(storage.pc, 0x07123456);
     }
 }
