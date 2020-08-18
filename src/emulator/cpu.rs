@@ -76,7 +76,13 @@ impl<'a> CPUProcess<'a> {
                 0b101011 => self.jal(instr),
                 0b000110 => self.jmp(instr),
                 0b101010 => self.jr(instr),
-                _ => return Err(anyhow::anyhow!("Unrecognized opcode {:06b}", opcode)),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Unrecognized opcode {:06b} at address 0x{:08x}",
+                        opcode,
+                        self.storage.pc - 2
+                    ))
+                }
             };
         }
         Ok(self.cycle)

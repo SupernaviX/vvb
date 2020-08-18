@@ -1,9 +1,13 @@
+use crate::emulator::storage::Storage;
 use anyhow::Result;
 use std::sync::{mpsc, Arc, Mutex};
 
 pub const VB_WIDTH: usize = 384;
 pub const VB_HEIGHT: usize = 224;
 pub const FRAME_SIZE: usize = VB_WIDTH * VB_HEIGHT * 4;
+
+const DPSTTS: usize = 0x0005f820;
+const DPCTRL: usize = 0x0005f822;
 
 #[derive(Copy, Clone)]
 pub enum Eye {
@@ -32,6 +36,16 @@ impl Video {
                 Arc::new(Mutex::new([0; FRAME_SIZE])),
             ],
         }
+    }
+
+    pub fn init(&self, storage: &mut Storage) {
+        storage.write_halfword(DPSTTS, 0x0040);
+        storage.write_halfword(DPCTRL, 0x0040);
+    }
+
+    pub fn run(&mut self, storage: &mut Storage, _until_cycle: u32) -> Result<()> {
+        storage.write_halfword(DPSTTS, storage.read_halfword(DPCTRL));
+        Ok(())
     }
 
     pub fn get_frame_channel(&mut self) -> FrameChannel {

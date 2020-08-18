@@ -37,6 +37,7 @@ impl Emulator {
     pub fn reset(&mut self) {
         self.cycle = 0;
         self.cpu.reset();
+        self.video.init(&mut self.storage);
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
             self.storage.read_halfword(0xfffffff0),
@@ -59,6 +60,7 @@ impl Emulator {
             self.storage.pc, self.storage.registers
         );
         self.cpu.run(&mut self.storage, self.cycle)?;
+        self.video.run(&mut self.storage, self.cycle)?;
         debug!(
             "After:  PC=0x{:08x} registers={:x?}",
             self.storage.pc, self.storage.registers
