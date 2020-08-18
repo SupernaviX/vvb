@@ -76,6 +76,10 @@ impl<'a> CPUProcess<'a> {
                 0b101011 => self.jal(instr),
                 0b000110 => self.jmp(instr),
                 0b101010 => self.jr(instr),
+
+                0b011100 => self.ldsr(instr),
+                0b011101 => self.stsr(instr),
+
                 _ => {
                     return Err(anyhow::anyhow!(
                         "Unrecognized opcode {:06b} at address 0x{:08x}",
@@ -361,6 +365,26 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 3;
     }
 
+    fn ldsr(&mut self, instr: i16) {
+        let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
+        let reg_id = (reg_id & 0x1f) as usize;
+        let mut value = self.storage.registers[reg2];
+        if reg_id == 31 && value < 0 {
+            value = -value;
+        }
+        match reg_id {
+            4 | 6..=23 | 26..=28 | 30 => (),
+            id => self.storage.sys_registers[id] = value,
+        }
+        self.cycle += 8;
+    }
+    fn stsr(&mut self, instr: i16) {
+        let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
+        let reg_id = (reg_id & 0x1f) as usize;
+        self.storage.registers[reg2] = self.storage.sys_registers[reg_id];
+        self.cycle += 8;
+    }
+
     fn parse_format_i_opcode(&self, instr: i16) -> (usize, usize) {
         let reg2 = (instr & 0x03E0) as usize >> 5;
         let reg1 = (instr & 0x001F) as usize;
@@ -483,6 +507,8 @@ mod tests {
     fn jal(disp: i32) -> Vec<u8> { _op_4(0b101011, disp) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
+    fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id as i8) }
+    fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id as i8) }
 
     fn rom(instructions: &[Vec<u8>]) -> Storage {
         let mut storage = Storage::new();
@@ -783,5 +809,18 @@ mod tests {
         assert_eq!(storage.registers[29], -1);
         assert_eq!(storage.registers[28], 0x0f0f);
         assert_eq!(storage.registers[27], 0x0f0f);
+    }
+
+    #[test]
+    fn can_ldsr_and_stsr() {
+        let mut storage = rom(&[
+            movea(31, 0, 0x0040),
+            ldsr(31, 5),
+            stsr(30, 5),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 17).unwrap();
+        assert_eq!(storage.sys_registers[5], 0x00000040);
+        assert_eq!(storage.registers[30], 0x00000040);
     }
 }
