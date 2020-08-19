@@ -10,6 +10,7 @@ use log::debug;
 
 pub struct Emulator {
     cycle: u32,
+    tick_calls: u32,
     storage: Storage,
     cpu: CPU,
     video: Video,
@@ -18,6 +19,7 @@ impl Emulator {
     fn new() -> Emulator {
         Emulator {
             cycle: 0,
+            tick_calls: 0,
             storage: Storage::new(),
             cpu: CPU::new(),
             video: Video::new(),
@@ -36,6 +38,7 @@ impl Emulator {
 
     pub fn reset(&mut self) {
         self.cycle = 0;
+        self.tick_calls = 0;
         self.cpu.reset();
         self.video.init(&mut self.storage);
         log::debug!(
@@ -53,18 +56,18 @@ impl Emulator {
 
     pub fn tick(&mut self, nanoseconds: u32) -> Result<()> {
         let cycles = nanoseconds / 50;
-        debug!("Running {} cycle(s)", cycles);
+
+        // Log average tick size every 5 seconds
+        let old_sec = self.cycle / 100_000_000;
         self.cycle += cycles;
-        debug!(
-            "Before: PC=0x{:08x} registers={:x?}",
-            self.storage.pc, self.storage.registers
-        );
+        self.tick_calls += 1;
+        let new_sec = self.cycle / 100_000_000;
+        if old_sec != new_sec {
+            debug!("Cycles per tick: {}", self.cycle / self.tick_calls);
+        }
+
         self.cpu.run(&mut self.storage, self.cycle)?;
         self.video.run(&mut self.storage, self.cycle)?;
-        debug!(
-            "After:  PC=0x{:08x} registers={:x?}",
-            self.storage.pc, self.storage.registers
-        );
         Ok(())
     }
 
