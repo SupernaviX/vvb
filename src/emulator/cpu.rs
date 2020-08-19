@@ -46,10 +46,18 @@ impl<'a> CPUProcess<'a> {
                 0b110000 => self.ld_b(instr),
                 0b110001 => self.ld_h(instr),
                 0b110011 => self.ld_w(instr),
+                // IN.x matches LD.x
+                0b111000 => self.ld_b(instr),
+                0b111001 => self.ld_h(instr),
+                0b111011 => self.ld_w(instr),
 
                 0b110100 => self.st_b(instr),
                 0b110101 => self.st_h(instr),
                 0b110111 => self.st_w(instr),
+                // OUT.x match ST.x
+                0b111100 => self.st_b(instr),
+                0b111101 => self.st_h(instr),
+                0b111111 => self.st_w(instr),
 
                 0b010001 => self.add_i(instr),
                 0b000001 => self.add_r(instr),
@@ -83,6 +91,9 @@ impl<'a> CPUProcess<'a> {
 
                 0b011100 => self.ldsr(instr),
                 0b011101 => self.stsr(instr),
+
+                0b011110 => self.sei(),
+                0b010110 => self.cli(),
 
                 _ => {
                     // TODO this should trap
@@ -458,6 +469,18 @@ impl<'a> CPUProcess<'a> {
         let reg_id = (reg_id & 0x1f) as usize;
         self.storage.registers[reg2] = self.storage.sys_registers[reg_id];
         self.cycle += 8;
+    }
+
+    fn sei(&mut self) {
+        let psw = self.storage.sys_registers[PSW];
+        self.storage.sys_registers[PSW] = psw | 0x1000;
+        self.cycle += 12;
+    }
+
+    fn cli(&mut self) {
+        let psw = self.storage.sys_registers[PSW];
+        self.storage.sys_registers[PSW] = psw ^ 0x1000;
+        self.cycle += 12;
     }
 
     fn parse_format_i_opcode(&self, instr: i16) -> (usize, usize) {
