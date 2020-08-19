@@ -2,13 +2,13 @@ use super::storage::Storage;
 use anyhow::Result;
 
 pub struct CPU {
-    cycle: u32,
+    cycle: u64,
 }
 impl CPU {
     pub fn new() -> CPU {
         CPU { cycle: 0 }
     }
-    pub fn run(&mut self, storage: &mut Storage, until_cycle: u32) -> Result<()> {
+    pub fn run(&mut self, storage: &mut Storage, until_cycle: u64) -> Result<()> {
         let cycles = CPUProcess {
             cycle: self.cycle,
             storage,
@@ -25,11 +25,11 @@ impl CPU {
 const PSW: usize = 5;
 
 pub struct CPUProcess<'a> {
-    cycle: u32,
+    cycle: u64,
     storage: &'a mut Storage,
 }
 impl<'a> CPUProcess<'a> {
-    pub fn run(&mut self, until_cycle: u32) -> Result<u32> {
+    pub fn run(&mut self, until_cycle: u64) -> Result<u64> {
         while self.cycle < until_cycle {
             let instr = self.read_pc();
             let opcode = (instr >> 10) & 0x003F;

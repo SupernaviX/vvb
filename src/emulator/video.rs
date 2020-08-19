@@ -26,7 +26,7 @@ pub struct Frame {
 pub type FrameChannel = mpsc::Receiver<Frame>;
 
 pub struct Video {
-    cycle: u32,
+    cycle: u64,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
@@ -48,7 +48,7 @@ impl Video {
         storage.write_halfword(DPSTTS, 0x00c0);
     }
 
-    pub fn run(&mut self, storage: &mut Storage, until_cycle: u32) -> Result<()> {
+    pub fn run(&mut self, storage: &mut Storage, until_cycle: u64) -> Result<()> {
         let mut curr_ms = self.cycle / 20000;
         let next_ms = until_cycle / 20000;
         while curr_ms != next_ms {
@@ -117,7 +117,7 @@ mod tests {
     use crate::emulator::storage::Storage;
     use crate::emulator::video::{Video, DPSTTS, XPSTTS};
 
-    fn ms_to_cycles(ms: u32) -> u32 {
+    fn ms_to_cycles(ms: u64) -> u64 {
         ms * 20000
     }
 

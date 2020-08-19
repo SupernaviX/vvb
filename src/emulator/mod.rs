@@ -9,8 +9,8 @@ use anyhow::Result;
 use log::debug;
 
 pub struct Emulator {
-    cycle: u32,
-    tick_calls: u32,
+    cycle: u64,
+    tick_calls: u64,
     storage: Storage,
     cpu: CPU,
     video: Video,
@@ -54,7 +54,7 @@ impl Emulator {
         );
     }
 
-    pub fn tick(&mut self, nanoseconds: u32) -> Result<()> {
+    pub fn tick(&mut self, nanoseconds: u64) -> Result<()> {
         let cycles = nanoseconds / 50;
 
         // Log average tick size every 5 seconds
@@ -117,7 +117,7 @@ pub mod jni {
     java_func!(Emulator_nativeTick, tick, jint);
     fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
-        this.tick(nanoseconds as u32)
+        this.tick(nanoseconds as u64)
     }
 
     java_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);
