@@ -57,6 +57,10 @@ impl<'a> CPUProcess<'a> {
                 0b010011 => self.cmp_i(instr),
                 0b000011 => self.cmp_r(instr),
                 0b000010 => self.sub(instr),
+                0b001000 => self.mul(instr),
+                0b001010 => self.mulu(instr),
+                0b001001 => self.div(instr)?,
+                0b001011 => self.divu(instr)?,
 
                 0b001101 => self.and(instr),
                 0b101101 => self.andi(instr),
@@ -81,11 +85,12 @@ impl<'a> CPUProcess<'a> {
                 0b011101 => self.stsr(instr),
 
                 _ => {
+                    // TODO this should trap
                     return Err(anyhow::anyhow!(
                         "Unrecognized opcode {:06b} at address 0x{:08x}",
                         opcode,
                         self.storage.pc - 2
-                    ))
+                    ));
                 }
             };
         }
@@ -165,7 +170,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let (value, ov) = old_value.overflowing_add(self.storage.registers[reg1]);
         self.storage.registers[reg2] = value;
-        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.update_psw_flags_cy(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
         self.cycle += 1;
     }
     fn add_i(&mut self, instr: i16) {
@@ -173,7 +178,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let (value, ov) = old_value.overflowing_add(imm);
         self.storage.registers[reg2] = value;
-        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.update_psw_flags_cy(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
         self.cycle += 1;
     }
     fn addi(&mut self, instr: i16) {
@@ -181,21 +186,21 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let (value, ov) = self.storage.registers[reg1].overflowing_add(imm);
         self.storage.registers[reg2] = value;
-        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.update_psw_flags_cy(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
         self.cycle += 1;
     }
     fn cmp_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let old_value = self.storage.registers[reg2];
         let (value, ov) = old_value.overflowing_sub(self.storage.registers[reg1]);
-        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.update_psw_flags_cy(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
         self.cycle += 1;
     }
     fn cmp_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
         let old_value = self.storage.registers[reg2];
         let (value, ov) = old_value.overflowing_sub(imm);
-        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.update_psw_flags_cy(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
         self.cycle += 1;
     }
     fn sub(&mut self, instr: i16) {
@@ -203,57 +208,127 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let (value, ov) = old_value.overflowing_sub(self.storage.registers[reg1]);
         self.storage.registers[reg2] = value;
-        self.update_status_flags(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
+        self.update_psw_flags_cy(value == 0, value < 0, ov, (value < 0) != (old_value < 0));
         self.cycle += 1;
+    }
+    fn mul(&mut self, instr: i16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let product = self.storage.registers[reg2] as i64 * self.storage.registers[reg1] as i64;
+
+        let hiword = (product >> 32) as i32;
+        let loword = product as i32;
+        self.storage.registers[30] = hiword;
+        self.storage.registers[reg2] = loword;
+
+        let ov = product != loword as i64;
+        self.update_psw_flags(loword == 0, loword < 0, ov);
+        self.cycle += 13;
+    }
+    fn mulu(&mut self, instr: i16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let product = self.storage.registers[reg2] as u64 * self.storage.registers[reg1] as u64;
+
+        let loword = product as i32;
+        let hiword = (product >> 32) as i32;
+
+        self.storage.registers[reg2] = loword;
+        self.storage.registers[30] = hiword;
+        let ov = product != loword as u64;
+        self.update_psw_flags(loword == 0, loword < 0, ov);
+        self.cycle += 13;
+    }
+    fn div(&mut self, instr: i16) -> Result<()> {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let dividend = self.storage.registers[reg2];
+        let divisor = self.storage.registers[reg1];
+        if divisor == 0 {
+            // TODO this should trap
+            return Err(anyhow::anyhow!(
+                "Divide by zero at 0x{:08x}",
+                self.storage.pc - 2
+            ));
+        } else if dividend == i32::MIN && divisor == -1 {
+            self.storage.registers[reg2] = i32::MIN;
+            self.storage.registers[30] = 0;
+            self.update_psw_flags(false, true, true);
+        } else {
+            let quotient = dividend / divisor;
+            let remainder = dividend % divisor;
+            self.storage.registers[30] = remainder;
+            self.storage.registers[reg2] = quotient;
+            self.update_psw_flags(quotient == 0, quotient < 0, false);
+        }
+        self.cycle += 38;
+        Ok(())
+    }
+    fn divu(&mut self, instr: i16) -> Result<()> {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let dividend = self.storage.registers[reg2] as u32;
+        let divisor = self.storage.registers[reg1] as u32;
+        if divisor == 0 {
+            // TODO this should trap
+            return Err(anyhow::anyhow!(
+                "Divide by zero at 0x{:08x}",
+                self.storage.pc - 2
+            ));
+        } else {
+            let quotient = (dividend / divisor as u32) as i32;
+            let remainder = (dividend % divisor) as i32;
+            self.storage.registers[30] = remainder;
+            self.storage.registers[reg2] = quotient;
+            self.update_psw_flags(quotient == 0, quotient < 0, false);
+        }
+        self.cycle += 36;
+        Ok(())
     }
 
     fn and(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.storage.registers[reg2] & self.storage.registers[reg1];
         self.storage.registers[reg2] = value;
-        self.update_logic_status_flags(value == 0, value < 0);
+        self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn andi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.storage.registers[reg1] & (imm & 0x00ff);
         self.storage.registers[reg2] = value;
-        self.update_logic_status_flags(value == 0, value < 0);
+        self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn not(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = !self.storage.registers[reg1];
         self.storage.registers[reg2] = value;
-        self.update_logic_status_flags(value == 0, value < 0);
+        self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn or(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.storage.registers[reg2] | self.storage.registers[reg1];
         self.storage.registers[reg2] = value;
-        self.update_logic_status_flags(value == 0, value < 0);
+        self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn ori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.storage.registers[reg1] | (imm & 0x00ff);
         self.storage.registers[reg2] = value;
-        self.update_logic_status_flags(value == 0, false);
+        self.update_psw_flags(value == 0, false, false);
         self.cycle += 1;
     }
     fn xor(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.storage.registers[reg2] ^ self.storage.registers[reg1];
         self.storage.registers[reg2] = value;
-        self.update_logic_status_flags(value == 0, value < 0);
+        self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn xori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.storage.registers[reg1] ^ (imm & 0x00ff);
         self.storage.registers[reg2] = value;
-        self.update_logic_status_flags(value == 0, value < 0);
+        self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
 
@@ -264,7 +339,7 @@ impl<'a> CPUProcess<'a> {
         let value = old_value >> shift;
         self.storage.registers[reg2] = value;
         let cv = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
-        self.update_status_flags(value == 0, value < 0, false, cv);
+        self.update_psw_flags_cy(value == 0, value < 0, false, cv);
         self.cycle += 1;
     }
     fn sar_r(&mut self, instr: i16) {
@@ -274,7 +349,7 @@ impl<'a> CPUProcess<'a> {
         let value = old_value >> shift;
         self.storage.registers[reg2] = value;
         let cv = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
-        self.update_status_flags(value == 0, value < 0, false, cv);
+        self.update_psw_flags_cy(value == 0, value < 0, false, cv);
         self.cycle += 1;
     }
     fn shl_i(&mut self, instr: i16) {
@@ -284,7 +359,7 @@ impl<'a> CPUProcess<'a> {
         let value = old_value << shift;
         self.storage.registers[reg2] = value;
         let cv = shift != 0 && (old_value & (i32::MIN >> (shift - 1)) != 0);
-        self.update_status_flags(value == 0, value < 0, false, cv);
+        self.update_psw_flags_cy(value == 0, value < 0, false, cv);
         self.cycle += 1;
     }
     fn shl_r(&mut self, instr: i16) {
@@ -294,7 +369,7 @@ impl<'a> CPUProcess<'a> {
         let value = old_value << shift;
         self.storage.registers[reg2] = value;
         let cv = shift != 0 && (old_value & (i32::MIN >> (shift - 1)) != 0);
-        self.update_status_flags(value == 0, value < 0, false, cv);
+        self.update_psw_flags_cy(value == 0, value < 0, false, cv);
         self.cycle += 1;
     }
     fn shr_i(&mut self, instr: i16) {
@@ -304,7 +379,7 @@ impl<'a> CPUProcess<'a> {
         let value = ((old_value as u32) >> shift as u32) as i32;
         self.storage.registers[reg2] = value;
         let cv = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
-        self.update_status_flags(value == 0, value < 0, false, cv);
+        self.update_psw_flags_cy(value == 0, value < 0, false, cv);
         self.cycle += 1;
     }
     fn shr_r(&mut self, instr: i16) {
@@ -314,7 +389,7 @@ impl<'a> CPUProcess<'a> {
         let value = ((old_value as u32) >> shift as u32) as i32;
         self.storage.registers[reg2] = value;
         let cv = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
-        self.update_status_flags(value == 0, value < 0, false, cv);
+        self.update_psw_flags_cy(value == 0, value < 0, false, cv);
         self.cycle += 1;
     }
 
@@ -419,7 +494,7 @@ impl<'a> CPUProcess<'a> {
         (reg2, reg1, disp)
     }
 
-    fn update_logic_status_flags(&mut self, z: bool, s: bool) {
+    fn update_psw_flags(&mut self, z: bool, s: bool, ov: bool) {
         let mut psw = self.storage.sys_registers[PSW];
         psw ^= psw & 0x00000007;
         if z {
@@ -428,9 +503,12 @@ impl<'a> CPUProcess<'a> {
         if s {
             psw |= 2;
         }
+        if ov {
+            psw |= 4;
+        }
         self.storage.sys_registers[PSW] = psw;
     }
-    fn update_status_flags(&mut self, z: bool, s: bool, ov: bool, cy: bool) {
+    fn update_psw_flags_cy(&mut self, z: bool, s: bool, ov: bool, cy: bool) {
         let mut psw = self.storage.sys_registers[PSW];
         psw ^= psw & 0x0000000f;
         if z {
@@ -496,6 +574,10 @@ mod tests {
     fn addi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101001, r2, r1, imm) }
     fn cmp_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000011, r2, r1) }
     fn sub(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000010, r2, r1) }
+    fn mul(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001000, r2, r1) }
+    fn mulu(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001010, r2, r1) }
+    fn div(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001001, r2, r1) }
+    fn divu(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001011, r2, r1) }
     fn and(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001101, r2, r1) }
     fn or(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001100, r2, r1) }
     fn xor(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001110, r2, r1) }
@@ -695,6 +777,44 @@ mod tests {
         assert_eq!(storage.registers[29], i32::MAX);
         assert_eq!(storage.registers[31], i32::MIN);
         assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1110);
+    }
+
+    #[test]
+    fn handles_multiplication() {
+        let mut storage = rom(&[
+            movea(10, 0, 3),
+            movea(11, 0, 6),
+            movea(12, 0, -4),
+            mulu(11, 10),
+            mul(12, 11),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 16).unwrap();
+        assert_eq!(storage.registers[11], 18);
+        assert_eq!(storage.registers[30], 0);
+
+        cpu.run(&mut storage, 29).unwrap();
+        assert_eq!(storage.registers[12], -72);
+        assert_eq!(storage.registers[30], -1);
+    }
+
+    #[test]
+    fn handles_division() {
+        let mut storage = rom(&[
+            movea(10, 0, -72),
+            movea(11, 0, -4),
+            movea(12, 0, 4),
+            div(10, 11),
+            divu(10, 12),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 39).unwrap();
+        assert_eq!(storage.registers[10], 18);
+        assert_eq!(storage.registers[30], 0);
+
+        cpu.run(&mut storage, 77).unwrap();
+        assert_eq!(storage.registers[10], 4);
+        assert_eq!(storage.registers[30], 2);
     }
 
     #[test]
