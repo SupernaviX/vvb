@@ -3,7 +3,7 @@ use super::gl::types::{GLboolean, GLchar, GLenum, GLfloat, GLint, GLshort, GLsiz
 use super::gl::utils::{check_error, temp_array, AsVoidptr};
 use crate::emulator::video::{Eye, Frame};
 use anyhow::Result;
-use cgmath::{self, vec4, Matrix4, SquareMatrix};
+use cgmath::{self, vec3, vec4, Matrix4, SquareMatrix};
 use log::{debug, error};
 use std::ffi::{CStr, CString};
 
@@ -12,8 +12,6 @@ const GL_FALSE: GLboolean = 0;
 
 const VB_WIDTH: i32 = 384;
 const VB_HEIGHT: i32 = 224;
-const TEXTURE_WIDTH: GLfloat = (VB_WIDTH * 2) as GLfloat;
-const TEXTURE_HEIGHT: GLfloat = VB_HEIGHT as GLfloat;
 
 #[rustfmt::skip]
 const POS_VERTICES: [GLfloat; 8] = [
@@ -111,19 +109,16 @@ unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<()> {
     ))
 }
 
-unsafe fn create_gl_texture() -> Result<GLuint> {
+unsafe fn init_gl_texture(texture_id: GLuint) -> Result<()> {
     gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
-    let texture_id = temp_array(|ptr| {
-        gl::GenTextures(1, ptr);
-    });
     check_error("generate a texture")?;
     gl::BindTexture(gl::TEXTURE_2D, texture_id);
     gl::TexImage2D(
         gl::TEXTURE_2D,
         0,
         gl::RGBA as GLint,
-        TEXTURE_WIDTH as GLsizei,
-        TEXTURE_HEIGHT as GLsizei,
+        VB_WIDTH as GLsizei,
+        VB_HEIGHT as GLsizei,
         0,
         gl::RGBA,
         gl::UNSIGNED_BYTE,
@@ -143,7 +138,7 @@ unsafe fn create_gl_texture() -> Result<GLuint> {
         gl::TEXTURE_WRAP_T,
         gl::CLAMP_TO_EDGE as GLint,
     );
-    Ok(texture_id)
+    Ok(())
 }
 
 pub struct VBScreenRenderer {
@@ -152,8 +147,10 @@ pub struct VBScreenRenderer {
     tex_coord_location: GLuint,
     modelview_location: GLint,
     texture_location: GLint,
-    texture_id: GLuint,
-    modelview: Vec<GLfloat>,
+    left_texture_id: GLuint,
+    right_texture_id: GLuint,
+    left_mv: Vec<GLfloat>,
+    right_mv: Vec<GLfloat>,
 }
 impl VBScreenRenderer {
     pub fn new() -> Result<VBScreenRenderer> {
@@ -183,7 +180,13 @@ impl VBScreenRenderer {
             let texture_location =
                 gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
 
-            let texture_id = create_gl_texture()?;
+            let (left_texture_id, right_texture_id) = {
+                let mut textures = [0 as GLuint; 2];
+                gl::GenTextures(2, textures.as_mut_ptr());
+                (textures[0], textures[1])
+            };
+            init_gl_texture(left_texture_id)?;
+            init_gl_texture(right_texture_id)?;
 
             VBScreenRenderer {
                 program_id,
@@ -191,8 +194,10 @@ impl VBScreenRenderer {
                 tex_coord_location,
                 modelview_location,
                 texture_location,
-                texture_id,
-                modelview: as_vec(Matrix4::identity()),
+                left_texture_id,
+                right_texture_id,
+                left_mv: as_vec(Matrix4::identity()),
+                right_mv: as_vec(Matrix4::identity()),
             }
         };
         Ok(state)
@@ -204,18 +209,21 @@ impl VBScreenRenderer {
         }
         let hsw = screen_width as GLfloat / 2.0;
         let hsh = screen_height as GLfloat / 2.0;
-        let htw = TEXTURE_WIDTH / 2.0;
-        let hth = TEXTURE_HEIGHT / 2.0;
+        let htw = VB_WIDTH as GLfloat; // half the texture width is the width of one full eye
+        let hth = VB_HEIGHT as GLfloat / 2.0;
 
         let projection = cgmath::ortho(-hsw, hsw, -hsh, hsh, -100.0, 100.0);
 
-        // The texture should take up as much of the screen as possible
+        // Scale required to fill the entire screen
         let scale_to_fit = (hsw / htw).min(hsh / hth);
+
+        // Proportion of this scale to use
+        let scale = 0.65;
 
         let vm = projection
             * Matrix4::from_nonuniform_scale(
-                TEXTURE_WIDTH * scale_to_fit,
-                TEXTURE_HEIGHT * scale_to_fit,
+                VB_WIDTH as GLfloat * scale_to_fit,
+                VB_HEIGHT as GLfloat * scale_to_fit,
                 0.0,
             );
 
@@ -225,21 +233,26 @@ impl VBScreenRenderer {
             "Screen stretches from from {:?} to {:?}",
             bottom_left, top_right
         );
-        self.modelview = as_vec(vm);
+        self.left_mv = as_vec(
+            vm * Matrix4::from_translation(vec3(-0.5, 0.0, 0.0)) * Matrix4::from_scale(scale),
+        );
+        self.right_mv = as_vec(
+            vm * Matrix4::from_translation(vec3(0.5, 0.0, 0.0)) * Matrix4::from_scale(scale),
+        );
     }
 
     pub fn update(&self, frame: Frame) -> Result<()> {
-        let x = match frame.eye {
-            Eye::Left => 0,
-            Eye::Right => VB_WIDTH,
+        let texture_id = match frame.eye {
+            Eye::Left => self.left_texture_id,
+            Eye::Right => self.right_texture_id,
         };
         let data = frame.buffer.lock().expect("Buffer lock was poisoned!");
         unsafe {
-            gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
+            gl::BindTexture(gl::TEXTURE_2D, texture_id);
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
                 0,
-                x,
+                0,
                 0,
                 VB_WIDTH,
                 VB_HEIGHT,
@@ -260,52 +273,54 @@ impl VBScreenRenderer {
             gl::UseProgram(self.program_id);
             check_error("use the program")?;
 
-            let pos_pointer = POS_VERTICES.as_voidptr();
-            gl::VertexAttribPointer(
-                self.position_location,
-                VERTEX_SIZE,
-                gl::FLOAT,
-                gl::FALSE,
-                VERTEX_STRIDE,
-                pos_pointer,
-            );
-            check_error("pass position data to the shader")?;
-
-            let tex_pointer = TEX_VERTICES.as_voidptr();
-            gl::VertexAttribPointer(
-                self.tex_coord_location,
-                VERTEX_SIZE,
-                gl::FLOAT,
-                gl::FALSE,
-                VERTEX_STRIDE,
-                tex_pointer,
-            );
-            check_error("pass texture data to the shader")?;
-
-            gl::EnableVertexAttribArray(self.position_location);
-            gl::EnableVertexAttribArray(self.tex_coord_location);
-
-            gl::UniformMatrix4fv(
-                self.modelview_location,
-                1,
-                GL_FALSE,
-                self.modelview.as_ptr(),
-            );
-
-            gl::ActiveTexture(gl::TEXTURE0);
-            gl::BindTexture(gl::TEXTURE_2D, self.texture_id);
-
-            gl::Uniform1i(self.texture_location, 0);
-
-            gl::DrawElements(
-                gl::TRIANGLES,
-                6,
-                gl::UNSIGNED_SHORT,
-                SQUARE_INDICES.as_voidptr(),
-            );
-            check_error("draw the actual shape")?;
+            self.render_eye(Eye::Left)?;
+            self.render_eye(Eye::Right)?;
             Ok(())
         }
+    }
+
+    unsafe fn render_eye(&self, eye: Eye) -> Result<()> {
+        let (texture_id, mv) = match eye {
+            Eye::Left => (self.left_texture_id, &self.left_mv),
+            Eye::Right => (self.right_texture_id, &self.right_mv),
+        };
+        let pos_pointer = POS_VERTICES.as_voidptr();
+        gl::VertexAttribPointer(
+            self.position_location,
+            VERTEX_SIZE,
+            gl::FLOAT,
+            gl::FALSE,
+            VERTEX_STRIDE,
+            pos_pointer,
+        );
+        check_error("pass position data to the shader")?;
+
+        let tex_pointer = TEX_VERTICES.as_voidptr();
+        gl::VertexAttribPointer(
+            self.tex_coord_location,
+            VERTEX_SIZE,
+            gl::FLOAT,
+            gl::FALSE,
+            VERTEX_STRIDE,
+            tex_pointer,
+        );
+        check_error("pass texture data to the shader")?;
+
+        gl::EnableVertexAttribArray(self.position_location);
+        gl::EnableVertexAttribArray(self.tex_coord_location);
+
+        gl::UniformMatrix4fv(self.modelview_location, 1, GL_FALSE, mv.as_ptr());
+        gl::ActiveTexture(gl::TEXTURE0);
+        gl::BindTexture(gl::TEXTURE_2D, texture_id);
+        gl::Uniform1i(self.texture_location, 0);
+        gl::DrawElements(
+            gl::TRIANGLES,
+            6,
+            gl::UNSIGNED_SHORT,
+            SQUARE_INDICES.as_voidptr(),
+        );
+        check_error("draw an eye")?;
+        Ok(())
     }
 }
 impl Drop for VBScreenRenderer {
@@ -314,8 +329,8 @@ impl Drop for VBScreenRenderer {
             if gl::IsProgram(self.program_id) == GL_TRUE {
                 gl::DeleteProgram(self.program_id);
             }
-
-            gl::DeleteTextures(1, &self.texture_id);
+            let textures = [self.left_texture_id, self.right_texture_id];
+            gl::DeleteTextures(2, textures.as_ptr());
 
             // Can't return a result from a Drop,
             // so just log if anything goes awry
