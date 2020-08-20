@@ -22,11 +22,7 @@ impl Storage {
             memory: vec![0; 0x07FFFFFF],
             rom_mask: 0,
         };
-        storage.sys_registers[4] = 0x0000fff0; // ECR
-        storage.sys_registers[5] = 0x00008000; // PSW
-        storage.sys_registers[6] = 0x00005346; // PIR
-        storage.sys_registers[7] = 0x000000E0; // TKCW
-        storage.sys_registers[30] = 0x00000004; // it is a mystery
+        storage.init();
         storage
     }
 
@@ -40,6 +36,7 @@ impl Storage {
         }
         self.rom_mask = 0x07000000 + rom_size - 1;
         self.memory[0x07000000..0x07000000 + rom_size].copy_from_slice(rom);
+        self.init();
         Ok(())
     }
 
@@ -84,6 +81,23 @@ impl Storage {
         };
         let bytes: &[u8; 4] = self.memory[address..address + 4].try_into().unwrap();
         i32::from_le_bytes(*bytes)
+    }
+
+    fn init(&mut self) {
+        self.pc = 0xfffffff0;
+        for reg in self.registers.iter_mut() {
+            *reg = 0;
+        }
+        for sys_reg in 0..self.sys_registers.len() {
+            self.sys_registers[sys_reg] = match sys_reg {
+                4 => 0x0000fff0,  // ETC
+                5 => 0x00008000,  // PSW
+                6 => 0x00005346,  // PIR
+                7 => 0x000000E0,  // TKCW
+                30 => 0x00000004, // it is a mystery
+                _ => 0,
+            };
+        }
     }
 
     fn resolve_address(&self, address: usize) -> Address {
