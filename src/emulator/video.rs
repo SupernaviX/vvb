@@ -4,7 +4,7 @@ use std::sync::{mpsc, Arc, Mutex};
 
 pub const VB_WIDTH: usize = 384;
 pub const VB_HEIGHT: usize = 224;
-pub const FRAME_SIZE: usize = VB_WIDTH * VB_HEIGHT * 4;
+pub const FRAME_SIZE: usize = VB_WIDTH * VB_HEIGHT;
 
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
@@ -85,7 +85,8 @@ impl Video {
         let mut buffer = self.buffers[eye as usize]
             .lock()
             .expect("Buffer lock was poisoned!");
-        for (place, data) in buffer.iter_mut().zip(image.iter()) {
+        // Input data is RGBA, only copy the R
+        for (place, data) in buffer.iter_mut().zip(image.iter().step_by(4)) {
             *place = *data;
         }
     }

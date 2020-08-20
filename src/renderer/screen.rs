@@ -12,6 +12,7 @@ const GL_FALSE: GLboolean = 0;
 
 const VB_WIDTH: i32 = 384;
 const VB_HEIGHT: i32 = 224;
+const EYE_BUFFER_SIZE: usize = (VB_WIDTH * VB_HEIGHT) as usize * 3;
 
 #[rustfmt::skip]
 const POS_VERTICES: [GLfloat; 8] = [
@@ -116,11 +117,11 @@ unsafe fn init_gl_texture(texture_id: GLuint) -> Result<()> {
     gl::TexImage2D(
         gl::TEXTURE_2D,
         0,
-        gl::RGBA as GLint,
+        gl::RGB as GLint,
         VB_WIDTH as GLsizei,
         VB_HEIGHT as GLsizei,
         0,
-        gl::RGBA,
+        gl::RGB,
         gl::UNSIGNED_BYTE,
         0 as *const _,
     );
@@ -147,10 +148,9 @@ pub struct VBScreenRenderer {
     tex_coord_location: GLuint,
     modelview_location: GLint,
     texture_location: GLint,
-    left_texture_id: GLuint,
-    right_texture_id: GLuint,
-    left_mv: Vec<GLfloat>,
-    right_mv: Vec<GLfloat>,
+    texture_ids: [GLuint; 2],
+    mvs: [Vec<GLfloat>; 2],
+    buffers: [Vec<u8>; 2],
 }
 impl VBScreenRenderer {
     pub fn new() -> Result<VBScreenRenderer> {
@@ -180,13 +180,10 @@ impl VBScreenRenderer {
             let texture_location =
                 gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
 
-            let (left_texture_id, right_texture_id) = {
-                let mut textures = [0 as GLuint; 2];
-                gl::GenTextures(2, textures.as_mut_ptr());
-                (textures[0], textures[1])
-            };
-            init_gl_texture(left_texture_id)?;
-            init_gl_texture(right_texture_id)?;
+            let mut texture_ids = [0 as GLuint; 2];
+            gl::GenTextures(2, texture_ids.as_mut_ptr());
+            init_gl_texture(texture_ids[0])?;
+            init_gl_texture(texture_ids[1])?;
 
             VBScreenRenderer {
                 program_id,
@@ -194,10 +191,9 @@ impl VBScreenRenderer {
                 tex_coord_location,
                 modelview_location,
                 texture_location,
-                left_texture_id,
-                right_texture_id,
-                left_mv: as_vec(Matrix4::identity()),
-                right_mv: as_vec(Matrix4::identity()),
+                texture_ids,
+                mvs: [as_vec(Matrix4::identity()), as_vec(Matrix4::identity())],
+                buffers: [vec![0; EYE_BUFFER_SIZE], vec![0; EYE_BUFFER_SIZE]],
             }
         };
         Ok(state)
@@ -233,20 +229,27 @@ impl VBScreenRenderer {
             "Screen stretches from from {:?} to {:?}",
             bottom_left, top_right
         );
-        self.left_mv = as_vec(
+        self.mvs[0] = as_vec(
             vm * Matrix4::from_translation(vec3(-0.5, 0.0, 0.0)) * Matrix4::from_scale(scale),
         );
-        self.right_mv = as_vec(
+        self.mvs[1] = as_vec(
             vm * Matrix4::from_translation(vec3(0.5, 0.0, 0.0)) * Matrix4::from_scale(scale),
         );
     }
 
-    pub fn update(&self, frame: Frame) -> Result<()> {
-        let texture_id = match frame.eye {
-            Eye::Left => self.left_texture_id,
-            Eye::Right => self.right_texture_id,
-        };
-        let data = frame.buffer.lock().expect("Buffer lock was poisoned!");
+    pub fn update(&mut self, frame: Frame) -> Result<()> {
+        let eye = frame.eye as usize;
+        let texture_id = self.texture_ids[eye];
+
+        let buffer = &mut self.buffers[eye];
+        let vb_data = frame.buffer.lock().expect("Buffer lock was poisoned!");
+        for i in 0..vb_data.len() {
+            // vb_data is R, we need RGB
+            // Someday this can support other colors
+            buffer[i * 3] = vb_data[i];
+        }
+        drop(vb_data); // free the lock ASAP
+
         unsafe {
             gl::BindTexture(gl::TEXTURE_2D, texture_id);
             gl::TexSubImage2D(
@@ -256,9 +259,9 @@ impl VBScreenRenderer {
                 0,
                 VB_WIDTH,
                 VB_HEIGHT,
-                gl::RGBA,
+                gl::RGB,
                 gl::UNSIGNED_BYTE,
-                data.as_voidptr(),
+                buffer.as_voidptr(),
             );
         }
         check_error("Update part of the screen")?;
@@ -280,10 +283,8 @@ impl VBScreenRenderer {
     }
 
     unsafe fn render_eye(&self, eye: Eye) -> Result<()> {
-        let (texture_id, mv) = match eye {
-            Eye::Left => (self.left_texture_id, &self.left_mv),
-            Eye::Right => (self.right_texture_id, &self.right_mv),
-        };
+        let texture_id = self.texture_ids[eye as usize];
+        let mv = &self.mvs[eye as usize];
         let pos_pointer = POS_VERTICES.as_voidptr();
         gl::VertexAttribPointer(
             self.position_location,
@@ -329,8 +330,7 @@ impl Drop for VBScreenRenderer {
             if gl::IsProgram(self.program_id) == GL_TRUE {
                 gl::DeleteProgram(self.program_id);
             }
-            let textures = [self.left_texture_id, self.right_texture_id];
-            gl::DeleteTextures(2, textures.as_ptr());
+            gl::DeleteTextures(2, self.texture_ids.as_ptr());
 
             // Can't return a result from a Drop,
             // so just log if anything goes awry

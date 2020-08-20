@@ -82,9 +82,9 @@ impl Renderer {
         Ok(())
     }
 
-    fn update_screen(&self) -> Result<()> {
+    fn update_screen(&mut self) -> Result<()> {
         match self.frame_channel.try_recv() {
-            Ok(frame) => self.vb_screen.as_ref().unwrap().update(frame),
+            Ok(frame) => self.vb_screen.as_mut().unwrap().update(frame),
             Err(TryRecvError::Empty) => Ok(()),
             Err(TryRecvError::Disconnected) => Err(anyhow::anyhow!("Emulator has shut down")),
         }
