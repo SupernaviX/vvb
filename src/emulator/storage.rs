@@ -40,6 +40,26 @@ impl Storage {
         Ok(())
     }
 
+    fn init(&mut self) {
+        self.pc = 0xfffffff0;
+        for reg in self.registers.iter_mut() {
+            *reg = 0;
+        }
+        for sys_reg in 0..self.sys_registers.len() {
+            self.sys_registers[sys_reg] = match sys_reg {
+                4 => 0x0000fff0,  // ETC
+                5 => 0x00008000,  // PSW
+                6 => 0x00005346,  // PIR
+                7 => 0x000000E0,  // TKCW
+                30 => 0x00000004, // it is a mystery
+                _ => 0,
+            };
+        }
+        // hold lr
+        self.write_byte(0x02000010, 0x02);
+        self.write_byte(0x02000014, 0x01);
+    }
+
     pub fn write_byte(&mut self, address: usize, value: i8) {
         if let Address::Mapped(resolved) = self.resolve_address(address) {
             self.memory[resolved] = value as u8;
@@ -83,29 +103,12 @@ impl Storage {
         i32::from_le_bytes(*bytes)
     }
 
-    fn init(&mut self) {
-        self.pc = 0xfffffff0;
-        for reg in self.registers.iter_mut() {
-            *reg = 0;
-        }
-        for sys_reg in 0..self.sys_registers.len() {
-            self.sys_registers[sys_reg] = match sys_reg {
-                4 => 0x0000fff0,  // ETC
-                5 => 0x00008000,  // PSW
-                6 => 0x00005346,  // PIR
-                7 => 0x000000E0,  // TKCW
-                30 => 0x00000004, // it is a mystery
-                _ => 0,
-            };
-        }
-    }
-
     fn resolve_address(&self, address: usize) -> Address {
         let address = address & 0x07FFFFFF;
         match address {
             0x00000000..=0x00FFFFFF => self.resolve_vip_address(address),
             0x01000000..=0x01FFFFFF => Address::Unmapped, // TODO: VSU
-            0x02000000..=0x02FFFFFF => Address::Unmapped, // TODO: hardware
+            0x02000000..=0x02FFFFFF => self.resolve_hardware_address(address),
             0x03000000..=0x03FFFFFF => Address::Unmapped,
             0x04000000..=0x04FFFFFF => Address::Unmapped, // Game Pak Expansion, never used
             0x05000000..=0x05FFFFFF => self.resolve_wram_address(address),
@@ -126,6 +129,10 @@ impl Storage {
             0x0007E000..=0x0007FFFF => Address::Mapped(address - 0x60000),
             _ => unreachable!("SCP-033 containment breach"),
         }
+    }
+
+    fn resolve_hardware_address(&self, address: usize) -> Address {
+        Address::Mapped(address & 0x0200003f)
     }
 
     fn resolve_wram_address(&self, address: usize) -> Address {
