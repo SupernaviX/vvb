@@ -323,7 +323,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn ori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        let value = self.storage.registers[reg1] | (imm & 0x00ff);
+        let value = self.storage.registers[reg1] | (imm & 0xffff);
         self.storage.registers[reg2] = value;
         self.update_psw_flags(value == 0, false, false);
         self.cycle += 1;
@@ -337,7 +337,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn xori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        let value = self.storage.registers[reg1] ^ (imm & 0x00ff);
+        let value = self.storage.registers[reg1] ^ (imm & 0xffff);
         self.storage.registers[reg2] = value;
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
@@ -604,7 +604,9 @@ mod tests {
     fn and(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001101, r2, r1) }
     fn andi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101101, r2, r1, imm) }
     fn or(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001100, r2, r1) }
+    fn ori(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101100, r2, r1, imm) }
     fn xor(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001110, r2, r1) }
+    fn xori(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101110, r2, r1, imm) }
     fn not(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001111, r2, r1) }
     fn sar_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010111, r2, imm) }
     fn shl_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010100, r2, imm) }
@@ -964,6 +966,28 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[11], 0x1082);
+    }
+
+    #[test]
+    fn ori_0xffff_should_set_to_0xffff() {
+        let mut storage = rom(&[
+            movea(10, 0, 0x1082),
+            ori(11, 10, -1),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 2).unwrap();
+        assert_eq!(storage.registers[11], 0xffff as i32);
+    }
+
+    #[test]
+    fn xori_0xffff_should_flip_bits() {
+        let mut storage = rom(&[
+            movea(10, 0, 0x1082),
+            xori(11, 10, -1),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 2).unwrap();
+        assert_eq!(storage.registers[11], 0xef7d as i32);
     }
 
     #[test]
