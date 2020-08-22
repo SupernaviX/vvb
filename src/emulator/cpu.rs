@@ -302,7 +302,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn andi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        let value = self.storage.registers[reg1] & (imm & 0x00ff);
+        let value = self.storage.registers[reg1] & (imm & 0xffff);
         self.storage.registers[reg2] = value;
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
@@ -602,6 +602,7 @@ mod tests {
     fn div(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001001, r2, r1) }
     fn divu(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001011, r2, r1) }
     fn and(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001101, r2, r1) }
+    fn andi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101101, r2, r1, imm) }
     fn or(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001100, r2, r1) }
     fn xor(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001110, r2, r1) }
     fn not(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001111, r2, r1) }
@@ -952,6 +953,17 @@ mod tests {
         assert_eq!(storage.registers[29], -1);
         assert_eq!(storage.registers[28], 0x0f0f);
         assert_eq!(storage.registers[27], 0x0f0f);
+    }
+
+    #[test]
+    fn andi_0xffff_should_preserve_high_bits() {
+        let mut storage = rom(&[
+            movea(10, 0, 0x1082),
+            andi(11, 10, -1),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 2).unwrap();
+        assert_eq!(storage.registers[11], 0x1082);
     }
 
     #[test]
