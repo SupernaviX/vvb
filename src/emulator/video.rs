@@ -8,8 +8,21 @@ pub const FRAME_SIZE: usize = VB_WIDTH * VB_HEIGHT;
 
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
+
+// brightness control registers
+const BRTA: usize = 0x0005f824;
+const BRTB: usize = 0x0005f826;
+const BRTC: usize = 0x0005f828;
+
 const XPSTTS: usize = 0x0005f840;
 const XPCTRL: usize = 0x0005f842;
+
+enum FrameBuffer {
+    Left0,
+    Right0,
+    Left1,
+    Right1,
+}
 
 #[derive(Copy, Clone)]
 pub enum Eye {
@@ -53,19 +66,34 @@ impl Video {
         let next_ms = until_cycle / 20000;
         while curr_ms != next_ms {
             curr_ms = curr_ms + 1;
+            let (current_eye, current_fb) = match curr_ms % 40 / 10 {
+                0 => (Eye::Left, FrameBuffer::Left0),
+                1 => (Eye::Right, FrameBuffer::Right0),
+                2 => (Eye::Left, FrameBuffer::Left1),
+                _ => (Eye::Right, FrameBuffer::Right1),
+            };
+            const FRAME_CLOCK_FLAG: i16 = 0x0080;
+            let (display_flags, drawing_flags) = match current_fb {
+                FrameBuffer::Left0 => (0x0004, 0x0008),
+                FrameBuffer::Right0 => (0x0008, 0x0008),
+                FrameBuffer::Left1 => (0x0010, 0x0004),
+                FrameBuffer::Right1 => (0x0020, 0x0004),
+            };
             match curr_ms % 20 {
-                0 => self.set_flags(storage, DPCTRL, 0x0080),
+                0 => self.set_flags(storage, DPCTRL, FRAME_CLOCK_FLAG),
                 3 | 13 => {
-                    let curr_buffer = (curr_ms % 40) / 10;
-                    self.set_flags(storage, DPCTRL, 0x0004 << (curr_buffer as i16));
-                    self.set_flags(storage, XPCTRL, 0x0004 << (1 - curr_buffer as i16 / 2));
+                    self.set_flags(storage, DPCTRL, display_flags);
+                    self.set_flags(storage, XPCTRL, drawing_flags);
+                }
+                5 | 15 => {
+                    self.build_frame(storage, current_fb)?;
+                    self.send_frame(current_eye)?;
                 }
                 8 | 18 => {
-                    let curr_buffer = (curr_ms % 40) / 10;
-                    self.clear_flags(storage, DPCTRL, 0x0004 << (curr_buffer as i16));
-                    self.clear_flags(storage, XPCTRL, 0x0004 << (1 - curr_buffer as i16 / 2));
+                    self.clear_flags(storage, DPCTRL, display_flags);
+                    self.clear_flags(storage, XPCTRL, drawing_flags);
                 }
-                10 => self.clear_flags(storage, DPCTRL, 0x0080),
+                10 => self.clear_flags(storage, DPCTRL, FRAME_CLOCK_FLAG),
                 _ => (),
             };
         }
@@ -94,10 +122,42 @@ impl Video {
     pub fn send_frame(&self, eye: Eye) -> Result<()> {
         if let Some(channel) = self.frame_channel.as_ref() {
             let buffer = &self.buffers[eye as usize];
-            channel.send(Frame {
+            let frame = Frame {
                 eye,
                 buffer: Arc::clone(buffer),
-            })?;
+            };
+            channel.send(frame)?;
+        }
+        Ok(())
+    }
+
+    fn build_frame(&self, storage: &Storage, buffer: FrameBuffer) -> Result<()> {
+        // colors to render
+        let color0 = 0u8; // always black
+        let color1 = storage.read_halfword(BRTA) as u8 * 2;
+        let color2 = storage.read_halfword(BRTB) as u8 * 2;
+        let color3 = color1 + color2 + storage.read_halfword(BRTC) as u8 * 2;
+        let colors = [color0, color1, color2, color3];
+
+        let (buf_index, buf_address) = match buffer {
+            FrameBuffer::Left0 => (0, 0x00000000),
+            FrameBuffer::Right0 => (1, 0x00010000),
+            FrameBuffer::Left1 => (0, 0x00008000),
+            FrameBuffer::Right1 => (1, 0x00018000),
+        };
+        let eye_buffer = &mut self.buffers[buf_index]
+            .lock()
+            .expect("Buffer lock was poisoned!");
+
+        for (col, col_offset) in (0..(384 * 64)).step_by(64).enumerate() {
+            for (row_offset, top_row) in (0..224).step_by(4).enumerate().step_by(2) {
+                let address = buf_address + col_offset + row_offset;
+                let pixels = storage.read_halfword(address) as u16;
+                for (row, pixel) in (0..16).step_by(2).map(|i| (pixels >> i) & 0b11).enumerate() {
+                    let index = col + (top_row + row) * 384;
+                    eye_buffer[index] = colors[pixel as usize];
+                }
+            }
         }
         Ok(())
     }
