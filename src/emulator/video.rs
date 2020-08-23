@@ -9,6 +9,14 @@ pub const FRAME_SIZE: usize = VB_WIDTH * VB_HEIGHT;
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
 
+// flags for DPSTTS/DPCTRL
+const FCLK: i16 = 0x0080;
+const SCANRDY: i16 = 0x0040;
+const R1BSY: i16 = 0x0020;
+const L1BSY: i16 = 0x0010;
+const R0BSY: i16 = 0x0008;
+const L0BSY: i16 = 0x0004;
+
 // brightness control registers
 const BRTA: usize = 0x0005f824;
 const BRTB: usize = 0x0005f826;
@@ -17,18 +25,33 @@ const BRTC: usize = 0x0005f828;
 const XPSTTS: usize = 0x0005f840;
 const XPCTRL: usize = 0x0005f842;
 
-enum FrameBuffer {
-    Left0,
-    Right0,
-    Left1,
-    Right1,
-}
+// flags for XPSTTS/XPCTRL
+const F1BSY: i16 = 0x0008;
+const F0BSY: i16 = 0x0004;
+const XPEN: i16 = 0x0002;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
+enum Buffer {
+    Buffer0,
+    Buffer1,
+}
+impl Buffer {
+    pub fn toggle(&self) -> Self {
+        match self {
+            Buffer0 => Buffer1,
+            Buffer1 => Buffer0,
+        }
+    }
+}
+use Buffer::{Buffer0, Buffer1};
+
+#[derive(Copy, Clone, Debug)]
 pub enum Eye {
     Left,
     Right,
 }
+use Eye::{Left, Right};
+
 pub type EyeBuffer = Vec<u8>;
 
 pub struct Frame {
@@ -40,6 +63,8 @@ pub type FrameChannel = mpsc::Receiver<Frame>;
 
 pub struct Video {
     cycle: u64,
+    drawing: bool,
+    display_buffer: Buffer,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
@@ -47,6 +72,8 @@ impl Video {
     pub fn new() -> Video {
         Video {
             cycle: 0,
+            drawing: false,
+            display_buffer: Buffer0,
             frame_channel: None,
             buffers: [
                 Arc::new(Mutex::new(vec![0; FRAME_SIZE])),
@@ -57,49 +84,87 @@ impl Video {
 
     pub fn init(&mut self, storage: &mut Storage) {
         self.cycle = 0;
-        self.set_flags(storage, DPCTRL, 0x00c0);
-        storage.write_halfword(DPSTTS, 0x00c0);
+        storage.write_halfword(DPCTRL, FCLK | SCANRDY);
+        storage.write_halfword(DPSTTS, FCLK | SCANRDY);
     }
 
     pub fn run(&mut self, storage: &mut Storage, until_cycle: u64) -> Result<()> {
+        let mut dpctrl = storage.read_halfword(DPCTRL);
+        let mut xpctrl = storage.read_halfword(XPCTRL);
+
         let mut curr_ms = self.cycle / 20000;
         let next_ms = until_cycle / 20000;
         while curr_ms != next_ms {
             curr_ms = curr_ms + 1;
-            let (current_eye, current_fb) = match curr_ms % 40 / 10 {
-                0 => (Eye::Left, FrameBuffer::Left0),
-                1 => (Eye::Right, FrameBuffer::Right0),
-                2 => (Eye::Left, FrameBuffer::Left1),
-                _ => (Eye::Right, FrameBuffer::Right1),
-            };
-            const FRAME_CLOCK_FLAG: i16 = 0x0080;
-            let (display_flags, drawing_flags) = match current_fb {
-                FrameBuffer::Left0 => (0x0004, 0x0008),
-                FrameBuffer::Right0 => (0x0008, 0x0008),
-                FrameBuffer::Left1 => (0x0010, 0x0004),
-                FrameBuffer::Right1 => (0x0020, 0x0004),
-            };
+            self.cycle += curr_ms * 20000;
+
             match curr_ms % 20 {
-                0 => self.set_flags(storage, DPCTRL, FRAME_CLOCK_FLAG),
-                3 | 13 => {
-                    self.set_flags(storage, DPCTRL, display_flags);
-                    self.set_flags(storage, XPCTRL, drawing_flags);
+                0 => {
+                    // Frame clock up
+                    dpctrl |= FCLK;
+
+                    // If we're starting a display frame, toggle whether we're drawing
+                    // TODO: this should be the start of a game frame
+                    self.drawing = (xpctrl & XPEN) != 0;
+
+                    if self.drawing {
+                        // "Start drawing" on whichever buffer was displayed before
+                        xpctrl |= match self.display_buffer {
+                            Buffer0 => F0BSY,
+                            Buffer1 => F1BSY,
+                        };
+
+                        // Switch to displaying the other buffer
+                        self.display_buffer = self.display_buffer.toggle();
+                    }
                 }
-                5 | 15 => {
-                    self.build_frame(storage, current_fb)?;
-                    self.send_frame(current_eye)?;
+                3 => {
+                    // "Start displaying" left eye
+                    dpctrl |= match self.display_buffer {
+                        Buffer0 => L0BSY,
+                        Buffer1 => L1BSY,
+                    };
                 }
-                8 | 18 => {
-                    self.clear_flags(storage, DPCTRL, display_flags);
-                    self.clear_flags(storage, XPCTRL, drawing_flags);
+                5 => {
+                    // Actually display the left eye
+                    self.build_frame(storage, Left)?;
+                    self.send_frame(Left)?;
+
+                    // "Stop drawing" on background buffer
+                    xpctrl &= !(F0BSY | F1BSY);
                 }
-                10 => self.clear_flags(storage, DPCTRL, FRAME_CLOCK_FLAG),
+                8 => {
+                    // "Stop displaying" left eye
+                    dpctrl &= !(L0BSY | L1BSY);
+                }
+                10 => {
+                    // Frame clock down
+                    dpctrl ^= FCLK;
+                }
+                13 => {
+                    // "Start displaying" right eye
+                    dpctrl |= match self.display_buffer {
+                        Buffer0 => R0BSY,
+                        Buffer1 => R1BSY,
+                    };
+                }
+                15 => {
+                    // Actually display the right eye
+                    self.build_frame(storage, Right)?;
+                    self.send_frame(Right)?;
+                }
+                18 => {
+                    // "Stop displaying" right eye,
+                    dpctrl &= !(R0BSY | R1BSY);
+                }
                 _ => (),
             };
         }
         self.cycle = until_cycle;
-        storage.write_halfword(DPSTTS, storage.read_halfword(DPCTRL));
-        storage.write_halfword(XPSTTS, storage.read_halfword(XPCTRL));
+        storage.write_halfword(DPCTRL, dpctrl);
+        storage.write_halfword(DPSTTS, dpctrl);
+        storage.write_halfword(XPCTRL, xpctrl);
+        storage.write_halfword(XPSTTS, xpctrl);
         Ok(())
     }
 
@@ -131,7 +196,7 @@ impl Video {
         Ok(())
     }
 
-    fn build_frame(&self, storage: &Storage, buffer: FrameBuffer) -> Result<()> {
+    fn build_frame(&self, storage: &Storage, eye: Eye) -> Result<()> {
         // colors to render
         let color0 = 0u8; // always black
         let color1 = storage.read_halfword(BRTA) as u8 * 2;
@@ -139,13 +204,13 @@ impl Video {
         let color3 = color1 + color2 + storage.read_halfword(BRTC) as u8 * 2;
         let colors = [color0, color1, color2, color3];
 
-        let (buf_index, buf_address) = match buffer {
-            FrameBuffer::Left0 => (0, 0x00000000),
-            FrameBuffer::Right0 => (1, 0x00010000),
-            FrameBuffer::Left1 => (0, 0x00008000),
-            FrameBuffer::Right1 => (1, 0x00018000),
+        let buf_address = match (eye, self.display_buffer) {
+            (Left, Buffer0) => 0x00000000,
+            (Right, Buffer0) => 0x00010000,
+            (Left, Buffer1) => 0x00008000,
+            (Right, Buffer1) => 0x00018000,
         };
-        let eye_buffer = &mut self.buffers[buf_index]
+        let eye_buffer = &mut self.buffers[eye as usize]
             .lock()
             .expect("Buffer lock was poisoned!");
 
@@ -161,77 +226,193 @@ impl Video {
         }
         Ok(())
     }
-
-    fn set_flags(&self, storage: &mut Storage, address: usize, flags: i16) {
-        let flags = storage.read_halfword(address) | flags;
-        storage.write_halfword(address, flags);
-    }
-
-    fn clear_flags(&self, storage: &mut Storage, address: usize, flags: i16) {
-        let flags = storage.read_halfword(address) ^ flags;
-        storage.write_halfword(address, flags);
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::emulator::storage::Storage;
-    use crate::emulator::video::{Video, DPSTTS, XPSTTS};
+    use crate::emulator::video::Video;
+    use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
+    use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
 
     fn ms_to_cycles(ms: u64) -> u64 {
         ms * 20000
     }
 
     #[test]
-    fn can_emulate_two_frames() {
+    fn can_emulate_two_frames_of_dpstts_while_drawing_is_off() {
         let mut video = Video::new();
         let mut storage = Storage::new();
 
         video.init(&mut storage);
-        assert_eq!(storage.read_halfword(DPSTTS), 0x00c0);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(3)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x00c4);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0008);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L0BSY);
 
         video.run(&mut storage, ms_to_cycles(8)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x00c0);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0000);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(10)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x0040);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(13)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x0048);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0008);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R0BSY);
 
         video.run(&mut storage, ms_to_cycles(18)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x0040);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0000);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(20)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x00c0);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(23)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x00d0);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0004);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L0BSY);
 
         video.run(&mut storage, ms_to_cycles(28)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x00c0);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0000);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(30)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x0040);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(33)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x0060);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0004);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R0BSY);
 
         video.run(&mut storage, ms_to_cycles(38)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x0040);
-        assert_eq!(storage.read_halfword(XPSTTS), 0x0000);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(40)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), 0x00c0);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+    }
+
+    #[test]
+    fn can_emulate_two_frames_of_dpstts_while_drawing_is_on() {
+        let mut video = Video::new();
+        let mut storage = Storage::new();
+
+        video.init(&mut storage);
+        storage.write_halfword(XPCTRL, XPEN);
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(3)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L0BSY);
+
+        video.run(&mut storage, ms_to_cycles(8)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(10)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(13)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R0BSY);
+
+        video.run(&mut storage, ms_to_cycles(18)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(20)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(23)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L1BSY);
+
+        video.run(&mut storage, ms_to_cycles(28)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(30)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(33)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R1BSY);
+
+        video.run(&mut storage, ms_to_cycles(38)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(40)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+    }
+
+    #[test]
+    fn can_emulate_two_frames_of_xpstts_while_drawing_is_on() {
+        let mut video = Video::new();
+        let mut storage = Storage::new();
+
+        video.init(&mut storage);
+        // turn on drawing
+        storage.write_halfword(XPCTRL, XPEN);
+
+        // start 2 frames in, because that's the first time we see a rising FCLK
+        video.run(&mut storage, ms_to_cycles(40)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN | F1BSY);
+
+        video.run(&mut storage, ms_to_cycles(45)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(50)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(55)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(60)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN | F0BSY);
+
+        video.run(&mut storage, ms_to_cycles(65)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(70)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(75)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(80)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN | F1BSY);
+    }
+
+    #[test]
+    fn can_turn_off_xpstts_midframe() {
+        let mut video = Video::new();
+        let mut storage = Storage::new();
+
+        video.init(&mut storage);
+
+        // turn on drawing 2 frames in, because that's the first time we see a rising FCLK
+        video.run(&mut storage, ms_to_cycles(39)).unwrap();
+        storage.write_halfword(XPCTRL, XPEN);
+        video.run(&mut storage, ms_to_cycles(40)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN | F0BSY);
+
+        // turn off drawing
+        storage.write_halfword(XPCTRL, F0BSY);
+        video.run(&mut storage, ms_to_cycles(42)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), F0BSY);
+
+        video.run(&mut storage, ms_to_cycles(45)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), 0);
+
+        video.run(&mut storage, ms_to_cycles(60)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), 0);
+    }
+
+    #[test]
+    fn can_turn_on_xpstts_midframe() {
+        let mut video = Video::new();
+        let mut storage = Storage::new();
+
+        video.init(&mut storage);
+
+        // start >2 frames in, because that's the first time we see a rising FCLK
+        video.run(&mut storage, ms_to_cycles(41)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), 0);
+
+        // turn on drawing
+        storage.write_halfword(XPCTRL, XPEN);
+        video.run(&mut storage, ms_to_cycles(42)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(45)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN);
+
+        video.run(&mut storage, ms_to_cycles(60)).unwrap();
+        assert_eq!(storage.read_halfword(XPSTTS), XPEN | F0BSY);
     }
 }
