@@ -55,9 +55,9 @@ impl Storage {
                 _ => 0,
             };
         }
-        // hold lr
+        // hold lr + start
         self.write_byte(0x02000010, 0x02);
-        self.write_byte(0x02000014, 0x01);
+        self.write_byte(0x02000014, 0x11);
     }
 
     pub fn write_byte(&mut self, address: usize, value: i8) {

@@ -30,6 +30,8 @@ const F1BSY: i16 = 0x0008;
 const F0BSY: i16 = 0x0004;
 const XPEN: i16 = 0x0002;
 
+const BKCOL: usize = 0x0005f870;
+
 #[derive(Copy, Clone, Debug)]
 enum Buffer {
     Buffer0,
@@ -124,6 +126,11 @@ impl Video {
                         Buffer0 => L0BSY,
                         Buffer1 => L1BSY,
                     };
+
+                    if self.drawing {
+                        // Actually draw on the background buffer
+                        self.draw(storage);
+                    }
                 }
                 5 => {
                     // Actually display the left eye
@@ -204,12 +211,7 @@ impl Video {
         let color3 = color1 + color2 + storage.read_halfword(BRTC) as u8 * 2;
         let colors = [color0, color1, color2, color3];
 
-        let buf_address = match (eye, self.display_buffer) {
-            (Left, Buffer0) => 0x00000000,
-            (Right, Buffer0) => 0x00010000,
-            (Left, Buffer1) => 0x00008000,
-            (Right, Buffer1) => 0x00018000,
-        };
+        let buf_address = self.get_buffer_address(eye, self.display_buffer);
         let eye_buffer = &mut self.buffers[eye as usize]
             .lock()
             .expect("Buffer lock was poisoned!");
@@ -225,6 +227,39 @@ impl Video {
             }
         }
         Ok(())
+    }
+
+    // Perform the drawing procedure, writing to whichever framebuffer is inactive
+    fn draw(&self, storage: &mut Storage) {
+        let buffer = self.display_buffer.toggle();
+        let left_buf_address = self.get_buffer_address(Left, buffer);
+        let right_buf_address = self.get_buffer_address(Right, buffer);
+
+        // Clear both frames to BKCOL
+        let bkcol = storage.read_halfword(BKCOL) & 0x03;
+        let fill = (0..16)
+            .step_by(2)
+            .map(|shift| bkcol << shift)
+            .fold(0, |a, b| a | b);
+        for buf_address in [left_buf_address, right_buf_address].iter() {
+            for col_offset in (0..384 * 64).step_by(64) {
+                for row_offset in 0..56 {
+                    let address = buf_address + col_offset + row_offset;
+                    storage.write_halfword(address, fill);
+                }
+            }
+        }
+
+        // TODO: actually... draw things
+    }
+
+    fn get_buffer_address(&self, eye: Eye, buffer: Buffer) -> usize {
+        match (eye, buffer) {
+            (Left, Buffer0) => 0x00000000,
+            (Right, Buffer0) => 0x00010000,
+            (Left, Buffer1) => 0x00008000,
+            (Right, Buffer1) => 0x00018000,
+        }
     }
 }
 
