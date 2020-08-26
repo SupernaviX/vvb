@@ -3,6 +3,7 @@ package com.simongellis.vvb
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 
@@ -31,6 +32,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
 
     override fun onResume() {
         super.onResume()
+        activity!!.setTitle(R.string.app_name)
         findPreference<Preference>("resume_game")?.apply {
             val emulator = Emulator.getInstance(context!!)
             isVisible = emulator.isGameLoaded()

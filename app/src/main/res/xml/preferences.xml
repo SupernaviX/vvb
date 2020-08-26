@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <Preference
         app:key="resume_game"
         app:title="@string/main_menu_resume_game"
@@ -13,6 +14,11 @@
             android:mimeType="*/*">
         </intent>
     </Preference>
+    <Preference
+        app:key="input"
+        app:title="@string/main_menu_input_setup"
+        app:fragment="com.simongellis.vvb.InputMenuFragment"
+        tools:context=".InputMenuFragment"/>
     <Preference
         app:key="switch_viewer"
         app:title="@string/main_menu_switch_viewer"/>

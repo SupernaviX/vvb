@@ -3,5 +3,6 @@
     <string name="main_menu_resume_game">Resume Game</string>
     <string name="main_menu_load_game">Load Game</string>
     <string name="main_menu_switch_viewer">Switch Cardboard Viewer</string>
+    <string name="main_menu_input_setup">Input Setup</string>
     <string name="ui_settings_button_content_description">settings</string>
 </resources>
