@@ -1,0 +1,40 @@
+package com.simongellis.vvb
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import androidx.preference.Preference
+import androidx.preference.PreferenceFragmentCompat
+
+class MainMenuFragment: PreferenceFragmentCompat() {
+    private val GAME_CHOSEN = 2;
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        addPreferencesFromResource(R.xml.preferences)
+
+        findPreference<Preference>("load_game")?.setOnPreferenceClickListener { preference ->
+            startActivityForResult(preference.intent, GAME_CHOSEN)
+            true
+        }
+
+        findPreference<Preference>("switch_viewer")?.setOnPreferenceClickListener { _ ->
+            val activity = activity as MainActivity
+            activity.changeDeviceParams()
+            true
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == GAME_CHOSEN && resultCode == Activity.RESULT_OK) {
+            data?.data?.also { uri ->
+                val emulator = Emulator.getInstance(context!!)
+                emulator.loadGamePak(uri)
+
+                val intent = Intent(activity, GameActivity::class.java)
+                startActivity(intent)
+            }
+        }
+    }
+
+}

@@ -2,7 +2,7 @@ use crate::emulator::video::FrameChannel;
 
 mod cardboard;
 pub use cardboard::api::Cardboard;
-use cardboard::api::QrCode;
+pub use cardboard::api::QrCode;
 use cardboard::CardboardRenderer;
 
 mod gl;

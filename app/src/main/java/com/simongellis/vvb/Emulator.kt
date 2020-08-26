@@ -33,7 +33,6 @@ class Emulator(context: Context) {
         pause()
         nativeLoadGamePakRom(rom)
         _gameLoaded = true
-        resume()
     }
 
     fun loadImage() {
@@ -89,4 +88,13 @@ class Emulator(context: Context) {
     private external fun nativeLoadGamePakRom(rom: ByteBuffer)
     private external fun nativeTick(nanoseconds: Int)
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
+
+    companion object {
+        @Volatile
+        private var INSTANCE: Emulator? = null
+
+        fun getInstance(context: Context): Emulator = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: Emulator(context).also { INSTANCE = it }
+        }
+    }
 }
