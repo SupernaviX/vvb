@@ -42,6 +42,10 @@ class Emulator(context: Context) {
         )
     }
 
+    fun isGameLoaded(): Boolean {
+        return _gameLoaded
+    }
+
     fun resume() {
         if (!_gameLoaded) {
             return

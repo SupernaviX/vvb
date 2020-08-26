@@ -7,10 +7,15 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 
 class MainMenuFragment: PreferenceFragmentCompat() {
-    private val GAME_CHOSEN = 2;
+    private val GAME_CHOSEN = 2
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.preferences)
+
+        findPreference<Preference>("resume_game")?.setOnPreferenceClickListener {
+            playGame()
+            true
+        }
 
         findPreference<Preference>("load_game")?.setOnPreferenceClickListener { preference ->
             startActivityForResult(preference.intent, GAME_CHOSEN)
@@ -24,17 +29,27 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        findPreference<Preference>("resume_game")?.apply {
+            val emulator = Emulator.getInstance(context!!)
+            isVisible = emulator.isGameLoaded()
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == GAME_CHOSEN && resultCode == Activity.RESULT_OK) {
             data?.data?.also { uri ->
                 val emulator = Emulator.getInstance(context!!)
                 emulator.loadGamePak(uri)
-
-                val intent = Intent(activity, GameActivity::class.java)
-                startActivity(intent)
+                playGame()
             }
         }
     }
 
+    private fun playGame() {
+        val intent = Intent(activity, GameActivity::class.java)
+        startActivity(intent)
+    }
 }

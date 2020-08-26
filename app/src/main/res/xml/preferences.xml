@@ -2,6 +2,10 @@
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <Preference
+        app:key="resume_game"
+        app:title="@string/main_menu_resume_game"
+        app:isPreferenceVisible="false"/>
+    <Preference
         app:key="load_game"
         app:title="@string/main_menu_load_game">
         <intent
