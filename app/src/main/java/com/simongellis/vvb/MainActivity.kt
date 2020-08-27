@@ -1,6 +1,7 @@
 package com.simongellis.vvb
 
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -29,6 +30,16 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
             .addToBackStack(null)
             .commit()
         return true
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val fragment = supportFragmentManager.fragments.firstOrNull()
+        if (fragment is InputMenuFragment) {
+            if (fragment.onKeyEvent(event)) {
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     fun changeDeviceParams() {
