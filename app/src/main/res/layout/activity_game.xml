@@ -12,7 +12,7 @@
     <android.opengl.GLSurfaceView
         android:id="@+id/surface-view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"/>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/ui_alignment_marker"
@@ -21,22 +21,6 @@
         android:background="@color/alignment_marker_color"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <FrameLayout
-        android:id="@+id/ui_settings_button_holder"
-        android:layout_width="42dp"
-        android:layout_height="42dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <ImageButton
-            android:id="@+id/ui_settings_button"
-            style="@style/UiButton"
-            android:contentDescription="@string/ui_settings_button_content_description"
-            app:srcCompat="@drawable/quantum_ic_settings_white_24" />
-    </FrameLayout>
+        app:layout_constraintStart_toStartOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

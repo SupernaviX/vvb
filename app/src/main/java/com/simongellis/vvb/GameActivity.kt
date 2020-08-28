@@ -4,16 +4,21 @@ import android.content.pm.ActivityInfo
 import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import android.view.KeyEvent
 import kotlinx.android.synthetic.main.activity_game.*
 
 class GameActivity : AppCompatActivity() {
     private lateinit var _emulator: Emulator
     private lateinit var _renderer: Renderer
+    private lateinit var _inputBindingMapper: InputBindingMapper
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _emulator = Emulator.getInstance(applicationContext)
         _renderer = Renderer(_emulator)
+        _inputBindingMapper = InputBindingMapper(applicationContext)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setContentView(R.layout.activity_game)
@@ -25,10 +30,14 @@ class GameActivity : AppCompatActivity() {
         _emulator.loadImage()
     }
 
-    override fun onPause() {
-        super.onPause()
-        surface_view.onPause()
-        _emulator.pause()
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val input = _inputBindingMapper.getBoundInput(event)
+        if (input != null) {
+            val action = if (event.action == KeyEvent.ACTION_DOWN) "down" else "up"
+            Log.d("GameActivity", "Input! $input $action")
+            return true
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     override fun onResume() {
@@ -39,8 +48,15 @@ class GameActivity : AppCompatActivity() {
         _emulator.resume()
     }
 
+    override fun onPause() {
+        super.onPause()
+        surface_view.onPause()
+        _emulator.pause()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        _inputBindingMapper.destroy()
         _renderer.destroy()
     }
 }

@@ -24,20 +24,9 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.preferences_input)
-        configureInputPreference("input_ll")
-        configureInputPreference("input_lr")
-        configureInputPreference("input_lu")
-        configureInputPreference("input_ld")
-        configureInputPreference("input_rl")
-        configureInputPreference("input_rr")
-        configureInputPreference("input_ru")
-        configureInputPreference("input_rd")
-        configureInputPreference("input_a")
-        configureInputPreference("input_b")
-        configureInputPreference("input_lt")
-        configureInputPreference("input_rt")
-        configureInputPreference("input_start")
-        configureInputPreference("input_select")
+        Input.values().forEach { input ->
+            configureInputPreference(input.prefName)
+        }
     }
 
     private fun configureInputPreference(key: String) {
