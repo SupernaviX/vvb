@@ -50,7 +50,7 @@ impl Emulator {
             self.storage.read_halfword(0xfffffff2),
             self.storage.read_halfword(0xfffffff4),
             self.storage.read_halfword(0xfffffff6),
-            self.storage.read_halfword(0xfffffff7),
+            self.storage.read_halfword(0xfffffff8),
             self.storage.read_halfword(0xfffffffa),
             self.storage.read_halfword(0xfffffffc),
             self.storage.read_halfword(0xfffffffe),
