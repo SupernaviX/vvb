@@ -14,6 +14,8 @@ class Emulator(context: Context) {
     private var _running = false
     private var _gameLoaded = false
 
+    private var _activeInputs = 0
+
     init {
         nativeConstructor()
     }
@@ -57,13 +59,22 @@ class Emulator(context: Context) {
     fun pause() {
         _running = false
         _thread?.join()
+        _activeInputs = 0
+    }
+
+    fun keyDown(input: Input) {
+        _activeInputs = _activeInputs or input.bitMask
+    }
+
+    fun keyUp(input: Input) {
+        _activeInputs = _activeInputs and input.bitMask.inv()
     }
 
     private fun run() {
         var then = SystemClock.elapsedRealtimeNanos()
         while (_running) {
             val now = SystemClock.elapsedRealtimeNanos()
-            nativeTick((now - then).toInt())
+            nativeTick((now - then).toInt(), _activeInputs)
             then = now
         }
     }
@@ -90,7 +101,7 @@ class Emulator(context: Context) {
     private external fun nativeConstructor()
     private external fun nativeDestructor()
     private external fun nativeLoadGamePakRom(rom: ByteBuffer)
-    private external fun nativeTick(nanoseconds: Int)
+    private external fun nativeTick(nanoseconds: Int, inputMask: Int)
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
 
     companion object {

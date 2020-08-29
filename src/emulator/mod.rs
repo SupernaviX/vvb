@@ -8,6 +8,9 @@ use video::{Eye, FrameChannel, Video};
 use anyhow::Result;
 use log::debug;
 
+const SDLR: usize = 0x02000010;
+const SDHR: usize = 0x02000014;
+
 pub struct Emulator {
     cycle: u64,
     tick_calls: u64,
@@ -54,7 +57,7 @@ impl Emulator {
         );
     }
 
-    pub fn tick(&mut self, nanoseconds: u64) -> Result<()> {
+    pub fn tick(&mut self, nanoseconds: u64, input_state: u16) -> Result<()> {
         let cycles = nanoseconds / 50;
 
         // Log average tick size every 5 seconds
@@ -66,6 +69,7 @@ impl Emulator {
             debug!("Cycles per tick: {}", self.cycle / self.tick_calls);
         }
 
+        self.process_inputs(input_state);
         self.cpu.run(&mut self.storage, self.cycle)?;
         self.video.run(&mut self.storage, self.cycle)?;
         Ok(())
@@ -77,6 +81,13 @@ impl Emulator {
         self.video.load_frame(Eye::Right, right_eye);
         self.video.send_frame(Eye::Right)?;
         Ok(())
+    }
+
+    fn process_inputs(&mut self, input_state: u16) {
+        self.storage
+            .write_halfword(SDLR, input_state as i16 & 0xff | 0x02);
+        self.storage
+            .write_halfword(SDHR, (input_state >> 8) as i16 & 0xff);
     }
 }
 
@@ -114,10 +125,10 @@ pub mod jni {
         this.load_game_pak_rom(rom)
     }
 
-    java_func!(Emulator_nativeTick, tick, jint);
-    fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint) -> Result<()> {
+    java_func!(Emulator_nativeTick, tick, jint, jint);
+    fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint, input_state: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
-        this.tick(nanoseconds as u64)
+        this.tick(nanoseconds as u64, input_state as u16)
     }
 
     java_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);

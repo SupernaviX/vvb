@@ -4,7 +4,6 @@ import android.content.pm.ActivityInfo
 import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import kotlinx.android.synthetic.main.activity_game.*
 
@@ -33,8 +32,11 @@ class GameActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val input = _inputBindingMapper.getBoundInput(event)
         if (input != null) {
-            val action = if (event.action == KeyEvent.ACTION_DOWN) "down" else "up"
-            Log.d("GameActivity", "Input! $input $action")
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                _emulator.keyDown(input)
+            } else {
+                _emulator.keyUp(input)
+            }
             return true
         }
         return super.dispatchKeyEvent(event)
