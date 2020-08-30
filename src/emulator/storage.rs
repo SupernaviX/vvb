@@ -55,6 +55,15 @@ impl Storage {
                 _ => 0,
             };
         }
+        for vram in self.memory[0x00000000..=0x00077fff].iter_mut() {
+            *vram = 0;
+        }
+        for hardware in self.memory[0x02000000..=0x0200003f].iter_mut() {
+            *hardware = 0;
+        }
+        for dram in self.memory[0x05000000..=0x0500ffff].iter_mut() {
+            *dram = 0;
+        }
     }
 
     pub fn write_byte(&mut self, address: usize, value: i8) {
