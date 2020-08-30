@@ -1,5 +1,6 @@
 use crate::emulator::storage::Storage;
 use anyhow::Result;
+use log::error;
 use std::sync::{mpsc, Arc, Mutex};
 
 pub const VB_WIDTH: usize = 384;
@@ -24,6 +25,11 @@ const BRTC: usize = 0x0005f828;
 
 const XPSTTS: usize = 0x0005f840;
 const XPCTRL: usize = 0x0005f842;
+
+const BACKGROUND_MAP_MEMORY: usize = 0x00020000;
+const WORLD_ATTRIBUTE_MEMORY: usize = 0x0003d800;
+const CHARACTER_TABLE: usize = 0x00078000;
+const GPLT0: usize = 0x0005f860;
 
 // flags for XPSTTS/XPCTRL
 const F1BSY: i16 = 0x0008;
@@ -134,7 +140,7 @@ impl Video {
                 }
                 5 => {
                     // Actually display the left eye
-                    self.build_frame(storage, Left)?;
+                    self.build_frame(storage, Left);
                     self.send_frame(Left)?;
 
                     // "Stop drawing" on background buffer
@@ -157,7 +163,7 @@ impl Video {
                 }
                 15 => {
                     // Actually display the right eye
-                    self.build_frame(storage, Right)?;
+                    self.build_frame(storage, Right);
                     self.send_frame(Right)?;
                 }
                 18 => {
@@ -203,13 +209,13 @@ impl Video {
         Ok(())
     }
 
-    fn build_frame(&self, storage: &Storage, eye: Eye) -> Result<()> {
+    fn build_frame(&self, storage: &Storage, eye: Eye) {
         // colors to render
-        let color0 = 0u8; // always black
-        let color1 = storage.read_halfword(BRTA) as u8 * 2;
-        let color2 = storage.read_halfword(BRTB) as u8 * 2;
-        let color3 = color1 + color2 + storage.read_halfword(BRTC) as u8 * 2;
-        let colors = [color0, color1, color2, color3];
+        let color0 = 0; // always black
+        let color1 = 255.min(storage.read_halfword(BRTA) * 4);
+        let color2 = 255.min(storage.read_halfword(BRTB) * 4);
+        let color3 = 255.min(color1 + color2 + storage.read_halfword(BRTC) * 2);
+        let colors = [color0 as u8, color1 as u8, color2 as u8, color3 as u8];
 
         let buf_address = self.get_buffer_address(eye, self.display_buffer);
         let eye_buffer = &mut self.buffers[eye as usize]
@@ -226,7 +232,15 @@ impl Video {
                 }
             }
         }
-        Ok(())
+    }
+
+    fn get_buffer_address(&self, eye: Eye, buffer: Buffer) -> usize {
+        match (eye, buffer) {
+            (Left, Buffer0) => 0x00000000,
+            (Right, Buffer0) => 0x00010000,
+            (Left, Buffer1) => 0x00008000,
+            (Right, Buffer1) => 0x00018000,
+        }
     }
 
     // Perform the drawing procedure, writing to whichever framebuffer is inactive
@@ -250,15 +264,147 @@ impl Video {
             }
         }
 
-        // TODO: actually... draw things
+        for world in (0..32).rev() {
+            let world_address = WORLD_ATTRIBUTE_MEMORY + (world * 32);
+            let header = storage.read_halfword(world_address) as u16;
+            if (header & 0x0040) != 0 {
+                // END flag set, we're done rendering
+                break;
+            }
+            let left_enabled = (header & 0x8000) != 0;
+            let right_enabled = (header & 0x4000) != 0;
+            if !left_enabled && !right_enabled {
+                // This world is blank
+                continue;
+            }
+
+            let bgm = (header & 0x3000) >> 12;
+            if bgm != 0 {
+                // TODO: support modes besides "normal background"
+                error!("Unsupported BGM {}!", bgm);
+                panic!();
+            }
+
+            let scx = (header & 0x0c00) >> 10;
+            let scy = (header & 0x0300) >> 8;
+            let bgmap_width = 2u16.pow(scx as u32);
+            let bgmap_height = 2u16.pow(scy as u32);
+            if bgmap_width != 1 || bgmap_height != 1 {
+                // TODO: support multiple background maps
+                error!(
+                    "Too many background maps ({}x{})!",
+                    bgmap_width, bgmap_height
+                );
+                panic!();
+            }
+
+            let bgmap = (header & 0x000f) as usize;
+            let bgmap_address = BACKGROUND_MAP_MEMORY + (bgmap * 8192);
+
+            let dest_x = storage.read_halfword(world_address + 2);
+            let dest_parallax_x = storage.read_halfword(world_address + 4);
+            let dest_y = storage.read_halfword(world_address + 6);
+            let source_x = storage.read_halfword(world_address + 8);
+            let source_parallax_x = storage.read_halfword(world_address + 10);
+            let source_y = storage.read_halfword(world_address + 12);
+            let width = storage.read_halfword(world_address + 14) + 1;
+            let height = i16::max(storage.read_halfword(world_address + 16) + 1, 8);
+
+            if left_enabled {
+                let source_x = source_x - source_parallax_x;
+                let dest_x = dest_x - dest_parallax_x;
+                self.draw_world(
+                    storage,
+                    left_buf_address,
+                    bgmap_address,
+                    source_x,
+                    source_y,
+                    dest_x,
+                    dest_y,
+                    width,
+                    height,
+                );
+            }
+
+            if right_enabled {
+                let source_x = source_x + source_parallax_x;
+                let dest_x = dest_x + dest_parallax_x;
+                self.draw_world(
+                    storage,
+                    right_buf_address,
+                    bgmap_address,
+                    source_x,
+                    source_y,
+                    dest_x,
+                    dest_y,
+                    width,
+                    height,
+                );
+            }
+        }
     }
 
-    fn get_buffer_address(&self, eye: Eye, buffer: Buffer) -> usize {
-        match (eye, buffer) {
-            (Left, Buffer0) => 0x00000000,
-            (Right, Buffer0) => 0x00010000,
-            (Left, Buffer1) => 0x00008000,
-            (Right, Buffer1) => 0x00018000,
+    fn draw_world(
+        &self,
+        storage: &mut Storage,
+        buf_address: usize,
+        bgmap_address: usize,
+        source_x: i16,
+        source_y: i16,
+        dest_x: i16,
+        dest_y: i16,
+        width: i16,
+        height: i16,
+    ) {
+        for column in 0..width {
+            for row in 0..height {
+                // for now, assume everything is background map 0
+
+                // figure out which cell in this background map is being read
+                let cell_row = (source_y + row) as usize / 8;
+                let cell_column = (source_x + column) as usize / 8;
+                let cell_index = cell_row * 64 + cell_column;
+
+                // load that cell data
+                let cell_data = storage.read_halfword(bgmap_address + (cell_index * 2)) as usize;
+                let palette_index = (cell_data & 0xc000) >> 14;
+                let flip_horizontally = (cell_data & 0x2000) != 0;
+                let flip_vertically = (cell_data & 0x1000) != 0;
+                let character_index = cell_data & 0x03ff;
+
+                // figure out which pixel in the character we're rendering
+                let mut character_x = source_x + column % 8;
+                let mut character_y = (source_y + row) as usize % 8;
+                if flip_horizontally {
+                    character_x = 7 - character_x;
+                }
+                if flip_vertically {
+                    character_y = 7 - character_y;
+                }
+
+                // get the value of that pixel
+                let character_row = storage
+                    .read_halfword(CHARACTER_TABLE + (character_index * 16) + (character_y * 2));
+                let character_pixel = (character_row >> (character_x * 2)) & 0x03;
+                if character_pixel == 0 {
+                    continue;
+                }
+
+                // translate that through the palette
+                let palette = storage.read_halfword(GPLT0 + (palette_index * 2));
+                let pixel_value = (palette >> (character_pixel * 2)) & 0x03;
+
+                // we finally have the pixel, now just load it into the right slot in the framebuffer
+                let fb_column = (dest_x + column) as usize;
+                let fb_row = dest_y + row;
+                let fb_address = buf_address + (fb_column * 64) + (fb_row as usize / 4) & !1;
+
+                // every 2 bytes contain 8 pixels, make sure we only update the 2 bits we're drawing now
+                let mut current_value = storage.read_halfword(fb_address);
+                let fb_offset = fb_row % 8;
+                current_value |= pixel_value << (fb_offset * 2);
+                storage.write_halfword(fb_address, current_value);
+            }
         }
     }
 }
