@@ -1,5 +1,7 @@
 mod cpu;
-use cpu::CPU;
+use cpu::{Event, CPU};
+mod hardware;
+use hardware::Hardware;
 mod storage;
 use storage::Storage;
 pub mod video;
@@ -8,15 +10,13 @@ use video::{Eye, FrameChannel, Video};
 use anyhow::Result;
 use log::debug;
 
-const SDLR: usize = 0x02000010;
-const SDHR: usize = 0x02000014;
-
 pub struct Emulator {
     cycle: u64,
     tick_calls: u64,
     storage: Storage,
     cpu: CPU,
     video: Video,
+    hardware: Hardware,
 }
 impl Emulator {
     fn new() -> Emulator {
@@ -26,6 +26,7 @@ impl Emulator {
             storage: Storage::new(),
             cpu: CPU::new(),
             video: Video::new(),
+            hardware: Hardware::new(),
         }
     }
 
@@ -44,6 +45,7 @@ impl Emulator {
         self.tick_calls = 0;
         self.cpu.reset();
         self.video.init(&mut self.storage);
+        self.hardware.reset();
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
             self.storage.read_halfword(0xfffffff0),
@@ -59,19 +61,41 @@ impl Emulator {
 
     pub fn tick(&mut self, nanoseconds: u64, input_state: u16) -> Result<()> {
         let cycles = nanoseconds / 50;
+        let target_cycle = self.cycle + cycles;
 
         // Log average tick size every 5 seconds
-        let old_sec = self.cycle / 100_000_000;
-        self.cycle += cycles;
         self.tick_calls += 1;
-        let new_sec = self.cycle / 100_000_000;
+        let old_sec = self.cycle / 100_000_000;
+        let new_sec = target_cycle / 100_000_000;
         if old_sec != new_sec {
-            debug!("Cycles per tick: {}", self.cycle / self.tick_calls);
+            debug!("Cycles per tick: {}", target_cycle / self.tick_calls);
         }
+        self.hardware.process_inputs(&mut self.storage, input_state);
 
-        self.process_inputs(input_state);
-        self.cpu.run(&mut self.storage, self.cycle)?;
-        self.video.run(&mut self.storage, self.cycle)?;
+        while self.cycle < target_cycle {
+            // Find how long we can run before something interesting happens
+            let next_event_cycle = std::cmp::min(self.hardware.next_event(), target_cycle);
+
+            // Run the CPU for at least that many cycles
+            // (specifically, until next_event_cycle + however long it takes to finish the current op)
+            // This is safe as long as it doesn't START a new op AFTER that interesting cycle
+            let cpu_result = self.cpu.run(&mut self.storage, next_event_cycle)?;
+
+            // Have the other components catch up
+            let cpu_cycle = cpu_result.cycle;
+            self.video.run(&mut self.storage, cpu_cycle)?;
+            self.hardware.run(&mut self.storage, cpu_cycle);
+
+            // If the CPU wrote somewhere interesting during execution, it would stop and return an event
+            // Do what we have to do based on which event was returned
+            match cpu_result.event {
+                Some(Event::HardwareAccess { address }) => {
+                    self.hardware.process_event(&mut self.storage, address);
+                }
+                None => (),
+            };
+            self.cycle = cpu_cycle;
+        }
         Ok(())
     }
 
@@ -81,13 +105,6 @@ impl Emulator {
         self.video.load_frame(Eye::Right, right_eye);
         self.video.send_frame(Eye::Right)?;
         Ok(())
-    }
-
-    fn process_inputs(&mut self, input_state: u16) {
-        self.storage
-            .write_halfword(SDLR, input_state as i16 & 0xff | 0x02);
-        self.storage
-            .write_halfword(SDHR, (input_state >> 8) as i16 & 0xff);
     }
 }
 

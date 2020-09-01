@@ -96,12 +96,12 @@ impl Video {
         storage.write_halfword(DPSTTS, FCLK | SCANRDY);
     }
 
-    pub fn run(&mut self, storage: &mut Storage, until_cycle: u64) -> Result<()> {
+    pub fn run(&mut self, storage: &mut Storage, target_cycle: u64) -> Result<()> {
         let mut dpctrl = storage.read_halfword(DPCTRL);
         let mut xpctrl = storage.read_halfword(XPCTRL);
 
         let mut curr_ms = self.cycle / 20000;
-        let next_ms = until_cycle / 20000;
+        let next_ms = target_cycle / 20000;
         while curr_ms != next_ms {
             curr_ms = curr_ms + 1;
             self.cycle += curr_ms * 20000;
@@ -173,7 +173,7 @@ impl Video {
                 _ => (),
             };
         }
-        self.cycle = until_cycle;
+        self.cycle = target_cycle;
         storage.write_halfword(DPCTRL, dpctrl);
         storage.write_halfword(DPSTTS, dpctrl);
         storage.write_halfword(XPCTRL, xpctrl);

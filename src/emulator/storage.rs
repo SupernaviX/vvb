@@ -1,8 +1,9 @@
+use crate::emulator::cpu::Event;
 use anyhow::Result;
 use std::convert::TryInto;
 
 enum Address {
-    Mapped(usize),
+    Mapped(usize, Option<Event>),
     Unmapped,
 }
 
@@ -66,34 +67,40 @@ impl Storage {
         }
     }
 
-    pub fn write_byte(&mut self, address: usize, value: i8) {
-        if let Address::Mapped(resolved) = self.resolve_address(address) {
+    pub fn write_byte(&mut self, address: usize, value: i8) -> Option<Event> {
+        if let Address::Mapped(resolved, event) = self.resolve_address(address) {
             self.memory[resolved] = value as u8;
+            return event;
         }
+        None
     }
 
-    pub fn write_halfword(&mut self, address: usize, value: i16) {
-        if let Address::Mapped(resolved) = self.resolve_address(address) {
+    pub fn write_halfword(&mut self, address: usize, value: i16) -> Option<Event> {
+        if let Address::Mapped(resolved, event) = self.resolve_address(address) {
             self.memory[resolved..resolved + 2].copy_from_slice(&value.to_le_bytes());
+            return event;
         }
+        None
     }
 
-    pub fn write_word(&mut self, address: usize, value: i32) {
-        if let Address::Mapped(resolved) = self.resolve_address(address) {
+    pub fn write_word(&mut self, address: usize, value: i32) -> Option<Event> {
+        if let Address::Mapped(resolved, event) = self.resolve_address(address) {
             self.memory[resolved..resolved + 4].copy_from_slice(&value.to_le_bytes());
+            return event;
         }
+        None
     }
 
     pub fn read_byte(&self, address: usize) -> i8 {
         match self.resolve_address(address) {
-            Address::Mapped(resolved) => self.memory[resolved] as i8,
+            Address::Mapped(resolved, _) => self.memory[resolved] as i8,
             Address::Unmapped => 0,
         }
     }
 
     pub fn read_halfword(&self, address: usize) -> i16 {
         let address = match self.resolve_address(address) {
-            Address::Mapped(resolved) => resolved,
+            Address::Mapped(resolved, _) => resolved,
             Address::Unmapped => return 0,
         };
         let bytes: &[u8; 2] = self.memory[address..address + 2].try_into().unwrap();
@@ -102,7 +109,7 @@ impl Storage {
 
     pub fn read_word(&self, address: usize) -> i32 {
         let address = match self.resolve_address(address) {
-            Address::Mapped(resolved) => resolved,
+            Address::Mapped(resolved, _) => resolved,
             Address::Unmapped => return 0,
         };
         let bytes: &[u8; 4] = self.memory[address..address + 4].try_into().unwrap();
@@ -127,26 +134,27 @@ impl Storage {
     fn resolve_vip_address(&self, address: usize) -> Address {
         let address = address & 0x0007FFFF;
         match address {
-            0x00000000..=0x00077FFF => Address::Mapped(address),
+            0x00000000..=0x00077FFF => Address::Mapped(address, None),
             // The following ranges mirror data from the character tables
-            0x00078000..=0x00079FFF => Address::Mapped(address - 0x72000),
-            0x0007A000..=0x0007BFFF => Address::Mapped(address - 0x6C000),
-            0x0007C000..=0x0007DFFF => Address::Mapped(address - 0x66000),
-            0x0007E000..=0x0007FFFF => Address::Mapped(address - 0x60000),
+            0x00078000..=0x00079FFF => Address::Mapped(address - 0x72000, None),
+            0x0007A000..=0x0007BFFF => Address::Mapped(address - 0x6C000, None),
+            0x0007C000..=0x0007DFFF => Address::Mapped(address - 0x66000, None),
+            0x0007E000..=0x0007FFFF => Address::Mapped(address - 0x60000, None),
             _ => unreachable!("SCP-033 containment breach"),
         }
     }
 
     fn resolve_hardware_address(&self, address: usize) -> Address {
-        Address::Mapped(address & 0x0200003f)
+        let address = address & 0x0200003f;
+        Address::Mapped(address, Some(Event::HardwareAccess { address }))
     }
 
     fn resolve_wram_address(&self, address: usize) -> Address {
-        Address::Mapped(address & 0x0500FFFF)
+        Address::Mapped(address & 0x0500FFFF, None)
     }
 
     fn resolve_game_pak_rom_address(&self, address: usize) -> Address {
-        Address::Mapped(address & self.rom_mask)
+        Address::Mapped(address & self.rom_mask, None)
     }
 }
 

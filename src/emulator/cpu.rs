@@ -8,14 +8,14 @@ impl CPU {
     pub fn new() -> CPU {
         CPU { cycle: 0 }
     }
-    pub fn run(&mut self, storage: &mut Storage, until_cycle: u64) -> Result<()> {
-        let cycles = CPUProcess {
-            cycle: self.cycle,
-            storage,
-        }
-        .run(until_cycle)?;
-        self.cycle = cycles;
-        Ok(())
+    pub fn run(&mut self, storage: &mut Storage, target_cycle: u64) -> Result<CPUProcessingResult> {
+        let mut process = CPUProcess::new(self.cycle, storage);
+        process.run(target_cycle)?;
+        self.cycle = process.cycle;
+        Ok(CPUProcessingResult {
+            cycle: process.cycle,
+            event: process.event,
+        })
     }
     pub fn reset(&mut self) {
         self.cycle = 0;
@@ -24,13 +24,29 @@ impl CPU {
 
 const PSW: usize = 5;
 
+pub struct CPUProcessingResult {
+    pub cycle: u64,
+    pub event: Option<Event>,
+}
+pub enum Event {
+    HardwareAccess { address: usize },
+}
+
 pub struct CPUProcess<'a> {
-    cycle: u64,
+    pub cycle: u64,
+    pub event: Option<Event>,
     storage: &'a mut Storage,
 }
 impl<'a> CPUProcess<'a> {
-    pub fn run(&mut self, until_cycle: u64) -> Result<u64> {
-        while self.cycle < until_cycle {
+    pub fn new(cycle: u64, storage: &mut Storage) -> CPUProcess {
+        CPUProcess {
+            cycle,
+            event: None,
+            storage,
+        }
+    }
+    pub fn run(&mut self, target_cycle: u64) -> Result<()> {
+        while self.cycle < target_cycle && self.event.is_none() {
             let instr = self.read_pc();
             let opcode = (instr >> 10) & 0x003F;
             if (instr as u16) & 0xe000 == 0x8000 {
@@ -105,7 +121,7 @@ impl<'a> CPUProcess<'a> {
                 }
             };
         }
-        Ok(self.cycle)
+        Ok(())
     }
 
     fn read_pc(&mut self) -> i16 {
@@ -157,21 +173,24 @@ impl<'a> CPUProcess<'a> {
     fn st_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize;
-        self.storage
+        self.event = self
+            .storage
             .write_byte(address, self.storage.registers[reg2] as i8);
         self.cycle += 4;
     }
     fn st_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize;
-        self.storage
+        self.event = self
+            .storage
             .write_halfword(address, self.storage.registers[reg2] as i16);
         self.cycle += 4;
     }
     fn st_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize;
-        self.storage
+        self.event = self
+            .storage
             .write_word(address, self.storage.registers[reg2]);
         self.cycle += 4;
     }
