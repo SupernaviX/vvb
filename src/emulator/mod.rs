@@ -84,7 +84,9 @@ impl Emulator {
             // Have the other components catch up
             let cpu_cycle = cpu_result.cycle;
             self.video.run(&mut self.storage, cpu_cycle)?;
-            self.hardware.run(&mut self.storage, cpu_cycle);
+            if let Some(interrupt) = self.hardware.run(&mut self.storage, cpu_cycle) {
+                self.cpu.request_interrupt(&mut self.storage, &interrupt);
+            }
 
             // If the CPU wrote somewhere interesting during execution, it would stop and return an event
             // Do what we have to do based on which event was returned

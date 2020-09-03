@@ -1,4 +1,5 @@
 use super::storage::Storage;
+use crate::emulator::cpu::Interrupt;
 
 const SDLR: usize = 0x02000010;
 const SDHR: usize = 0x02000014;
@@ -71,7 +72,7 @@ impl Hardware {
         // TODO: interrupt logic
     }
 
-    pub fn run(&mut self, storage: &mut Storage, target_cycle: u64) {
+    pub fn run(&mut self, storage: &mut Storage, target_cycle: u64) -> Option<Interrupt> {
         while self.cycle < target_cycle {
             self.cycle = std::cmp::min(target_cycle, self.next_tick);
             if self.cycle == self.next_tick {
@@ -85,10 +86,14 @@ impl Hardware {
                     tcr |= T_IS_ZERO;
                     storage.write_byte(TCR, tcr);
 
-                    // TODO: trigger interrupt
-
                     // Stop counting down
                     self.next_tick = u64::MAX;
+
+                    return Some(Interrupt {
+                        code: 0xfe10,
+                        level: 2,
+                        handler: 0xfffffe10,
+                    });
                 } else {
                     // Keep on ticking
                     let tcr = storage.read_byte(TCR);
@@ -97,6 +102,7 @@ impl Hardware {
                 }
             }
         }
+        None
     }
 
     fn read_timer(&self, storage: &Storage) -> u16 {
@@ -163,22 +169,26 @@ mod tests {
         assert_eq!(hardware.read_timer(&storage), 3);
         assert_eq!(hardware.next_event(), 2000);
 
-        hardware.run(&mut storage, 1000);
+        let res = hardware.run(&mut storage, 1000);
+        assert!(res.is_none());
         assert_eq!(storage.read_byte(TCR), T_ENABLED);
         assert_eq!(hardware.read_timer(&storage), 3);
         assert_eq!(hardware.next_event(), 2000);
 
-        hardware.run(&mut storage, hardware.next_event());
+        let res = hardware.run(&mut storage, hardware.next_event());
+        assert!(res.is_none());
         assert_eq!(storage.read_byte(TCR), T_ENABLED);
         assert_eq!(hardware.read_timer(&storage), 2);
         assert_eq!(hardware.next_event(), 4000);
 
-        hardware.run(&mut storage, hardware.next_event());
+        let res = hardware.run(&mut storage, hardware.next_event());
+        assert!(res.is_none());
         assert_eq!(storage.read_byte(TCR), T_ENABLED);
         assert_eq!(hardware.read_timer(&storage), 1);
         assert_eq!(hardware.next_event(), 6000);
 
-        hardware.run(&mut storage, hardware.next_event());
+        let res = hardware.run(&mut storage, hardware.next_event());
+        assert!(res.is_some());
         assert_eq!(storage.read_byte(TCR), T_IS_ZERO | T_ENABLED);
         assert_eq!(hardware.read_timer(&storage), 0);
         assert_eq!(hardware.next_event(), u64::MAX);

@@ -1,6 +1,27 @@
 use super::storage::Storage;
 use anyhow::Result;
 
+// ECR: exception cause register
+const ECR: usize = 4;
+// PSW: program status word
+const PSW: usize = 5;
+// EIPC: exception/interrupt PC
+const EIPC: usize = 0;
+// EIPSW: exception interrupt PSW
+const EIPSW: usize = 1;
+
+// PSW flags and masks
+const INTERRUPT_LEVEL: i32 = 0x0000f0000;
+const NMI_PENDING_FLAG: i32 = 0x00008000;
+const EX_PENDING_FLAG: i32 = 0x00004000;
+const ADDRESS_TRAP_ENABLE_FLAG: i32 = 0x00002000;
+const INTERRUPT_DISABLE_FLAG: i32 = 0x00001000;
+const CARRY_FLAG: i32 = 0x00000008;
+const OVERFLOW_FLAG: i32 = 0x00000004;
+const SIGN_FLAG: i32 = 0x00000002;
+const ZERO_FLAG: i32 = 0x00000001;
+const INTERRUPTS_DISABLED_MASK: i32 = INTERRUPT_DISABLE_FLAG | EX_PENDING_FLAG | NMI_PENDING_FLAG;
+
 pub struct CPU {
     cycle: u64,
 }
@@ -17,12 +38,43 @@ impl CPU {
             event: process.event,
         })
     }
+    pub fn request_interrupt(&mut self, storage: &mut Storage, interrupt: &Interrupt) {
+        let mut psw = storage.sys_registers[PSW];
+
+        // if interrupts have been disabled, do nothing
+        if (psw & INTERRUPTS_DISABLED_MASK) != 0 {
+            return;
+        }
+        // if the current interrupt is more important, do nothing
+        let current_level = ((psw & INTERRUPT_LEVEL) >> 16) as u8;
+        if current_level > interrupt.level {
+            return;
+        }
+
+        let mut ecr = storage.sys_registers[ECR];
+        let pc = storage.pc;
+
+        // Save the state from before interrupt handling
+        storage.sys_registers[EIPSW] = psw;
+        storage.sys_registers[EIPC] = pc as i32;
+
+        // Update the state to process the interrupt
+        ecr |= interrupt.code as u32 as i32; // zero-extending
+        storage.sys_registers[ECR] = ecr;
+
+        psw |= EX_PENDING_FLAG;
+        psw &= !INTERRUPT_LEVEL;
+        psw |= (interrupt.level as i32 + 1) << 16;
+        psw |= INTERRUPT_DISABLE_FLAG;
+        psw &= !ADDRESS_TRAP_ENABLE_FLAG;
+        storage.sys_registers[PSW] = psw;
+
+        storage.pc = interrupt.handler;
+    }
     pub fn reset(&mut self) {
         self.cycle = 0;
     }
 }
-
-const PSW: usize = 5;
 
 pub struct CPUProcessingResult {
     pub cycle: u64,
@@ -30,6 +82,12 @@ pub struct CPUProcessingResult {
 }
 pub enum Event {
     HardwareAccess { address: usize },
+}
+
+pub struct Interrupt {
+    pub code: u16,
+    pub level: u8,
+    pub handler: usize,
 }
 
 pub struct CPUProcess<'a> {
@@ -492,13 +550,13 @@ impl<'a> CPUProcess<'a> {
 
     fn sei(&mut self) {
         let psw = self.storage.sys_registers[PSW];
-        self.storage.sys_registers[PSW] = psw | 0x1000;
+        self.storage.sys_registers[PSW] = psw | INTERRUPT_DISABLE_FLAG;
         self.cycle += 12;
     }
 
     fn cli(&mut self) {
         let psw = self.storage.sys_registers[PSW];
-        self.storage.sys_registers[PSW] = psw ^ 0x1000;
+        self.storage.sys_registers[PSW] = psw ^ INTERRUPT_DISABLE_FLAG;
         self.cycle += 12;
     }
 
@@ -538,32 +596,32 @@ impl<'a> CPUProcess<'a> {
 
     fn update_psw_flags(&mut self, z: bool, s: bool, ov: bool) {
         let mut psw = self.storage.sys_registers[PSW];
-        psw ^= psw & 0x00000007;
+        psw ^= psw & (ZERO_FLAG | SIGN_FLAG | OVERFLOW_FLAG);
         if z {
-            psw |= 1;
+            psw |= ZERO_FLAG;
         }
         if s {
-            psw |= 2;
+            psw |= SIGN_FLAG;
         }
         if ov {
-            psw |= 4;
+            psw |= OVERFLOW_FLAG;
         }
         self.storage.sys_registers[PSW] = psw;
     }
     fn update_psw_flags_cy(&mut self, z: bool, s: bool, ov: bool, cy: bool) {
         let mut psw = self.storage.sys_registers[PSW];
-        psw ^= psw & 0x0000000f;
+        psw ^= psw & (ZERO_FLAG | SIGN_FLAG | OVERFLOW_FLAG | CARRY_FLAG);
         if z {
-            psw |= 1;
+            psw |= ZERO_FLAG;
         }
         if s {
-            psw |= 2;
+            psw |= SIGN_FLAG;
         }
         if ov {
-            psw |= 4;
+            psw |= OVERFLOW_FLAG;
         }
         if cy {
-            psw |= 8;
+            psw |= CARRY_FLAG;
         }
         self.storage.sys_registers[PSW] = psw;
     }
@@ -572,7 +630,7 @@ impl<'a> CPUProcess<'a> {
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::{CPU, PSW};
+    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Interrupt, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG};
     use crate::emulator::storage::Storage;
 
     fn _op_1(opcode: u8, r2: u8, r1: u8) -> Vec<u8> {
@@ -649,6 +707,15 @@ mod tests {
             }
         }
         storage
+    }
+
+    fn add_interrupt_handler(storage: &mut Storage, mut address: usize, instructions: &[Vec<u8>]) {
+        for instr in instructions {
+            for byte in instr {
+                storage.write_byte(address, *byte as i8);
+                address += 1;
+            }
+        }
     }
 
     #[test]
@@ -777,7 +844,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[31], 9);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b0000);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
@@ -790,7 +857,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 3).unwrap();
         assert_eq!(storage.registers[31], -1);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1010);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
     }
 
     #[test]
@@ -803,7 +870,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 3).unwrap();
         assert_eq!(storage.registers[31], 4);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1010);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
     }
 
     #[test]
@@ -821,7 +888,7 @@ mod tests {
         cpu.run(&mut storage, 4).unwrap();
         assert_eq!(storage.registers[29], i32::MAX);
         assert_eq!(storage.registers[31], i32::MIN);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1110);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, CARRY_FLAG | OVERFLOW_FLAG | SIGN_FLAG);
     }
 
     #[test]
@@ -924,7 +991,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[31], 0);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b1001);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, CARRY_FLAG | ZERO_FLAG);
     }
 
     #[test]
@@ -936,7 +1003,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[31], 0x40000000);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b0000);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
@@ -948,7 +1015,7 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[31], i32::MIN >> 1);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0b0010);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, SIGN_FLAG);
     }
 
     #[test]
@@ -1020,5 +1087,98 @@ mod tests {
         cpu.run(&mut storage, 17).unwrap();
         assert_eq!(storage.sys_registers[5], 0x00000040);
         assert_eq!(storage.registers[30], 0x00000040);
+    }
+
+    #[test]
+    fn can_request_interrupt() {
+        let mut storage = rom(&[
+            movea(31, 0, 1),
+        ]);
+        add_interrupt_handler(&mut storage, 0xfffffe10, &[
+            movea(31, 0, 2),
+        ]);
+        let mut cpu = CPU::new();
+        storage.sys_registers[PSW] = 0;
+
+        cpu.request_interrupt(&mut storage, &Interrupt {
+            code: 0xfe10,
+            level: 1,
+            handler: 0xfffffe10,
+        });
+        assert_eq!(storage.sys_registers[PSW], EX_PENDING_FLAG
+            | 0x20000 // interrupt level 1
+            | INTERRUPT_DISABLE_FLAG
+        );
+        assert_eq!(storage.sys_registers[EIPC], 0x07000000);
+        assert_eq!(storage.sys_registers[EIPSW], 0);
+
+        cpu.run(&mut storage, 1).unwrap();
+        assert_eq!(storage.registers[31], 2);
+    }
+
+    #[test]
+    fn can_not_request_interrupt_when_disabled() {
+        let mut storage = rom(&[
+            movea(31, 0, 1),
+            movea(31, 0, 2),
+            movea(31, 0, 3),
+        ]);
+        add_interrupt_handler(&mut storage, 0xfffffe10, &[
+            movea(31, 0, 9001),
+        ]);
+        let mut cpu = CPU::new();
+
+        let interrupt = Interrupt {
+            code: 0xfe10,
+            level: 1,
+            handler: 0xfffffe10
+        };
+
+        storage.sys_registers[PSW] = INTERRUPT_DISABLE_FLAG;
+        cpu.request_interrupt(&mut storage, &interrupt);
+        cpu.run(&mut storage, 1).unwrap();
+        assert_eq!(storage.registers[31], 1);
+
+        storage.sys_registers[PSW] = EX_PENDING_FLAG;
+        cpu.request_interrupt(&mut storage, &interrupt);
+        cpu.run(&mut storage, 2).unwrap();
+        assert_eq!(storage.registers[31], 2);
+
+        storage.sys_registers[PSW] = NMI_PENDING_FLAG;
+        cpu.request_interrupt(&mut storage, &interrupt);
+        cpu.run(&mut storage, 3).unwrap();
+        assert_eq!(storage.registers[31], 3);
+    }
+
+    #[test]
+    fn can_not_request_interrupt_when_current_interrupt_takes_priority() {
+        let mut storage = rom(&[
+            movea(31, 0, 1),
+        ]);
+        add_interrupt_handler(&mut storage, 0xfffffe10, &[
+            movea(31, 0, 2),
+        ]);
+        add_interrupt_handler(&mut storage, 0xfffffe40, &[
+            movea(31, 0, 3),
+        ]);
+        let mut cpu = CPU::new();
+        storage.sys_registers[PSW] = 0;
+
+        let high_priority_interrupt = Interrupt {
+            code: 0xfe40,
+            level: 4,
+            handler: 0xfffffe40,
+        };
+        let low_priority_interrupt = Interrupt {
+            code: 0xfe10,
+            level: 1,
+            handler: 0xfffffe10,
+        };
+        cpu.request_interrupt(&mut storage, &high_priority_interrupt);
+        storage.sys_registers[PSW] ^= EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG;
+        cpu.request_interrupt(&mut storage, &low_priority_interrupt);
+
+        cpu.run(&mut storage, 1).unwrap();
+        assert_eq!(storage.registers[31], 3);
     }
 }

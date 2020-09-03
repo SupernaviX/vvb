@@ -48,7 +48,7 @@ impl Storage {
         }
         for sys_reg in 0..self.sys_registers.len() {
             self.sys_registers[sys_reg] = match sys_reg {
-                4 => 0x0000fff0,  // ETC
+                4 => 0x0000fff0,  // ECR
                 5 => 0x00008000,  // PSW
                 6 => 0x00005346,  // PIR
                 7 => 0x000000E0,  // TKCW
