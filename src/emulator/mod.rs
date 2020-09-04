@@ -45,7 +45,7 @@ impl Emulator {
         self.tick_calls = 0;
         self.cpu.reset();
         self.video.init(&mut self.storage);
-        self.hardware.reset();
+        self.hardware.init(&mut self.storage);
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
             self.storage.read_halfword(0xfffffff0),
@@ -84,9 +84,7 @@ impl Emulator {
             // Have the other components catch up
             let cpu_cycle = cpu_result.cycle;
             self.video.run(&mut self.storage, cpu_cycle)?;
-            if let Some(interrupt) = self.hardware.run(&mut self.storage, cpu_cycle) {
-                self.cpu.request_interrupt(&mut self.storage, &interrupt);
-            }
+            self.hardware.run(&mut self.storage, cpu_cycle);
 
             // If the CPU wrote somewhere interesting during execution, it would stop and return an event
             // Do what we have to do based on which event was returned
@@ -96,6 +94,12 @@ impl Emulator {
                 }
                 None => (),
             };
+
+            // Components are caught up and their events are handled, now apply any pending interrupts
+            if let Some(interrupt) = self.hardware.active_interrupt() {
+                self.cpu.request_interrupt(&mut self.storage, &interrupt);
+            }
+
             self.cycle = cpu_cycle;
         }
         Ok(())

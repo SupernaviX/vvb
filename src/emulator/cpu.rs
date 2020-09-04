@@ -84,6 +84,7 @@ pub enum Event {
     HardwareAccess { address: usize },
 }
 
+#[derive(Clone, Copy)]
 pub struct Interrupt {
     pub code: u16,
     pub level: u8,
