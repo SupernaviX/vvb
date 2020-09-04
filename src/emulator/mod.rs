@@ -92,7 +92,7 @@ impl Emulator {
                 Some(Event::HardwareAccess { address }) => {
                     self.hardware.process_event(&mut self.storage, address);
                 }
-                None => (),
+                _ => (),
             };
 
             // Components are caught up and their events are handled, now apply any pending interrupts

@@ -82,6 +82,7 @@ pub struct CPUProcessingResult {
 }
 pub enum Event {
     HardwareAccess { address: usize },
+    ReturnFromInterrupt,
 }
 
 #[derive(Clone, Copy)]
@@ -169,6 +170,7 @@ impl<'a> CPUProcess<'a> {
 
                 0b011110 => self.sei(),
                 0b010110 => self.cli(),
+                0b011001 => self.reti(),
 
                 _ => {
                     // TODO this should trap
@@ -561,6 +563,13 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 12;
     }
 
+    fn reti(&mut self) {
+        self.storage.sys_registers[PSW] = self.storage.sys_registers[EIPSW];
+        self.storage.pc = self.storage.sys_registers[EIPC] as usize;
+        self.event = Some(Event::ReturnFromInterrupt);
+        self.cycle += 10;
+    }
+
     fn parse_format_i_opcode(&self, instr: i16) -> (usize, usize) {
         let reg2 = (instr & 0x03E0) as usize >> 5;
         let reg1 = (instr & 0x001F) as usize;
@@ -695,6 +704,7 @@ mod tests {
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
     fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id as i8) }
     fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id as i8) }
+    fn reti() -> Vec<u8> { _op_2(0b011001, 0, 0) }
 
     fn rom(instructions: &[Vec<u8>]) -> Storage {
         let mut storage = Storage::new();
@@ -1097,6 +1107,7 @@ mod tests {
         ]);
         add_interrupt_handler(&mut storage, 0xfffffe10, &[
             movea(31, 0, 2),
+            reti(),
         ]);
         let mut cpu = CPU::new();
         storage.sys_registers[PSW] = 0;
@@ -1115,6 +1126,12 @@ mod tests {
 
         cpu.run(&mut storage, 1).unwrap();
         assert_eq!(storage.registers[31], 2);
+
+        // Run another 10 cycles for RETI
+        cpu.run(&mut storage, 11).unwrap();
+        assert_eq!(storage.pc, 0x07000000);
+        cpu.run(&mut storage, 12).unwrap();
+        assert_eq!(storage.registers[31], 1);
     }
 
     #[test]
