@@ -325,11 +325,11 @@ impl<'a> CPUProcess<'a> {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let product = self.storage.registers[reg2] as u64 * self.storage.registers[reg1] as u64;
 
-        let loword = product as i32;
         let hiword = (product >> 32) as i32;
+        let loword = product as i32;
 
-        self.storage.registers[reg2] = loword;
         self.storage.registers[30] = hiword;
+        self.storage.registers[reg2] = loword;
         let ov = product != loword as u64;
         self.update_psw_flags(loword == 0, loword < 0, ov);
         self.cycle += 13;
@@ -345,8 +345,8 @@ impl<'a> CPUProcess<'a> {
                 self.storage.pc - 2
             ));
         } else if dividend == i32::MIN && divisor == -1 {
-            self.storage.registers[reg2] = i32::MIN;
             self.storage.registers[30] = 0;
+            self.storage.registers[reg2] = i32::MIN;
             self.update_psw_flags(false, true, true);
         } else {
             let quotient = dividend / divisor;
