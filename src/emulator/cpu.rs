@@ -220,13 +220,13 @@ impl<'a> CPUProcess<'a> {
     }
     fn ld_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
+        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
         self.storage.registers[reg2] = self.storage.read_halfword(address) as i32;
         self.cycle += 5;
     }
     fn ld_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
+        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
         self.storage.registers[reg2] = self.storage.read_word(address);
         self.cycle += 5;
     }
@@ -238,13 +238,13 @@ impl<'a> CPUProcess<'a> {
     }
     fn in_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
+        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
         self.storage.registers[reg2] = (self.storage.read_halfword(address) as i32) & 0x0000ffff;
         self.cycle += 5;
     }
     fn in_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
+        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
         self.storage.registers[reg2] = self.storage.read_word(address);
         self.cycle += 5;
     }
@@ -259,7 +259,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn st_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
+        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
         self.event = self
             .storage
             .write_halfword(address, self.storage.registers[reg2] as i16);
@@ -267,7 +267,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn st_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
+        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
         self.event = self
             .storage
             .write_word(address, self.storage.registers[reg2]);
@@ -703,7 +703,11 @@ mod tests {
     fn movea(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101000, r2, r1, imm) }
     fn in_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b111000, r2, r1, disp) }
     fn ld_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110000, r2, r1, disp) }
+    fn ld_h(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110001, r2, r1, disp) }
+    fn ld_w(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110011, r2, r1, disp) }
     fn st_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110100, r2, r1, disp) }
+    fn st_h(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110101, r2, r1, disp) }
+    fn st_w(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110111, r2, r1, disp) }
     fn add_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010001, r2, imm) }
     fn addi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101001, r2, r1, imm) }
     fn cmp_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000011, r2, r1) }
@@ -845,6 +849,20 @@ mod tests {
     }
 
     #[test]
+    fn masks_lower_bits_of_addresses_for_multibyte_reads() {
+        let mut storage = rom(&[
+            movhi(10, 0, 0x0500),
+            ld_h(11, 10, 1),
+            ld_w(12, 10, 2),
+        ]);
+        storage.write_word(0x05000000, 0x12345678);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 11).unwrap();
+        assert_eq!(storage.registers[11], 0x5678);
+        assert_eq!(storage.registers[12], 0x12345678);
+    }
+
+    #[test]
     fn writes_to_memory() {
         let mut storage = rom(&[
             movhi(30, 0, 0x0700),
@@ -868,6 +886,22 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 7).unwrap();
         assert_eq!(storage.read_byte(0x07000032), -2);
+    }
+
+    #[test]
+    fn masks_lower_bits_of_addresses_for_multibyte_writes() {
+        let mut storage = rom(&[
+            movhi(10, 0, 0x0500),
+            movhi(11, 0, 0x1234),
+            movea(11, 11, 0x5678),
+            st_h(11, 10, 1),
+            st_w(11, 10, 10),
+        ]);
+        storage.write_word(0x05000000, 0x12345678);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 13).unwrap();
+        assert_eq!(storage.read_halfword(0x05000000), 0x5678);
+        assert_eq!(storage.read_word(0x05000008), 0x12345678);
     }
 
     #[test]
