@@ -9,6 +9,7 @@ use video::{Eye, FrameChannel, Video};
 
 use anyhow::Result;
 use log::debug;
+use std::cmp;
 
 pub struct Emulator {
     cycle: u64,
@@ -74,7 +75,10 @@ impl Emulator {
 
         while self.cycle < target_cycle {
             // Find how long we can run before something interesting happens
-            let next_event_cycle = std::cmp::min(self.hardware.next_event(), target_cycle);
+            let next_event_cycle = cmp::min(
+                target_cycle,
+                cmp::min(self.hardware.next_event(), self.video.next_event()),
+            );
 
             // Run the CPU for at least that many cycles
             // (specifically, until next_event_cycle + however long it takes to finish the current op)
@@ -89,13 +93,19 @@ impl Emulator {
             // If the CPU wrote somewhere interesting during execution, it would stop and return an event
             // Do what we have to do based on which event was returned
             match cpu_result.event {
-                Some(Event::HardwareAccess { address }) => {
+                Some(Event::HardwareWrite { address }) => {
                     self.hardware.process_event(&mut self.storage, address);
+                }
+                Some(Event::DisplayControlWrite { address }) => {
+                    self.video.process_event(&mut self.storage, address);
                 }
                 _ => (),
             };
 
             // Components are caught up and their events are handled, now apply any pending interrupts
+            if let Some(interrupt) = self.video.active_interrupt() {
+                self.cpu.request_interrupt(&mut self.storage, &interrupt);
+            }
             if let Some(interrupt) = self.hardware.active_interrupt() {
                 self.cpu.request_interrupt(&mut self.storage, &interrupt);
             }

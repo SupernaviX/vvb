@@ -134,6 +134,7 @@ impl Storage {
     fn resolve_vip_address(&self, address: usize) -> Address {
         let address = address & 0x0007FFFF;
         match address {
+            0x0005f822 => Address::Mapped(address, Some(Event::DisplayControlWrite { address })),
             0x00000000..=0x00077FFF => Address::Mapped(address, None),
             // The following ranges mirror data from the character tables
             0x00078000..=0x00079FFF => Address::Mapped(address - 0x72000, None),
@@ -146,7 +147,7 @@ impl Storage {
 
     fn resolve_hardware_address(&self, address: usize) -> Address {
         let address = address & 0x0200003f;
-        Address::Mapped(address, Some(Event::HardwareAccess { address }))
+        Address::Mapped(address, Some(Event::HardwareWrite { address }))
     }
 
     fn resolve_wram_address(&self, address: usize) -> Address {

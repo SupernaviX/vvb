@@ -17,6 +17,7 @@ const R1BSY: i16 = 0x0020;
 const L1BSY: i16 = 0x0010;
 const R0BSY: i16 = 0x0008;
 const L0BSY: i16 = 0x0004;
+const DP_READONLY_MASK: i16 = FCLK | SCANRDY | R1BSY | L1BSY | R0BSY | L0BSY;
 
 // brightness control registers
 const BRTA: usize = 0x0005f824;
@@ -58,6 +59,7 @@ pub enum Eye {
     Left,
     Right,
 }
+use crate::emulator::cpu::Interrupt;
 use Eye::{Left, Right};
 
 pub type EyeBuffer = Vec<u8>;
@@ -72,7 +74,9 @@ pub type FrameChannel = mpsc::Receiver<Frame>;
 pub struct Video {
     cycle: u64,
     drawing: bool,
+    dpctrl_flags: i16,
     display_buffer: Buffer,
+    interrupt: Option<Interrupt>,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
@@ -81,7 +85,9 @@ impl Video {
         Video {
             cycle: 0,
             drawing: false,
+            dpctrl_flags: FCLK | SCANRDY,
             display_buffer: Buffer0,
+            interrupt: None,
             frame_channel: None,
             buffers: [
                 Arc::new(Mutex::new(vec![0; FRAME_SIZE])),
@@ -92,12 +98,33 @@ impl Video {
 
     pub fn init(&mut self, storage: &mut Storage) {
         self.cycle = 0;
-        storage.write_halfword(DPCTRL, FCLK | SCANRDY);
-        storage.write_halfword(DPSTTS, FCLK | SCANRDY);
+        self.drawing = false;
+        self.dpctrl_flags = FCLK | SCANRDY;
+        self.display_buffer = Buffer0;
+        self.interrupt = None;
+        storage.write_halfword(DPCTRL, self.dpctrl_flags);
+        storage.write_halfword(DPSTTS, self.dpctrl_flags);
+    }
+
+    pub fn next_event(&self) -> u64 {
+        ((self.cycle / 20000) + 1) * 20000
+    }
+
+    pub fn active_interrupt(&self) -> Option<Interrupt> {
+        self.interrupt.clone()
+    }
+
+    pub fn process_event(&mut self, storage: &mut Storage, address: usize) {
+        if address == DPCTRL {
+            // Don't let the program overwrite the readonly flags
+            let mut dpctrl = storage.read_halfword(DPCTRL);
+            dpctrl &= !DP_READONLY_MASK;
+            dpctrl |= self.dpctrl_flags;
+            storage.write_halfword(DPSTTS, dpctrl);
+        }
     }
 
     pub fn run(&mut self, storage: &mut Storage, target_cycle: u64) -> Result<()> {
-        let mut dpctrl = storage.read_halfword(DPCTRL);
         let mut xpctrl = storage.read_halfword(XPCTRL);
 
         let mut curr_ms = self.cycle / 20000;
@@ -109,7 +136,7 @@ impl Video {
             match curr_ms % 20 {
                 0 => {
                     // Frame clock up
-                    dpctrl |= FCLK;
+                    self.dpctrl_flags |= FCLK;
 
                     // If we're starting a display frame, toggle whether we're drawing
                     // TODO: this should be the start of a game frame
@@ -128,7 +155,7 @@ impl Video {
                 }
                 3 => {
                     // "Start displaying" left eye
-                    dpctrl |= match self.display_buffer {
+                    self.dpctrl_flags |= match self.display_buffer {
                         Buffer0 => L0BSY,
                         Buffer1 => L1BSY,
                     };
@@ -148,15 +175,15 @@ impl Video {
                 }
                 8 => {
                     // "Stop displaying" left eye
-                    dpctrl &= !(L0BSY | L1BSY);
+                    self.dpctrl_flags &= !(L0BSY | L1BSY);
                 }
                 10 => {
                     // Frame clock down
-                    dpctrl ^= FCLK;
+                    self.dpctrl_flags ^= FCLK;
                 }
                 13 => {
                     // "Start displaying" right eye
-                    dpctrl |= match self.display_buffer {
+                    self.dpctrl_flags |= match self.display_buffer {
                         Buffer0 => R0BSY,
                         Buffer1 => R1BSY,
                     };
@@ -168,12 +195,15 @@ impl Video {
                 }
                 18 => {
                     // "Stop displaying" right eye,
-                    dpctrl &= !(R0BSY | R1BSY);
+                    self.dpctrl_flags &= !(R0BSY | R1BSY);
                 }
                 _ => (),
             };
         }
         self.cycle = target_cycle;
+        let mut dpctrl = storage.read_halfword(DPCTRL);
+        dpctrl &= !DP_READONLY_MASK;
+        dpctrl |= self.dpctrl_flags;
         storage.write_halfword(DPCTRL, dpctrl);
         storage.write_halfword(DPSTTS, dpctrl);
         storage.write_halfword(XPCTRL, xpctrl);
