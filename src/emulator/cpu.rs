@@ -22,6 +22,10 @@ const SIGN_FLAG: i32 = 0x00000002;
 const ZERO_FLAG: i32 = 0x00000001;
 const INTERRUPTS_DISABLED_MASK: i32 = INTERRUPT_DISABLE_FLAG | EX_PENDING_FLAG | NMI_PENDING_FLAG;
 
+fn nth_bit_set(value: i32, n: i32) -> bool {
+    return (value & (1 << n)) != 0;
+}
+
 pub struct CPU {
     cycle: u64,
 }
@@ -197,8 +201,8 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 1;
     }
     fn mov_r(&mut self, instr: i16) {
-        let (reg2, reg1) = self.parse_format_ii_opcode(instr);
-        self.storage.registers[reg2] = self.storage.registers[(reg1 & 0x1f) as usize];
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        self.storage.registers[reg2] = self.storage.registers[reg1];
         self.cycle += 1;
     }
     fn movhi(&mut self, instr: i16) {
@@ -386,7 +390,7 @@ impl<'a> CPUProcess<'a> {
                 self.storage.pc - 2
             ));
         } else {
-            let quotient = (dividend / divisor as u32) as i32;
+            let quotient = (dividend / divisor) as i32;
             let remainder = (dividend % divisor) as i32;
             self.storage.registers[30] = remainder;
             self.storage.registers[reg2] = quotient;
@@ -428,7 +432,7 @@ impl<'a> CPUProcess<'a> {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.storage.registers[reg1] | (imm & 0xffff);
         self.storage.registers[reg2] = value;
-        self.update_psw_flags(value == 0, false, false);
+        self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn xor(&mut self, instr: i16) {
@@ -452,7 +456,7 @@ impl<'a> CPUProcess<'a> {
         let shift = imm & 0x1f;
         let value = old_value >> shift;
         self.storage.registers[reg2] = value;
-        let cy = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
+        let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
     }
@@ -462,7 +466,7 @@ impl<'a> CPUProcess<'a> {
         let shift = self.storage.registers[reg1] & 0x1f;
         let value = old_value >> shift;
         self.storage.registers[reg2] = value;
-        let cy = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
+        let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
     }
@@ -472,7 +476,7 @@ impl<'a> CPUProcess<'a> {
         let shift = imm & 0x1f;
         let value = old_value << shift;
         self.storage.registers[reg2] = value;
-        let cy = shift != 0 && (old_value & (i32::MIN >> (shift - 1)) != 0);
+        let cy = shift != 0 && nth_bit_set(old_value, 32 - shift);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
     }
@@ -482,7 +486,7 @@ impl<'a> CPUProcess<'a> {
         let shift = self.storage.registers[reg1] & 0x1f;
         let value = old_value << shift;
         self.storage.registers[reg2] = value;
-        let cy = shift != 0 && (old_value & (i32::MIN >> (shift - 1)) != 0);
+        let cy = shift != 0 && nth_bit_set(old_value, 32 - shift);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
     }
@@ -492,7 +496,7 @@ impl<'a> CPUProcess<'a> {
         let shift = imm & 0x1f;
         let value = ((old_value as u32) >> shift as u32) as i32;
         self.storage.registers[reg2] = value;
-        let cy = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
+        let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
     }
@@ -502,7 +506,7 @@ impl<'a> CPUProcess<'a> {
         let shift = self.storage.registers[reg1] & 0x1f;
         let value = ((old_value as u32) >> shift as u32) as i32;
         self.storage.registers[reg2] = value;
-        let cy = shift != 0 && (old_value & (1 << (shift - 1)) != 0);
+        let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
     }
@@ -510,10 +514,10 @@ impl<'a> CPUProcess<'a> {
     fn bcond(&mut self, instr: i16) {
         let (negate, cond, disp) = self.parse_format_iii_opcode(instr);
         let psw = self.storage.sys_registers[PSW];
-        let cy = (psw & 0x8) != 0;
-        let ov = (psw & 0x4) != 0;
-        let s = (psw & 0x2) != 0;
-        let z = (psw & 0x1) != 0;
+        let cy = (psw & CARRY_FLAG) != 0;
+        let ov = (psw & OVERFLOW_FLAG) != 0;
+        let s = (psw & SIGN_FLAG) != 0;
+        let z = (psw & ZERO_FLAG) != 0;
         let mut result = match cond {
             0 => ov,
             1 => cy,
@@ -521,7 +525,7 @@ impl<'a> CPUProcess<'a> {
             3 => cy || z,
             4 => s,
             5 => true,
-            6 => ov || s,
+            6 => ov != s,
             7 => ((ov != s) || z),
             _ => unreachable!("impossible"),
         };
@@ -530,7 +534,7 @@ impl<'a> CPUProcess<'a> {
         }
         if result {
             // jump is relative to start of instruction
-            self.storage.pc = (self.storage.pc as i32 + disp - 2) as usize;
+            self.storage.pc = (self.storage.pc as i32 + disp - 2) as usize & 0xfffffffe;
             self.cycle += 3;
         } else {
             self.cycle += 1;
@@ -540,17 +544,17 @@ impl<'a> CPUProcess<'a> {
     fn jal(&mut self, instr: i16) {
         let disp = self.parse_format_iv_opcode(instr);
         self.storage.registers[31] = self.storage.pc as i32;
-        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize;
+        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
     fn jmp(&mut self, instr: i16) {
         let (_, reg1) = self.parse_format_i_opcode(instr);
-        self.storage.pc = self.storage.registers[reg1] as usize;
+        self.storage.pc = self.storage.registers[reg1] as usize & 0xfffffffe;
         self.cycle += 3;
     }
     fn jr(&mut self, instr: i16) {
         let disp = self.parse_format_iv_opcode(instr);
-        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize;
+        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
 
@@ -582,7 +586,7 @@ impl<'a> CPUProcess<'a> {
 
     fn cli(&mut self) {
         let psw = self.storage.sys_registers[PSW];
-        self.storage.sys_registers[PSW] = psw ^ INTERRUPT_DISABLE_FLAG;
+        self.storage.sys_registers[PSW] = psw & !INTERRUPT_DISABLE_FLAG;
         self.cycle += 12;
     }
 
@@ -611,7 +615,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn parse_format_iv_opcode(&mut self, instr: i16) -> i32 {
         let mut disp: i32 = (instr as i32).wrapping_shl(24).wrapping_shr(8);
-        disp |= self.read_pc() as i32;
+        disp += self.read_pc() as i32;
         disp
     }
     fn parse_format_v_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
