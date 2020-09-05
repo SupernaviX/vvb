@@ -123,10 +123,9 @@ impl<'a> CPUProcess<'a> {
                 0b110000 => self.ld_b(instr),
                 0b110001 => self.ld_h(instr),
                 0b110011 => self.ld_w(instr),
-                // IN.x matches LD.x
-                0b111000 => self.ld_b(instr),
-                0b111001 => self.ld_h(instr),
-                0b111011 => self.ld_w(instr),
+                0b111000 => self.in_b(instr),
+                0b111001 => self.in_h(instr),
+                0b111011 => self.in_w(instr),
 
                 0b110100 => self.st_b(instr),
                 0b110101 => self.st_h(instr),
@@ -226,6 +225,24 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 5;
     }
     fn ld_w(&mut self, instr: i16) {
+        let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
+        let address = (self.storage.registers[reg1] + disp) as usize;
+        self.storage.registers[reg2] = self.storage.read_word(address);
+        self.cycle += 5;
+    }
+    fn in_b(&mut self, instr: i16) {
+        let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
+        let address = (self.storage.registers[reg1] + disp) as usize;
+        self.storage.registers[reg2] = (self.storage.read_byte(address) as i32) & 0x000000ff;
+        self.cycle += 5;
+    }
+    fn in_h(&mut self, instr: i16) {
+        let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
+        let address = (self.storage.registers[reg1] + disp) as usize;
+        self.storage.registers[reg2] = (self.storage.read_halfword(address) as i32) & 0x0000ffff;
+        self.cycle += 5;
+    }
+    fn in_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize;
         self.storage.registers[reg2] = self.storage.read_word(address);
@@ -684,6 +701,7 @@ mod tests {
     fn mov_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000000, r2, r1) }
     fn movhi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101111, r2, r1, imm) }
     fn movea(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101000, r2, r1, imm) }
+    fn in_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b111000, r2, r1, disp) }
     fn ld_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110000, r2, r1, disp) }
     fn st_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110100, r2, r1, disp) }
     fn add_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010001, r2, imm) }
@@ -811,6 +829,19 @@ mod tests {
         let mut cpu = CPU::new();
         cpu.run(&mut storage, 7).unwrap();
         assert_eq!(storage.registers[31], -2);
+    }
+
+    #[test]
+    fn zero_extends_for_loads() {
+        let mut storage = rom(&[
+            movhi(30, 0, 0x0700),
+            movea(30, 30, 0x0042),
+            in_b(31, 30, -16),
+        ]);
+        storage.write_byte(0x07000032, -2);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 7).unwrap();
+        assert_eq!(storage.registers[31], 0x000000fe);
     }
 
     #[test]
