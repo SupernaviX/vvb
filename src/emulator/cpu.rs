@@ -178,6 +178,25 @@ impl<'a> CPUProcess<'a> {
                 0b010110 => self.cli(),
                 0b011001 => self.reti(),
 
+                0b111110 => {
+                    // format 7 opcodes are format 1 with a subopcode suffix
+                    let subopcode = (self.read_pc() >> 10) & 0x3f;
+                    match subopcode {
+                        0b001100 => self.mpyhw(instr),
+                        0b001010 => self.rev(instr),
+                        0b001000 => self.xb(instr),
+                        0b001001 => self.xh(instr),
+                        _ => {
+                            // TODO this should trap
+                            return Err(anyhow::anyhow!(
+                                "Unrecognized subopcode {:06b} at address 0x{:08x}",
+                                subopcode,
+                                self.storage.pc - 4
+                            ));
+                        }
+                    }
+                }
+
                 _ => {
                     // TODO this should trap
                     return Err(anyhow::anyhow!(
@@ -599,6 +618,38 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 10;
     }
 
+    fn mpyhw(&mut self, instr: i16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let rhs = self.storage.registers[reg1]
+            .wrapping_shl(15)
+            .wrapping_shr(15);
+        self.storage.registers[reg2] = self.storage.registers[reg2] * rhs;
+        self.cycle += 9;
+    }
+    fn rev(&mut self, instr: i16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = self.storage.registers[reg1].reverse_bits();
+        self.storage.registers[reg2] = value;
+        self.cycle += 22;
+    }
+    #[allow(overflowing_literals)]
+    fn xb(&mut self, instr: i16) {
+        let (reg2, _) = self.parse_format_i_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let value = (old_value & 0xffff0000)
+            | ((old_value << 8) & 0x0000ff00)
+            | ((old_value >> 8) & 0x000000ff);
+        self.storage.registers[reg2] = value;
+        self.cycle += 6;
+    }
+    fn xh(&mut self, instr: i16) {
+        let (reg2, _) = self.parse_format_i_opcode(instr);
+        let old_value = self.storage.registers[reg2];
+        let value = (old_value << 16) | ((old_value >> 16) & 0x0000ffff);
+        self.storage.registers[reg2] = value;
+        self.cycle += 1;
+    }
+
     fn parse_format_i_opcode(&self, instr: i16) -> (usize, usize) {
         let reg2 = (instr & 0x03E0) as usize >> 5;
         let reg1 = (instr & 0x001F) as usize;
@@ -703,6 +754,14 @@ mod tests {
     fn _op_6(opcode: u8, r2: u8, r1: u8, disp: i16) -> Vec<u8> {
         _op_5(opcode, r2, r1, disp)
     }
+    fn _op_7(opcode: u8, r2: u8, r1: u8, subopcode: u8) -> Vec<u8> {
+        vec![
+            (r2 << 5) | r1,
+            (opcode << 2) | (r2 >> 3),
+            0,
+            subopcode << 2,
+        ]
+    }
 
     fn mov_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000000, r2, r1) }
     fn movhi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101111, r2, r1, imm) }
@@ -738,6 +797,10 @@ mod tests {
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
     fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id as i8) }
     fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id as i8) }
+    fn mpyhw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001100) }
+    fn rev(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001010) }
+    fn xb(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001000) }
+    fn xh(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001001) }
     fn reti() -> Vec<u8> { _op_2(0b011001, 0, 0) }
 
     fn rom(instructions: &[Vec<u8>]) -> Storage {
@@ -1215,6 +1278,37 @@ mod tests {
         cpu.run(&mut storage, 17).unwrap();
         assert_eq!(storage.sys_registers[5], 0x00000040);
         assert_eq!(storage.registers[30], 0x00000040);
+    }
+
+    #[test]
+    fn can_run_mpyhw() {
+        let mut storage = rom(&[
+            movea(10, 0, 9),
+            movea(11, 0, 6),
+            mpyhw(10, 11),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 11).unwrap();
+        assert_eq!(storage.registers[10], 54);
+        assert_eq!(storage.sys_registers[PSW] & 0xf, 0);
+    }
+
+    #[test]
+    fn can_run_extended_opcodes() {
+        let mut storage = rom(&[
+            movhi(10, 0, 0x1234),
+            movea(10, 10, 0x5678),
+            mov_r(11, 10),
+            mov_r(12, 10),
+            rev(10, 10),
+            xb(11),
+            xh(12),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 33).unwrap();
+        assert_eq!(storage.registers[10], 0x1e6a2c48);
+        assert_eq!(storage.registers[11], 0x12347856);
+        assert_eq!(storage.registers[12], 0x56781234);
     }
 
     #[test]
