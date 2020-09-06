@@ -3,6 +3,7 @@ use anyhow::Result;
 
 // ECR: exception cause register
 const ECR: usize = 4;
+const EICC: i32 = 0x0000ffff;
 // PSW: program status word
 const PSW: usize = 5;
 // EIPC: exception/interrupt PC
@@ -63,7 +64,8 @@ impl CPU {
         storage.sys_registers[EIPC] = pc as i32;
 
         // Update the state to process the interrupt
-        ecr |= interrupt.code as u32 as i32; // zero-extending
+        ecr &= !EICC;
+        ecr |= interrupt.code as u16 as i32; // zero-extending
         storage.sys_registers[ECR] = ecr;
 
         psw |= EX_PENDING_FLAG;
