@@ -615,7 +615,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn parse_format_iv_opcode(&mut self, instr: i16) -> i32 {
         let mut disp: i32 = (instr as i32).wrapping_shl(24).wrapping_shr(8);
-        disp += self.read_pc() as i32;
+        disp |= self.read_pc() as u16 as i32;
         disp
     }
     fn parse_format_v_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
