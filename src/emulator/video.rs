@@ -17,6 +17,7 @@ const R1BSY: i16 = 0x0020;
 const L1BSY: i16 = 0x0010;
 const R0BSY: i16 = 0x0008;
 const L0BSY: i16 = 0x0004;
+const DISP: i16 = 0x0002;
 const DP_READONLY_MASK: i16 = FCLK | SCANRDY | R1BSY | L1BSY | R0BSY | L0BSY;
 
 // brightness control registers
@@ -74,6 +75,7 @@ pub type FrameChannel = mpsc::Receiver<Frame>;
 pub struct Video {
     cycle: u64,
     drawing: bool,
+    enabled: bool,
     dpctrl_flags: i16,
     display_buffer: Buffer,
     interrupt: Option<Interrupt>,
@@ -85,6 +87,7 @@ impl Video {
         Video {
             cycle: 0,
             drawing: false,
+            enabled: false,
             dpctrl_flags: FCLK | SCANRDY,
             display_buffer: Buffer0,
             interrupt: None,
@@ -99,6 +102,7 @@ impl Video {
     pub fn init(&mut self, storage: &mut Storage) {
         self.cycle = 0;
         self.drawing = false;
+        self.enabled = false;
         self.dpctrl_flags = FCLK | SCANRDY;
         self.display_buffer = Buffer0;
         self.interrupt = None;
@@ -119,6 +123,10 @@ impl Video {
             // Don't let the program overwrite the readonly flags
             let mut dpctrl = storage.read_halfword(DPCTRL);
             dpctrl &= !DP_READONLY_MASK;
+            self.enabled = (dpctrl & DISP) != 0;
+            if !self.enabled {
+                self.dpctrl_flags = SCANRDY;
+            }
             dpctrl |= self.dpctrl_flags;
             storage.write_halfword(DPSTTS, dpctrl);
         }
@@ -129,7 +137,7 @@ impl Video {
 
         let mut curr_ms = self.cycle / 20000;
         let next_ms = target_cycle / 20000;
-        while curr_ms != next_ms {
+        while self.enabled && curr_ms != next_ms {
             curr_ms = curr_ms + 1;
             self.cycle += curr_ms * 20000;
 
@@ -442,12 +450,17 @@ impl Video {
 #[cfg(test)]
 mod tests {
     use crate::emulator::storage::Storage;
-    use crate::emulator::video::Video;
+    use crate::emulator::video::{Video, DISP, DPCTRL};
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
 
     fn ms_to_cycles(ms: u64) -> u64 {
         ms * 20000
+    }
+
+    fn write_dpctrl(video: &mut Video, storage: &mut Storage, value: i16) {
+        storage.write_halfword(DPCTRL, value);
+        video.process_event(storage, DPCTRL);
     }
 
     #[test]
@@ -456,43 +469,44 @@ mod tests {
         let mut storage = Storage::new();
 
         video.init(&mut storage);
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        write_dpctrl(&mut video, &mut storage, DISP);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(3)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L0BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
 
         video.run(&mut storage, ms_to_cycles(8)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(10)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(13)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R0BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
 
         video.run(&mut storage, ms_to_cycles(18)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(20)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(23)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L0BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
 
         video.run(&mut storage, ms_to_cycles(28)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(30)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(33)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R0BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
 
         video.run(&mut storage, ms_to_cycles(38)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(40)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
     }
 
     #[test]
@@ -501,44 +515,45 @@ mod tests {
         let mut storage = Storage::new();
 
         video.init(&mut storage);
+        write_dpctrl(&mut video, &mut storage, DISP);
         storage.write_halfword(XPCTRL, XPEN);
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(3)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L0BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
 
         video.run(&mut storage, ms_to_cycles(8)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(10)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(13)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R0BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
 
         video.run(&mut storage, ms_to_cycles(18)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(20)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(23)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK | L1BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L1BSY);
 
         video.run(&mut storage, ms_to_cycles(28)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
         video.run(&mut storage, ms_to_cycles(30)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(33)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | R1BSY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R1BSY);
 
         video.run(&mut storage, ms_to_cycles(38)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(&mut storage, ms_to_cycles(40)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), SCANRDY | FCLK);
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
     }
 
     #[test]
@@ -547,6 +562,7 @@ mod tests {
         let mut storage = Storage::new();
 
         video.init(&mut storage);
+        write_dpctrl(&mut video, &mut storage, DISP);
         // turn on drawing
         storage.write_halfword(XPCTRL, XPEN);
 
@@ -585,6 +601,7 @@ mod tests {
         let mut storage = Storage::new();
 
         video.init(&mut storage);
+        write_dpctrl(&mut video, &mut storage, DISP);
 
         // turn on drawing 2 frames in, because that's the first time we see a rising FCLK
         video.run(&mut storage, ms_to_cycles(39)).unwrap();
@@ -610,6 +627,7 @@ mod tests {
         let mut storage = Storage::new();
 
         video.init(&mut storage);
+        write_dpctrl(&mut video, &mut storage, DISP);
 
         // start >2 frames in, because that's the first time we see a rising FCLK
         video.run(&mut storage, ms_to_cycles(41)).unwrap();
