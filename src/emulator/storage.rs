@@ -132,15 +132,17 @@ impl Storage {
     }
 
     fn resolve_vip_address(&self, address: usize) -> Address {
-        let address = address & 0x0007FFFF;
+        let address = address & 0x0007ffff;
         match address {
-            0x0005f822 => Address::Mapped(address, Some(Event::DisplayControlWrite { address })),
-            0x00000000..=0x00077FFF => Address::Mapped(address, None),
+            0x0005f800..=0x0005f870 => {
+                Address::Mapped(address, Some(Event::DisplayControlWrite { address }))
+            }
+            0x00000000..=0x00077fff => Address::Mapped(address, None),
             // The following ranges mirror data from the character tables
-            0x00078000..=0x00079FFF => Address::Mapped(address - 0x72000, None),
-            0x0007A000..=0x0007BFFF => Address::Mapped(address - 0x6C000, None),
-            0x0007C000..=0x0007DFFF => Address::Mapped(address - 0x66000, None),
-            0x0007E000..=0x0007FFFF => Address::Mapped(address - 0x60000, None),
+            0x00078000..=0x00079fff => Address::Mapped(address - 0x72000, None),
+            0x0007a000..=0x0007bfff => Address::Mapped(address - 0x6C000, None),
+            0x0007c000..=0x0007dfff => Address::Mapped(address - 0x66000, None),
+            0x0007e000..=0x0007ffff => Address::Mapped(address - 0x60000, None),
             _ => unreachable!("SCP-033 containment breach"),
         }
     }

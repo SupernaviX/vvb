@@ -7,6 +7,14 @@ pub const VB_WIDTH: usize = 384;
 pub const VB_HEIGHT: usize = 224;
 pub const FRAME_SIZE: usize = VB_WIDTH * VB_HEIGHT;
 
+const INTPND: usize = 0x0005f800;
+const INTENB: usize = 0x0005f802;
+const INTCLR: usize = 0x0005f804;
+
+// flags for the interrupt registers
+const FRAMESTART: i16 = 0x0010;
+const DP_INTERRUPTS: i16 = FRAMESTART;
+
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
 
@@ -18,6 +26,7 @@ const L1BSY: i16 = 0x0010;
 const R0BSY: i16 = 0x0008;
 const L0BSY: i16 = 0x0004;
 const DISP: i16 = 0x0002;
+const DPRST: i16 = 0x0001;
 const DP_READONLY_MASK: i16 = FCLK | SCANRDY | R1BSY | L1BSY | R0BSY | L0BSY;
 
 // brightness control registers
@@ -74,11 +83,12 @@ pub type FrameChannel = mpsc::Receiver<Frame>;
 
 pub struct Video {
     cycle: u64,
+    displaying: bool,
     drawing: bool,
-    enabled: bool,
     dpctrl_flags: i16,
+    pending_interrupts: i16,
+    enabled_interrupts: i16,
     display_buffer: Buffer,
-    interrupt: Option<Interrupt>,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
@@ -86,11 +96,12 @@ impl Video {
     pub fn new() -> Video {
         Video {
             cycle: 0,
+            displaying: false,
             drawing: false,
-            enabled: false,
-            dpctrl_flags: FCLK | SCANRDY,
+            dpctrl_flags: SCANRDY,
+            pending_interrupts: 0,
+            enabled_interrupts: 0,
             display_buffer: Buffer0,
-            interrupt: None,
             frame_channel: None,
             buffers: [
                 Arc::new(Mutex::new(vec![0; FRAME_SIZE])),
@@ -101,13 +112,16 @@ impl Video {
 
     pub fn init(&mut self, storage: &mut Storage) {
         self.cycle = 0;
+        self.displaying = false;
         self.drawing = false;
-        self.enabled = false;
-        self.dpctrl_flags = FCLK | SCANRDY;
+        self.dpctrl_flags = SCANRDY;
+        self.pending_interrupts = 0;
+        self.enabled_interrupts = 0;
         self.display_buffer = Buffer0;
-        self.interrupt = None;
         storage.write_halfword(DPCTRL, self.dpctrl_flags);
         storage.write_halfword(DPSTTS, self.dpctrl_flags);
+        storage.write_halfword(INTPND, self.pending_interrupts);
+        storage.write_halfword(INTENB, self.enabled_interrupts);
     }
 
     pub fn next_event(&self) -> u64 {
@@ -115,40 +129,77 @@ impl Video {
     }
 
     pub fn active_interrupt(&self) -> Option<Interrupt> {
-        self.interrupt.clone()
+        if (self.enabled_interrupts & self.pending_interrupts) != 0 {
+            return Some(Interrupt {
+                code: 0xfe40,
+                level: 4,
+                handler: 0xfffffe40,
+            });
+        }
+        None
     }
 
     pub fn process_event(&mut self, storage: &mut Storage, address: usize) {
         if address == DPCTRL {
-            // Don't let the program overwrite the readonly flags
             let mut dpctrl = storage.read_halfword(DPCTRL);
-            dpctrl &= !DP_READONLY_MASK;
-            self.enabled = (dpctrl & DISP) != 0;
-            if !self.enabled {
+
+            let displaying = (dpctrl & DISP) != 0;
+            let resetting = (dpctrl & DPRST) != 0;
+            if !displaying || resetting {
+                self.displaying = false;
                 self.dpctrl_flags = SCANRDY;
             }
+            if resetting {
+                self.pending_interrupts &= !DP_INTERRUPTS;
+                self.enabled_interrupts &= !DP_INTERRUPTS;
+            }
+
+            // Don't let the program overwrite the readonly flags
+            dpctrl &= !DP_READONLY_MASK;
             dpctrl |= self.dpctrl_flags;
-            storage.write_halfword(DPSTTS, dpctrl);
+            storage.write_halfword(DPCTRL, dpctrl);
+            storage.write_halfword(DPSTTS, dpctrl & !DPRST);
+            storage.write_halfword(INTPND, self.pending_interrupts);
+            storage.write_halfword(INTENB, self.enabled_interrupts);
+        }
+
+        if address == INTENB {
+            self.enabled_interrupts = storage.read_halfword(INTENB);
+            if (self.enabled_interrupts & !FRAMESTART) != 0 {
+                error!("Unsupported interrupt! 0x{:04x}", self.enabled_interrupts);
+                panic!();
+            }
+        }
+
+        if address == INTCLR {
+            self.pending_interrupts &= !storage.read_halfword(INTCLR);
+            storage.write_halfword(INTPND, self.pending_interrupts);
         }
     }
 
     pub fn run(&mut self, storage: &mut Storage, target_cycle: u64) -> Result<()> {
+        let mut dpctrl = storage.read_halfword(DPCTRL);
         let mut xpctrl = storage.read_halfword(XPCTRL);
 
         let mut curr_ms = self.cycle / 20000;
         let next_ms = target_cycle / 20000;
-        while self.enabled && curr_ms != next_ms {
+        while curr_ms < next_ms {
             curr_ms = curr_ms + 1;
             self.cycle += curr_ms * 20000;
 
             match curr_ms % 20 {
                 0 => {
-                    // Frame clock up
-                    self.dpctrl_flags |= FCLK;
-
-                    // If we're starting a display frame, toggle whether we're drawing
-                    // TODO: this should be the start of a game frame
+                    // If we're starting a display frame, check what's enabled
+                    // TODO: only start drawing at the start of a game frame
+                    self.displaying = (dpctrl & DISP) != 0 && (dpctrl & DPRST) == 0;
                     self.drawing = (xpctrl & XPEN) != 0;
+
+                    // Frame clock up
+                    if self.displaying {
+                        self.dpctrl_flags |= FCLK;
+                        self.pending_interrupts |= FRAMESTART;
+                        storage.write_halfword(INTPND, self.pending_interrupts);
+                    }
 
                     if self.drawing {
                         // "Start drawing" on whichever buffer was displayed before
@@ -163,10 +214,12 @@ impl Video {
                 }
                 3 => {
                     // "Start displaying" left eye
-                    self.dpctrl_flags |= match self.display_buffer {
-                        Buffer0 => L0BSY,
-                        Buffer1 => L1BSY,
-                    };
+                    if self.displaying {
+                        self.dpctrl_flags |= match self.display_buffer {
+                            Buffer0 => L0BSY,
+                            Buffer1 => L1BSY,
+                        };
+                    }
 
                     if self.drawing {
                         // Actually draw on the background buffer
@@ -174,9 +227,11 @@ impl Video {
                     }
                 }
                 5 => {
-                    // Actually display the left eye
-                    self.build_frame(storage, Left);
-                    self.send_frame(Left)?;
+                    if self.displaying {
+                        // Actually display the left eye
+                        self.build_frame(storage, Left);
+                        self.send_frame(Left)?;
+                    }
 
                     // "Stop drawing" on background buffer
                     xpctrl &= !(F0BSY | F1BSY);
@@ -186,20 +241,26 @@ impl Video {
                     self.dpctrl_flags &= !(L0BSY | L1BSY);
                 }
                 10 => {
-                    // Frame clock down
-                    self.dpctrl_flags ^= FCLK;
+                    if self.displaying {
+                        // Frame clock down
+                        self.dpctrl_flags &= !FCLK;
+                    }
                 }
                 13 => {
-                    // "Start displaying" right eye
-                    self.dpctrl_flags |= match self.display_buffer {
-                        Buffer0 => R0BSY,
-                        Buffer1 => R1BSY,
-                    };
+                    if self.displaying {
+                        // "Start displaying" right eye
+                        self.dpctrl_flags |= match self.display_buffer {
+                            Buffer0 => R0BSY,
+                            Buffer1 => R1BSY,
+                        };
+                    }
                 }
                 15 => {
-                    // Actually display the right eye
-                    self.build_frame(storage, Right);
-                    self.send_frame(Right)?;
+                    if self.displaying {
+                        // Actually display the right eye
+                        self.build_frame(storage, Right);
+                        self.send_frame(Right)?;
+                    }
                 }
                 18 => {
                     // "Stop displaying" right eye,
@@ -209,11 +270,10 @@ impl Video {
             };
         }
         self.cycle = target_cycle;
-        let mut dpctrl = storage.read_halfword(DPCTRL);
         dpctrl &= !DP_READONLY_MASK;
         dpctrl |= self.dpctrl_flags;
         storage.write_halfword(DPCTRL, dpctrl);
-        storage.write_halfword(DPSTTS, dpctrl);
+        storage.write_halfword(DPSTTS, dpctrl & !DPRST);
         storage.write_halfword(XPCTRL, xpctrl);
         storage.write_halfword(XPSTTS, xpctrl);
         Ok(())
@@ -450,7 +510,7 @@ impl Video {
 #[cfg(test)]
 mod tests {
     use crate::emulator::storage::Storage;
-    use crate::emulator::video::{Video, DISP, DPCTRL};
+    use crate::emulator::video::{Video, DISP, DPCTRL, DPRST, FRAMESTART, INTCLR, INTENB, INTPND};
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
 
@@ -462,6 +522,14 @@ mod tests {
         storage.write_halfword(DPCTRL, value);
         video.process_event(storage, DPCTRL);
     }
+    fn write_intenb(video: &mut Video, storage: &mut Storage, value: i16) {
+        storage.write_halfword(INTENB, value);
+        video.process_event(storage, INTENB);
+    }
+    fn write_intclr(video: &mut Video, storage: &mut Storage, value: i16) {
+        storage.write_halfword(INTCLR, value);
+        video.process_event(storage, INTCLR);
+    }
 
     #[test]
     fn can_emulate_two_frames_of_dpstts_while_drawing_is_off() {
@@ -470,42 +538,45 @@ mod tests {
 
         video.init(&mut storage);
         write_dpctrl(&mut video, &mut storage, DISP);
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut storage, ms_to_cycles(3)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
-
-        video.run(&mut storage, ms_to_cycles(8)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
-
-        video.run(&mut storage, ms_to_cycles(10)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
-
-        video.run(&mut storage, ms_to_cycles(13)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
-
-        video.run(&mut storage, ms_to_cycles(18)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
-
-        video.run(&mut storage, ms_to_cycles(20)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
-
-        video.run(&mut storage, ms_to_cycles(23)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
-
-        video.run(&mut storage, ms_to_cycles(28)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
-
-        video.run(&mut storage, ms_to_cycles(30)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
-
-        video.run(&mut storage, ms_to_cycles(33)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
-
-        video.run(&mut storage, ms_to_cycles(38)).unwrap();
-        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
-
+        // start 2 frames in, because that's the first time we see a rising FCLK
         video.run(&mut storage, ms_to_cycles(40)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(43)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
+
+        video.run(&mut storage, ms_to_cycles(48)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(50)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(53)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
+
+        video.run(&mut storage, ms_to_cycles(58)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(60)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(63)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
+
+        video.run(&mut storage, ms_to_cycles(68)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+
+        video.run(&mut storage, ms_to_cycles(70)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(73)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
+
+        video.run(&mut storage, ms_to_cycles(78)).unwrap();
+        assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
+
+        video.run(&mut storage, ms_to_cycles(80)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
     }
 
@@ -517,42 +588,45 @@ mod tests {
         video.init(&mut storage);
         write_dpctrl(&mut video, &mut storage, DISP);
         storage.write_halfword(XPCTRL, XPEN);
+
+        // start 2 frames in, because that's the first time we see a rising FCLK
+        video.run(&mut storage, ms_to_cycles(40)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut storage, ms_to_cycles(3)).unwrap();
+        video.run(&mut storage, ms_to_cycles(43)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
 
-        video.run(&mut storage, ms_to_cycles(8)).unwrap();
+        video.run(&mut storage, ms_to_cycles(48)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut storage, ms_to_cycles(10)).unwrap();
+        video.run(&mut storage, ms_to_cycles(50)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut storage, ms_to_cycles(13)).unwrap();
+        video.run(&mut storage, ms_to_cycles(53)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
 
-        video.run(&mut storage, ms_to_cycles(18)).unwrap();
+        video.run(&mut storage, ms_to_cycles(58)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut storage, ms_to_cycles(20)).unwrap();
+        video.run(&mut storage, ms_to_cycles(60)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut storage, ms_to_cycles(23)).unwrap();
+        video.run(&mut storage, ms_to_cycles(63)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L1BSY);
 
-        video.run(&mut storage, ms_to_cycles(28)).unwrap();
+        video.run(&mut storage, ms_to_cycles(68)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut storage, ms_to_cycles(30)).unwrap();
+        video.run(&mut storage, ms_to_cycles(70)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut storage, ms_to_cycles(33)).unwrap();
+        video.run(&mut storage, ms_to_cycles(73)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | R1BSY);
 
-        video.run(&mut storage, ms_to_cycles(38)).unwrap();
+        video.run(&mut storage, ms_to_cycles(78)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut storage, ms_to_cycles(40)).unwrap();
+        video.run(&mut storage, ms_to_cycles(80)).unwrap();
         assert_eq!(storage.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
     }
 
@@ -643,5 +717,37 @@ mod tests {
 
         video.run(&mut storage, ms_to_cycles(60)).unwrap();
         assert_eq!(storage.read_halfword(XPSTTS), XPEN | F0BSY);
+    }
+
+    #[test]
+    fn can_trigger_framestart_interrupt() {
+        let mut video = Video::new();
+        let mut storage = Storage::new();
+
+        video.init(&mut storage);
+        write_dpctrl(&mut video, &mut storage, DISP);
+
+        // While INTENB is unset, set INTPND but don't trigger interrupts
+        video.run(&mut storage, ms_to_cycles(37)).unwrap();
+        assert_eq!(storage.read_halfword(INTPND), FRAMESTART);
+        assert!(video.active_interrupt().is_none());
+
+        // Interrupt can be cleared by writing to DPRST
+        write_dpctrl(&mut video, &mut storage, DISP | DPRST);
+        video.run(&mut storage, ms_to_cycles(38)).unwrap();
+        assert_eq!(storage.read_halfword(INTPND), 0);
+
+        // Interrupt is triggered on FCLK going high
+        write_dpctrl(&mut video, &mut storage, DISP);
+        write_intenb(&mut video, &mut storage, FRAMESTART);
+        video.run(&mut storage, ms_to_cycles(40)).unwrap();
+        assert_eq!(storage.read_halfword(INTPND), FRAMESTART);
+        assert!(video.active_interrupt().is_some());
+
+        // Interrupt can be cleared by writing to INTCLR
+        write_intclr(&mut video, &mut storage, FRAMESTART);
+        video.run(&mut storage, ms_to_cycles(41)).unwrap();
+        assert_eq!(storage.read_halfword(INTPND), 0);
+        assert!(video.active_interrupt().is_none());
     }
 }

@@ -69,6 +69,7 @@ impl Emulator {
         let old_sec = self.cycle / 100_000_000;
         let new_sec = target_cycle / 100_000_000;
         if old_sec != new_sec {
+            debug!("Current PC: 0x{:08x}", self.storage.pc);
             debug!("Cycles per tick: {}", target_cycle / self.tick_calls);
         }
         self.hardware.process_inputs(&mut self.storage, input_state);
