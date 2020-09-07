@@ -65,7 +65,7 @@ impl CPU {
 
         // Update the state to process the interrupt
         ecr &= !EICC;
-        ecr |= interrupt.code as u16 as i32; // zero-extending
+        ecr |= interrupt.code as i32;
         storage.sys_registers[ECR] = ecr;
 
         psw |= EX_PENDING_FLAG;
@@ -218,59 +218,62 @@ impl<'a> CPUProcess<'a> {
 
     fn mov_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        self.storage.registers[reg2] = imm;
+        self.set_register(reg2, imm);
         self.cycle += 1;
     }
     fn mov_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        self.storage.registers[reg2] = self.storage.registers[reg1];
+        self.set_register(reg2, self.storage.registers[reg1]);
         self.cycle += 1;
     }
     fn movhi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.storage.registers[reg2] = self.storage.registers[reg1] + (imm << 16);
+        self.set_register(reg2, self.storage.registers[reg1] + (imm << 16));
         self.cycle += 1;
     }
     fn movea(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.storage.registers[reg2] = self.storage.registers[reg1] + imm;
+        self.set_register(reg2, self.storage.registers[reg1] + imm);
         self.cycle += 1;
     }
 
     fn ld_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize;
-        self.storage.registers[reg2] = self.storage.read_byte(address) as i32;
+        self.set_register(reg2, self.storage.read_byte(address) as i32);
         self.cycle += 5;
     }
     fn ld_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
-        self.storage.registers[reg2] = self.storage.read_halfword(address) as i32;
+        self.set_register(reg2, self.storage.read_halfword(address) as i32);
         self.cycle += 5;
     }
     fn ld_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
-        self.storage.registers[reg2] = self.storage.read_word(address);
+        self.set_register(reg2, self.storage.read_word(address));
         self.cycle += 5;
     }
     fn in_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize;
-        self.storage.registers[reg2] = (self.storage.read_byte(address) as i32) & 0x000000ff;
+        self.set_register(reg2, (self.storage.read_byte(address) as i32) & 0x000000ff);
         self.cycle += 5;
     }
     fn in_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
-        self.storage.registers[reg2] = (self.storage.read_halfword(address) as i32) & 0x0000ffff;
+        self.set_register(
+            reg2,
+            (self.storage.read_halfword(address) as i32) & 0x0000ffff,
+        );
         self.cycle += 5;
     }
     fn in_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
         let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
-        self.storage.registers[reg2] = self.storage.read_word(address);
+        self.set_register(reg2, self.storage.read_word(address));
         self.cycle += 5;
     }
 
@@ -301,18 +304,20 @@ impl<'a> CPUProcess<'a> {
 
     fn add_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        self.storage.registers[reg2] =
-            self._add(self.storage.registers[reg2], self.storage.registers[reg1]);
+        let value = self._add(self.storage.registers[reg2], self.storage.registers[reg1]);
+        self.set_register(reg2, value);
         self.cycle += 1;
     }
     fn add_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        self.storage.registers[reg2] = self._add(self.storage.registers[reg2], imm);
+        let value = self._add(self.storage.registers[reg2], imm);
+        self.set_register(reg2, value);
         self.cycle += 1;
     }
     fn addi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.storage.registers[reg2] = self._add(self.storage.registers[reg1], imm);
+        let value = self._add(self.storage.registers[reg1], imm);
+        self.set_register(reg2, value);
         self.cycle += 1;
     }
     fn _add(&mut self, val1: i32, val2: i32) -> i32 {
@@ -337,8 +342,8 @@ impl<'a> CPUProcess<'a> {
     }
     fn sub(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        self.storage.registers[reg2] =
-            self._subtract(self.storage.registers[reg2], self.storage.registers[reg1]);
+        let value = self._subtract(self.storage.registers[reg2], self.storage.registers[reg1]);
+        self.set_register(reg2, value);
         self.cycle += 1;
     }
     fn _subtract(&mut self, val1: i32, val2: i32) -> i32 {
@@ -356,8 +361,8 @@ impl<'a> CPUProcess<'a> {
 
         let hiword = (product >> 32) as i32;
         let loword = product as i32;
-        self.storage.registers[30] = hiword;
-        self.storage.registers[reg2] = loword;
+        self.set_register(30, hiword);
+        self.set_register(reg2, loword);
 
         let ov = product != loword as i64;
         self.update_psw_flags(loword == 0, loword < 0, ov);
@@ -370,8 +375,8 @@ impl<'a> CPUProcess<'a> {
         let hiword = (product >> 32) as i32;
         let loword = product as i32;
 
-        self.storage.registers[30] = hiword;
-        self.storage.registers[reg2] = loword;
+        self.set_register(30, hiword);
+        self.set_register(reg2, loword);
         let ov = product != loword as u64;
         self.update_psw_flags(loword == 0, loword < 0, ov);
         self.cycle += 13;
@@ -387,14 +392,14 @@ impl<'a> CPUProcess<'a> {
                 self.storage.pc - 2
             ));
         } else if dividend == i32::MIN && divisor == -1 {
-            self.storage.registers[30] = 0;
-            self.storage.registers[reg2] = i32::MIN;
+            self.set_register(30, 0);
+            self.set_register(reg2, i32::MIN);
             self.update_psw_flags(false, true, true);
         } else {
             let quotient = dividend / divisor;
             let remainder = dividend % divisor;
-            self.storage.registers[30] = remainder;
-            self.storage.registers[reg2] = quotient;
+            self.set_register(30, remainder);
+            self.set_register(reg2, quotient);
             self.update_psw_flags(quotient == 0, quotient < 0, false);
         }
         self.cycle += 38;
@@ -413,8 +418,8 @@ impl<'a> CPUProcess<'a> {
         } else {
             let quotient = (dividend / divisor) as i32;
             let remainder = (dividend % divisor) as i32;
-            self.storage.registers[30] = remainder;
-            self.storage.registers[reg2] = quotient;
+            self.set_register(30, remainder);
+            self.set_register(reg2, quotient);
             self.update_psw_flags(quotient == 0, quotient < 0, false);
         }
         self.cycle += 36;
@@ -424,49 +429,49 @@ impl<'a> CPUProcess<'a> {
     fn and(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.storage.registers[reg2] & self.storage.registers[reg1];
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn andi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.storage.registers[reg1] & (imm & 0xffff);
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn not(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = !self.storage.registers[reg1];
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn or(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.storage.registers[reg2] | self.storage.registers[reg1];
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn ori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.storage.registers[reg1] | (imm & 0xffff);
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn xor(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.storage.registers[reg2] ^ self.storage.registers[reg1];
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn xori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.storage.registers[reg1] ^ (imm & 0xffff);
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
@@ -476,7 +481,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let shift = imm & 0x1f;
         let value = old_value >> shift;
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
@@ -486,7 +491,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let shift = self.storage.registers[reg1] & 0x1f;
         let value = old_value >> shift;
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
@@ -496,7 +501,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let shift = imm & 0x1f;
         let value = old_value << shift;
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, 32 - shift);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
@@ -506,7 +511,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let shift = self.storage.registers[reg1] & 0x1f;
         let value = old_value << shift;
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, 32 - shift);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
@@ -516,7 +521,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let shift = imm & 0x1f;
         let value = ((old_value as u32) >> shift as u32) as i32;
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
@@ -526,7 +531,7 @@ impl<'a> CPUProcess<'a> {
         let old_value = self.storage.registers[reg2];
         let shift = self.storage.registers[reg1] & 0x1f;
         let value = ((old_value as u32) >> shift as u32) as i32;
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
         self.update_psw_flags_cy(value == 0, value < 0, false, cy);
         self.cycle += 1;
@@ -564,7 +569,7 @@ impl<'a> CPUProcess<'a> {
 
     fn jal(&mut self, instr: i16) {
         let disp = self.parse_format_iv_opcode(instr);
-        self.storage.registers[31] = self.storage.pc as i32;
+        self.set_register(31, self.storage.pc as i32);
         self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
@@ -595,7 +600,7 @@ impl<'a> CPUProcess<'a> {
     fn stsr(&mut self, instr: i16) {
         let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
         let reg_id = (reg_id & 0x1f) as usize;
-        self.storage.registers[reg2] = self.storage.sys_registers[reg_id];
+        self.set_register(reg2, self.storage.sys_registers[reg_id]);
         self.cycle += 8;
     }
 
@@ -623,13 +628,13 @@ impl<'a> CPUProcess<'a> {
         let rhs = self.storage.registers[reg1]
             .wrapping_shl(15)
             .wrapping_shr(15);
-        self.storage.registers[reg2] = self.storage.registers[reg2] * rhs;
+        self.set_register(reg2, self.storage.registers[reg2] * rhs);
         self.cycle += 9;
     }
     fn rev(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.storage.registers[reg1].reverse_bits();
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.cycle += 22;
     }
     #[allow(overflowing_literals)]
@@ -639,15 +644,21 @@ impl<'a> CPUProcess<'a> {
         let value = (old_value & 0xffff0000)
             | ((old_value << 8) & 0x0000ff00)
             | ((old_value >> 8) & 0x000000ff);
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.cycle += 6;
     }
     fn xh(&mut self, instr: i16) {
         let (reg2, _) = self.parse_format_i_opcode(instr);
         let old_value = self.storage.registers[reg2];
         let value = (old_value << 16) | ((old_value >> 16) & 0x0000ffff);
-        self.storage.registers[reg2] = value;
+        self.set_register(reg2, value);
         self.cycle += 1;
+    }
+
+    fn set_register(&mut self, reg: usize, value: i32) {
+        if reg != 0 {
+            self.storage.registers[reg] = value;
+        }
     }
 
     fn parse_format_i_opcode(&self, instr: i16) -> (usize, usize) {
@@ -850,6 +861,16 @@ mod tests {
         assert_eq!(storage.registers[31], 0x07000000);
         cpu.run(&mut storage, 2).unwrap();
         assert_eq!(storage.registers[31], 0x07000420);
+    }
+
+    #[test]
+    fn cannot_overwrite_zero() {
+        let mut storage = rom(&[
+            movhi(0, 0, 0x0700),
+        ]);
+        let mut cpu = CPU::new();
+        cpu.run(&mut storage, 1).unwrap();
+        assert_eq!(storage.registers[0], 0);
     }
 
     #[test]
