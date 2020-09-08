@@ -310,9 +310,9 @@ impl Video {
     fn build_frame(&self, storage: &Storage, eye: Eye) {
         // colors to render
         let color0 = 0; // always black
-        let color1 = 255.min(storage.read_halfword(BRTA) * 4);
-        let color2 = 255.min(storage.read_halfword(BRTB) * 4);
-        let color3 = 255.min(color1 + color2 + storage.read_halfword(BRTC) * 2);
+        let color1 = 255.min(self.get_brightness(storage, BRTA));
+        let color2 = 255.min(self.get_brightness(storage, BRTB));
+        let color3 = 255.min(color1 + color2 + self.get_brightness(storage, BRTC));
         let colors = [color0 as u8, color1 as u8, color2 as u8, color3 as u8];
 
         let buf_address = self.get_buffer_address(eye, self.display_buffer);
@@ -330,6 +330,11 @@ impl Video {
                 }
             }
         }
+    }
+
+    fn get_brightness(&self, storage: &Storage, address: usize) -> i16 {
+        // experimentally chosen conversion factor from led-duration-in-50-ns-increments to 8-bit color
+        storage.read_halfword(address) * 19 / 8
     }
 
     fn get_buffer_address(&self, eye: Eye, buffer: Buffer) -> usize {
