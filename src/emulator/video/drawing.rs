@@ -1,31 +1,51 @@
+#![allow(overflowing_literals)]
+
 use crate::emulator::storage::Storage;
 use crate::emulator::video::Eye;
 use anyhow::Result;
 
 const BACKGROUND_MAP_MEMORY: usize = 0x00020000;
 const WORLD_ATTRIBUTE_MEMORY: usize = 0x0003d800;
+const OBJECT_ATTRIBUTE_MEMORY: usize = 0x0003e000;
 const CHARACTER_TABLE: usize = 0x00078000;
+
+const SPT0: usize = 0x0005f848;
+
 const GPLT0: usize = 0x0005f860;
+
+const JPLT0: usize = 0x0005f868;
 
 const BKCOL: usize = 0x0005f870;
 
 // World attribute flags
-const LON: u16 = 0x8000;
-const RON: u16 = 0x4000;
-const BGM: u16 = 0x3000;
-const SCX: u16 = 0x0c00;
-const SCY: u16 = 0x0300;
-const END_FLAG: u16 = 0x0040;
-const BG_MAP_BASE: u16 = 0x000f;
+const LON: i16 = 0x8000;
+const RON: i16 = 0x4000;
+const BGM: i16 = 0x3000;
+const SCX: i16 = 0x0c00;
+const SCY: i16 = 0x0300;
+const END_FLAG: i16 = 0x0040;
+const BG_MAP_BASE: i16 = 0x000f;
+
+// Object attribute flags
+const JX: i16 = 0x01ff;
+const JLON: i16 = 0x8000;
+const JRON: i16 = 0x4000;
+const JP: i16 = 0x001f;
+const JY: i16 = 0x00ff;
+const JHFLP: i16 = 0x2000;
+const JVFLP: i16 = 0x1000;
+const JCA: i16 = 0x07ff;
 
 pub struct DrawingProcess {
     buffer: [[i16; 384]; 28],
+    object_world: usize,
 }
 
 impl DrawingProcess {
     pub fn new() -> DrawingProcess {
         DrawingProcess {
             buffer: [[0; 384]; 28],
+            object_world: 3,
         }
     }
 
@@ -44,6 +64,7 @@ impl DrawingProcess {
         }
 
         // Draw rows in the buffer one-at-a-time
+        self.object_world = 3;
         for world in (0..32).rev() {
             let done = self.draw_world(storage, eye, world)?;
             if done {
@@ -63,7 +84,7 @@ impl DrawingProcess {
 
     fn draw_world(&mut self, storage: &Storage, eye: Eye, world: usize) -> Result<bool> {
         let world_address = WORLD_ATTRIBUTE_MEMORY + (world * 32);
-        let header = storage.read_halfword(world_address) as u16;
+        let header = storage.read_halfword(world_address);
         if (header & END_FLAG) != 0 {
             // END flag set, we're done rendering
             return Ok(true);
@@ -74,6 +95,7 @@ impl DrawingProcess {
             // This world is blank, move on to the next
             return Ok(false);
         }
+        log::debug!("World {}: 0x{:04x}", world, header);
         let eye_enabled = match eye {
             Eye::Left => left_enabled,
             Eye::Right => right_enabled,
@@ -138,49 +160,123 @@ impl DrawingProcess {
                 let cell_index = cell_row * 64 + cell_column;
 
                 // load that cell data
-                let cell_data = storage.read_halfword(bgmap_address + (cell_index * 2)) as usize;
-                let palette_index = (cell_data & 0xc000) >> 14;
+                let cell_data = storage.read_halfword(bgmap_address + (cell_index * 2));
+                let palette_index = (cell_data >> 14) & 0x0003;
                 let flip_horizontally = (cell_data & 0x2000) != 0;
                 let flip_vertically = (cell_data & 0x1000) != 0;
-                let character_index = cell_data & 0x03ff;
+                let char_index = cell_data & 0x03ff;
 
                 // figure out which pixel in the character we're rendering
-                let mut character_x = source_x + column % 8;
-                let mut character_y = (source_y + row) as usize % 8;
+                let mut char_x = (source_x + column) % 8;
+                let mut char_y = (source_y + row) % 8;
                 if flip_horizontally {
-                    character_x = 7 - character_x;
+                    char_x = 7 - char_x;
                 }
                 if flip_vertically {
-                    character_y = 7 - character_y;
+                    char_y = 7 - char_y;
                 }
-
-                // get the value of that pixel
-                let character_row = storage
-                    .read_halfword(CHARACTER_TABLE + (character_index * 16) + (character_y * 2));
-                let character_pixel = (character_row >> (character_x * 2)) & 0x03;
-                if character_pixel == 0 {
+                let pixel = self.get_char_pixel(storage, char_index, char_x, char_y);
+                if pixel == 0 {
                     continue;
                 }
+                let color = self.get_palette_color(storage, GPLT0, palette_index, pixel);
 
-                // translate that through the palette
-                let palette = storage.read_halfword(GPLT0 + (palette_index * 2));
-                let pixel_value = (palette >> (character_pixel * 2)) & 0x03;
-
-                // we finally have the pixel, now just write it to the right slot in the buffer
-                // every 2 bytes contain 8 pixels, make sure we only update the 2 bits we're drawing now
-                let column_index = (dest_x + column) as usize;
-                let row_index = (dest_y + row) as usize / 8;
-                let current_value = &mut self.buffer[row_index][column_index];
-                let row_offset = (dest_y + row) % 8;
-                *current_value &= !(0b11 << (row_offset * 2));
-                *current_value |= pixel_value << (row_offset * 2);
+                self.draw_pixel(dest_x + column, dest_y + row, color);
             }
         }
 
         return Ok(false);
     }
 
-    fn draw_object_world(&self, _storage: &Storage, _eye: Eye) {
-        // TODO
+    fn draw_object_world(&mut self, storage: &Storage, eye: Eye) {
+        let end_register = SPT0 + (self.object_world * 2);
+        let mut obj_index = storage.read_halfword(end_register) as usize & 0x03ff;
+
+        let target_obj_index: usize;
+        if self.object_world == 0 {
+            self.object_world = 3;
+            target_obj_index = 1023;
+        } else {
+            self.object_world -= 1;
+            let start_register = SPT0 + (self.object_world * 2);
+            target_obj_index = storage.read_halfword(start_register) as usize & 0x03ff;
+        }
+
+        while obj_index != target_obj_index {
+            let obj_address = OBJECT_ATTRIBUTE_MEMORY + (obj_index * 8);
+            self.draw_object(storage, eye, obj_address);
+
+            obj_index = if obj_index == 0 { 1023 } else { obj_index - 1 };
+        }
+    }
+
+    fn draw_object(&mut self, storage: &Storage, eye: Eye, obj_address: usize) {
+        let visible = match eye {
+            Eye::Left => (storage.read_halfword(obj_address + 2) & JLON) != 0,
+            Eye::Right => (storage.read_halfword(obj_address + 2) & JRON) != 0,
+        };
+        if !visible {
+            return;
+        }
+
+        let jx = storage.read_halfword(obj_address) & JX;
+        let jp = storage.read_halfword(obj_address + 2) & JP;
+        // apply parallax to the x coordinate
+        let jx = match eye {
+            Eye::Left => jx - jp,
+            Eye::Right => jx + jp,
+        };
+
+        let jy = storage.read_halfword(obj_address + 4) & JY;
+        // JY is effectively the lower 8 bits of an i16, so figure out the sign from the range
+        // if it's > 224, it's supposed to be negative
+        let jy = if jy > 224 {
+            jy.wrapping_shl(8).wrapping_shr(8)
+        } else {
+            jy
+        };
+
+        let jplts = (storage.read_halfword(obj_address + 6) >> 14) & 0x3;
+        let flip_horizontal = (storage.read_halfword(obj_address + 6) & JHFLP) != 0;
+        let flip_vertical = (storage.read_halfword(obj_address + 6) & JVFLP) != 0;
+        let jca = storage.read_halfword(obj_address + 6) & JCA;
+
+        for x in 0..8 {
+            for y in 0..8 {
+                let char_x = if flip_horizontal { 7 - x } else { x };
+                let char_y = if flip_vertical { 7 - y } else { y };
+                let pixel = self.get_char_pixel(storage, jca, char_x, char_y);
+                if pixel == 0 {
+                    continue;
+                }
+
+                let color = self.get_palette_color(storage, JPLT0, jplts, pixel);
+                self.draw_pixel(jx + x, jy + y, color);
+            }
+        }
+    }
+
+    fn get_char_pixel(&self, storage: &Storage, index: i16, x: i16, y: i16) -> i16 {
+        let char_row =
+            storage.read_halfword(CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2));
+        let pixel = (char_row >> (x * 2)) & 0x3;
+        pixel
+    }
+
+    fn get_palette_color(&self, storage: &Storage, base: usize, index: i16, pixel: i16) -> i16 {
+        let palette = storage.read_halfword(base + (index as usize * 2));
+        let color = (palette >> (pixel * 2)) & 0x03;
+        color
+    }
+
+    fn draw_pixel(&mut self, column: i16, row: i16, color: i16) {
+        if column < 0 || row < 0 || column >= 384 || row >= 224 {
+            return;
+        }
+        let row_index = row as usize / 8;
+        let current_value = &mut self.buffer[row_index][column as usize];
+        let row_offset = row % 8;
+        *current_value &= !(0b11 << (row_offset * 2));
+        *current_value |= color << (row_offset * 2);
     }
 }
