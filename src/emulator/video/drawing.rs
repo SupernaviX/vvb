@@ -23,6 +23,7 @@ const RON: i16 = 0x4000;
 const BGM: i16 = 0x3000;
 const SCX: i16 = 0x0c00;
 const SCY: i16 = 0x0300;
+const OVERPLANE_FLAG: i16 = 0x0080;
 const END_FLAG: i16 = 0x0040;
 const BG_MAP_BASE: i16 = 0x000f;
 
@@ -35,6 +36,10 @@ const JY: i16 = 0x00ff;
 const JHFLP: i16 = 0x2000;
 const JVFLP: i16 = 0x1000;
 const JCA: i16 = 0x07ff;
+
+fn modulus(a: i16, b: i16) -> i16 {
+    ((a % b) + b) % b
+}
 
 pub struct DrawingProcess {
     buffer: [[i16; 384]; 28],
@@ -95,7 +100,12 @@ impl DrawingProcess {
             // This world is blank, move on to the next
             return Ok(false);
         }
-        log::debug!("World {}: 0x{:04x}", world, header);
+        let bgm = (header & BGM) >> 12;
+        if bgm == 3 {
+            self.draw_object_world(storage, eye);
+            return Ok(false);
+        }
+
         let eye_enabled = match eye {
             Eye::Left => left_enabled,
             Eye::Right => right_enabled,
@@ -105,31 +115,8 @@ impl DrawingProcess {
             return Ok(false);
         }
 
-        let bgm = (header & BGM) >> 12;
-        if bgm == 3 {
-            self.draw_object_world(storage, eye);
-            return Ok(false);
-        }
-        if bgm != 0 {
-            // TODO: support other modes
-            return Err(anyhow::anyhow!("Unsupported BGM {}!", bgm));
-        }
-
-        let scx = (header & SCX) >> 10;
-        let scy = (header & SCY) >> 8;
-        let bgmap_width = 2u16.pow(scx as u32);
-        let bgmap_height = 2u16.pow(scy as u32);
-        if bgmap_width != 1 || bgmap_height != 1 {
-            // TODO: support multiple background maps
-            return Err(anyhow::anyhow!(
-                "Too many background maps ({}x{})!",
-                bgmap_width,
-                bgmap_height
-            ));
-        }
-
-        let bgmap = (header & BG_MAP_BASE) as usize;
-        let bgmap_address = BACKGROUND_MAP_MEMORY + (bgmap * 8192);
+        let overplane = storage.read_halfword(world_address + 20);
+        let background = Background::parse(header, overplane)?;
 
         let dest_x = storage.read_halfword(world_address + 2);
         let dest_parallax_x = storage.read_halfword(world_address + 4);
@@ -152,23 +139,21 @@ impl DrawingProcess {
 
         for column in 0..width {
             for row in 0..height {
-                // for now, assume everything is background map 0
-
                 // figure out which cell in this background map is being read
-                let cell_row = (source_y + row) as usize / 8;
-                let cell_column = (source_x + column) as usize / 8;
-                let cell_index = cell_row * 64 + cell_column;
+                let bg_x = source_x + column;
+                let bg_y = source_y + row;
+                let cell_address = background.get_cell_address(bg_x, bg_y);
 
                 // load that cell data
-                let cell_data = storage.read_halfword(bgmap_address + (cell_index * 2));
+                let cell_data = storage.read_halfword(cell_address);
                 let palette_index = (cell_data >> 14) & 0x0003;
                 let flip_horizontally = (cell_data & 0x2000) != 0;
                 let flip_vertically = (cell_data & 0x1000) != 0;
-                let char_index = cell_data & 0x03ff;
+                let char_index = cell_data & 0x07ff;
 
                 // figure out which pixel in the character we're rendering
-                let mut char_x = (source_x + column) % 8;
-                let mut char_y = (source_y + row) % 8;
+                let mut char_x = modulus(bg_x, 8);
+                let mut char_y = modulus(bg_y, 8);
                 if flip_horizontally {
                     char_x = 7 - char_x;
                 }
@@ -278,5 +263,75 @@ impl DrawingProcess {
         let row_offset = row % 8;
         *current_value &= !(0b11 << (row_offset * 2));
         *current_value |= color << (row_offset * 2);
+    }
+}
+
+struct Background {
+    pub mode: i16,
+    pub bgmap_width: i16,
+    pub bgmap_height: i16,
+    pub bgmap_base: usize,
+    pub overplane_cell: Option<usize>,
+}
+impl Background {
+    pub fn parse(header: i16, overplane: i16) -> Result<Background> {
+        let bgm = (header & BGM) >> 12;
+        if bgm != 0 {
+            // TODO: support other modes
+            return Err(anyhow::anyhow!("Unsupported BGM {}!", bgm));
+        }
+        let scx = (header & SCX) >> 10;
+        let scy = (header & SCY) >> 8;
+        let bgmap_width = 2i16.pow(scx as u32);
+        let bgmap_height = 2i16.pow(scy as u32);
+        if bgmap_width != 1 || bgmap_height != 1 {
+            // TODO: support multiple background maps
+            return Err(anyhow::anyhow!(
+                "Too many background maps ({}x{})!",
+                bgmap_width,
+                bgmap_height
+            ));
+        }
+        let bgmap_base = (header & BG_MAP_BASE) as usize;
+        let has_overplane = (header & OVERPLANE_FLAG) != 0;
+        let overplane_cell = if has_overplane {
+            Some(overplane as usize)
+        } else {
+            None
+        };
+
+        Ok(Background {
+            mode: bgm,
+            bgmap_width,
+            bgmap_height,
+            bgmap_base,
+            overplane_cell,
+        })
+    }
+
+    pub fn get_cell_address(&self, x: i16, y: i16) -> usize {
+        // for now, assume everything is background map 0
+        let bg_width = self.bgmap_width * 512;
+        let bg_height = self.bgmap_height * 512;
+
+        let mut bg_x = x;
+        if bg_x < 0 || bg_x >= bg_width {
+            bg_x = match self.overplane_cell {
+                Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
+                None => modulus(bg_x, bg_width),
+            };
+        }
+        let mut bg_y = y;
+        if bg_y < 0 || bg_y >= bg_height {
+            bg_y = match self.overplane_cell {
+                Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
+                None => modulus(bg_y, bg_height),
+            };
+        }
+
+        let row = bg_y as usize / 8;
+        let column = bg_x as usize / 8;
+        let index = row * 64 + column;
+        BACKGROUND_MAP_MEMORY + (self.bgmap_base * 8192) + (index * 2)
     }
 }
