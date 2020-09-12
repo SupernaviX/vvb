@@ -219,6 +219,8 @@ impl<'a> CPUProcess<'a> {
                 0b000110 => self.jmp(instr),
                 0b101010 => self.jr(instr),
 
+                0b010010 => self.setf(instr),
+
                 0b011100 => self.ldsr(instr),
                 0b011101 => self.stsr(instr),
 
@@ -578,13 +580,31 @@ impl<'a> CPUProcess<'a> {
     }
 
     fn bcond(&mut self, instr: u16) {
-        let (negate, cond, disp) = self.parse_format_iii_opcode(instr);
+        let (cond, disp) = self.parse_format_iii_opcode(instr);
+        if self._condition(cond) {
+            // jump is relative to start of instruction
+            self.pc = (self.pc as i32 + disp - 2) as usize & 0xfffffffe;
+            self.cycle += 3;
+        } else {
+            self.cycle += 1;
+        }
+    }
+
+    fn setf(&mut self, instr: u16) {
+        let (reg2, cond) = self.parse_format_ii_opcode(instr);
+        let result = if self._condition(cond) { 1 } else { 0 };
+        self.registers[reg2] = result;
+        self.cycle += 1;
+    }
+
+    fn _condition(&self, cond: u32) -> bool {
+        let negate = (cond & 0b1000) != 0;
         let psw = self.sys_registers[PSW];
         let cy = (psw & CARRY_FLAG) != 0;
         let ov = (psw & OVERFLOW_FLAG) != 0;
         let s = (psw & SIGN_FLAG) != 0;
         let z = (psw & ZERO_FLAG) != 0;
-        let mut result = match cond {
+        let result = match cond & 0b0111 {
             0 => ov,
             1 => cy,
             2 => z,
@@ -595,16 +615,7 @@ impl<'a> CPUProcess<'a> {
             7 => ((ov != s) || z),
             _ => unreachable!("impossible"),
         };
-        if negate {
-            result = !result;
-        }
-        if result {
-            // jump is relative to start of instruction
-            self.pc = (self.pc as i32 + disp - 2) as usize & 0xfffffffe;
-            self.cycle += 3;
-        } else {
-            self.cycle += 1;
-        }
+        result != negate
     }
 
     fn jal(&mut self, instr: u16) {
@@ -811,11 +822,10 @@ impl<'a> CPUProcess<'a> {
         let imm = (instr as i16 & 0x001f).wrapping_shl(11).wrapping_shr(11) as u32;
         (reg2, imm)
     }
-    fn parse_format_iii_opcode(&self, instr: u16) -> (bool, u8, i32) {
-        let negate = (instr & 0x1000) != 0;
-        let cond = ((instr >> 9) & 0x07) as u8;
+    fn parse_format_iii_opcode(&self, instr: u16) -> (u32, i32) {
+        let cond = ((instr >> 9) & 0x0f) as u32;
         let disp = (instr as i16 & 0x01ff).wrapping_shl(7).wrapping_shr(7) as i32;
-        (negate, cond, disp)
+        (cond, disp)
     }
     fn parse_format_iv_opcode(&mut self, instr: u16) -> i32 {
         let mut disp: i32 = (instr as i32).wrapping_shl(24).wrapping_shr(8);
@@ -943,6 +953,7 @@ mod tests {
     fn shl_i(r2: u8, imm: u8) -> Vec<u8> { _op_2(0b010100, r2, imm) }
     fn shr_i(r2: u8, imm: u8) -> Vec<u8> { _op_2(0b010101, r2, imm) }
     fn bcond(cond: u8, disp: i16) -> Vec<u8> { _op_3(0b100, cond, disp) }
+    fn setf(r2: u8, cond: u8) -> Vec<u8> { _op_2(0b010010, r2, cond) }
     fn jal(disp: i32) -> Vec<u8> { _op_4(0b101011, disp) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
@@ -1290,6 +1301,30 @@ mod tests {
         cpu.run(&mut memory, 5).unwrap();
         assert_eq!(cpu.registers[1], 1);
         assert_eq!(cpu.registers[2], 0);
+    }
+
+    #[test]
+    fn handles_setf_true() {
+        let (mut cpu, mut memory) = rom(&[
+            movea(31, 0, 4),
+            movea(30, 0, 5),
+            cmp_r(31, 30),
+            setf(1, 6),
+        ]);
+        cpu.run(&mut memory, 4).unwrap();
+        assert_eq!(cpu.registers[1], 1);
+    }
+
+    #[test]
+    fn handles_setf_false() {
+        let (mut cpu, mut memory) = rom(&[
+            movea(31, 0, 4),
+            movea(30, 0, 5),
+            cmp_r(31, 30),
+            setf(1, 11),
+        ]);
+        cpu.run(&mut memory, 4).unwrap();
+        assert_eq!(cpu.registers[1], 0);
     }
 
     #[test]
