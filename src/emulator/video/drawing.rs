@@ -28,10 +28,10 @@ const END_FLAG: i16 = 0x0040;
 const BG_MAP_BASE: i16 = 0x000f;
 
 // Object attribute flags
-const JX: i16 = 0x01ff;
+const JX: i16 = 0x03ff;
 const JLON: i16 = 0x8000;
 const JRON: i16 = 0x4000;
-const JP: i16 = 0x001f;
+const JP: i16 = 0x03ff;
 const JY: i16 = 0x00ff;
 const JHFLP: i16 = 0x2000;
 const JVFLP: i16 = 0x1000;
@@ -205,7 +205,9 @@ impl DrawingProcess {
         }
 
         let jx = storage.read_halfword(obj_address) & JX;
-        let jp = storage.read_halfword(obj_address + 2) & JP;
+        let jp = (storage.read_halfword(obj_address + 2) & JP)
+            .wrapping_shl(6)
+            .wrapping_shr(6);
         // apply parallax to the x coordinate
         let jx = match eye {
             Eye::Left => jx - jp,
