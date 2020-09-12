@@ -32,8 +32,13 @@ fn sign_bit(value: u32) -> bool {
     value & 0x80000000 != 0
 }
 
+fn bit_range_mask(start: u32, length: u32) -> u32 {
+    ((i32::MIN >> length - 1) as u32) >> (32 - length - start)
+}
+
 pub struct CPU {
     cycle: u64,
+    bitstring_cycle: u64,
     pub pc: usize,
     pub registers: [u32; 32],
     pub sys_registers: [u32; 32],
@@ -42,6 +47,7 @@ impl CPU {
     pub fn new() -> CPU {
         let mut cpu = CPU {
             cycle: 0,
+            bitstring_cycle: 0,
             pc: 0xfffffff0,
             registers: [0; 32],
             sys_registers: [0; 32],
@@ -51,6 +57,7 @@ impl CPU {
     }
     pub fn init(&mut self) {
         self.cycle = 0;
+        self.bitstring_cycle = 0;
         self.pc = 0xfffffff0;
         for reg in self.registers.iter_mut() {
             *reg = 0;
@@ -68,12 +75,14 @@ impl CPU {
     }
 
     pub fn run(&mut self, memory: &mut Memory, target_cycle: u64) -> Result<CPUProcessingResult> {
-        let mut process = CPUProcess::new(self.cycle, self, memory);
+        let mut process = CPUProcess::new(self, memory);
         process.run(target_cycle)?;
         let pc = process.pc;
         let cycle = process.cycle;
+        let bitstring_cycle = process.bitstring_cycle;
         let event = process.event;
         self.pc = pc;
+        self.bitstring_cycle = bitstring_cycle;
         self.cycle = cycle;
         Ok(CPUProcessingResult { cycle, event })
     }
@@ -132,6 +141,7 @@ pub struct Interrupt {
 
 pub struct CPUProcess<'a> {
     pub cycle: u64,
+    pub bitstring_cycle: u64,
     pub pc: usize,
     pub event: Option<Event>,
     memory: &'a mut Memory,
@@ -139,9 +149,10 @@ pub struct CPUProcess<'a> {
     sys_registers: &'a mut [u32; 32],
 }
 impl<'a> CPUProcess<'a> {
-    pub fn new(cycle: u64, cpu: &'a mut CPU, memory: &'a mut Memory) -> CPUProcess<'a> {
+    pub fn new(cpu: &'a mut CPU, memory: &'a mut Memory) -> CPUProcess<'a> {
         CPUProcess {
-            cycle,
+            cycle: cpu.cycle,
+            bitstring_cycle: cpu.bitstring_cycle,
             pc: cpu.pc,
             event: None,
             memory,
@@ -214,6 +225,8 @@ impl<'a> CPUProcess<'a> {
                 0b011110 => self.sei(),
                 0b010110 => self.cli(),
                 0b011001 => self.reti(),
+
+                0b011111 => self.bitstring_operation(instr)?,
 
                 0b111110 => {
                     // format 7 opcodes are format 1 with a subopcode suffix
@@ -650,6 +663,104 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 10;
     }
 
+    fn bitstring_operation(&mut self, instr: u16) -> Result<()> {
+        let (_, opcode) = self.parse_format_ii_opcode(instr);
+        let is_search = (opcode & 0b000010) != 0;
+        if is_search {
+            return Err(anyhow::anyhow!(
+                "Bitwise search 0b{:06b} not supported",
+                opcode
+            ));
+        }
+        if self.bitstring_cycle == 0 {
+            // clear lower bits of word addresses
+            self.registers[30] &= 0xfffffffc;
+            self.registers[29] &= 0xfffffffc;
+            // clear higher bits of bit offsets
+            self.registers[27] &= 0x0000001f;
+            self.registers[26] &= 0x0000001f;
+        }
+        let mut src_address = self.registers[30] as usize;
+        let mut dst_address = self.registers[29] as usize;
+        let mut length = self.registers[28];
+        let mut src_offset = self.registers[27];
+        let mut dst_offset = self.registers[26];
+
+        let mut bit_goal = length.min(32 - dst_offset);
+        while bit_goal > 0 {
+            let src_word = self.memory.read_word(src_address);
+            let mut dst_word = self.memory.read_word(dst_address);
+            let bits_to_read = bit_goal.min(32 - src_offset);
+            let src_bits = src_word & bit_range_mask(src_offset, bits_to_read);
+            // make sure src_bits line up with dst_bits
+            let src_bits = if src_offset > dst_offset {
+                src_bits >> (src_offset - dst_offset)
+            } else {
+                src_bits << (dst_offset - src_offset)
+            };
+            let mask = bit_range_mask(dst_offset, bits_to_read);
+            match opcode {
+                // ANDBSU
+                0b01001 => dst_word = (dst_word & !mask) | (dst_word & src_bits),
+                // ANDNBSU
+                0b01101 => dst_word = (dst_word & !mask) | (dst_word & !src_bits & mask),
+                // MOVBSU
+                0b01011 => dst_word = (dst_word & !mask) | src_bits,
+                // NOTBSU
+                0b01111 => dst_word = (dst_word & !mask) | (!src_bits & mask),
+                // ORBSU
+                0b01000 => dst_word |= src_bits,
+                // ORNBSU
+                0b01100 => dst_word |= !src_bits & mask,
+                // XORBSU
+                0b01010 => dst_word ^= src_bits,
+                // XORNBSU
+                0b01110 => dst_word ^= !src_bits & mask,
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Unrecognized bitstring opcode 0b{:05b}",
+                        opcode
+                    ))
+                }
+            };
+            self.memory.write_word(dst_address, dst_word);
+            dst_offset += bits_to_read;
+            if dst_offset > 31 {
+                dst_offset -= 32;
+                dst_address += 4;
+            }
+            src_offset += bits_to_read;
+            if src_offset > 31 {
+                src_offset -= 32;
+                src_address += 4;
+            }
+
+            length -= bits_to_read;
+            bit_goal -= bits_to_read;
+        }
+        self.registers[30] = src_address as u32;
+        self.registers[29] = dst_address as u32;
+        self.registers[28] = length;
+        self.registers[27] = src_offset;
+        self.registers[26] = dst_offset;
+
+        // use the worst-case cycle count for simplicity
+        if self.bitstring_cycle == 0 {
+            self.cycle += 49;
+        } else {
+            self.cycle += 12;
+        }
+        if length == 0 {
+            // bitstring operation complete!
+            self.bitstring_cycle = 0;
+        } else {
+            // try again next cycle
+            self.bitstring_cycle += 1;
+            self.pc -= 2;
+        }
+        Ok(())
+    }
+
     fn mpyhw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let lhs = (self.registers[reg2] as i32)
@@ -837,6 +948,7 @@ mod tests {
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
     fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id) }
     fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id) }
+    fn orbsu() -> Vec<u8> { _op_2(0b011111, 0, 0b01000) }
     fn mpyhw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001100) }
     fn rev(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001010) }
     fn xb(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001000) }
@@ -1296,6 +1408,64 @@ mod tests {
         cpu.run(&mut memory, 17).unwrap();
         assert_eq!(cpu.sys_registers[5], 0x00000040);
         assert_eq!(cpu.registers[30], 0x00000040);
+    }
+
+    #[test]
+    fn can_run_bitstring_operations() {
+        let (mut cpu, mut memory) = rom(&[
+            movhi(10, 0, 0x0500),
+            movhi(11, 0, 0x0500),
+            movea(11, 11, 0x1000),
+            movhi(12, 0, 0x7777),
+            movea(12, 12, 0x7777),
+            movhi(13, 0, 0x5555),
+            movea(13, 13, 0x5555),
+            st_w(12, 10, 0),
+            st_w(12, 10, 4),
+            st_w(13, 11, 0),
+            st_w(13, 11, 4),
+            mov_r(30, 10),
+            mov_r(29, 11),
+            movea(28, 0, 30),
+            movea(27, 0, 26),
+            movea(26, 0, 20),
+            orbsu(),
+        ]);
+
+        let setup_cycles = 28;
+        let first_cycle = setup_cycles + 49;
+        let final_cycle = first_cycle + 12;
+        let bitstring_op_pc = 0x0700003c;
+
+        cpu.run(&mut memory, setup_cycles).unwrap();
+        assert_eq!(cpu.registers[10], 0x05000000);
+        assert_eq!(cpu.registers[11], 0x05001000);
+        assert_eq!(cpu.registers[12], 0x77777777);
+        assert_eq!(cpu.registers[13], 0x55555555);
+        assert_eq!(memory.read_word(0x05000000), 0x77777777);
+        assert_eq!(memory.read_word(0x05001000), 0x55555555);
+
+        // First cycle, instruction shouldn't be done
+        cpu.run(&mut memory, first_cycle).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc);
+        assert_eq!(cpu.registers[30], 0x05000004);
+        assert_eq!(cpu.registers[29], 0x05001004);
+        assert_eq!(cpu.registers[28], 18);
+        assert_eq!(cpu.registers[27], 6);
+        assert_eq!(cpu.registers[26], 0);
+        assert_eq!(memory.read_word(0x05001000), 0xddd55555);
+        assert_eq!(memory.read_word(0x05001004), 0x55555555);
+
+        // NOW we should be done
+        cpu.run(&mut memory, final_cycle).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc + 2);
+        assert_eq!(cpu.registers[30], 0x05000004);
+        assert_eq!(cpu.registers[29], 0x05001004);
+        assert_eq!(cpu.registers[28], 0);
+        assert_eq!(cpu.registers[27], 24);
+        assert_eq!(cpu.registers[26], 18);
+        assert_eq!(memory.read_word(0x05001000), 0xddd55555);
+        assert_eq!(memory.read_word(0x05001004), 0x5555dddd);
     }
 
     #[test]
