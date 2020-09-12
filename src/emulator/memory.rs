@@ -7,24 +7,18 @@ enum Address {
     Unmapped,
 }
 
-pub struct Storage {
-    pub pc: usize,
-    pub registers: [i32; 32],
-    pub sys_registers: [i32; 32],
+pub struct Memory {
     memory: Vec<u8>,
     rom_mask: usize,
 }
-impl Storage {
-    pub fn new() -> Storage {
-        let mut storage = Storage {
-            pc: 0xFFFFFFF0,
-            registers: [0; 32],
-            sys_registers: [0; 32],
+impl Memory {
+    pub fn new() -> Memory {
+        let mut memory = Memory {
             memory: vec![0; 0x07FFFFFF],
             rom_mask: 0,
         };
-        storage.init();
-        storage
+        memory.init();
+        memory
     }
 
     pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
@@ -42,20 +36,6 @@ impl Storage {
     }
 
     fn init(&mut self) {
-        self.pc = 0xfffffff0;
-        for reg in self.registers.iter_mut() {
-            *reg = 0;
-        }
-        for sys_reg in 0..self.sys_registers.len() {
-            self.sys_registers[sys_reg] = match sys_reg {
-                4 => 0x0000fff0,  // ECR
-                5 => 0x00008000,  // PSW
-                6 => 0x00005346,  // PIR
-                7 => 0x000000E0,  // TKCW
-                30 => 0x00000004, // it is a mystery
-                _ => 0,
-            };
-        }
         for vram in self.memory[0x00000000..=0x00077fff].iter_mut() {
             *vram = 0;
         }
@@ -164,115 +144,111 @@ impl Storage {
 #[cfg(test)]
 #[allow(overflowing_literals)] // 0xFF is -1, this is not a logical error
 mod tests {
-    use crate::emulator::storage::Storage;
+    use crate::emulator::memory::Memory;
 
     #[test]
     fn can_create() {
-        Storage::new();
+        Memory::new();
     }
 
     #[test]
     fn can_read_and_write_byte() {
-        let mut storage = Storage::new();
-        storage.write_byte(0x00000000, 0x42);
-        assert_eq!(storage.read_byte(0x00000000), 0x42);
+        let mut memory = Memory::new();
+        memory.write_byte(0x00000000, 0x42);
+        assert_eq!(memory.read_byte(0x00000000), 0x42);
     }
 
     #[test]
     fn can_read_and_write_halfword() {
-        let mut storage = Storage::new();
-        storage.write_halfword(0x00000000, 0x1234);
-        assert_eq!(storage.read_byte(0x00000000), 0x34);
-        assert_eq!(storage.read_byte(0x00000001), 0x12);
-        assert_eq!(storage.read_halfword(0x00000000), 0x1234);
+        let mut memory = Memory::new();
+        memory.write_halfword(0x00000000, 0x1234);
+        assert_eq!(memory.read_byte(0x00000000), 0x34);
+        assert_eq!(memory.read_byte(0x00000001), 0x12);
+        assert_eq!(memory.read_halfword(0x00000000), 0x1234);
     }
 
     #[test]
     fn can_read_and_write_word() {
-        let mut storage = Storage::new();
-        storage.write_word(0x00000000, 0x12345678);
-        assert_eq!(storage.read_byte(0x00000000), 0x78);
-        assert_eq!(storage.read_byte(0x00000001), 0x56);
-        assert_eq!(storage.read_byte(0x00000002), 0x34);
-        assert_eq!(storage.read_byte(0x00000003), 0x12);
-        assert_eq!(storage.read_word(0x00000000), 0x12345678);
+        let mut memory = Memory::new();
+        memory.write_word(0x00000000, 0x12345678);
+        assert_eq!(memory.read_byte(0x00000000), 0x78);
+        assert_eq!(memory.read_byte(0x00000001), 0x56);
+        assert_eq!(memory.read_byte(0x00000002), 0x34);
+        assert_eq!(memory.read_byte(0x00000003), 0x12);
+        assert_eq!(memory.read_word(0x00000000), 0x12345678);
     }
 
     #[test]
     fn high_addresses_are_mirrored() {
-        let mut storage = Storage::new();
-        storage.write_byte(0x10000000, 0xFF);
-        assert_eq!(storage.read_byte(0x00000000), 0xFF);
+        let mut memory = Memory::new();
+        memory.write_byte(0x10000000, 0xFF);
+        assert_eq!(memory.read_byte(0x00000000), 0xFF);
     }
 
     #[test]
     fn frame_buffers_are_mirrored() {
-        let mut storage = Storage::new();
-        storage.write_byte(0x00000000, 0xFF);
-        assert_eq!(storage.read_byte(0x00080000), 0xFF);
-        assert_eq!(storage.read_byte(0x00100000), 0xFF);
+        let mut memory = Memory::new();
+        memory.write_byte(0x00000000, 0xFF);
+        assert_eq!(memory.read_byte(0x00080000), 0xFF);
+        assert_eq!(memory.read_byte(0x00100000), 0xFF);
     }
 
     #[test]
     fn character_tables_are_mirrored() {
-        let mut storage = Storage::new();
-        storage.write_byte(0x00006000, 0x01);
-        storage.write_byte(0x0000E000, 0x02);
-        storage.write_byte(0x00016000, 0x03);
-        storage.write_byte(0x0001E000, 0x04);
-        assert_eq!(storage.read_byte(0x00078000), 0x01);
-        assert_eq!(storage.read_byte(0x0007A000), 0x02);
-        assert_eq!(storage.read_byte(0x0007C000), 0x03);
-        assert_eq!(storage.read_byte(0x0007E000), 0x04);
+        let mut memory = Memory::new();
+        memory.write_byte(0x00006000, 0x01);
+        memory.write_byte(0x0000E000, 0x02);
+        memory.write_byte(0x00016000, 0x03);
+        memory.write_byte(0x0001E000, 0x04);
+        assert_eq!(memory.read_byte(0x00078000), 0x01);
+        assert_eq!(memory.read_byte(0x0007A000), 0x02);
+        assert_eq!(memory.read_byte(0x0007C000), 0x03);
+        assert_eq!(memory.read_byte(0x0007E000), 0x04);
     }
 
     #[test]
     fn wram_is_mirrored() {
-        let mut storage = Storage::new();
-        storage.write_byte(0x05123456, 0x63);
-        assert_eq!(storage.read_byte(0x05F23456), 0x63);
+        let mut memory = Memory::new();
+        memory.write_byte(0x05123456, 0x63);
+        assert_eq!(memory.read_byte(0x05F23456), 0x63);
     }
 
     #[test]
     fn can_load_game_pak_rom() {
-        let mut storage = Storage::new();
-        storage
-            .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12])
-            .unwrap();
+        let mut memory = Memory::new();
+        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
     }
 
     #[test]
     #[should_panic(expected = "ROM size must be a power of two")]
     fn asserts_rom_is_power_of_two() {
-        let mut storage = Storage::new();
-        storage.load_game_pak_rom(&[0x78, 0x56, 0x34]).unwrap();
+        let mut memory = Memory::new();
+        memory.load_game_pak_rom(&[0x78, 0x56, 0x34]).unwrap();
     }
 
     #[test]
     #[should_panic(expected = "ROM size must be <= 16Mb")]
     fn asserts_rom_is_small_enough() {
-        let mut storage = Storage::new();
+        let mut memory = Memory::new();
         let too_much_rom = vec![0u8; 0x01000000];
-        storage.load_game_pak_rom(too_much_rom.as_slice()).unwrap();
+        memory.load_game_pak_rom(too_much_rom.as_slice()).unwrap();
     }
 
     #[test]
     fn can_read_game_pak_rom() {
-        let mut storage = Storage::new();
-        storage
-            .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12])
-            .unwrap();
-        assert_eq!(storage.read_word(0x07000000), 0x12345678);
+        let mut memory = Memory::new();
+        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
+        assert_eq!(memory.read_word(0x07000000), 0x12345678);
     }
 
     #[test]
     fn can_read_game_pak_rom_mirrored_by_size() {
-        let mut storage = Storage::new();
-        storage
+        let mut memory = Memory::new();
+        memory
             .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12, 0x89, 0x57, 0x34, 0x06])
             .unwrap();
-        assert_eq!(storage.read_word(0x07000000), 0x12345678);
-        assert_eq!(storage.read_word(0x07000004), 0x06345789);
-        assert_eq!(storage.read_word(0x07000008), 0x12345678);
+        assert_eq!(memory.read_word(0x07000000), 0x12345678);
+        assert_eq!(memory.read_word(0x07000004), 0x06345789);
+        assert_eq!(memory.read_word(0x07000008), 0x12345678);
     }
 }

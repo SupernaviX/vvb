@@ -2,8 +2,8 @@ mod cpu;
 use cpu::{Event, CPU};
 mod hardware;
 use hardware::Hardware;
-mod storage;
-use storage::Storage;
+mod memory;
+use memory::Memory;
 pub mod video;
 use video::{Eye, FrameChannel, Video};
 
@@ -14,7 +14,7 @@ use std::cmp;
 pub struct Emulator {
     cycle: u64,
     tick_calls: u64,
-    storage: Storage,
+    memory: Memory,
     cpu: CPU,
     video: Video,
     hardware: Hardware,
@@ -24,7 +24,7 @@ impl Emulator {
         Emulator {
             cycle: 0,
             tick_calls: 0,
-            storage: Storage::new(),
+            memory: Memory::new(),
             cpu: CPU::new(),
             video: Video::new(),
             hardware: Hardware::new(),
@@ -36,7 +36,7 @@ impl Emulator {
     }
 
     pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
-        self.storage.load_game_pak_rom(rom)?;
+        self.memory.load_game_pak_rom(rom)?;
         self.reset();
         Ok(())
     }
@@ -44,19 +44,19 @@ impl Emulator {
     pub fn reset(&mut self) {
         self.cycle = 0;
         self.tick_calls = 0;
-        self.cpu.reset();
-        self.video.init(&mut self.storage);
-        self.hardware.init(&mut self.storage);
+        self.cpu.init();
+        self.video.init(&mut self.memory);
+        self.hardware.init(&mut self.memory);
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
-            self.storage.read_halfword(0xfffffff0),
-            self.storage.read_halfword(0xfffffff2),
-            self.storage.read_halfword(0xfffffff4),
-            self.storage.read_halfword(0xfffffff6),
-            self.storage.read_halfword(0xfffffff8),
-            self.storage.read_halfword(0xfffffffa),
-            self.storage.read_halfword(0xfffffffc),
-            self.storage.read_halfword(0xfffffffe),
+            self.memory.read_halfword(0xfffffff0),
+            self.memory.read_halfword(0xfffffff2),
+            self.memory.read_halfword(0xfffffff4),
+            self.memory.read_halfword(0xfffffff6),
+            self.memory.read_halfword(0xfffffff8),
+            self.memory.read_halfword(0xfffffffa),
+            self.memory.read_halfword(0xfffffffc),
+            self.memory.read_halfword(0xfffffffe),
         );
     }
 
@@ -69,10 +69,10 @@ impl Emulator {
         let old_sec = self.cycle / 100_000_000;
         let new_sec = target_cycle / 100_000_000;
         if old_sec != new_sec {
-            debug!("Current PC: 0x{:08x}", self.storage.pc);
+            debug!("Current PC: 0x{:08x}", self.cpu.pc);
             debug!("Cycles per tick: {}", target_cycle / self.tick_calls);
         }
-        self.hardware.process_inputs(&mut self.storage, input_state);
+        self.hardware.process_inputs(&mut self.memory, input_state);
 
         while self.cycle < target_cycle {
             // Find how long we can run before something interesting happens
@@ -84,31 +84,31 @@ impl Emulator {
             // Run the CPU for at least that many cycles
             // (specifically, until next_event_cycle + however long it takes to finish the current op)
             // This is safe as long as it doesn't START a new op AFTER that interesting cycle
-            let cpu_result = self.cpu.run(&mut self.storage, next_event_cycle)?;
+            let cpu_result = self.cpu.run(&mut self.memory, next_event_cycle)?;
 
             // Have the other components catch up
             let cpu_cycle = cpu_result.cycle;
-            self.video.run(&mut self.storage, cpu_cycle)?;
-            self.hardware.run(&mut self.storage, cpu_cycle);
+            self.video.run(&mut self.memory, cpu_cycle)?;
+            self.hardware.run(&mut self.memory, cpu_cycle);
 
             // If the CPU wrote somewhere interesting during execution, it would stop and return an event
             // Do what we have to do based on which event was returned
             match cpu_result.event {
                 Some(Event::HardwareWrite { address }) => {
-                    self.hardware.process_event(&mut self.storage, address);
+                    self.hardware.process_event(&mut self.memory, address);
                 }
                 Some(Event::DisplayControlWrite { address }) => {
-                    self.video.process_event(&mut self.storage, address);
+                    self.video.process_event(&mut self.memory, address);
                 }
                 _ => (),
             };
 
             // Components are caught up and their events are handled, now apply any pending interrupts
             if let Some(interrupt) = self.video.active_interrupt() {
-                self.cpu.request_interrupt(&mut self.storage, &interrupt);
+                self.cpu.request_interrupt(&interrupt);
             }
             if let Some(interrupt) = self.hardware.active_interrupt() {
-                self.cpu.request_interrupt(&mut self.storage, &interrupt);
+                self.cpu.request_interrupt(&interrupt);
             }
 
             self.cycle = cpu_cycle;

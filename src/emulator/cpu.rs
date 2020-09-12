@@ -1,4 +1,4 @@
-use super::storage::Storage;
+use super::memory::Memory;
 use anyhow::Result;
 
 // ECR: exception cause register
@@ -29,22 +29,51 @@ fn nth_bit_set(value: i32, n: i32) -> bool {
 
 pub struct CPU {
     cycle: u64,
+    pub pc: usize,
+    pub registers: [i32; 32],
+    pub sys_registers: [i32; 32],
 }
 impl CPU {
     pub fn new() -> CPU {
-        CPU { cycle: 0 }
+        let mut cpu = CPU {
+            cycle: 0,
+            pc: 0xfffffff0,
+            registers: [0; 32],
+            sys_registers: [0; 32],
+        };
+        cpu.init();
+        cpu
     }
-    pub fn run(&mut self, storage: &mut Storage, target_cycle: u64) -> Result<CPUProcessingResult> {
-        let mut process = CPUProcess::new(self.cycle, storage);
+    pub fn init(&mut self) {
+        self.cycle = 0;
+        self.pc = 0xfffffff0;
+        for reg in self.registers.iter_mut() {
+            *reg = 0;
+        }
+        for sys_reg in 0..self.sys_registers.len() {
+            self.sys_registers[sys_reg] = match sys_reg {
+                4 => 0x0000fff0,  // ECR
+                5 => 0x00008000,  // PSW
+                6 => 0x00005346,  // PIR
+                7 => 0x000000E0,  // TKCW
+                30 => 0x00000004, // it is a mystery
+                _ => 0,
+            };
+        }
+    }
+
+    pub fn run(&mut self, memory: &mut Memory, target_cycle: u64) -> Result<CPUProcessingResult> {
+        let mut process = CPUProcess::new(self.cycle, self, memory);
         process.run(target_cycle)?;
-        self.cycle = process.cycle;
-        Ok(CPUProcessingResult {
-            cycle: process.cycle,
-            event: process.event,
-        })
+        let pc = process.pc;
+        let cycle = process.cycle;
+        let event = process.event;
+        self.pc = pc;
+        self.cycle = cycle;
+        Ok(CPUProcessingResult { cycle, event })
     }
-    pub fn request_interrupt(&mut self, storage: &mut Storage, interrupt: &Interrupt) {
-        let mut psw = storage.sys_registers[PSW];
+    pub fn request_interrupt(&mut self, interrupt: &Interrupt) {
+        let mut psw = self.sys_registers[PSW];
 
         // if interrupts have been disabled, do nothing
         if (psw & INTERRUPTS_DISABLED_MASK) != 0 {
@@ -56,29 +85,26 @@ impl CPU {
             return;
         }
 
-        let mut ecr = storage.sys_registers[ECR];
-        let pc = storage.pc;
+        let mut ecr = self.sys_registers[ECR];
+        let pc = self.pc;
 
         // Save the state from before interrupt handling
-        storage.sys_registers[EIPSW] = psw;
-        storage.sys_registers[EIPC] = pc as i32;
+        self.sys_registers[EIPSW] = psw;
+        self.sys_registers[EIPC] = pc as i32;
 
         // Update the state to process the interrupt
         ecr &= !EICC;
         ecr |= interrupt.code as i32;
-        storage.sys_registers[ECR] = ecr;
+        self.sys_registers[ECR] = ecr;
 
         psw |= EX_PENDING_FLAG;
         psw &= !INTERRUPT_LEVEL;
         psw |= (interrupt.level as i32 + 1) << 16;
         psw |= INTERRUPT_DISABLE_FLAG;
         psw &= !ADDRESS_TRAP_ENABLE_FLAG;
-        storage.sys_registers[PSW] = psw;
+        self.sys_registers[PSW] = psw;
 
-        storage.pc = interrupt.handler;
-    }
-    pub fn reset(&mut self) {
-        self.cycle = 0;
+        self.pc = interrupt.handler;
     }
 }
 
@@ -101,15 +127,21 @@ pub struct Interrupt {
 
 pub struct CPUProcess<'a> {
     pub cycle: u64,
+    pub pc: usize,
     pub event: Option<Event>,
-    storage: &'a mut Storage,
+    memory: &'a mut Memory,
+    registers: &'a mut [i32; 32],
+    sys_registers: &'a mut [i32; 32],
 }
 impl<'a> CPUProcess<'a> {
-    pub fn new(cycle: u64, storage: &mut Storage) -> CPUProcess {
+    pub fn new(cycle: u64, cpu: &'a mut CPU, memory: &'a mut Memory) -> CPUProcess<'a> {
         CPUProcess {
             cycle,
+            pc: cpu.pc,
             event: None,
-            storage,
+            memory,
+            registers: &mut cpu.registers,
+            sys_registers: &mut cpu.sys_registers,
         }
     }
     pub fn run(&mut self, target_cycle: u64) -> Result<()> {
@@ -191,7 +223,7 @@ impl<'a> CPUProcess<'a> {
                             return Err(anyhow::anyhow!(
                                 "Unrecognized subopcode {:06b} at address 0x{:08x}",
                                 subopcode,
-                                self.storage.pc - 4
+                                self.pc - 4
                             ));
                         }
                     }
@@ -202,7 +234,7 @@ impl<'a> CPUProcess<'a> {
                     return Err(anyhow::anyhow!(
                         "Unrecognized opcode {:06b} at address 0x{:08x}",
                         opcode,
-                        self.storage.pc - 2
+                        self.pc - 2
                     ));
                 }
             };
@@ -211,8 +243,8 @@ impl<'a> CPUProcess<'a> {
     }
 
     fn read_pc(&mut self) -> i16 {
-        let result = self.storage.read_halfword(self.storage.pc);
-        self.storage.pc += 2;
+        let result = self.memory.read_halfword(self.pc);
+        self.pc += 2;
         result
     }
 
@@ -223,100 +255,96 @@ impl<'a> CPUProcess<'a> {
     }
     fn mov_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        self.set_register(reg2, self.storage.registers[reg1]);
+        self.set_register(reg2, self.registers[reg1]);
         self.cycle += 1;
     }
     fn movhi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.set_register(reg2, self.storage.registers[reg1] + (imm << 16));
+        self.set_register(reg2, self.registers[reg1] + (imm << 16));
         self.cycle += 1;
     }
     fn movea(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.set_register(reg2, self.storage.registers[reg1] + imm);
+        self.set_register(reg2, self.registers[reg1] + imm);
         self.cycle += 1;
     }
 
     fn ld_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
-        self.set_register(reg2, self.storage.read_byte(address) as i32);
+        let address = (self.registers[reg1] + disp) as usize;
+        self.set_register(reg2, self.memory.read_byte(address) as i32);
         self.cycle += 5;
     }
     fn ld_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
-        self.set_register(reg2, self.storage.read_halfword(address) as i32);
+        let address = (self.registers[reg1] + disp) as usize & 0xfffffffe;
+        self.set_register(reg2, self.memory.read_halfword(address) as i32);
         self.cycle += 5;
     }
     fn ld_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
-        self.set_register(reg2, self.storage.read_word(address));
+        let address = (self.registers[reg1] + disp) as usize & 0xfffffffc;
+        self.set_register(reg2, self.memory.read_word(address));
         self.cycle += 5;
     }
     fn in_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
-        self.set_register(reg2, (self.storage.read_byte(address) as i32) & 0x000000ff);
+        let address = (self.registers[reg1] + disp) as usize;
+        self.set_register(reg2, (self.memory.read_byte(address) as i32) & 0x000000ff);
         self.cycle += 5;
     }
     fn in_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
+        let address = (self.registers[reg1] + disp) as usize & 0xfffffffe;
         self.set_register(
             reg2,
-            (self.storage.read_halfword(address) as i32) & 0x0000ffff,
+            (self.memory.read_halfword(address) as i32) & 0x0000ffff,
         );
         self.cycle += 5;
     }
     fn in_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
-        self.set_register(reg2, self.storage.read_word(address));
+        let address = (self.registers[reg1] + disp) as usize & 0xfffffffc;
+        self.set_register(reg2, self.memory.read_word(address));
         self.cycle += 5;
     }
 
     fn st_b(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize;
-        self.event = self
-            .storage
-            .write_byte(address, self.storage.registers[reg2] as i8);
+        let address = (self.registers[reg1] + disp) as usize;
+        self.event = self.memory.write_byte(address, self.registers[reg2] as i8);
         self.cycle += 4;
     }
     fn st_h(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffe;
+        let address = (self.registers[reg1] + disp) as usize & 0xfffffffe;
         self.event = self
-            .storage
-            .write_halfword(address, self.storage.registers[reg2] as i16);
+            .memory
+            .write_halfword(address, self.registers[reg2] as i16);
         self.cycle += 4;
     }
     fn st_w(&mut self, instr: i16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.storage.registers[reg1] + disp) as usize & 0xfffffffc;
-        self.event = self
-            .storage
-            .write_word(address, self.storage.registers[reg2]);
+        let address = (self.registers[reg1] + disp) as usize & 0xfffffffc;
+        self.event = self.memory.write_word(address, self.registers[reg2]);
         self.cycle += 4;
     }
 
     fn add_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = self._add(self.storage.registers[reg2], self.storage.registers[reg1]);
+        let value = self._add(self.registers[reg2], self.registers[reg1]);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
     fn add_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        let value = self._add(self.storage.registers[reg2], imm);
+        let value = self._add(self.registers[reg2], imm);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
     fn addi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        let value = self._add(self.storage.registers[reg1], imm);
+        let value = self._add(self.registers[reg1], imm);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
@@ -332,17 +360,17 @@ impl<'a> CPUProcess<'a> {
 
     fn cmp_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        self._subtract(self.storage.registers[reg2], self.storage.registers[reg1]);
+        self._subtract(self.registers[reg2], self.registers[reg1]);
         self.cycle += 1;
     }
     fn cmp_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        self._subtract(self.storage.registers[reg2], imm);
+        self._subtract(self.registers[reg2], imm);
         self.cycle += 1;
     }
     fn sub(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = self._subtract(self.storage.registers[reg2], self.storage.registers[reg1]);
+        let value = self._subtract(self.registers[reg2], self.registers[reg1]);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
@@ -357,7 +385,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn mul(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let product = self.storage.registers[reg2] as i64 * self.storage.registers[reg1] as i64;
+        let product = self.registers[reg2] as i64 * self.registers[reg1] as i64;
 
         let hiword = (product >> 32) as i32;
         let loword = product as i32;
@@ -370,7 +398,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn mulu(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let product = self.storage.registers[reg2] as u64 * self.storage.registers[reg1] as u64;
+        let product = self.registers[reg2] as u64 * self.registers[reg1] as u64;
 
         let hiword = (product >> 32) as i32;
         let loword = product as i32;
@@ -383,14 +411,11 @@ impl<'a> CPUProcess<'a> {
     }
     fn div(&mut self, instr: i16) -> Result<()> {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let dividend = self.storage.registers[reg2];
-        let divisor = self.storage.registers[reg1];
+        let dividend = self.registers[reg2];
+        let divisor = self.registers[reg1];
         if divisor == 0 {
             // TODO this should trap
-            return Err(anyhow::anyhow!(
-                "Divide by zero at 0x{:08x}",
-                self.storage.pc - 2
-            ));
+            return Err(anyhow::anyhow!("Divide by zero at 0x{:08x}", self.pc - 2));
         } else if dividend == i32::MIN && divisor == -1 {
             self.set_register(30, 0);
             self.set_register(reg2, i32::MIN);
@@ -407,14 +432,11 @@ impl<'a> CPUProcess<'a> {
     }
     fn divu(&mut self, instr: i16) -> Result<()> {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let dividend = self.storage.registers[reg2] as u32;
-        let divisor = self.storage.registers[reg1] as u32;
+        let dividend = self.registers[reg2] as u32;
+        let divisor = self.registers[reg1] as u32;
         if divisor == 0 {
             // TODO this should trap
-            return Err(anyhow::anyhow!(
-                "Divide by zero at 0x{:08x}",
-                self.storage.pc - 2
-            ));
+            return Err(anyhow::anyhow!("Divide by zero at 0x{:08x}", self.pc - 2));
         } else {
             let quotient = (dividend / divisor) as i32;
             let remainder = (dividend % divisor) as i32;
@@ -428,49 +450,49 @@ impl<'a> CPUProcess<'a> {
 
     fn and(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = self.storage.registers[reg2] & self.storage.registers[reg1];
+        let value = self.registers[reg2] & self.registers[reg1];
         self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn andi(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        let value = self.storage.registers[reg1] & (imm & 0xffff);
+        let value = self.registers[reg1] & (imm & 0xffff);
         self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn not(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = !self.storage.registers[reg1];
+        let value = !self.registers[reg1];
         self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn or(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = self.storage.registers[reg2] | self.storage.registers[reg1];
+        let value = self.registers[reg2] | self.registers[reg1];
         self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn ori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        let value = self.storage.registers[reg1] | (imm & 0xffff);
+        let value = self.registers[reg1] | (imm & 0xffff);
         self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn xor(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = self.storage.registers[reg2] ^ self.storage.registers[reg1];
+        let value = self.registers[reg2] ^ self.registers[reg1];
         self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
     }
     fn xori(&mut self, instr: i16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        let value = self.storage.registers[reg1] ^ (imm & 0xffff);
+        let value = self.registers[reg1] ^ (imm & 0xffff);
         self.set_register(reg2, value);
         self.update_psw_flags(value == 0, value < 0, false);
         self.cycle += 1;
@@ -478,7 +500,7 @@ impl<'a> CPUProcess<'a> {
 
     fn sar_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        let old_value = self.storage.registers[reg2];
+        let old_value = self.registers[reg2];
         let shift = imm & 0x1f;
         let value = old_value >> shift;
         self.set_register(reg2, value);
@@ -488,8 +510,8 @@ impl<'a> CPUProcess<'a> {
     }
     fn sar_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let old_value = self.storage.registers[reg2];
-        let shift = self.storage.registers[reg1] & 0x1f;
+        let old_value = self.registers[reg2];
+        let shift = self.registers[reg1] & 0x1f;
         let value = old_value >> shift;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
@@ -498,7 +520,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn shl_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        let old_value = self.storage.registers[reg2];
+        let old_value = self.registers[reg2];
         let shift = imm & 0x1f;
         let value = old_value << shift;
         self.set_register(reg2, value);
@@ -508,8 +530,8 @@ impl<'a> CPUProcess<'a> {
     }
     fn shl_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let old_value = self.storage.registers[reg2];
-        let shift = self.storage.registers[reg1] & 0x1f;
+        let old_value = self.registers[reg2];
+        let shift = self.registers[reg1] & 0x1f;
         let value = old_value << shift;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, 32 - shift);
@@ -518,7 +540,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn shr_i(&mut self, instr: i16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
-        let old_value = self.storage.registers[reg2];
+        let old_value = self.registers[reg2];
         let shift = imm & 0x1f;
         let value = ((old_value as u32) >> shift as u32) as i32;
         self.set_register(reg2, value);
@@ -528,8 +550,8 @@ impl<'a> CPUProcess<'a> {
     }
     fn shr_r(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let old_value = self.storage.registers[reg2];
-        let shift = self.storage.registers[reg1] & 0x1f;
+        let old_value = self.registers[reg2];
+        let shift = self.registers[reg1] & 0x1f;
         let value = ((old_value as u32) >> shift as u32) as i32;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
@@ -539,7 +561,7 @@ impl<'a> CPUProcess<'a> {
 
     fn bcond(&mut self, instr: i16) {
         let (negate, cond, disp) = self.parse_format_iii_opcode(instr);
-        let psw = self.storage.sys_registers[PSW];
+        let psw = self.sys_registers[PSW];
         let cy = (psw & CARRY_FLAG) != 0;
         let ov = (psw & OVERFLOW_FLAG) != 0;
         let s = (psw & SIGN_FLAG) != 0;
@@ -560,7 +582,7 @@ impl<'a> CPUProcess<'a> {
         }
         if result {
             // jump is relative to start of instruction
-            self.storage.pc = (self.storage.pc as i32 + disp - 2) as usize & 0xfffffffe;
+            self.pc = (self.pc as i32 + disp - 2) as usize & 0xfffffffe;
             self.cycle += 3;
         } else {
             self.cycle += 1;
@@ -569,78 +591,76 @@ impl<'a> CPUProcess<'a> {
 
     fn jal(&mut self, instr: i16) {
         let disp = self.parse_format_iv_opcode(instr);
-        self.set_register(31, self.storage.pc as i32);
-        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize & 0xfffffffe;
+        self.set_register(31, self.pc as i32);
+        self.pc = (self.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
     fn jmp(&mut self, instr: i16) {
         let (_, reg1) = self.parse_format_i_opcode(instr);
-        self.storage.pc = self.storage.registers[reg1] as usize & 0xfffffffe;
+        self.pc = self.registers[reg1] as usize & 0xfffffffe;
         self.cycle += 3;
     }
     fn jr(&mut self, instr: i16) {
         let disp = self.parse_format_iv_opcode(instr);
-        self.storage.pc = (self.storage.pc as i32 + disp - 4) as usize & 0xfffffffe;
+        self.pc = (self.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
 
     fn ldsr(&mut self, instr: i16) {
         let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
         let reg_id = (reg_id & 0x1f) as usize;
-        let mut value = self.storage.registers[reg2];
+        let mut value = self.registers[reg2];
         if reg_id == 31 && value < 0 {
             value = -value;
         }
         match reg_id {
             4 | 6..=23 | 26..=28 | 30 => (),
-            id => self.storage.sys_registers[id] = value,
+            id => self.sys_registers[id] = value,
         }
         self.cycle += 8;
     }
     fn stsr(&mut self, instr: i16) {
         let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
         let reg_id = (reg_id & 0x1f) as usize;
-        self.set_register(reg2, self.storage.sys_registers[reg_id]);
+        self.set_register(reg2, self.sys_registers[reg_id]);
         self.cycle += 8;
     }
 
     fn sei(&mut self) {
-        let psw = self.storage.sys_registers[PSW];
-        self.storage.sys_registers[PSW] = psw | INTERRUPT_DISABLE_FLAG;
+        let psw = self.sys_registers[PSW];
+        self.sys_registers[PSW] = psw | INTERRUPT_DISABLE_FLAG;
         self.cycle += 12;
     }
 
     fn cli(&mut self) {
-        let psw = self.storage.sys_registers[PSW];
-        self.storage.sys_registers[PSW] = psw & !INTERRUPT_DISABLE_FLAG;
+        let psw = self.sys_registers[PSW];
+        self.sys_registers[PSW] = psw & !INTERRUPT_DISABLE_FLAG;
         self.cycle += 12;
     }
 
     fn reti(&mut self) {
-        self.storage.sys_registers[PSW] = self.storage.sys_registers[EIPSW];
-        self.storage.pc = self.storage.sys_registers[EIPC] as usize;
+        self.sys_registers[PSW] = self.sys_registers[EIPSW];
+        self.pc = self.sys_registers[EIPC] as usize;
         self.event = Some(Event::ReturnFromInterrupt);
         self.cycle += 10;
     }
 
     fn mpyhw(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let rhs = self.storage.registers[reg1]
-            .wrapping_shl(15)
-            .wrapping_shr(15);
-        self.set_register(reg2, self.storage.registers[reg2] * rhs);
+        let rhs = self.registers[reg1].wrapping_shl(15).wrapping_shr(15);
+        self.set_register(reg2, self.registers[reg2] * rhs);
         self.cycle += 9;
     }
     fn rev(&mut self, instr: i16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = self.storage.registers[reg1].reverse_bits();
+        let value = self.registers[reg1].reverse_bits();
         self.set_register(reg2, value);
         self.cycle += 22;
     }
     #[allow(overflowing_literals)]
     fn xb(&mut self, instr: i16) {
         let (reg2, _) = self.parse_format_i_opcode(instr);
-        let old_value = self.storage.registers[reg2];
+        let old_value = self.registers[reg2];
         let value = (old_value & 0xffff0000)
             | ((old_value << 8) & 0x0000ff00)
             | ((old_value >> 8) & 0x000000ff);
@@ -649,7 +669,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn xh(&mut self, instr: i16) {
         let (reg2, _) = self.parse_format_i_opcode(instr);
-        let old_value = self.storage.registers[reg2];
+        let old_value = self.registers[reg2];
         let value = (old_value << 16) | ((old_value >> 16) & 0x0000ffff);
         self.set_register(reg2, value);
         self.cycle += 1;
@@ -657,7 +677,7 @@ impl<'a> CPUProcess<'a> {
 
     fn set_register(&mut self, reg: usize, value: i32) {
         if reg != 0 {
-            self.storage.registers[reg] = value;
+            self.registers[reg] = value;
         }
     }
 
@@ -696,7 +716,7 @@ impl<'a> CPUProcess<'a> {
     }
 
     fn update_psw_flags(&mut self, z: bool, s: bool, ov: bool) {
-        let mut psw = self.storage.sys_registers[PSW];
+        let mut psw = self.sys_registers[PSW];
         psw ^= psw & (ZERO_FLAG | SIGN_FLAG | OVERFLOW_FLAG);
         if z {
             psw |= ZERO_FLAG;
@@ -707,10 +727,10 @@ impl<'a> CPUProcess<'a> {
         if ov {
             psw |= OVERFLOW_FLAG;
         }
-        self.storage.sys_registers[PSW] = psw;
+        self.sys_registers[PSW] = psw;
     }
     fn update_psw_flags_cy(&mut self, z: bool, s: bool, ov: bool, cy: bool) {
-        let mut psw = self.storage.sys_registers[PSW];
+        let mut psw = self.sys_registers[PSW];
         psw ^= psw & (ZERO_FLAG | SIGN_FLAG | OVERFLOW_FLAG | CARRY_FLAG);
         if z {
             psw |= ZERO_FLAG;
@@ -724,7 +744,7 @@ impl<'a> CPUProcess<'a> {
         if cy {
             psw |= CARRY_FLAG;
         }
-        self.storage.sys_registers[PSW] = psw;
+        self.sys_registers[PSW] = psw;
     }
 }
 
@@ -732,7 +752,7 @@ impl<'a> CPUProcess<'a> {
 #[rustfmt::skip]
 mod tests {
     use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Interrupt, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG};
-    use crate::emulator::storage::Storage;
+    use crate::emulator::memory::Memory;
 
     fn _op_1(opcode: u8, r2: u8, r1: u8) -> Vec<u8> {
         vec![(r2 << 5) | r1, (opcode << 2) | (r2 >> 3)]
@@ -814,24 +834,26 @@ mod tests {
     fn xh(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001001) }
     fn reti() -> Vec<u8> { _op_2(0b011001, 0, 0) }
 
-    fn rom(instructions: &[Vec<u8>]) -> Storage {
-        let mut storage = Storage::new();
-        storage.load_game_pak_rom(&[0; 256]).unwrap();
-        storage.pc = 0x07000000;
-        let mut address = storage.pc;
+    fn rom(instructions: &[Vec<u8>]) -> (CPU, Memory) {
+        let mut cpu = CPU::new();
+        cpu.pc = 0x07000000;
+
+        let mut memory = Memory::new();
+        memory.load_game_pak_rom(&[0; 256]).unwrap();
+        let mut address = cpu.pc;
         for instr in instructions {
             for byte in instr {
-                storage.write_byte(address, *byte as i8);
+                memory.write_byte(address, *byte as i8);
                 address += 1;
             }
         }
-        storage
+        (cpu, memory)
     }
 
-    fn add_interrupt_handler(storage: &mut Storage, mut address: usize, instructions: &[Vec<u8>]) {
+    fn add_interrupt_handler(memory: &mut Memory, mut address: usize, instructions: &[Vec<u8>]) {
         for instr in instructions {
             for byte in instr {
-                storage.write_byte(address, *byte as i8);
+                memory.write_byte(address, *byte as i8);
                 address += 1;
             }
         }
@@ -839,189 +861,175 @@ mod tests {
 
     #[test]
     fn does_nothing_on_zero_cycles() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 0).unwrap();
-        assert_eq!(storage.pc, 0x07000000);
+        cpu.run(&mut memory, 0).unwrap();
+        assert_eq!(cpu.pc, 0x07000000);
     }
 
     #[test]
     fn runs_one_cycle_at_a_time() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 1).unwrap();
-        assert_eq!(storage.registers[31], 0x07000000);
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], 0x07000420);
+        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.registers[31], 0x07000000);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], 0x07000420);
     }
 
     #[test]
     fn cannot_overwrite_zero() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(0, 0, 0x0700),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 1).unwrap();
-        assert_eq!(storage.registers[0], 0);
+        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.registers[0], 0);
     }
 
     #[test]
     fn does_nothing_when_ahead_of_current_cycle() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 1).unwrap();
-        assert_eq!(storage.registers[31], 0x07000000);
-        cpu.run(&mut storage, 1).unwrap();
-        assert_eq!(storage.registers[31], 0x07000000);
+        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.registers[31], 0x07000000);
+        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.registers[31], 0x07000000);
     }
 
     #[test]
     fn jumps_to_address() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 5).unwrap();
-        assert_eq!(storage.pc, 0x07000420);
+        cpu.run(&mut memory, 5).unwrap();
+        assert_eq!(cpu.pc, 0x07000420);
     }
 
     #[test]
     fn reads_from_memory() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             ld_b(31, 30, 16),
         ]);
-        storage.write_byte(0x07000052, 69);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 7).unwrap();
-        assert_eq!(storage.registers[31], 69);
+        memory.write_byte(0x07000052, 69);
+        cpu.run(&mut memory, 7).unwrap();
+        assert_eq!(cpu.registers[31], 69);
     }
 
     #[test]
     fn sign_extends_for_reads() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             ld_b(31, 30, -16),
         ]);
-        storage.write_byte(0x07000032, -2);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 7).unwrap();
-        assert_eq!(storage.registers[31], -2);
+        memory.write_byte(0x07000032, -2);
+        cpu.run(&mut memory, 7).unwrap();
+        assert_eq!(cpu.registers[31], -2);
     }
 
     #[test]
     fn zero_extends_for_loads() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             in_b(31, 30, -16),
         ]);
-        storage.write_byte(0x07000032, -2);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 7).unwrap();
-        assert_eq!(storage.registers[31], 0x000000fe);
+        memory.write_byte(0x07000032, -2);
+        cpu.run(&mut memory, 7).unwrap();
+        assert_eq!(cpu.registers[31], 0x000000fe);
     }
 
     #[test]
     fn masks_lower_bits_of_addresses_for_multibyte_reads() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(10, 0, 0x0500),
             ld_h(11, 10, 1),
             ld_w(12, 10, 2),
         ]);
-        storage.write_word(0x05000000, 0x12345678);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 11).unwrap();
-        assert_eq!(storage.registers[11], 0x5678);
-        assert_eq!(storage.registers[12], 0x12345678);
+        memory.write_word(0x05000000, 0x12345678);
+        cpu.run(&mut memory, 11).unwrap();
+        assert_eq!(cpu.registers[11], 0x5678);
+        assert_eq!(cpu.registers[12], 0x12345678);
     }
 
     #[test]
     fn writes_to_memory() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             movea(31, 0, 0x0069),
             st_b(31, 30, 16),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 7).unwrap();
-        assert_eq!(storage.read_byte(0x07000052), 0x69);
+        cpu.run(&mut memory, 7).unwrap();
+        assert_eq!(memory.read_byte(0x07000052), 0x69);
     }
 
     #[test]
     fn sign_extends_for_writes() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             movea(31, 0, -2),
             st_b(31, 30, -16),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 7).unwrap();
-        assert_eq!(storage.read_byte(0x07000032), -2);
+        cpu.run(&mut memory, 7).unwrap();
+        assert_eq!(memory.read_byte(0x07000032), -2);
     }
 
     #[test]
     fn masks_lower_bits_of_addresses_for_multibyte_writes() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(10, 0, 0x0500),
             movhi(11, 0, 0x1234),
             movea(11, 11, 0x5678),
             st_h(11, 10, 1),
             st_w(11, 10, 10),
         ]);
-        storage.write_word(0x05000000, 0x12345678);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 13).unwrap();
-        assert_eq!(storage.read_halfword(0x05000000), 0x5678);
-        assert_eq!(storage.read_word(0x05000008), 0x12345678);
+        memory.write_word(0x05000000, 0x12345678);
+        cpu.run(&mut memory, 13).unwrap();
+        assert_eq!(memory.read_halfword(0x05000000), 0x5678);
+        assert_eq!(memory.read_word(0x05000008), 0x12345678);
     }
 
     #[test]
     fn truncates_during_stores() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             movea(31, 0, 257),
             st_b(31, 30, 16),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 7).unwrap();
-        assert_eq!(storage.read_byte(0x07000052), 1);
+        cpu.run(&mut memory, 7).unwrap();
+        assert_eq!(memory.read_byte(0x07000052), 1);
     }
 
     #[test]
     fn does_addition() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(29, 0, 4),
             addi(31, 29, 5)
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], 9);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], 9);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
     fn sets_overflow_flag_on_addition_signed_wraparound() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             // most straightforward way I can find to set a register to i32::MAX
             movhi(29, 0, 0x0001),
             add_i(29, -1),
@@ -1030,41 +1038,38 @@ mod tests {
             // i32::MAX + 1 == i32.min
             addi(31, 29, 1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 4).unwrap();
-        assert_eq!(storage.registers[29], i32::MAX);
-        assert_eq!(storage.registers[31], i32::MIN);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, OVERFLOW_FLAG | SIGN_FLAG);
+        cpu.run(&mut memory, 4).unwrap();
+        assert_eq!(cpu.registers[29], i32::MAX);
+        assert_eq!(cpu.registers[31], i32::MIN);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, OVERFLOW_FLAG | SIGN_FLAG);
     }
 
     #[test]
     fn sets_carry_flag_on_addition_unsigned_wraparound() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(29, 29, -1),
             addi(31, 29, 1)
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], 0);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, ZERO_FLAG | CARRY_FLAG);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], 0);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, ZERO_FLAG | CARRY_FLAG);
     }
 
     #[test]
     fn does_subtraction() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 4),
             movea(30, 0, 5),
             sub(31,30),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 3).unwrap();
-        assert_eq!(storage.registers[31], -1);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
+        cpu.run(&mut memory, 3).unwrap();
+        assert_eq!(cpu.registers[31], -1);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
     }
 
     #[test]
     fn sets_overflow_flag_on_subtraction_signed_wraparound() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             // most straightforward way I can find to set a register to i32::MIN
             movhi(31, 0, i16::MIN),
             movea(30, 0, 1),
@@ -1072,78 +1077,73 @@ mod tests {
             // i32::MIN - 1 == i32.MAX
             sub(31, 30),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 3).unwrap();
-        assert_eq!(storage.registers[31], i32::MAX);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, OVERFLOW_FLAG);
+        cpu.run(&mut memory, 3).unwrap();
+        assert_eq!(cpu.registers[31], i32::MAX);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, OVERFLOW_FLAG);
     }
 
     #[test]
     fn sets_carry_flag_on_subtraction_unsigned_wraparound() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(29, 29, 1),
             sub(31, 29),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], -1);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, SIGN_FLAG | CARRY_FLAG);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], -1);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, SIGN_FLAG | CARRY_FLAG);
     }
 
     #[test]
     fn does_cmp() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31,30),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 3).unwrap();
-        assert_eq!(storage.registers[31], 4);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
+        cpu.run(&mut memory, 3).unwrap();
+        assert_eq!(cpu.registers[31], 4);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
     }
 
     #[test]
     fn handles_multiplication() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 3),
             movea(11, 0, 6),
             movea(12, 0, -4),
             mulu(11, 10),
             mul(12, 11),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 16).unwrap();
-        assert_eq!(storage.registers[11], 18);
-        assert_eq!(storage.registers[30], 0);
+        cpu.run(&mut memory, 16).unwrap();
+        assert_eq!(cpu.registers[11], 18);
+        assert_eq!(cpu.registers[30], 0);
 
-        cpu.run(&mut storage, 29).unwrap();
-        assert_eq!(storage.registers[12], -72);
-        assert_eq!(storage.registers[30], -1);
+        cpu.run(&mut memory, 29).unwrap();
+        assert_eq!(cpu.registers[12], -72);
+        assert_eq!(cpu.registers[30], -1);
     }
 
     #[test]
     fn handles_division() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(10, 0, -72),
             movea(11, 0, -4),
             movea(12, 0, 4),
             div(10, 11),
             divu(10, 12),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 39).unwrap();
-        assert_eq!(storage.registers[10], 18);
-        assert_eq!(storage.registers[30], 0);
+        cpu.run(&mut memory, 39).unwrap();
+        assert_eq!(cpu.registers[10], 18);
+        assert_eq!(cpu.registers[30], 0);
 
-        cpu.run(&mut storage, 77).unwrap();
-        assert_eq!(storage.registers[10], 4);
-        assert_eq!(storage.registers[30], 2);
+        cpu.run(&mut memory, 77).unwrap();
+        assert_eq!(cpu.registers[10], 4);
+        assert_eq!(cpu.registers[30], 2);
     }
 
     #[test]
     fn handles_bcond_true() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31, 30),
@@ -1151,15 +1151,14 @@ mod tests {
             movea(1, 0, 1),
             movea(2, 0, 1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 7).unwrap();
-        assert_eq!(storage.registers[1], 0);
-        assert_eq!(storage.registers[2], 1);
+        cpu.run(&mut memory, 7).unwrap();
+        assert_eq!(cpu.registers[1], 0);
+        assert_eq!(cpu.registers[2], 1);
     }
 
     #[test]
     fn handles_bcond_false() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31, 30),
@@ -1167,72 +1166,66 @@ mod tests {
             movea(1, 0, 1),
             movea(2, 0, 1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 5).unwrap();
-        assert_eq!(storage.registers[1], 1);
-        assert_eq!(storage.registers[2], 0);
+        cpu.run(&mut memory, 5).unwrap();
+        assert_eq!(cpu.registers[1], 1);
+        assert_eq!(cpu.registers[2], 0);
     }
 
     #[test]
     fn can_jump_relative() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             jr(0x123456),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 3).unwrap();
-        assert_eq!(storage.pc, 0x07123456);
+        cpu.run(&mut memory, 3).unwrap();
+        assert_eq!(cpu.pc, 0x07123456);
     }
 
     #[test]
     fn can_jump_and_link() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             jal(0x123456),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 3).unwrap();
-        assert_eq!(storage.registers[31], 0x07000004);
-        assert_eq!(storage.pc, 0x07123456);
+        cpu.run(&mut memory, 3).unwrap();
+        assert_eq!(cpu.registers[31], 0x07000004);
+        assert_eq!(cpu.pc, 0x07123456);
     }
 
     #[test]
     fn can_shl_with_carry() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(31, 0, i16::MIN),
             shl_i(31, 1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], 0);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, CARRY_FLAG | ZERO_FLAG);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], 0);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, CARRY_FLAG | ZERO_FLAG);
     }
 
     #[test]
     fn can_shr_with_zero_filling() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(31, 0, i16::MIN),
             shr_i(31, 1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], 0x40000000);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], 0x40000000);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
     fn can_shr_with_sign_extension() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(31, 0, i16::MIN),
             sar_i(31, 1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], i32::MIN >> 1);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, SIGN_FLAG);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], i32::MIN >> 1);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, SIGN_FLAG);
     }
 
     #[test]
     fn can_run_logic() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 0x0f0f),
 
             mov_r(30, 31),
@@ -1247,76 +1240,70 @@ mod tests {
             mov_r(27, 29),
             xor(27, 30),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 9).unwrap();
-        assert_eq!(storage.registers[30], 0xfffff0f0u32 as i32);
-        assert_eq!(storage.registers[29], -1);
-        assert_eq!(storage.registers[28], 0x0f0f);
-        assert_eq!(storage.registers[27], 0x0f0f);
+        cpu.run(&mut memory, 9).unwrap();
+        assert_eq!(cpu.registers[30], 0xfffff0f0u32 as i32);
+        assert_eq!(cpu.registers[29], -1);
+        assert_eq!(cpu.registers[28], 0x0f0f);
+        assert_eq!(cpu.registers[27], 0x0f0f);
     }
 
     #[test]
     fn andi_0xffff_should_preserve_high_bits() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 0x1082),
             andi(11, 10, -1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[11], 0x1082);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[11], 0x1082);
     }
 
     #[test]
     fn ori_0xffff_should_set_to_0xffff() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 0x1082),
             ori(11, 10, -1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[11], 0xffff as i32);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[11], 0xffff as i32);
     }
 
     #[test]
     fn xori_0xffff_should_flip_bits() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 0x1082),
             xori(11, 10, -1),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[11], 0xef7d as i32);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[11], 0xef7d as i32);
     }
 
     #[test]
     fn can_ldsr_and_stsr() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 0x0040),
             ldsr(31, 5),
             stsr(30, 5),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 17).unwrap();
-        assert_eq!(storage.sys_registers[5], 0x00000040);
-        assert_eq!(storage.registers[30], 0x00000040);
+        cpu.run(&mut memory, 17).unwrap();
+        assert_eq!(cpu.sys_registers[5], 0x00000040);
+        assert_eq!(cpu.registers[30], 0x00000040);
     }
 
     #[test]
     fn can_run_mpyhw() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 9),
             movea(11, 0, 6),
             mpyhw(10, 11),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 11).unwrap();
-        assert_eq!(storage.registers[10], 54);
-        assert_eq!(storage.sys_registers[PSW] & 0xf, 0);
+        cpu.run(&mut memory, 11).unwrap();
+        assert_eq!(cpu.registers[10], 54);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
     fn can_run_extended_opcodes() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movhi(10, 0, 0x1234),
             movea(10, 10, 0x5678),
             mov_r(11, 10),
@@ -1325,58 +1312,55 @@ mod tests {
             xb(11),
             xh(12),
         ]);
-        let mut cpu = CPU::new();
-        cpu.run(&mut storage, 33).unwrap();
-        assert_eq!(storage.registers[10], 0x1e6a2c48);
-        assert_eq!(storage.registers[11], 0x12347856);
-        assert_eq!(storage.registers[12], 0x56781234);
+        cpu.run(&mut memory, 33).unwrap();
+        assert_eq!(cpu.registers[10], 0x1e6a2c48);
+        assert_eq!(cpu.registers[11], 0x12347856);
+        assert_eq!(cpu.registers[12], 0x56781234);
     }
 
     #[test]
     fn can_request_interrupt() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 1),
         ]);
-        add_interrupt_handler(&mut storage, 0xfffffe10, &[
+        add_interrupt_handler(&mut memory, 0xfffffe10, &[
             movea(31, 0, 2),
             reti(),
         ]);
-        let mut cpu = CPU::new();
-        storage.sys_registers[PSW] = 0;
+        cpu.sys_registers[PSW] = 0;
 
-        cpu.request_interrupt(&mut storage, &Interrupt {
+        cpu.request_interrupt(&Interrupt {
             code: 0xfe10,
             level: 1,
             handler: 0xfffffe10,
         });
-        assert_eq!(storage.sys_registers[PSW], EX_PENDING_FLAG
+        assert_eq!(cpu.sys_registers[PSW], EX_PENDING_FLAG
             | 0x20000 // interrupt level 1
             | INTERRUPT_DISABLE_FLAG
         );
-        assert_eq!(storage.sys_registers[EIPC], 0x07000000);
-        assert_eq!(storage.sys_registers[EIPSW], 0);
+        assert_eq!(cpu.sys_registers[EIPC], 0x07000000);
+        assert_eq!(cpu.sys_registers[EIPSW], 0);
 
-        cpu.run(&mut storage, 1).unwrap();
-        assert_eq!(storage.registers[31], 2);
+        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.registers[31], 2);
 
         // Run another 10 cycles for RETI
-        cpu.run(&mut storage, 11).unwrap();
-        assert_eq!(storage.pc, 0x07000000);
-        cpu.run(&mut storage, 12).unwrap();
-        assert_eq!(storage.registers[31], 1);
+        cpu.run(&mut memory, 11).unwrap();
+        assert_eq!(cpu.pc, 0x07000000);
+        cpu.run(&mut memory, 12).unwrap();
+        assert_eq!(cpu.registers[31], 1);
     }
 
     #[test]
     fn can_not_request_interrupt_when_disabled() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 1),
             movea(31, 0, 2),
             movea(31, 0, 3),
         ]);
-        add_interrupt_handler(&mut storage, 0xfffffe10, &[
+        add_interrupt_handler(&mut memory, 0xfffffe10, &[
             movea(31, 0, 9001),
         ]);
-        let mut cpu = CPU::new();
 
         let interrupt = Interrupt {
             code: 0xfe10,
@@ -1384,35 +1368,34 @@ mod tests {
             handler: 0xfffffe10
         };
 
-        storage.sys_registers[PSW] = INTERRUPT_DISABLE_FLAG;
-        cpu.request_interrupt(&mut storage, &interrupt);
-        cpu.run(&mut storage, 1).unwrap();
-        assert_eq!(storage.registers[31], 1);
+        cpu.sys_registers[PSW] = INTERRUPT_DISABLE_FLAG;
+        cpu.request_interrupt(&interrupt);
+        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.registers[31], 1);
 
-        storage.sys_registers[PSW] = EX_PENDING_FLAG;
-        cpu.request_interrupt(&mut storage, &interrupt);
-        cpu.run(&mut storage, 2).unwrap();
-        assert_eq!(storage.registers[31], 2);
+        cpu.sys_registers[PSW] = EX_PENDING_FLAG;
+        cpu.request_interrupt(&interrupt);
+        cpu.run(&mut memory, 2).unwrap();
+        assert_eq!(cpu.registers[31], 2);
 
-        storage.sys_registers[PSW] = NMI_PENDING_FLAG;
-        cpu.request_interrupt(&mut storage, &interrupt);
-        cpu.run(&mut storage, 3).unwrap();
-        assert_eq!(storage.registers[31], 3);
+        cpu.sys_registers[PSW] = NMI_PENDING_FLAG;
+        cpu.request_interrupt(&interrupt);
+        cpu.run(&mut memory, 3).unwrap();
+        assert_eq!(cpu.registers[31], 3);
     }
 
     #[test]
     fn can_not_request_interrupt_when_current_interrupt_takes_priority() {
-        let mut storage = rom(&[
+        let (mut cpu, mut memory) = rom(&[
             movea(31, 0, 1),
         ]);
-        add_interrupt_handler(&mut storage, 0xfffffe10, &[
+        add_interrupt_handler(&mut memory, 0xfffffe10, &[
             movea(31, 0, 2),
         ]);
-        add_interrupt_handler(&mut storage, 0xfffffe40, &[
+        add_interrupt_handler(&mut memory, 0xfffffe40, &[
             movea(31, 0, 3),
         ]);
-        let mut cpu = CPU::new();
-        storage.sys_registers[PSW] = 0;
+        cpu.sys_registers[PSW] = 0;
 
         let high_priority_interrupt = Interrupt {
             code: 0xfe40,
@@ -1424,11 +1407,11 @@ mod tests {
             level: 1,
             handler: 0xfffffe10,
         };
-        cpu.request_interrupt(&mut storage, &high_priority_interrupt);
-        storage.sys_registers[PSW] ^= EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG;
-        cpu.request_interrupt(&mut storage, &low_priority_interrupt);
+        cpu.request_interrupt(&high_priority_interrupt);
+        cpu.sys_registers[PSW] ^= EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG;
+        cpu.request_interrupt(&low_priority_interrupt);
 
-        cpu.run(&mut storage, 1).unwrap();
-        assert_eq!(storage.registers[31], 3);
+        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.registers[31], 3);
     }
 }

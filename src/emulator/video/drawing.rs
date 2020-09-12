@@ -1,6 +1,6 @@
 #![allow(overflowing_literals)]
 
-use crate::emulator::storage::Storage;
+use crate::emulator::memory::Memory;
 use crate::emulator::video::Eye;
 use anyhow::Result;
 
@@ -55,9 +55,9 @@ impl DrawingProcess {
     }
 
     // Draws the contents of the given eye to the screen
-    pub fn draw_eye(&mut self, storage: &mut Storage, eye: Eye, buf_address: usize) -> Result<()> {
+    pub fn draw_eye(&mut self, memory: &mut Memory, eye: Eye, buf_address: usize) -> Result<()> {
         // Clear both frames to BKCOL
-        let bkcol = storage.read_halfword(BKCOL) & 0x03;
+        let bkcol = memory.read_halfword(BKCOL) & 0x03;
         let fill = (0..16)
             .step_by(2)
             .map(|shift| bkcol << shift)
@@ -71,7 +71,7 @@ impl DrawingProcess {
         // Draw rows in the buffer one-at-a-time
         self.object_world = 3;
         for world in (0..32).rev() {
-            let done = self.draw_world(storage, eye, world)?;
+            let done = self.draw_world(memory, eye, world)?;
             if done {
                 break;
             }
@@ -80,16 +80,16 @@ impl DrawingProcess {
         for (row_offset, row) in self.buffer.iter().enumerate() {
             for (column_offset, column) in row.iter().enumerate() {
                 let address = buf_address + (column_offset * 64) + (row_offset * 2);
-                storage.write_halfword(address, *column);
+                memory.write_halfword(address, *column);
             }
         }
 
         Ok(())
     }
 
-    fn draw_world(&mut self, storage: &Storage, eye: Eye, world: usize) -> Result<bool> {
+    fn draw_world(&mut self, memory: &Memory, eye: Eye, world: usize) -> Result<bool> {
         let world_address = WORLD_ATTRIBUTE_MEMORY + (world * 32);
-        let header = storage.read_halfword(world_address);
+        let header = memory.read_halfword(world_address);
         if (header & END_FLAG) != 0 {
             // END flag set, we're done rendering
             return Ok(true);
@@ -102,7 +102,7 @@ impl DrawingProcess {
         }
         let bgm = (header & BGM) >> 12;
         if bgm == 3 {
-            self.draw_object_world(storage, eye);
+            self.draw_object_world(memory, eye);
             return Ok(false);
         }
 
@@ -115,17 +115,17 @@ impl DrawingProcess {
             return Ok(false);
         }
 
-        let overplane = storage.read_halfword(world_address + 20);
+        let overplane = memory.read_halfword(world_address + 20);
         let background = Background::parse(header, overplane)?;
 
-        let dest_x = storage.read_halfword(world_address + 2);
-        let dest_parallax_x = storage.read_halfword(world_address + 4);
-        let dest_y = storage.read_halfword(world_address + 6);
-        let source_x = storage.read_halfword(world_address + 8);
-        let source_parallax_x = storage.read_halfword(world_address + 10);
-        let source_y = storage.read_halfword(world_address + 12);
-        let width = storage.read_halfword(world_address + 14) + 1;
-        let height = i16::max(storage.read_halfword(world_address + 16) + 1, 8);
+        let dest_x = memory.read_halfword(world_address + 2);
+        let dest_parallax_x = memory.read_halfword(world_address + 4);
+        let dest_y = memory.read_halfword(world_address + 6);
+        let source_x = memory.read_halfword(world_address + 8);
+        let source_parallax_x = memory.read_halfword(world_address + 10);
+        let source_y = memory.read_halfword(world_address + 12);
+        let width = memory.read_halfword(world_address + 14) + 1;
+        let height = i16::max(memory.read_halfword(world_address + 16) + 1, 8);
 
         // Apply parallax based on which eye this is
         let dest_x = match eye {
@@ -145,7 +145,7 @@ impl DrawingProcess {
                 let cell_address = background.get_cell_address(bg_x, bg_y);
 
                 // load that cell data
-                let cell_data = storage.read_halfword(cell_address);
+                let cell_data = memory.read_halfword(cell_address);
                 let palette_index = (cell_data >> 14) & 0x0003;
                 let flip_horizontally = (cell_data & 0x2000) != 0;
                 let flip_vertically = (cell_data & 0x1000) != 0;
@@ -160,11 +160,11 @@ impl DrawingProcess {
                 if flip_vertically {
                     char_y = 7 - char_y;
                 }
-                let pixel = self.get_char_pixel(storage, char_index, char_x, char_y);
+                let pixel = self.get_char_pixel(memory, char_index, char_x, char_y);
                 if pixel == 0 {
                     continue;
                 }
-                let color = self.get_palette_color(storage, GPLT0, palette_index, pixel);
+                let color = self.get_palette_color(memory, GPLT0, palette_index, pixel);
 
                 self.draw_pixel(dest_x + column, dest_y + row, color);
             }
@@ -173,9 +173,9 @@ impl DrawingProcess {
         return Ok(false);
     }
 
-    fn draw_object_world(&mut self, storage: &Storage, eye: Eye) {
+    fn draw_object_world(&mut self, memory: &Memory, eye: Eye) {
         let end_register = SPT0 + (self.object_world * 2);
-        let mut obj_index = storage.read_halfword(end_register) as usize & 0x03ff;
+        let mut obj_index = memory.read_halfword(end_register) as usize & 0x03ff;
 
         let target_obj_index: usize;
         if self.object_world == 0 {
@@ -184,28 +184,28 @@ impl DrawingProcess {
         } else {
             self.object_world -= 1;
             let start_register = SPT0 + (self.object_world * 2);
-            target_obj_index = storage.read_halfword(start_register) as usize & 0x03ff;
+            target_obj_index = memory.read_halfword(start_register) as usize & 0x03ff;
         }
 
         while obj_index != target_obj_index {
             let obj_address = OBJECT_ATTRIBUTE_MEMORY + (obj_index * 8);
-            self.draw_object(storage, eye, obj_address);
+            self.draw_object(memory, eye, obj_address);
 
             obj_index = if obj_index == 0 { 1023 } else { obj_index - 1 };
         }
     }
 
-    fn draw_object(&mut self, storage: &Storage, eye: Eye, obj_address: usize) {
+    fn draw_object(&mut self, memory: &Memory, eye: Eye, obj_address: usize) {
         let visible = match eye {
-            Eye::Left => (storage.read_halfword(obj_address + 2) & JLON) != 0,
-            Eye::Right => (storage.read_halfword(obj_address + 2) & JRON) != 0,
+            Eye::Left => (memory.read_halfword(obj_address + 2) & JLON) != 0,
+            Eye::Right => (memory.read_halfword(obj_address + 2) & JRON) != 0,
         };
         if !visible {
             return;
         }
 
-        let jx = storage.read_halfword(obj_address) & JX;
-        let jp = (storage.read_halfword(obj_address + 2) & JP)
+        let jx = memory.read_halfword(obj_address) & JX;
+        let jp = (memory.read_halfword(obj_address + 2) & JP)
             .wrapping_shl(6)
             .wrapping_shr(6);
         // apply parallax to the x coordinate
@@ -214,7 +214,7 @@ impl DrawingProcess {
             Eye::Right => jx + jp,
         };
 
-        let jy = storage.read_halfword(obj_address + 4) & JY;
+        let jy = memory.read_halfword(obj_address + 4) & JY;
         // JY is effectively the lower 8 bits of an i16, so figure out the sign from the range
         // if it's > 224, it's supposed to be negative
         let jy = if jy > 224 {
@@ -223,35 +223,35 @@ impl DrawingProcess {
             jy
         };
 
-        let jplts = (storage.read_halfword(obj_address + 6) >> 14) & 0x3;
-        let flip_horizontal = (storage.read_halfword(obj_address + 6) & JHFLP) != 0;
-        let flip_vertical = (storage.read_halfword(obj_address + 6) & JVFLP) != 0;
-        let jca = storage.read_halfword(obj_address + 6) & JCA;
+        let jplts = (memory.read_halfword(obj_address + 6) >> 14) & 0x3;
+        let flip_horizontal = (memory.read_halfword(obj_address + 6) & JHFLP) != 0;
+        let flip_vertical = (memory.read_halfword(obj_address + 6) & JVFLP) != 0;
+        let jca = memory.read_halfword(obj_address + 6) & JCA;
 
         for x in 0..8 {
             for y in 0..8 {
                 let char_x = if flip_horizontal { 7 - x } else { x };
                 let char_y = if flip_vertical { 7 - y } else { y };
-                let pixel = self.get_char_pixel(storage, jca, char_x, char_y);
+                let pixel = self.get_char_pixel(memory, jca, char_x, char_y);
                 if pixel == 0 {
                     continue;
                 }
 
-                let color = self.get_palette_color(storage, JPLT0, jplts, pixel);
+                let color = self.get_palette_color(memory, JPLT0, jplts, pixel);
                 self.draw_pixel(jx + x, jy + y, color);
             }
         }
     }
 
-    fn get_char_pixel(&self, storage: &Storage, index: i16, x: i16, y: i16) -> i16 {
+    fn get_char_pixel(&self, memory: &Memory, index: i16, x: i16, y: i16) -> i16 {
         let char_row =
-            storage.read_halfword(CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2));
+            memory.read_halfword(CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2));
         let pixel = (char_row >> (x * 2)) & 0x3;
         pixel
     }
 
-    fn get_palette_color(&self, storage: &Storage, base: usize, index: i16, pixel: i16) -> i16 {
-        let palette = storage.read_halfword(base + (index as usize * 2));
+    fn get_palette_color(&self, memory: &Memory, base: usize, index: i16, pixel: i16) -> i16 {
+        let palette = memory.read_halfword(base + (index as usize * 2));
         let color = (palette >> (pixel * 2)) & 0x03;
         color
     }
