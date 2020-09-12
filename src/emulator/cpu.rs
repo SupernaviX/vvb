@@ -3,7 +3,7 @@ use anyhow::Result;
 
 // ECR: exception cause register
 const ECR: usize = 4;
-const EICC: i32 = 0x0000ffff;
+const EICC: u32 = 0x0000ffff;
 // PSW: program status word
 const PSW: usize = 5;
 // EIPC: exception/interrupt PC
@@ -12,26 +12,31 @@ const EIPC: usize = 0;
 const EIPSW: usize = 1;
 
 // PSW flags and masks
-const INTERRUPT_LEVEL: i32 = 0x0000f0000;
-const NMI_PENDING_FLAG: i32 = 0x00008000;
-const EX_PENDING_FLAG: i32 = 0x00004000;
-const ADDRESS_TRAP_ENABLE_FLAG: i32 = 0x00002000;
-const INTERRUPT_DISABLE_FLAG: i32 = 0x00001000;
-const CARRY_FLAG: i32 = 0x00000008;
-const OVERFLOW_FLAG: i32 = 0x00000004;
-const SIGN_FLAG: i32 = 0x00000002;
-const ZERO_FLAG: i32 = 0x00000001;
-const INTERRUPTS_DISABLED_MASK: i32 = INTERRUPT_DISABLE_FLAG | EX_PENDING_FLAG | NMI_PENDING_FLAG;
+const INTERRUPT_LEVEL: u32 = 0x0000f0000;
+const NMI_PENDING_FLAG: u32 = 0x00008000;
+const EX_PENDING_FLAG: u32 = 0x00004000;
+const ADDRESS_TRAP_ENABLE_FLAG: u32 = 0x00002000;
+const INTERRUPT_DISABLE_FLAG: u32 = 0x00001000;
+const CARRY_FLAG: u32 = 0x00000008;
+const OVERFLOW_FLAG: u32 = 0x00000004;
+const SIGN_FLAG: u32 = 0x00000002;
+const ZERO_FLAG: u32 = 0x00000001;
+const INTERRUPTS_DISABLED_MASK: u32 = INTERRUPT_DISABLE_FLAG | EX_PENDING_FLAG | NMI_PENDING_FLAG;
 
-fn nth_bit_set(value: i32, n: i32) -> bool {
+fn nth_bit_set(value: u32, n: u32) -> bool {
     return (value & (1 << n)) != 0;
+}
+
+#[inline]
+fn sign_bit(value: u32) -> bool {
+    value & 0x80000000 != 0
 }
 
 pub struct CPU {
     cycle: u64,
     pub pc: usize,
-    pub registers: [i32; 32],
-    pub sys_registers: [i32; 32],
+    pub registers: [u32; 32],
+    pub sys_registers: [u32; 32],
 }
 impl CPU {
     pub fn new() -> CPU {
@@ -90,16 +95,16 @@ impl CPU {
 
         // Save the state from before interrupt handling
         self.sys_registers[EIPSW] = psw;
-        self.sys_registers[EIPC] = pc as i32;
+        self.sys_registers[EIPC] = pc as u32;
 
         // Update the state to process the interrupt
         ecr &= !EICC;
-        ecr |= interrupt.code as i32;
+        ecr |= interrupt.code as u32;
         self.sys_registers[ECR] = ecr;
 
         psw |= EX_PENDING_FLAG;
         psw &= !INTERRUPT_LEVEL;
-        psw |= (interrupt.level as i32 + 1) << 16;
+        psw |= (interrupt.level as u32 + 1) << 16;
         psw |= INTERRUPT_DISABLE_FLAG;
         psw &= !ADDRESS_TRAP_ENABLE_FLAG;
         self.sys_registers[PSW] = psw;
@@ -130,8 +135,8 @@ pub struct CPUProcess<'a> {
     pub pc: usize,
     pub event: Option<Event>,
     memory: &'a mut Memory,
-    registers: &'a mut [i32; 32],
-    sys_registers: &'a mut [i32; 32],
+    registers: &'a mut [u32; 32],
+    sys_registers: &'a mut [u32; 32],
 }
 impl<'a> CPUProcess<'a> {
     pub fn new(cycle: u64, cpu: &'a mut CPU, memory: &'a mut Memory) -> CPUProcess<'a> {
@@ -242,324 +247,324 @@ impl<'a> CPUProcess<'a> {
         Ok(())
     }
 
-    fn read_pc(&mut self) -> i16 {
+    fn read_pc(&mut self) -> u16 {
         let result = self.memory.read_halfword(self.pc);
         self.pc += 2;
         result
     }
 
-    fn mov_i(&mut self, instr: i16) {
+    fn mov_i(&mut self, instr: u16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
         self.set_register(reg2, imm);
         self.cycle += 1;
     }
-    fn mov_r(&mut self, instr: i16) {
+    fn mov_r(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         self.set_register(reg2, self.registers[reg1]);
         self.cycle += 1;
     }
-    fn movhi(&mut self, instr: i16) {
+    fn movhi(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         self.set_register(reg2, self.registers[reg1] + (imm << 16));
         self.cycle += 1;
     }
-    fn movea(&mut self, instr: i16) {
+    fn movea(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         self.set_register(reg2, self.registers[reg1] + imm);
         self.cycle += 1;
     }
 
-    fn ld_b(&mut self, instr: i16) {
+    fn ld_b(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize;
-        self.set_register(reg2, self.memory.read_byte(address) as i32);
+        let address = (self.registers[reg1] as i32 + disp) as usize;
+        self.set_register(reg2, self.memory.read_byte(address) as i8 as u32);
         self.cycle += 5;
     }
-    fn ld_h(&mut self, instr: i16) {
+    fn ld_h(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize & 0xfffffffe;
-        self.set_register(reg2, self.memory.read_halfword(address) as i32);
+        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffe;
+        self.set_register(reg2, self.memory.read_halfword(address) as i16 as u32);
         self.cycle += 5;
     }
-    fn ld_w(&mut self, instr: i16) {
+    fn ld_w(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize & 0xfffffffc;
+        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffc;
         self.set_register(reg2, self.memory.read_word(address));
         self.cycle += 5;
     }
-    fn in_b(&mut self, instr: i16) {
+    fn in_b(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize;
-        self.set_register(reg2, (self.memory.read_byte(address) as i32) & 0x000000ff);
+        let address = (self.registers[reg1] as i32 + disp) as usize;
+        self.set_register(reg2, (self.memory.read_byte(address) as u32) & 0x000000ff);
         self.cycle += 5;
     }
-    fn in_h(&mut self, instr: i16) {
+    fn in_h(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize & 0xfffffffe;
+        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffe;
         self.set_register(
             reg2,
-            (self.memory.read_halfword(address) as i32) & 0x0000ffff,
+            (self.memory.read_halfword(address) as u32) & 0x0000ffff,
         );
         self.cycle += 5;
     }
-    fn in_w(&mut self, instr: i16) {
+    fn in_w(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize & 0xfffffffc;
+        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffc;
         self.set_register(reg2, self.memory.read_word(address));
         self.cycle += 5;
     }
 
-    fn st_b(&mut self, instr: i16) {
+    fn st_b(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize;
-        self.event = self.memory.write_byte(address, self.registers[reg2] as i8);
+        let address = (self.registers[reg1] as i32 + disp) as usize;
+        self.event = self.memory.write_byte(address, self.registers[reg2] as u8);
         self.cycle += 4;
     }
-    fn st_h(&mut self, instr: i16) {
+    fn st_h(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize & 0xfffffffe;
+        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffe;
         self.event = self
             .memory
-            .write_halfword(address, self.registers[reg2] as i16);
+            .write_halfword(address, self.registers[reg2] as u16);
         self.cycle += 4;
     }
-    fn st_w(&mut self, instr: i16) {
+    fn st_w(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] + disp) as usize & 0xfffffffc;
+        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffc;
         self.event = self.memory.write_word(address, self.registers[reg2]);
         self.cycle += 4;
     }
 
-    fn add_r(&mut self, instr: i16) {
+    fn add_r(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self._add(self.registers[reg2], self.registers[reg1]);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
-    fn add_i(&mut self, instr: i16) {
+    fn add_i(&mut self, instr: u16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
         let value = self._add(self.registers[reg2], imm);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
-    fn addi(&mut self, instr: i16) {
+    fn addi(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self._add(self.registers[reg1], imm);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
-    fn _add(&mut self, val1: i32, val2: i32) -> i32 {
-        let (result, ov) = val1.overflowing_add(val2);
-        let s1 = val1 < 0;
-        let s2 = val2 < 0;
-        let s = result < 0;
-        let cy = if s { s1 && s2 } else { s1 || s2 };
+    fn _add(&mut self, val1: u32, val2: u32) -> u32 {
+        let (result, cy) = val1.overflowing_add(val2);
+        let s1 = sign_bit(val1);
+        let s2 = sign_bit(val2);
+        let s = sign_bit(result);
+        let ov = if s { !s1 && !s2 } else { s1 && s2 };
         self.update_psw_flags_cy(result == 0, s, ov, cy);
         result
     }
 
-    fn cmp_r(&mut self, instr: i16) {
+    fn cmp_r(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         self._subtract(self.registers[reg2], self.registers[reg1]);
         self.cycle += 1;
     }
-    fn cmp_i(&mut self, instr: i16) {
+    fn cmp_i(&mut self, instr: u16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
         self._subtract(self.registers[reg2], imm);
         self.cycle += 1;
     }
-    fn sub(&mut self, instr: i16) {
+    fn sub(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self._subtract(self.registers[reg2], self.registers[reg1]);
         self.set_register(reg2, value);
         self.cycle += 1;
     }
-    fn _subtract(&mut self, val1: i32, val2: i32) -> i32 {
-        let (result, ov) = val1.overflowing_sub(val2);
-        let s1 = val1 < 0;
-        let s2 = val2 < 0;
-        let s = result < 0;
-        let cy = if s1 { s2 && s } else { s2 || s };
+    fn _subtract(&mut self, val1: u32, val2: u32) -> u32 {
+        let (result, cy) = val1.overflowing_sub(val2);
+        let s1 = sign_bit(val1);
+        let s2 = sign_bit(val2);
+        let s = sign_bit(result);
+        let ov = if s1 { !s2 && !s } else { s2 && s };
         self.update_psw_flags_cy(result == 0, s, ov, cy);
         result
     }
-    fn mul(&mut self, instr: i16) {
+    fn mul(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let product = self.registers[reg2] as i64 * self.registers[reg1] as i64;
+        let product = self.registers[reg2] as i32 as i64 * self.registers[reg1] as i32 as i64;
 
-        let hiword = (product >> 32) as i32;
-        let loword = product as i32;
+        let hiword = (product >> 32) as u32;
+        let loword = product as u32;
         self.set_register(30, hiword);
         self.set_register(reg2, loword);
 
-        let ov = product != loword as i64;
-        self.update_psw_flags(loword == 0, loword < 0, ov);
+        let ov = product != loword as i32 as i64;
+        self.update_psw_flags(loword == 0, sign_bit(loword), ov);
         self.cycle += 13;
     }
-    fn mulu(&mut self, instr: i16) {
+    fn mulu(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let product = self.registers[reg2] as u64 * self.registers[reg1] as u64;
 
-        let hiword = (product >> 32) as i32;
-        let loword = product as i32;
+        let hiword = (product >> 32) as u32;
+        let loword = product as u32;
 
         self.set_register(30, hiword);
         self.set_register(reg2, loword);
-        let ov = product != loword as u64;
-        self.update_psw_flags(loword == 0, loword < 0, ov);
+        let ov = product != loword as i32 as u64;
+        self.update_psw_flags(loword == 0, sign_bit(loword), ov);
         self.cycle += 13;
     }
-    fn div(&mut self, instr: i16) -> Result<()> {
+    fn div(&mut self, instr: u16) -> Result<()> {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let dividend = self.registers[reg2] as i32;
+        let divisor = self.registers[reg1] as i32;
+        if divisor == 0 {
+            // TODO this should trap
+            return Err(anyhow::anyhow!("Divide by zero at 0x{:08x}", self.pc - 2));
+        } else if dividend == i32::MIN && divisor == -1 {
+            self.set_register(30, 0);
+            self.set_register(reg2, 0x80000000);
+            self.update_psw_flags(false, true, true);
+        } else {
+            let quotient = dividend / divisor;
+            let remainder = dividend % divisor;
+            self.set_register(30, remainder as u32);
+            self.set_register(reg2, quotient as u32);
+            self.update_psw_flags(quotient == 0, quotient < 0, false);
+        }
+        self.cycle += 38;
+        Ok(())
+    }
+    fn divu(&mut self, instr: u16) -> Result<()> {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let dividend = self.registers[reg2];
         let divisor = self.registers[reg1];
         if divisor == 0 {
             // TODO this should trap
             return Err(anyhow::anyhow!("Divide by zero at 0x{:08x}", self.pc - 2));
-        } else if dividend == i32::MIN && divisor == -1 {
-            self.set_register(30, 0);
-            self.set_register(reg2, i32::MIN);
-            self.update_psw_flags(false, true, true);
         } else {
             let quotient = dividend / divisor;
             let remainder = dividend % divisor;
             self.set_register(30, remainder);
             self.set_register(reg2, quotient);
-            self.update_psw_flags(quotient == 0, quotient < 0, false);
-        }
-        self.cycle += 38;
-        Ok(())
-    }
-    fn divu(&mut self, instr: i16) -> Result<()> {
-        let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let dividend = self.registers[reg2] as u32;
-        let divisor = self.registers[reg1] as u32;
-        if divisor == 0 {
-            // TODO this should trap
-            return Err(anyhow::anyhow!("Divide by zero at 0x{:08x}", self.pc - 2));
-        } else {
-            let quotient = (dividend / divisor) as i32;
-            let remainder = (dividend % divisor) as i32;
-            self.set_register(30, remainder);
-            self.set_register(reg2, quotient);
-            self.update_psw_flags(quotient == 0, quotient < 0, false);
+            self.update_psw_flags(quotient == 0, sign_bit(quotient), false);
         }
         self.cycle += 36;
         Ok(())
     }
 
-    fn and(&mut self, instr: i16) {
+    fn and(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.registers[reg2] & self.registers[reg1];
         self.set_register(reg2, value);
-        self.update_psw_flags(value == 0, value < 0, false);
+        self.update_psw_flags(value == 0, sign_bit(value), false);
         self.cycle += 1;
     }
-    fn andi(&mut self, instr: i16) {
+    fn andi(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.registers[reg1] & (imm & 0xffff);
         self.set_register(reg2, value);
-        self.update_psw_flags(value == 0, value < 0, false);
+        self.update_psw_flags(value == 0, sign_bit(value), false);
         self.cycle += 1;
     }
-    fn not(&mut self, instr: i16) {
+    fn not(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = !self.registers[reg1];
         self.set_register(reg2, value);
-        self.update_psw_flags(value == 0, value < 0, false);
+        self.update_psw_flags(value == 0, sign_bit(value), false);
         self.cycle += 1;
     }
-    fn or(&mut self, instr: i16) {
+    fn or(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.registers[reg2] | self.registers[reg1];
         self.set_register(reg2, value);
-        self.update_psw_flags(value == 0, value < 0, false);
+        self.update_psw_flags(value == 0, sign_bit(value), false);
         self.cycle += 1;
     }
-    fn ori(&mut self, instr: i16) {
+    fn ori(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.registers[reg1] | (imm & 0xffff);
         self.set_register(reg2, value);
-        self.update_psw_flags(value == 0, value < 0, false);
+        self.update_psw_flags(value == 0, sign_bit(value), false);
         self.cycle += 1;
     }
-    fn xor(&mut self, instr: i16) {
+    fn xor(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.registers[reg2] ^ self.registers[reg1];
         self.set_register(reg2, value);
-        self.update_psw_flags(value == 0, value < 0, false);
+        self.update_psw_flags(value == 0, sign_bit(value), false);
         self.cycle += 1;
     }
-    fn xori(&mut self, instr: i16) {
+    fn xori(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
         let value = self.registers[reg1] ^ (imm & 0xffff);
         self.set_register(reg2, value);
-        self.update_psw_flags(value == 0, value < 0, false);
+        self.update_psw_flags(value == 0, sign_bit(value), false);
         self.cycle += 1;
     }
 
-    fn sar_i(&mut self, instr: i16) {
+    fn sar_i(&mut self, instr: u16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
         let old_value = self.registers[reg2];
         let shift = imm & 0x1f;
-        let value = old_value >> shift;
+        let value = ((old_value as i32) >> shift as i32) as u32;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
-        self.update_psw_flags_cy(value == 0, value < 0, false, cy);
+        self.update_psw_flags_cy(value == 0, sign_bit(value), false, cy);
         self.cycle += 1;
     }
-    fn sar_r(&mut self, instr: i16) {
+    fn sar_r(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let old_value = self.registers[reg2];
         let shift = self.registers[reg1] & 0x1f;
-        let value = old_value >> shift;
+        let value = ((old_value as i32) >> shift as i32) as u32;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
-        self.update_psw_flags_cy(value == 0, value < 0, false, cy);
+        self.update_psw_flags_cy(value == 0, sign_bit(value), false, cy);
         self.cycle += 1;
     }
-    fn shl_i(&mut self, instr: i16) {
+    fn shl_i(&mut self, instr: u16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
         let old_value = self.registers[reg2];
         let shift = imm & 0x1f;
         let value = old_value << shift;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, 32 - shift);
-        self.update_psw_flags_cy(value == 0, value < 0, false, cy);
+        self.update_psw_flags_cy(value == 0, sign_bit(value), false, cy);
         self.cycle += 1;
     }
-    fn shl_r(&mut self, instr: i16) {
+    fn shl_r(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let old_value = self.registers[reg2];
         let shift = self.registers[reg1] & 0x1f;
         let value = old_value << shift;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, 32 - shift);
-        self.update_psw_flags_cy(value == 0, value < 0, false, cy);
+        self.update_psw_flags_cy(value == 0, sign_bit(value), false, cy);
         self.cycle += 1;
     }
-    fn shr_i(&mut self, instr: i16) {
+    fn shr_i(&mut self, instr: u16) {
         let (reg2, imm) = self.parse_format_ii_opcode(instr);
         let old_value = self.registers[reg2];
         let shift = imm & 0x1f;
-        let value = ((old_value as u32) >> shift as u32) as i32;
+        let value = old_value >> shift;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
-        self.update_psw_flags_cy(value == 0, value < 0, false, cy);
+        self.update_psw_flags_cy(value == 0, sign_bit(value), false, cy);
         self.cycle += 1;
     }
-    fn shr_r(&mut self, instr: i16) {
+    fn shr_r(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let old_value = self.registers[reg2];
         let shift = self.registers[reg1] & 0x1f;
-        let value = ((old_value as u32) >> shift as u32) as i32;
+        let value = old_value >> shift;
         self.set_register(reg2, value);
         let cy = shift != 0 && nth_bit_set(old_value, shift - 1);
-        self.update_psw_flags_cy(value == 0, value < 0, false, cy);
+        self.update_psw_flags_cy(value == 0, sign_bit(value), false, cy);
         self.cycle += 1;
     }
 
-    fn bcond(&mut self, instr: i16) {
+    fn bcond(&mut self, instr: u16) {
         let (negate, cond, disp) = self.parse_format_iii_opcode(instr);
         let psw = self.sys_registers[PSW];
         let cy = (psw & CARRY_FLAG) != 0;
@@ -589,29 +594,29 @@ impl<'a> CPUProcess<'a> {
         }
     }
 
-    fn jal(&mut self, instr: i16) {
+    fn jal(&mut self, instr: u16) {
         let disp = self.parse_format_iv_opcode(instr);
-        self.set_register(31, self.pc as i32);
+        self.set_register(31, self.pc as u32);
         self.pc = (self.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
-    fn jmp(&mut self, instr: i16) {
+    fn jmp(&mut self, instr: u16) {
         let (_, reg1) = self.parse_format_i_opcode(instr);
         self.pc = self.registers[reg1] as usize & 0xfffffffe;
         self.cycle += 3;
     }
-    fn jr(&mut self, instr: i16) {
+    fn jr(&mut self, instr: u16) {
         let disp = self.parse_format_iv_opcode(instr);
         self.pc = (self.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
 
-    fn ldsr(&mut self, instr: i16) {
+    fn ldsr(&mut self, instr: u16) {
         let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
         let reg_id = (reg_id & 0x1f) as usize;
         let mut value = self.registers[reg2];
-        if reg_id == 31 && value < 0 {
-            value = -value;
+        if reg_id == 31 && sign_bit(value) {
+            value = -(value as i32) as u32;
         }
         match reg_id {
             4 | 6..=23 | 26..=28 | 30 => (),
@@ -619,7 +624,7 @@ impl<'a> CPUProcess<'a> {
         }
         self.cycle += 8;
     }
-    fn stsr(&mut self, instr: i16) {
+    fn stsr(&mut self, instr: u16) {
         let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
         let reg_id = (reg_id & 0x1f) as usize;
         self.set_register(reg2, self.sys_registers[reg_id]);
@@ -645,20 +650,24 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 10;
     }
 
-    fn mpyhw(&mut self, instr: i16) {
+    fn mpyhw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let rhs = self.registers[reg1].wrapping_shl(15).wrapping_shr(15);
-        self.set_register(reg2, self.registers[reg2] * rhs);
+        let lhs = (self.registers[reg2] as i32)
+            .wrapping_shl(15)
+            .wrapping_shr(15);
+        let rhs = (self.registers[reg1] as i32)
+            .wrapping_shl(15)
+            .wrapping_shr(15);
+        self.set_register(reg2, (lhs * rhs) as u32);
         self.cycle += 9;
     }
-    fn rev(&mut self, instr: i16) {
+    fn rev(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let value = self.registers[reg1].reverse_bits();
         self.set_register(reg2, value);
         self.cycle += 22;
     }
-    #[allow(overflowing_literals)]
-    fn xb(&mut self, instr: i16) {
+    fn xb(&mut self, instr: u16) {
         let (reg2, _) = self.parse_format_i_opcode(instr);
         let old_value = self.registers[reg2];
         let value = (old_value & 0xffff0000)
@@ -667,7 +676,7 @@ impl<'a> CPUProcess<'a> {
         self.set_register(reg2, value);
         self.cycle += 6;
     }
-    fn xh(&mut self, instr: i16) {
+    fn xh(&mut self, instr: u16) {
         let (reg2, _) = self.parse_format_i_opcode(instr);
         let old_value = self.registers[reg2];
         let value = (old_value << 16) | ((old_value >> 16) & 0x0000ffff);
@@ -675,43 +684,43 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 1;
     }
 
-    fn set_register(&mut self, reg: usize, value: i32) {
+    fn set_register(&mut self, reg: usize, value: u32) {
         if reg != 0 {
             self.registers[reg] = value;
         }
     }
 
-    fn parse_format_i_opcode(&self, instr: i16) -> (usize, usize) {
-        let reg2 = (instr & 0x03E0) as usize >> 5;
-        let reg1 = (instr & 0x001F) as usize;
+    fn parse_format_i_opcode(&self, instr: u16) -> (usize, usize) {
+        let reg2 = (instr & 0x03e0) as usize >> 5;
+        let reg1 = (instr & 0x001f) as usize;
         (reg2, reg1)
     }
-    fn parse_format_ii_opcode(&self, instr: i16) -> (usize, i32) {
-        let reg2 = (instr & 0x03E0) as usize >> 5;
-        let imm = (instr & 0x001F).wrapping_shl(11).wrapping_shr(11) as i32;
+    fn parse_format_ii_opcode(&self, instr: u16) -> (usize, u32) {
+        let reg2 = (instr & 0x03e0) as usize >> 5;
+        let imm = (instr as i16 & 0x001f).wrapping_shl(11).wrapping_shr(11) as u32;
         (reg2, imm)
     }
-    fn parse_format_iii_opcode(&self, instr: i16) -> (bool, u8, i32) {
+    fn parse_format_iii_opcode(&self, instr: u16) -> (bool, u8, i32) {
         let negate = (instr & 0x1000) != 0;
         let cond = ((instr >> 9) & 0x07) as u8;
-        let disp = (instr & 0x01ff).wrapping_shl(7).wrapping_shr(7) as i32;
+        let disp = (instr as i16 & 0x01ff).wrapping_shl(7).wrapping_shr(7) as i32;
         (negate, cond, disp)
     }
-    fn parse_format_iv_opcode(&mut self, instr: i16) -> i32 {
+    fn parse_format_iv_opcode(&mut self, instr: u16) -> i32 {
         let mut disp: i32 = (instr as i32).wrapping_shl(24).wrapping_shr(8);
-        disp |= self.read_pc() as u16 as i32;
+        disp |= self.read_pc() as i32;
         disp
     }
-    fn parse_format_v_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
-        let reg2 = (instr & 0x03E0) as usize >> 5;
-        let reg1 = (instr & 0x001F) as usize;
-        let imm = self.read_pc() as i32;
+    fn parse_format_v_opcode(&mut self, instr: u16) -> (usize, usize, u32) {
+        let reg2 = (instr & 0x03e0) as usize >> 5;
+        let reg1 = (instr & 0x001f) as usize;
+        let imm = self.read_pc() as i16 as u32;
         (reg2, reg1, imm)
     }
-    fn parse_format_vi_opcode(&mut self, instr: i16) -> (usize, usize, i32) {
-        let reg2 = (instr & 0x03E0) as usize >> 5;
-        let reg1 = (instr & 0x001F) as usize;
-        let disp = self.read_pc() as i32;
+    fn parse_format_vi_opcode(&mut self, instr: u16) -> (usize, usize, i32) {
+        let reg2 = (instr & 0x03e0) as usize >> 5;
+        let reg1 = (instr & 0x001f) as usize;
+        let disp = self.read_pc() as i16 as i32;
         (reg2, reg1, disp)
     }
 
@@ -757,8 +766,8 @@ mod tests {
     fn _op_1(opcode: u8, r2: u8, r1: u8) -> Vec<u8> {
         vec![(r2 << 5) | r1, (opcode << 2) | (r2 >> 3)]
     }
-    fn _op_2(opcode: u8, r2: u8, imm: i8) -> Vec<u8> {
-        vec![(r2 << 5) | ((imm as u8) & 0x1f), (opcode << 2) | (r2 >> 3)]
+    fn _op_2(opcode: u8, r2: u8, imm: u8) -> Vec<u8> {
+        vec![(r2 << 5) | (imm & 0x1f), (opcode << 2) | (r2 >> 3)]
     }
     fn _op_3(opcode: u8, cond: u8, disp: i16) -> Vec<u8> {
         vec![
@@ -774,7 +783,7 @@ mod tests {
             ((disp & 0x0000ff00) >> 8) as u8,
         ]
     }
-    fn _op_5(opcode: u8, r2: u8, r1: u8, imm: i16) -> Vec<u8> {
+    fn _op_5(opcode: u8, r2: u8, r1: u8, imm: u16) -> Vec<u8> {
         vec![
             (r2 << 5) | r1,
             (opcode << 2) | (r2 >> 3),
@@ -783,7 +792,7 @@ mod tests {
         ]
     }
     fn _op_6(opcode: u8, r2: u8, r1: u8, disp: i16) -> Vec<u8> {
-        _op_5(opcode, r2, r1, disp)
+        _op_5(opcode, r2, r1, disp as u16)
     }
     fn _op_7(opcode: u8, r2: u8, r1: u8, subopcode: u8) -> Vec<u8> {
         vec![
@@ -795,8 +804,8 @@ mod tests {
     }
 
     fn mov_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000000, r2, r1) }
-    fn movhi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101111, r2, r1, imm) }
-    fn movea(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101000, r2, r1, imm) }
+    fn movhi(r2: u8, r1: u8, imm: u16) -> Vec<u8> { _op_5(0b101111, r2, r1, imm) }
+    fn movea(r2: u8, r1: u8, imm: u16) -> Vec<u8> { _op_5(0b101000, r2, r1, imm) }
     fn in_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b111000, r2, r1, disp) }
     fn ld_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110000, r2, r1, disp) }
     fn ld_h(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110001, r2, r1, disp) }
@@ -804,8 +813,8 @@ mod tests {
     fn st_b(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110100, r2, r1, disp) }
     fn st_h(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110101, r2, r1, disp) }
     fn st_w(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b110111, r2, r1, disp) }
-    fn add_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010001, r2, imm) }
-    fn addi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101001, r2, r1, imm) }
+    fn add_i(r2: u8, imm: u8) -> Vec<u8> { _op_2(0b010001, r2, imm) }
+    fn addi(r2: u8, r1: u8, imm: u16) -> Vec<u8> { _op_5(0b101001, r2, r1, imm) }
     fn cmp_r(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000011, r2, r1) }
     fn sub(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b000010, r2, r1) }
     fn mul(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001000, r2, r1) }
@@ -813,21 +822,21 @@ mod tests {
     fn div(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001001, r2, r1) }
     fn divu(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001011, r2, r1) }
     fn and(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001101, r2, r1) }
-    fn andi(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101101, r2, r1, imm) }
+    fn andi(r2: u8, r1: u8, imm: u16) -> Vec<u8> { _op_5(0b101101, r2, r1, imm) }
     fn or(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001100, r2, r1) }
-    fn ori(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101100, r2, r1, imm) }
+    fn ori(r2: u8, r1: u8, imm: u16) -> Vec<u8> { _op_5(0b101100, r2, r1, imm) }
     fn xor(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001110, r2, r1) }
-    fn xori(r2: u8, r1: u8, imm: i16) -> Vec<u8> { _op_5(0b101110, r2, r1, imm) }
+    fn xori(r2: u8, r1: u8, imm: u16) -> Vec<u8> { _op_5(0b101110, r2, r1, imm) }
     fn not(r2: u8, r1: u8) -> Vec<u8> { _op_1(0b001111, r2, r1) }
-    fn sar_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010111, r2, imm) }
-    fn shl_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010100, r2, imm) }
-    fn shr_i(r2: u8, imm: i8) -> Vec<u8> { _op_2(0b010101, r2, imm) }
+    fn sar_i(r2: u8, imm: u8) -> Vec<u8> { _op_2(0b010111, r2, imm) }
+    fn shl_i(r2: u8, imm: u8) -> Vec<u8> { _op_2(0b010100, r2, imm) }
+    fn shr_i(r2: u8, imm: u8) -> Vec<u8> { _op_2(0b010101, r2, imm) }
     fn bcond(cond: u8, disp: i16) -> Vec<u8> { _op_3(0b100, cond, disp) }
     fn jal(disp: i32) -> Vec<u8> { _op_4(0b101011, disp) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
-    fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id as i8) }
-    fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id as i8) }
+    fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id) }
+    fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id) }
     fn mpyhw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001100) }
     fn rev(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001010) }
     fn xb(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001000) }
@@ -843,7 +852,7 @@ mod tests {
         let mut address = cpu.pc;
         for instr in instructions {
             for byte in instr {
-                memory.write_byte(address, *byte as i8);
+                memory.write_byte(address, *byte);
                 address += 1;
             }
         }
@@ -853,7 +862,7 @@ mod tests {
     fn add_interrupt_handler(memory: &mut Memory, mut address: usize, instructions: &[Vec<u8>]) {
         for instr in instructions {
             for byte in instr {
-                memory.write_byte(address, *byte as i8);
+                memory.write_byte(address, *byte);
                 address += 1;
             }
         }
@@ -935,9 +944,9 @@ mod tests {
             movea(30, 30, 0x0042),
             ld_b(31, 30, -16),
         ]);
-        memory.write_byte(0x07000032, -2);
+        memory.write_byte(0x07000032, 0xfe);
         cpu.run(&mut memory, 7).unwrap();
-        assert_eq!(cpu.registers[31], -2);
+        assert_eq!(cpu.registers[31] as i32, -2);
     }
 
     #[test]
@@ -947,7 +956,7 @@ mod tests {
             movea(30, 30, 0x0042),
             in_b(31, 30, -16),
         ]);
-        memory.write_byte(0x07000032, -2);
+        memory.write_byte(0x07000032, 0xfe);
         cpu.run(&mut memory, 7).unwrap();
         assert_eq!(cpu.registers[31], 0x000000fe);
     }
@@ -982,11 +991,11 @@ mod tests {
         let (mut cpu, mut memory) = rom(&[
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
-            movea(31, 0, -2),
+            movea(31, 0, -2i16 as u16),
             st_b(31, 30, -16),
         ]);
         cpu.run(&mut memory, 7).unwrap();
-        assert_eq!(memory.read_byte(0x07000032), -2);
+        assert_eq!(memory.read_byte(0x07000032) as i8, -2);
     }
 
     #[test]
@@ -1032,22 +1041,22 @@ mod tests {
         let (mut cpu, mut memory) = rom(&[
             // most straightforward way I can find to set a register to i32::MAX
             movhi(29, 0, 0x0001),
-            add_i(29, -1),
+            add_i(29, 0xff),
             movhi(29, 29, 0x7fff),
 
             // i32::MAX + 1 == i32.min
             addi(31, 29, 1),
         ]);
         cpu.run(&mut memory, 4).unwrap();
-        assert_eq!(cpu.registers[29], i32::MAX);
-        assert_eq!(cpu.registers[31], i32::MIN);
+        assert_eq!(cpu.registers[29] as i32, i32::MAX);
+        assert_eq!(cpu.registers[31] as i32, i32::MIN);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, OVERFLOW_FLAG | SIGN_FLAG);
     }
 
     #[test]
     fn sets_carry_flag_on_addition_unsigned_wraparound() {
         let (mut cpu, mut memory) = rom(&[
-            movea(29, 29, -1),
+            movea(29, 0, 0xffff),
             addi(31, 29, 1)
         ]);
         cpu.run(&mut memory, 2).unwrap();
@@ -1063,7 +1072,7 @@ mod tests {
             sub(31,30),
         ]);
         cpu.run(&mut memory, 3).unwrap();
-        assert_eq!(cpu.registers[31], -1);
+        assert_eq!(cpu.registers[31] as i32, -1);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
     }
 
@@ -1071,25 +1080,25 @@ mod tests {
     fn sets_overflow_flag_on_subtraction_signed_wraparound() {
         let (mut cpu, mut memory) = rom(&[
             // most straightforward way I can find to set a register to i32::MIN
-            movhi(31, 0, i16::MIN),
+            movhi(31, 0, 0x8000),
             movea(30, 0, 1),
 
             // i32::MIN - 1 == i32.MAX
             sub(31, 30),
         ]);
         cpu.run(&mut memory, 3).unwrap();
-        assert_eq!(cpu.registers[31], i32::MAX);
+        assert_eq!(cpu.registers[31] as i32, i32::MAX);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, OVERFLOW_FLAG);
     }
 
     #[test]
     fn sets_carry_flag_on_subtraction_unsigned_wraparound() {
         let (mut cpu, mut memory) = rom(&[
-            movea(29, 29, 1),
+            movea(29, 0, 1),
             sub(31, 29),
         ]);
         cpu.run(&mut memory, 2).unwrap();
-        assert_eq!(cpu.registers[31], -1);
+        assert_eq!(cpu.registers[31], u32::MAX);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, SIGN_FLAG | CARRY_FLAG);
     }
 
@@ -1110,7 +1119,7 @@ mod tests {
         let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 3),
             movea(11, 0, 6),
-            movea(12, 0, -4),
+            movea(12, 0, -4i16 as u16),
             mulu(11, 10),
             mul(12, 11),
         ]);
@@ -1119,15 +1128,15 @@ mod tests {
         assert_eq!(cpu.registers[30], 0);
 
         cpu.run(&mut memory, 29).unwrap();
-        assert_eq!(cpu.registers[12], -72);
-        assert_eq!(cpu.registers[30], -1);
+        assert_eq!(cpu.registers[12] as i32, -72);
+        assert_eq!(cpu.registers[30] as i32, -1);
     }
 
     #[test]
     fn handles_division() {
         let (mut cpu, mut memory) = rom(&[
-            movea(10, 0, -72),
-            movea(11, 0, -4),
+            movea(10, 0, -72i16 as u16),
+            movea(11, 0, -4i16 as u16),
             movea(12, 0, 4),
             div(10, 11),
             divu(10, 12),
@@ -1193,7 +1202,7 @@ mod tests {
     #[test]
     fn can_shl_with_carry() {
         let (mut cpu, mut memory) = rom(&[
-            movhi(31, 0, i16::MIN),
+            movhi(31, 0, 0x8000),
             shl_i(31, 1),
         ]);
         cpu.run(&mut memory, 2).unwrap();
@@ -1204,7 +1213,7 @@ mod tests {
     #[test]
     fn can_shr_with_zero_filling() {
         let (mut cpu, mut memory) = rom(&[
-            movhi(31, 0, i16::MIN),
+            movhi(31, 0, 0x8000),
             shr_i(31, 1),
         ]);
         cpu.run(&mut memory, 2).unwrap();
@@ -1215,11 +1224,11 @@ mod tests {
     #[test]
     fn can_shr_with_sign_extension() {
         let (mut cpu, mut memory) = rom(&[
-            movhi(31, 0, i16::MIN),
+            movhi(31, 0, 0x8000),
             sar_i(31, 1),
         ]);
         cpu.run(&mut memory, 2).unwrap();
-        assert_eq!(cpu.registers[31], i32::MIN >> 1);
+        assert_eq!(cpu.registers[31], 0xc0000000);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, SIGN_FLAG);
     }
 
@@ -1241,8 +1250,8 @@ mod tests {
             xor(27, 30),
         ]);
         cpu.run(&mut memory, 9).unwrap();
-        assert_eq!(cpu.registers[30], 0xfffff0f0u32 as i32);
-        assert_eq!(cpu.registers[29], -1);
+        assert_eq!(cpu.registers[30], 0xfffff0f0);
+        assert_eq!(cpu.registers[29], 0xffffffff);
         assert_eq!(cpu.registers[28], 0x0f0f);
         assert_eq!(cpu.registers[27], 0x0f0f);
     }
@@ -1251,7 +1260,7 @@ mod tests {
     fn andi_0xffff_should_preserve_high_bits() {
         let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 0x1082),
-            andi(11, 10, -1),
+            andi(11, 10, 0xffff),
         ]);
         cpu.run(&mut memory, 2).unwrap();
         assert_eq!(cpu.registers[11], 0x1082);
@@ -1261,20 +1270,20 @@ mod tests {
     fn ori_0xffff_should_set_to_0xffff() {
         let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 0x1082),
-            ori(11, 10, -1),
+            ori(11, 10, 0xffff),
         ]);
         cpu.run(&mut memory, 2).unwrap();
-        assert_eq!(cpu.registers[11], 0xffff as i32);
+        assert_eq!(cpu.registers[11], 0xffff);
     }
 
     #[test]
     fn xori_0xffff_should_flip_bits() {
         let (mut cpu, mut memory) = rom(&[
             movea(10, 0, 0x1082),
-            xori(11, 10, -1),
+            xori(11, 10, 0xffff),
         ]);
         cpu.run(&mut memory, 2).unwrap();
-        assert_eq!(cpu.registers[11], 0xef7d as i32);
+        assert_eq!(cpu.registers[11], 0xef7d);
     }
 
     #[test]
@@ -1298,6 +1307,18 @@ mod tests {
         ]);
         cpu.run(&mut memory, 11).unwrap();
         assert_eq!(cpu.registers[10], 54);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
+    }
+
+    #[test]
+    fn can_mpyhw_negative_numbers() {
+        let (mut cpu, mut memory) = rom(&[
+            movea(10, 0, -9i16 as u16),
+            movea(11, 0, 6),
+            mpyhw(10, 11),
+        ]);
+        cpu.run(&mut memory, 11).unwrap();
+        assert_eq!(cpu.registers[10] as i32, -54);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 

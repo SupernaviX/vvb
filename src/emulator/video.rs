@@ -14,22 +14,22 @@ const INTENB: usize = 0x0005f802;
 const INTCLR: usize = 0x0005f804;
 
 // flags for the interrupt registers
-const FRAMESTART: i16 = 0x0010;
-const DP_INTERRUPTS: i16 = FRAMESTART;
+const FRAMESTART: u16 = 0x0010;
+const DP_INTERRUPTS: u16 = FRAMESTART;
 
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
 
 // flags for DPSTTS/DPCTRL
-const FCLK: i16 = 0x0080;
-const SCANRDY: i16 = 0x0040;
-const R1BSY: i16 = 0x0020;
-const L1BSY: i16 = 0x0010;
-const R0BSY: i16 = 0x0008;
-const L0BSY: i16 = 0x0004;
-const DISP: i16 = 0x0002;
-const DPRST: i16 = 0x0001;
-const DP_READONLY_MASK: i16 = FCLK | SCANRDY | R1BSY | L1BSY | R0BSY | L0BSY;
+const FCLK: u16 = 0x0080;
+const SCANRDY: u16 = 0x0040;
+const R1BSY: u16 = 0x0020;
+const L1BSY: u16 = 0x0010;
+const R0BSY: u16 = 0x0008;
+const L0BSY: u16 = 0x0004;
+const DISP: u16 = 0x0002;
+const DPRST: u16 = 0x0001;
+const DP_READONLY_MASK: u16 = FCLK | SCANRDY | R1BSY | L1BSY | R0BSY | L0BSY;
 
 // brightness control registers
 const BRTA: usize = 0x0005f824;
@@ -40,9 +40,9 @@ const XPSTTS: usize = 0x0005f840;
 const XPCTRL: usize = 0x0005f842;
 
 // flags for XPSTTS/XPCTRL
-const F1BSY: i16 = 0x0008;
-const F0BSY: i16 = 0x0004;
-const XPEN: i16 = 0x0002;
+const F1BSY: u16 = 0x0008;
+const F0BSY: u16 = 0x0004;
+const XPEN: u16 = 0x0002;
 
 #[derive(Copy, Clone, Debug)]
 enum Buffer {
@@ -82,9 +82,9 @@ pub struct Video {
     displaying: bool,
     drawing: bool,
     xp_module: DrawingProcess,
-    dpctrl_flags: i16,
-    pending_interrupts: i16,
-    enabled_interrupts: i16,
+    dpctrl_flags: u16,
+    pending_interrupts: u16,
+    enabled_interrupts: u16,
     display_buffer: Buffer,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
@@ -330,7 +330,7 @@ impl Video {
         }
     }
 
-    fn get_brightness(&self, memory: &Memory, address: usize) -> i16 {
+    fn get_brightness(&self, memory: &Memory, address: usize) -> u16 {
         // experimentally chosen conversion factor from led-duration-in-50-ns-increments to 8-bit color
         memory.read_halfword(address) * 19 / 8
     }
@@ -369,15 +369,15 @@ mod tests {
         ms * 20000
     }
 
-    fn write_dpctrl(video: &mut Video, memory: &mut Memory, value: i16) {
+    fn write_dpctrl(video: &mut Video, memory: &mut Memory, value: u16) {
         memory.write_halfword(DPCTRL, value);
         video.process_event(memory, DPCTRL);
     }
-    fn write_intenb(video: &mut Video, memory: &mut Memory, value: i16) {
+    fn write_intenb(video: &mut Video, memory: &mut Memory, value: u16) {
         memory.write_halfword(INTENB, value);
         video.process_event(memory, INTENB);
     }
-    fn write_intclr(video: &mut Video, memory: &mut Memory, value: i16) {
+    fn write_intclr(video: &mut Video, memory: &mut Memory, value: u16) {
         memory.write_halfword(INTCLR, value);
         video.process_event(memory, INTCLR);
     }

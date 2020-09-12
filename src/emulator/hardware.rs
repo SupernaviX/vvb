@@ -8,11 +8,11 @@ const THR: usize = 0x0200001c;
 const TCR: usize = 0x02000020;
 
 // TCR bits
-const T_INTERVAL: i8 = 0x10;
-const T_INTERRUPT: i8 = 0x08;
-const T_CLEAR_ZERO: i8 = 0x04;
-const T_IS_ZERO: i8 = 0x02;
-const T_ENABLED: i8 = 0x01;
+const T_INTERVAL: u8 = 0x10;
+const T_INTERRUPT: u8 = 0x08;
+const T_CLEAR_ZERO: u8 = 0x04;
+const T_IS_ZERO: u8 = 0x02;
+const T_ENABLED: u8 = 0x01;
 
 pub struct Hardware {
     cycle: u64,
@@ -45,8 +45,8 @@ impl Hardware {
 
     pub fn process_inputs(&self, memory: &mut Memory, input_state: u16) {
         // Always set flag 0x02 on the lower register, "real" controllers do
-        let sdlr = input_state as i16 & 0xff | 0x02;
-        let sdhr = (input_state >> 8) as i16 & 0xff;
+        let sdlr = input_state & 0xff | 0x02;
+        let sdhr = (input_state >> 8) & 0xff;
         memory.write_halfword(SDLR, sdlr);
         memory.write_halfword(SDHR, sdhr);
     }
@@ -132,8 +132,8 @@ impl Hardware {
     }
 
     fn write_timer(&self, memory: &mut Memory, value: u16) {
-        memory.write_halfword(THR, (value >> 8) as i16);
-        memory.write_halfword(TLR, (value & 0xff) as i16);
+        memory.write_halfword(THR, value >> 8);
+        memory.write_halfword(TLR, value & 0xff);
     }
 
     fn compute_next_tick(&mut self, memory: &mut Memory) {
@@ -167,15 +167,15 @@ mod tests {
     };
     use crate::emulator::memory::Memory;
 
-    fn set_tcr(hardware: &mut Hardware, memory: &mut Memory, value: i8) {
+    fn set_tcr(hardware: &mut Hardware, memory: &mut Memory, value: u8) {
         memory.write_byte(TCR, value);
         hardware.process_event(memory, TCR);
     }
 
     fn set_timer(hardware: &mut Hardware, memory: &mut Memory, value: u16) {
-        memory.write_halfword(THR, (value >> 8) as i16);
+        memory.write_halfword(THR, value >> 8);
         hardware.process_event(memory, THR);
-        memory.write_halfword(TLR, value as i16);
+        memory.write_halfword(TLR, value & 0xff);
         hardware.process_event(memory, TLR);
     }
 

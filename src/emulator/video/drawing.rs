@@ -1,5 +1,3 @@
-#![allow(overflowing_literals)]
-
 use crate::emulator::memory::Memory;
 use crate::emulator::video::Eye;
 use anyhow::Result;
@@ -18,31 +16,31 @@ const JPLT0: usize = 0x0005f868;
 const BKCOL: usize = 0x0005f870;
 
 // World attribute flags
-const LON: i16 = 0x8000;
-const RON: i16 = 0x4000;
-const BGM: i16 = 0x3000;
-const SCX: i16 = 0x0c00;
-const SCY: i16 = 0x0300;
-const OVERPLANE_FLAG: i16 = 0x0080;
-const END_FLAG: i16 = 0x0040;
-const BG_MAP_BASE: i16 = 0x000f;
+const LON: u16 = 0x8000;
+const RON: u16 = 0x4000;
+const BGM: u16 = 0x3000;
+const SCX: u16 = 0x0c00;
+const SCY: u16 = 0x0300;
+const OVERPLANE_FLAG: u16 = 0x0080;
+const END_FLAG: u16 = 0x0040;
+const BG_MAP_BASE: u16 = 0x000f;
 
 // Object attribute flags
-const JX: i16 = 0x03ff;
-const JLON: i16 = 0x8000;
-const JRON: i16 = 0x4000;
-const JP: i16 = 0x03ff;
-const JY: i16 = 0x00ff;
-const JHFLP: i16 = 0x2000;
-const JVFLP: i16 = 0x1000;
-const JCA: i16 = 0x07ff;
+const JX: u16 = 0x03ff;
+const JLON: u16 = 0x8000;
+const JRON: u16 = 0x4000;
+const JP: u16 = 0x03ff;
+const JY: u16 = 0x00ff;
+const JHFLP: u16 = 0x2000;
+const JVFLP: u16 = 0x1000;
+const JCA: u16 = 0x07ff;
 
-fn modulus(a: i16, b: i16) -> i16 {
-    ((a % b) + b) % b
+fn modulus(a: i16, b: i16) -> u16 {
+    (((a % b) + b) % b) as u16
 }
 
 pub struct DrawingProcess {
-    buffer: [[i16; 384]; 28],
+    buffer: [[u16; 384]; 28],
     object_world: usize,
 }
 
@@ -118,14 +116,14 @@ impl DrawingProcess {
         let overplane = memory.read_halfword(world_address + 20);
         let background = Background::parse(header, overplane)?;
 
-        let dest_x = memory.read_halfword(world_address + 2);
-        let dest_parallax_x = memory.read_halfword(world_address + 4);
-        let dest_y = memory.read_halfword(world_address + 6);
-        let source_x = memory.read_halfword(world_address + 8);
-        let source_parallax_x = memory.read_halfword(world_address + 10);
-        let source_y = memory.read_halfword(world_address + 12);
-        let width = memory.read_halfword(world_address + 14) + 1;
-        let height = i16::max(memory.read_halfword(world_address + 16) + 1, 8);
+        let dest_x = memory.read_halfword(world_address + 2) as i16;
+        let dest_parallax_x = memory.read_halfword(world_address + 4) as i16;
+        let dest_y = memory.read_halfword(world_address + 6) as i16;
+        let source_x = memory.read_halfword(world_address + 8) as i16;
+        let source_parallax_x = memory.read_halfword(world_address + 10) as i16;
+        let source_y = memory.read_halfword(world_address + 12) as i16;
+        let width = memory.read_halfword(world_address + 14) as i16 + 1;
+        let height = i16::max(memory.read_halfword(world_address + 16) as i16 + 1, 8);
 
         // Apply parallax based on which eye this is
         let dest_x = match eye {
@@ -204,8 +202,10 @@ impl DrawingProcess {
             return;
         }
 
-        let jx = memory.read_halfword(obj_address) & JX;
-        let jp = (memory.read_halfword(obj_address + 2) & JP)
+        let jx = ((memory.read_halfword(obj_address) & JX) as i16)
+            .wrapping_shl(6)
+            .wrapping_shr(6);
+        let jp = ((memory.read_halfword(obj_address + 2) & JP) as i16)
             .wrapping_shl(6)
             .wrapping_shr(6);
         // apply parallax to the x coordinate
@@ -214,7 +214,7 @@ impl DrawingProcess {
             Eye::Right => jx + jp,
         };
 
-        let jy = memory.read_halfword(obj_address + 4) & JY;
+        let jy = (memory.read_halfword(obj_address + 4) & JY) as i16;
         // JY is effectively the lower 8 bits of an i16, so figure out the sign from the range
         // if it's > 224, it's supposed to be negative
         let jy = if jy > 224 {
@@ -230,8 +230,8 @@ impl DrawingProcess {
 
         for x in 0..8 {
             for y in 0..8 {
-                let char_x = if flip_horizontal { 7 - x } else { x };
-                let char_y = if flip_vertical { 7 - y } else { y };
+                let char_x = if flip_horizontal { 7 - x } else { x } as u16;
+                let char_y = if flip_vertical { 7 - y } else { y } as u16;
                 let pixel = self.get_char_pixel(memory, jca, char_x, char_y);
                 if pixel == 0 {
                     continue;
@@ -243,40 +243,40 @@ impl DrawingProcess {
         }
     }
 
-    fn get_char_pixel(&self, memory: &Memory, index: i16, x: i16, y: i16) -> i16 {
+    fn get_char_pixel(&self, memory: &Memory, index: u16, x: u16, y: u16) -> u16 {
         let char_row =
             memory.read_halfword(CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2));
         let pixel = (char_row >> (x * 2)) & 0x3;
         pixel
     }
 
-    fn get_palette_color(&self, memory: &Memory, base: usize, index: i16, pixel: i16) -> i16 {
+    fn get_palette_color(&self, memory: &Memory, base: usize, index: u16, pixel: u16) -> u16 {
         let palette = memory.read_halfword(base + (index as usize * 2));
         let color = (palette >> (pixel * 2)) & 0x03;
         color
     }
 
-    fn draw_pixel(&mut self, column: i16, row: i16, color: i16) {
+    fn draw_pixel(&mut self, column: i16, row: i16, color: u16) {
         if column < 0 || row < 0 || column >= 384 || row >= 224 {
             return;
         }
         let row_index = row as usize / 8;
         let current_value = &mut self.buffer[row_index][column as usize];
-        let row_offset = row % 8;
+        let row_offset = modulus(row, 8);
         *current_value &= !(0b11 << (row_offset * 2));
         *current_value |= color << (row_offset * 2);
     }
 }
 
 struct Background {
-    pub mode: i16,
+    pub mode: u16,
     pub bgmap_width: i16,
     pub bgmap_height: i16,
     pub bgmap_base: usize,
     pub overplane_cell: Option<usize>,
 }
 impl Background {
-    pub fn parse(header: i16, overplane: i16) -> Result<Background> {
+    pub fn parse(header: u16, overplane: u16) -> Result<Background> {
         let bgm = (header & BGM) >> 12;
         if bgm != 0 {
             // TODO: support other modes
@@ -320,14 +320,14 @@ impl Background {
         if bg_x < 0 || bg_x >= bg_width {
             bg_x = match self.overplane_cell {
                 Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
-                None => modulus(bg_x, bg_width),
+                None => modulus(bg_x, bg_width) as i16,
             };
         }
         let mut bg_y = y;
         if bg_y < 0 || bg_y >= bg_height {
             bg_y = match self.overplane_cell {
                 Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
-                None => modulus(bg_y, bg_height),
+                None => modulus(bg_y, bg_height) as i16,
             };
         }
 

@@ -47,15 +47,15 @@ impl Memory {
         }
     }
 
-    pub fn write_byte(&mut self, address: usize, value: i8) -> Option<Event> {
+    pub fn write_byte(&mut self, address: usize, value: u8) -> Option<Event> {
         if let Address::Mapped(resolved, event) = self.resolve_address(address) {
-            self.memory[resolved] = value as u8;
+            self.memory[resolved] = value;
             return event;
         }
         None
     }
 
-    pub fn write_halfword(&mut self, address: usize, value: i16) -> Option<Event> {
+    pub fn write_halfword(&mut self, address: usize, value: u16) -> Option<Event> {
         if let Address::Mapped(resolved, event) = self.resolve_address(address) {
             self.memory[resolved..resolved + 2].copy_from_slice(&value.to_le_bytes());
             return event;
@@ -63,7 +63,7 @@ impl Memory {
         None
     }
 
-    pub fn write_word(&mut self, address: usize, value: i32) -> Option<Event> {
+    pub fn write_word(&mut self, address: usize, value: u32) -> Option<Event> {
         if let Address::Mapped(resolved, event) = self.resolve_address(address) {
             self.memory[resolved..resolved + 4].copy_from_slice(&value.to_le_bytes());
             return event;
@@ -71,29 +71,29 @@ impl Memory {
         None
     }
 
-    pub fn read_byte(&self, address: usize) -> i8 {
+    pub fn read_byte(&self, address: usize) -> u8 {
         match self.resolve_address(address) {
-            Address::Mapped(resolved, _) => self.memory[resolved] as i8,
+            Address::Mapped(resolved, _) => self.memory[resolved],
             Address::Unmapped => 0,
         }
     }
 
-    pub fn read_halfword(&self, address: usize) -> i16 {
+    pub fn read_halfword(&self, address: usize) -> u16 {
         let address = match self.resolve_address(address) {
             Address::Mapped(resolved, _) => resolved,
             Address::Unmapped => return 0,
         };
         let bytes: &[u8; 2] = self.memory[address..address + 2].try_into().unwrap();
-        i16::from_le_bytes(*bytes)
+        u16::from_le_bytes(*bytes)
     }
 
-    pub fn read_word(&self, address: usize) -> i32 {
+    pub fn read_word(&self, address: usize) -> u32 {
         let address = match self.resolve_address(address) {
             Address::Mapped(resolved, _) => resolved,
             Address::Unmapped => return 0,
         };
         let bytes: &[u8; 4] = self.memory[address..address + 4].try_into().unwrap();
-        i32::from_le_bytes(*bytes)
+        u32::from_le_bytes(*bytes)
     }
 
     fn resolve_address(&self, address: usize) -> Address {
@@ -142,7 +142,6 @@ impl Memory {
 }
 
 #[cfg(test)]
-#[allow(overflowing_literals)] // 0xFF is -1, this is not a logical error
 mod tests {
     use crate::emulator::memory::Memory;
 
