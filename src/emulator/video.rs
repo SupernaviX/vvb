@@ -14,8 +14,10 @@ const INTENB: usize = 0x0005f802;
 const INTCLR: usize = 0x0005f804;
 
 // flags for the interrupt registers
+const XPEND: u16 = 0x4000;
 const FRAMESTART: u16 = 0x0010;
 const DP_INTERRUPTS: u16 = FRAMESTART;
+const XP_INTERRUPTS: u16 = XPEND;
 
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
@@ -43,6 +45,8 @@ const XPCTRL: usize = 0x0005f842;
 const F1BSY: u16 = 0x0008;
 const F0BSY: u16 = 0x0004;
 const XPEN: u16 = 0x0002;
+const XPRST: u16 = 0x0001;
+const XP_READONLY_MASK: u16 = 0x801c;
 
 #[derive(Copy, Clone, Debug)]
 enum Buffer {
@@ -83,6 +87,7 @@ pub struct Video {
     drawing: bool,
     xp_module: DrawingProcess,
     dpctrl_flags: u16,
+    xpctrl_flags: u16,
     pending_interrupts: u16,
     enabled_interrupts: u16,
     display_buffer: Buffer,
@@ -97,6 +102,7 @@ impl Video {
             drawing: false,
             xp_module: DrawingProcess::new(),
             dpctrl_flags: SCANRDY,
+            xpctrl_flags: 0,
             pending_interrupts: 0,
             enabled_interrupts: 0,
             display_buffer: Buffer0,
@@ -113,6 +119,7 @@ impl Video {
         self.displaying = false;
         self.drawing = false;
         self.dpctrl_flags = SCANRDY;
+        self.xpctrl_flags = 0;
         self.pending_interrupts = 0;
         self.enabled_interrupts = 0;
         self.display_buffer = Buffer0;
@@ -161,9 +168,26 @@ impl Video {
             memory.write_halfword(INTENB, self.enabled_interrupts);
         }
 
+        if address == XPCTRL {
+            let mut xpctrl = memory.read_halfword(XPCTRL);
+
+            if (xpctrl & XPRST) != 0 {
+                self.pending_interrupts &= !XP_INTERRUPTS;
+                self.enabled_interrupts &= !XP_INTERRUPTS;
+            }
+
+            // Don't let the program overwrite the readonly flags
+            xpctrl &= !XP_READONLY_MASK;
+            xpctrl |= self.xpctrl_flags;
+            memory.write_halfword(XPCTRL, xpctrl);
+            memory.write_halfword(XPSTTS, xpctrl & !XPRST);
+            memory.write_halfword(INTPND, self.pending_interrupts);
+            memory.write_halfword(INTENB, self.enabled_interrupts);
+        }
+
         if address == INTENB {
             self.enabled_interrupts = memory.read_halfword(INTENB);
-            if (self.enabled_interrupts & !FRAMESTART) != 0 {
+            if (self.enabled_interrupts & !(DP_INTERRUPTS | XP_INTERRUPTS)) != 0 {
                 error!("Unsupported interrupt! 0x{:04x}", self.enabled_interrupts);
                 panic!();
             }
@@ -201,7 +225,7 @@ impl Video {
 
                     if self.drawing {
                         // "Start drawing" on whichever buffer was displayed before
-                        xpctrl |= match self.display_buffer {
+                        self.xpctrl_flags |= match self.display_buffer {
                             Buffer0 => F0BSY,
                             Buffer1 => F1BSY,
                         };
@@ -231,8 +255,12 @@ impl Video {
                         self.send_frame(Left)?;
                     }
 
-                    // "Stop drawing" on background buffer
-                    xpctrl &= !(F0BSY | F1BSY);
+                    if self.drawing {
+                        // "Stop drawing" on background buffer
+                        self.xpctrl_flags &= !(F0BSY | F1BSY);
+                        self.pending_interrupts |= XPEND;
+                        memory.write_halfword(INTPND, self.pending_interrupts);
+                    }
                 }
                 8 => {
                     // "Stop displaying" left eye
@@ -272,8 +300,11 @@ impl Video {
         dpctrl |= self.dpctrl_flags;
         memory.write_halfword(DPCTRL, dpctrl);
         memory.write_halfword(DPSTTS, dpctrl & !DPRST);
+
+        xpctrl &= !XP_READONLY_MASK;
+        xpctrl |= self.xpctrl_flags;
         memory.write_halfword(XPCTRL, xpctrl);
-        memory.write_halfword(XPSTTS, xpctrl);
+        memory.write_halfword(XPSTTS, xpctrl & !XPRST);
         Ok(())
     }
 
@@ -361,7 +392,9 @@ impl Video {
 #[cfg(test)]
 mod tests {
     use crate::emulator::memory::Memory;
-    use crate::emulator::video::{Video, DISP, DPCTRL, DPRST, FRAMESTART, INTCLR, INTENB, INTPND};
+    use crate::emulator::video::{
+        Video, DISP, DPCTRL, DPRST, FRAMESTART, INTCLR, INTENB, INTPND, XPEND, XPRST,
+    };
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
 
@@ -372,6 +405,10 @@ mod tests {
     fn write_dpctrl(video: &mut Video, memory: &mut Memory, value: u16) {
         memory.write_halfword(DPCTRL, value);
         video.process_event(memory, DPCTRL);
+    }
+    fn write_xpctrl(video: &mut Video, memory: &mut Memory, value: u16) {
+        memory.write_halfword(XPCTRL, value);
+        video.process_event(memory, XPCTRL);
     }
     fn write_intenb(video: &mut Video, memory: &mut Memory, value: u16) {
         memory.write_halfword(INTENB, value);
@@ -438,7 +475,7 @@ mod tests {
 
         video.init(&mut memory);
         write_dpctrl(&mut video, &mut memory, DISP);
-        memory.write_halfword(XPCTRL, XPEN);
+        write_xpctrl(&mut video, &mut memory, XPEN);
 
         // start 2 frames in, because that's the first time we see a rising FCLK
         video.run(&mut memory, ms_to_cycles(40)).unwrap();
@@ -488,8 +525,7 @@ mod tests {
 
         video.init(&mut memory);
         write_dpctrl(&mut video, &mut memory, DISP);
-        // turn on drawing
-        memory.write_halfword(XPCTRL, XPEN);
+        write_xpctrl(&mut video, &mut memory, XPEN);
 
         // start 2 frames in, because that's the first time we see a rising FCLK
         video.run(&mut memory, ms_to_cycles(40)).unwrap();
@@ -530,12 +566,12 @@ mod tests {
 
         // turn on drawing 2 frames in, because that's the first time we see a rising FCLK
         video.run(&mut memory, ms_to_cycles(39)).unwrap();
-        memory.write_halfword(XPCTRL, XPEN);
+        write_xpctrl(&mut video, &mut memory, XPEN);
         video.run(&mut memory, ms_to_cycles(40)).unwrap();
         assert_eq!(memory.read_halfword(XPSTTS), XPEN | F0BSY);
 
         // turn off drawing
-        memory.write_halfword(XPCTRL, F0BSY);
+        write_xpctrl(&mut video, &mut memory, 0);
         video.run(&mut memory, ms_to_cycles(42)).unwrap();
         assert_eq!(memory.read_halfword(XPSTTS), F0BSY);
 
@@ -559,7 +595,7 @@ mod tests {
         assert_eq!(memory.read_halfword(XPSTTS), 0);
 
         // turn on drawing
-        memory.write_halfword(XPCTRL, XPEN);
+        write_xpctrl(&mut video, &mut memory, XPEN);
         video.run(&mut memory, ms_to_cycles(42)).unwrap();
         assert_eq!(memory.read_halfword(XPSTTS), XPEN);
 
@@ -586,19 +622,52 @@ mod tests {
         // Interrupt can be cleared by writing to DPRST
         write_dpctrl(&mut video, &mut memory, DISP | DPRST);
         video.run(&mut memory, ms_to_cycles(38)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND), 0);
+        assert_eq!(memory.read_halfword(INTPND) & FRAMESTART, 0);
 
         // Interrupt is triggered on FCLK going high
         write_dpctrl(&mut video, &mut memory, DISP);
         write_intenb(&mut video, &mut memory, FRAMESTART);
         video.run(&mut memory, ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND), FRAMESTART);
+        assert_ne!(memory.read_halfword(INTPND) & FRAMESTART, 0);
         assert!(video.active_interrupt().is_some());
 
         // Interrupt can be cleared by writing to INTCLR
         write_intclr(&mut video, &mut memory, FRAMESTART);
         video.run(&mut memory, ms_to_cycles(41)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND), 0);
+        assert_eq!(memory.read_halfword(INTPND) & FRAMESTART, 0);
+        assert!(video.active_interrupt().is_none());
+    }
+
+    #[test]
+    fn can_trigger_xpend_interrupt() {
+        let mut video = Video::new();
+        let mut memory = Memory::new();
+
+        video.init(&mut memory);
+        write_dpctrl(&mut video, &mut memory, DISP);
+        write_xpctrl(&mut video, &mut memory, XPEN);
+
+        // While INTENB is unset, set INTPND but don't trigger interrupts
+        video.run(&mut memory, ms_to_cycles(37)).unwrap();
+        assert_ne!(memory.read_halfword(INTPND) & XPEND, 0);
+        assert!(video.active_interrupt().is_none());
+
+        // Interrupt can be cleared by writing to XPRST
+        write_xpctrl(&mut video, &mut memory, XPRST);
+        video.run(&mut memory, ms_to_cycles(38)).unwrap();
+        assert_eq!(memory.read_halfword(INTPND) & XPEND, 0);
+
+        // Interrupt is triggered when "drawing" completes
+        write_xpctrl(&mut video, &mut memory, XPEN);
+        write_intenb(&mut video, &mut memory, XPEND);
+        video.run(&mut memory, ms_to_cycles(45)).unwrap();
+        assert_ne!(memory.read_halfword(INTPND) & XPEND, 0);
+        assert!(video.active_interrupt().is_some());
+
+        // Interrupt can be cleared by writing to INTCLR
+        write_intclr(&mut video, &mut memory, XPEND);
+        video.run(&mut memory, ms_to_cycles(46)).unwrap();
+        assert_eq!(memory.read_halfword(INTPND) & XPEND, 0);
         assert!(video.active_interrupt().is_none());
     }
 }
