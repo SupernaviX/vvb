@@ -12,7 +12,7 @@ const EIPC: usize = 0;
 const EIPSW: usize = 1;
 
 // PSW flags and masks
-const INTERRUPT_LEVEL: u32 = 0x0000f0000;
+const INTERRUPT_LEVEL: u32 = 0x000f0000;
 const NMI_PENDING_FLAG: u32 = 0x00008000;
 const EX_PENDING_FLAG: u32 = 0x00004000;
 const ADDRESS_TRAP_ENABLE_FLAG: u32 = 0x00002000;
@@ -66,7 +66,7 @@ impl CPU {
             self.sys_registers[sys_reg] = match sys_reg {
                 4 => 0x0000fff0,  // ECR
                 5 => 0x00008000,  // PSW
-                6 => 0x00005346,  // PIR
+                6 => 0x00008100,  // PIR
                 7 => 0x000000E0,  // TKCW
                 30 => 0x00000004, // it is a mystery
                 _ => 0,
@@ -132,7 +132,7 @@ pub enum Event {
     ReturnFromInterrupt,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Interrupt {
     pub code: u16,
     pub level: u8,
@@ -828,7 +828,7 @@ impl<'a> CPUProcess<'a> {
         (cond, disp)
     }
     fn parse_format_iv_opcode(&mut self, instr: u16) -> i32 {
-        let mut disp: i32 = (instr as i32).wrapping_shl(24).wrapping_shr(8);
+        let mut disp: i32 = (instr as i32).wrapping_shl(22).wrapping_shr(6);
         disp |= self.read_pc() as i32;
         disp
     }

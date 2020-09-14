@@ -70,6 +70,7 @@ impl Emulator {
         let new_sec = target_cycle / 100_000_000;
         if old_sec != new_sec {
             debug!("Current PC: 0x{:08x}", self.cpu.pc);
+            debug!("Current PSW: 0x{:08x}", self.cpu.sys_registers[5]);
             debug!("Cycles per tick: {}", target_cycle / self.tick_calls);
         }
         self.hardware.process_inputs(&mut self.memory, input_state);

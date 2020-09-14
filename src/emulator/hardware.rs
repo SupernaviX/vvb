@@ -107,12 +107,14 @@ impl Hardware {
                     // Set the flag that says the timer went off
                     self.zero_flag = true;
 
-                    // Fire the interrupt
-                    self.interrupt = Some(Interrupt {
-                        code: 0xfe10,
-                        level: 2,
-                        handler: 0xfffffe10,
-                    });
+                    // Maybe fire the interrupt
+                    if (memory.read_byte(TCR) & T_INTERRUPT) != 0 {
+                        self.interrupt = Some(Interrupt {
+                            code: 0xfe10,
+                            level: 2,
+                            handler: 0xfffffe10,
+                        });
+                    }
 
                     // Reset the timer
                     self.write_timer(memory, self.reload_value);
@@ -235,7 +237,7 @@ mod tests {
         assert_eq!(hardware.next_event(), 6000);
 
         hardware.run(&mut memory, hardware.next_event());
-        assert!(hardware.active_interrupt().is_some());
+        assert!(hardware.active_interrupt().is_none());
         assert_eq!(memory.read_byte(TCR), T_ENABLED | T_CLEAR_ZERO | T_IS_ZERO);
         assert_eq!(hardware.read_timer(&memory), 3);
         assert_eq!(hardware.next_event(), 8000);
