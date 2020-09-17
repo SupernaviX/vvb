@@ -15,8 +15,10 @@ const INTCLR: usize = 0x0005f804;
 
 // flags for the interrupt registers
 const XPEND: u16 = 0x4000;
+const RFBEND: u16 = 0x0004;
+const LFBEND: u16 = 0x0002;
 const FRAMESTART: u16 = 0x0010;
-const DP_INTERRUPTS: u16 = FRAMESTART;
+const DP_INTERRUPTS: u16 = RFBEND | LFBEND | FRAMESTART;
 const XP_INTERRUPTS: u16 = XPEND;
 
 const DPSTTS: usize = 0x0005f820;
@@ -220,7 +222,6 @@ impl Video {
                     if self.displaying {
                         self.dpctrl_flags |= FCLK;
                         self.pending_interrupts |= FRAMESTART;
-                        memory.write_halfword(INTPND, self.pending_interrupts);
                     }
 
                     if self.drawing {
@@ -259,12 +260,12 @@ impl Video {
                         // "Stop drawing" on background buffer
                         self.xpctrl_flags &= !(F0BSY | F1BSY);
                         self.pending_interrupts |= XPEND;
-                        memory.write_halfword(INTPND, self.pending_interrupts);
                     }
                 }
                 8 => {
                     // "Stop displaying" left eye
                     self.dpctrl_flags &= !(L0BSY | L1BSY);
+                    self.pending_interrupts |= LFBEND;
                 }
                 10 => {
                     if self.displaying {
@@ -291,11 +292,14 @@ impl Video {
                 18 => {
                     // "Stop displaying" right eye,
                     self.dpctrl_flags &= !(R0BSY | R1BSY);
+                    self.pending_interrupts |= RFBEND;
                 }
                 _ => (),
             };
         }
         self.cycle = target_cycle;
+        memory.write_halfword(INTPND, self.pending_interrupts);
+
         dpctrl &= !DP_READONLY_MASK;
         dpctrl |= self.dpctrl_flags;
         memory.write_halfword(DPCTRL, dpctrl);
@@ -616,7 +620,7 @@ mod tests {
 
         // While INTENB is unset, set INTPND but don't trigger interrupts
         video.run(&mut memory, ms_to_cycles(37)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND), FRAMESTART);
+        assert_ne!(memory.read_halfword(INTPND) & FRAMESTART, 0);
         assert!(video.active_interrupt().is_none());
 
         // Interrupt can be cleared by writing to DPRST
