@@ -113,15 +113,11 @@ impl DrawingProcess {
             return Ok(false);
         }
 
-        let overplane = memory.read_halfword(world_address + 20);
-        let background = Background::parse(header, overplane)?;
+        let background = Background::parse(memory, world_address)?;
 
         let dest_x = memory.read_halfword(world_address + 2) as i16;
         let dest_parallax_x = memory.read_halfword(world_address + 4) as i16;
         let dest_y = memory.read_halfword(world_address + 6) as i16;
-        let source_x = memory.read_halfword(world_address + 8) as i16;
-        let source_parallax_x = memory.read_halfword(world_address + 10) as i16;
-        let source_y = memory.read_halfword(world_address + 12) as i16;
         let width = memory.read_halfword(world_address + 14) as i16 + 1;
         let height = i16::max(memory.read_halfword(world_address + 16) as i16 + 1, 8);
 
@@ -130,16 +126,11 @@ impl DrawingProcess {
             Eye::Left => dest_x - dest_parallax_x,
             Eye::Right => dest_x + dest_parallax_x,
         };
-        let source_x = match eye {
-            Eye::Left => source_x - source_parallax_x,
-            Eye::Right => source_x + source_parallax_x,
-        };
 
-        for column in 0..width {
-            for row in 0..height {
+        for row in 0..height {
+            for column in 0..width {
                 // figure out which cell in this background map is being read
-                let bg_x = source_x + column;
-                let bg_y = source_y + row;
+                let (bg_x, bg_y) = background.get_coords(eye, column, row);
                 let cell_address = background.get_cell_address(bg_x, bg_y);
 
                 // load that cell data
@@ -268,20 +259,33 @@ impl DrawingProcess {
     }
 }
 
-struct Background {
-    pub mode: u16,
+enum BGMode {
+    Normal,
+    Affine,
+}
+struct Background<'a> {
+    memory: &'a Memory,
+    pub mode: BGMode,
     pub bgmap_width: i16,
     pub bgmap_height: i16,
     pub bgmap_base: usize,
     pub overplane_cell: Option<usize>,
+
+    pub src_x: i16,
+    pub src_parallax_x: i16,
+    pub src_y: i16,
+    pub param_base: usize,
 }
-impl Background {
-    pub fn parse(header: u16, overplane: u16) -> Result<Background> {
+impl<'a> Background<'a> {
+    pub fn parse(memory: &Memory, address: usize) -> Result<Background> {
+        let header = memory.read_halfword(address);
         let bgm = (header & BGM) >> 12;
-        if bgm != 0 {
-            // TODO: support other modes
-            return Err(anyhow::anyhow!("Unsupported BGM {}!", bgm));
-        }
+        let mode = match bgm {
+            0 => BGMode::Normal,
+            2 => BGMode::Affine,
+            m => return Err(anyhow::anyhow!("Unsupported BGM {}!", m)),
+        };
+
         let scx = (header & SCX) >> 10;
         let scy = (header & SCY) >> 8;
         let bgmap_width = 2i16.pow(scx as u32);
@@ -297,18 +301,74 @@ impl Background {
         let bgmap_base = (header & BG_MAP_BASE) as usize;
         let has_overplane = (header & OVERPLANE_FLAG) != 0;
         let overplane_cell = if has_overplane {
+            let overplane = memory.read_halfword(address + 20);
             Some(overplane as usize)
         } else {
             None
         };
+        let param_base = BACKGROUND_MAP_MEMORY + (memory.read_halfword(address + 18) as usize) * 2;
+
+        let src_x = memory.read_halfword(address + 8) as i16;
+        let src_parallax_x = memory.read_halfword(address + 10) as i16;
+        let src_y = memory.read_halfword(address + 12) as i16;
 
         Ok(Background {
-            mode: bgm,
+            memory,
+            mode,
             bgmap_width,
             bgmap_height,
             bgmap_base,
             overplane_cell,
+            param_base,
+            src_x,
+            src_parallax_x,
+            src_y,
         })
+    }
+
+    pub fn get_coords(&self, eye: Eye, x: i16, y: i16) -> (i16, i16) {
+        match self.mode {
+            BGMode::Normal => {
+                let x = x + self.src_x;
+                let y = y + self.src_y;
+                match eye {
+                    Eye::Left => (x - self.src_parallax_x, y),
+                    Eye::Right => (x + self.src_parallax_x, y),
+                }
+            }
+            BGMode::Affine => {
+                let address = self.param_base + (y as usize * 16);
+                // These are stored as 13.3 fixed-point numbers,
+                // shift left 6 to give precision 9
+                // TODO: it looks like all these fields really should be 0x07ff, maybe sign extension is busted?
+                let x_base = (self.memory.read_halfword(address) as i16 as i32) << 6;
+                let y_base = (self.memory.read_halfword(address + 4) as i16 as i32) << 6;
+
+                // These are stored as 7.9 signed fixed-point numbers
+                let x_offset = self.memory.read_halfword(address + 6) as i16 as i32;
+                let y_offset = self.memory.read_halfword(address + 8) as i16 as i32;
+
+                // This is a 16-bit signed integer
+                let parallax = self.memory.read_halfword(address + 2) as i16 as i32;
+
+                // Parallax applies to only the left eye if negative, only the right if positive
+                let mut px = x as i32;
+                if parallax < 0 {
+                    if let Eye::Left = eye {
+                        px += parallax;
+                    }
+                } else {
+                    if let Eye::Right = eye {
+                        px += parallax;
+                    }
+                }
+
+                let tx = (x_base + (x_offset * px)) >> 9;
+                let ty = (y_base + (y_offset * px)) >> 9;
+
+                (tx as i16, ty as i16)
+            }
+        }
     }
 
     pub fn get_cell_address(&self, x: i16, y: i16) -> usize {
