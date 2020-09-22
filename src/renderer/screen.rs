@@ -214,7 +214,7 @@ impl VBScreenRenderer {
         let scale_to_fit = (hsw / htw).min(hsh / hth);
 
         // Proportion of this scale to use
-        let scale = 0.8;
+        let scale = 0.65;
 
         let vm = projection
             * Matrix4::from_nonuniform_scale(
