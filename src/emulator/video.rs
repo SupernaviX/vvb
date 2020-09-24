@@ -25,6 +25,7 @@ const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
 
 // flags for DPSTTS/DPCTRL
+const LOCK: u16 = 0x0400;
 const FCLK: u16 = 0x0080;
 const SCANRDY: u16 = 0x0040;
 const R1BSY: u16 = 0x0020;
@@ -33,12 +34,15 @@ const R0BSY: u16 = 0x0008;
 const L0BSY: u16 = 0x0004;
 const DISP: u16 = 0x0002;
 const DPRST: u16 = 0x0001;
+const DPBSY: u16 = R1BSY | L1BSY | R0BSY | L0BSY;
 const DP_READONLY_MASK: u16 = FCLK | SCANRDY | R1BSY | L1BSY | R0BSY | L0BSY;
 
 // brightness control registers
 const BRTA: usize = 0x0005f824;
 const BRTB: usize = 0x0005f826;
 const BRTC: usize = 0x0005f828;
+
+const CTA: usize = 0x0005f830;
 
 const XPSTTS: usize = 0x0005f840;
 const XPCTRL: usize = 0x0005f842;
@@ -132,6 +136,13 @@ impl Video {
     }
 
     pub fn next_event(&self) -> u64 {
+        if self.drawing && (self.dpctrl_flags & DPBSY) != 0 {
+            // When we're "drawing", CTA goes through 96 values over the course of 5ms.
+            // We should update the value every ~1040 cycles to achieve that
+            let last_draw_start = ((self.cycle / 200000) * 200000) + 600000;
+            return (((self.cycle - last_draw_start) / 1040) + 1) * 1040 + last_draw_start;
+        }
+        // Every other event happens at 1ms intervals
         ((self.cycle / 20000) + 1) * 20000
     }
 
@@ -299,6 +310,28 @@ impl Video {
         }
         self.cycle = target_cycle;
         memory.write_halfword(INTPND, self.pending_interrupts);
+
+        // calculate CTA
+        if (dpctrl & LOCK) == 0 {
+            let mut col_l = 0;
+            let mut col_r = 0;
+            if self.drawing && (self.dpctrl_flags & DPBSY) != 0 {
+                // Find the current column based on how much time has passed since drawing started
+                let column = (((self.cycle % 200000) - 60000) / 1040) as u16;
+                let eye = if (self.cycle % 400000) < 200000 {
+                    Eye::Left
+                } else {
+                    Eye::Right
+                };
+                if let Eye::Left = eye {
+                    col_l += column;
+                } else {
+                    col_r += column;
+                }
+            }
+            let cta = ((0x52 + 95 - col_r) << 8) + (0x52 + 95 - col_l);
+            memory.write_halfword(CTA, cta);
+        }
 
         dpctrl &= !DP_READONLY_MASK;
         dpctrl |= self.dpctrl_flags;
