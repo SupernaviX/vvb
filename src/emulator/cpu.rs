@@ -234,6 +234,14 @@ impl<'a> CPUProcess<'a> {
                     // format 7 opcodes are format 1 with a subopcode suffix
                     let subopcode = (self.read_pc() >> 10) & 0x3f;
                     match subopcode {
+                        0b000000 => self.cmpf_s(instr),
+                        0b000010 => self.cvt_ws(instr),
+                        0b000011 => self.cvt_sw(instr),
+                        0b000100 => self.addf_s(instr),
+                        0b000101 => self.subf_s(instr),
+                        0b000110 => self.mulf_s(instr),
+                        0b000111 => self.divf_s(instr),
+                        0b001011 => self.trnc_sw(instr),
                         0b001100 => self.mpyhw(instr),
                         0b001010 => self.rev(instr),
                         0b001000 => self.xb(instr),
@@ -772,6 +780,62 @@ impl<'a> CPUProcess<'a> {
         Ok(())
     }
 
+    fn cmpf_s(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = f32::from_bits(self.registers[reg2]) - f32::from_bits(self.registers[reg1]);
+        self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.cycle += 10;
+    }
+    fn cvt_ws(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = self.registers[reg1] as f32;
+        self.registers[reg2] = value.to_bits();
+        self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.cycle += 16;
+    }
+    fn cvt_sw(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = f32::from_bits(self.registers[reg1]).round() as u32;
+        self.registers[reg2] = value;
+        self.update_psw_flags(value == 0, sign_bit(value), false);
+        self.cycle += 14;
+    }
+    fn addf_s(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = f32::from_bits(self.registers[reg2]) + f32::from_bits(self.registers[reg1]);
+        self.registers[reg2] = value.to_bits();
+        self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.cycle += 28;
+    }
+    fn subf_s(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = f32::from_bits(self.registers[reg2]) - f32::from_bits(self.registers[reg1]);
+        self.registers[reg2] = value.to_bits();
+        self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.cycle += 28;
+    }
+    fn mulf_s(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = f32::from_bits(self.registers[reg2]) * f32::from_bits(self.registers[reg1]);
+        self.registers[reg2] = value.to_bits();
+        self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.cycle += 30;
+    }
+    fn divf_s(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = f32::from_bits(self.registers[reg2]) / f32::from_bits(self.registers[reg1]);
+        self.registers[reg2] = value.to_bits();
+        self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.cycle += 44;
+    }
+    fn trnc_sw(&mut self, instr: u16) {
+        let (reg2, reg1) = self.parse_format_i_opcode(instr);
+        let value = f32::from_bits(self.registers[reg1]).trunc() as u32;
+        self.registers[reg2] = value;
+        self.update_psw_flags(value == 0, sign_bit(value), false);
+        self.cycle += 14;
+    }
+
     fn mpyhw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let lhs = (self.registers[reg2] as i32)
@@ -960,6 +1024,10 @@ mod tests {
     fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id) }
     fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id) }
     fn orbsu() -> Vec<u8> { _op_2(0b011111, 0, 0b01000) }
+    fn cvt_ws(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000010) }
+    fn cvt_sw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000011) }
+    fn addf_s(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000100) }
+    fn divf_s(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000111) }
     fn mpyhw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001100) }
     fn rev(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001010) }
     fn xb(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001000) }
@@ -1501,6 +1569,25 @@ mod tests {
         assert_eq!(cpu.registers[26], 18);
         assert_eq!(memory.read_word(0x05001000), 0xddd55555);
         assert_eq!(memory.read_word(0x05001004), 0x5555dddd);
+    }
+
+    #[test]
+    fn can_do_float_things() {
+        let (mut cpu, mut memory) = rom(&[
+            movea(10, 0, 3),
+            cvt_ws(11, 10),
+            movea(10, 0, 14),
+            cvt_ws(12, 10),
+            addf_s(12, 11),
+            cvt_sw(13, 12),
+            divf_s(12, 11),
+            cvt_sw(14, 12),
+        ]);
+        cpu.run(&mut memory, 134).unwrap();
+        assert_eq!(f32::from_bits(cpu.registers[11]), 3.0);
+        assert_eq!(f32::from_bits(cpu.registers[12]), 17.0 / 3.0);
+        assert_eq!(cpu.registers[13], 17);
+        assert_eq!(cpu.registers[14], 6);
     }
 
     #[test]
