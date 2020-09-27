@@ -374,19 +374,15 @@ impl Video {
     }
 
     fn build_frame(&self, memory: &Memory, eye: Eye) {
-        // colors to render
-        let color0 = 0; // always black
-        let color1 = 255.min(self.get_brightness(memory, BRTA));
-        let color2 = 255.min(self.get_brightness(memory, BRTB));
-        let color3 = 255.min(color1 + color2 + self.get_brightness(memory, BRTC));
-        let colors = [color0 as u8, color1 as u8, color2 as u8, color3 as u8];
-
         let buf_address = self.get_buffer_address(eye, self.display_buffer);
         let eye_buffer = &mut self.buffers[eye as usize]
             .lock()
             .expect("Buffer lock was poisoned!");
 
         for (col, col_offset) in (0..(384 * 64)).step_by(64).enumerate() {
+            // colors to render
+            let colors = self.get_brightnesses(memory, eye, col);
+
             for (row_offset, top_row) in (0..224).step_by(4).enumerate().step_by(2) {
                 let address = buf_address + col_offset + row_offset;
                 let pixels = memory.read_halfword(address) as u16;
@@ -398,9 +394,27 @@ impl Video {
         }
     }
 
-    fn get_brightness(&self, memory: &Memory, address: usize) -> u16 {
+    fn get_brightnesses(&self, memory: &Memory, eye: Eye, col: usize) -> [u8; 4] {
+        let cta_index = 0x52 + 95 - (col / 4);
+        let cta = match eye {
+            Eye::Left => 0x0003dc00 + (cta_index * 2),
+            Eye::Right => 0x0003de00 + (cta_index * 2),
+        };
+        let ct = memory.read_halfword(cta);
+        let repeat = ct >> 8;
+        let len = ct & 0xff;
+        let color0 = 0; // always black
+        let color1 = 255.min(self.get_brightness(memory, BRTA, repeat, len));
+        let color2 = 255.min(self.get_brightness(memory, BRTB, repeat, len));
+        let color3 = 255.min(color1 + color2 + self.get_brightness(memory, BRTC, repeat, len));
+        [color0 as u8, color1 as u8, color2 as u8, color3 as u8]
+    }
+
+    fn get_brightness(&self, memory: &Memory, address: usize, repeat: u16, len: u16) -> u16 {
+        let brt = memory.read_halfword(address);
+
         // experimentally chosen conversion factor from led-duration-in-50-ns-increments to 8-bit color
-        memory.read_halfword(address) * 19 / 8
+        (brt * 19 / 8) + (brt * repeat * len / 40)
     }
 
     fn get_buffer_address(&self, eye: Eye, buffer: Buffer) -> usize {
