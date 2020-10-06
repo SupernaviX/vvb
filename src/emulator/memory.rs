@@ -1,6 +1,8 @@
 use crate::emulator::cpu::Event;
 use anyhow::Result;
 use std::convert::TryInto;
+use std::hint::unreachable_unchecked;
+use std::ops::Range;
 
 enum Address {
     Mapped(usize, Option<Event>),
@@ -83,7 +85,7 @@ impl Memory {
             Address::Mapped(resolved, _) => resolved,
             Address::Unmapped => return 0,
         };
-        let bytes: &[u8; 2] = self.memory[address..address + 2].try_into().unwrap();
+        let bytes: &[u8; 2] = &self.memory[address..address + 2].try_into().unwrap();
         u16::from_le_bytes(*bytes)
     }
 
@@ -92,8 +94,16 @@ impl Memory {
             Address::Mapped(resolved, _) => resolved,
             Address::Unmapped => return 0,
         };
-        let bytes: &[u8; 4] = self.memory[address..address + 4].try_into().unwrap();
+        let bytes: &[u8; 4] = &self.memory[address..address + 4].try_into().unwrap();
         u32::from_le_bytes(*bytes)
+    }
+
+    pub fn read_range(&self, range: Range<usize>) -> &[u8] {
+        &self.memory[range]
+    }
+
+    pub fn write_range(&mut self, range: Range<usize>, data: &[u8]) {
+        &mut self.memory[range].copy_from_slice(data);
     }
 
     fn resolve_address(&self, address: usize) -> Address {
@@ -107,7 +117,7 @@ impl Memory {
             0x05000000..=0x05FFFFFF => self.resolve_wram_address(address),
             0x06000000..=0x06FFFFFF => Address::Unmapped, // TODO: Game Pak RAM
             0x07000000..=0x07FFFFFF => self.resolve_game_pak_rom_address(address),
-            _ => unreachable!("Math broke"),
+            _ => unsafe { unreachable_unchecked() },
         }
     }
 
@@ -123,7 +133,7 @@ impl Memory {
             0x0007a000..=0x0007bfff => Address::Mapped(address - 0x6C000, None),
             0x0007c000..=0x0007dfff => Address::Mapped(address - 0x66000, None),
             0x0007e000..=0x0007ffff => Address::Mapped(address - 0x60000, None),
-            _ => unreachable!("SCP-033 containment breach"),
+            _ => unsafe { unreachable_unchecked() },
         }
     }
 

@@ -1,4 +1,4 @@
-mod emulator;
+pub mod emulator;
 mod jni_helpers;
 mod renderer;
 

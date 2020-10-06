@@ -2,7 +2,7 @@ mod cpu;
 use cpu::{Event, CPU};
 mod hardware;
 use hardware::Hardware;
-mod memory;
+pub mod memory;
 use memory::Memory;
 pub mod video;
 use video::{Eye, FrameChannel, Video};

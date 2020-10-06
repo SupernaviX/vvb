@@ -18,4 +18,14 @@ gl_generator = "0.14.0"
 
 [lib]
 name = "vvb"
-crate-type = ["dylib"]
+doctest = false
+crate-type = ["rlib", "dylib"]
+
+[[bin]]
+name = "perftest"
+test = false
+path = "src/emulator/main.rs"
+
+[profile.release]
+debug = true
+panic = "abort"

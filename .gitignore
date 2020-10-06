@@ -15,3 +15,5 @@
 .cxx
 vcs.xml
 target
+flamegraph.svg
+perf.data

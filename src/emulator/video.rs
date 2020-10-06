@@ -3,7 +3,7 @@ use anyhow::Result;
 use log::error;
 use std::sync::{mpsc, Arc, Mutex};
 
-mod drawing;
+pub mod drawing;
 
 pub const VB_WIDTH: usize = 384;
 pub const VB_HEIGHT: usize = 224;

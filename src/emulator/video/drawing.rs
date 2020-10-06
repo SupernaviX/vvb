@@ -36,12 +36,22 @@ const JVFLP: u16 = 0x1000;
 const JCA: u16 = 0x07ff;
 
 fn modulus(a: i16, b: i16) -> u16 {
-    (((a % b) + b) % b) as u16
+    (if a < 0 { (a % b) + b } else { a % b }) as u16
 }
 
 pub struct DrawingProcess {
     buffer: [[u16; 384]; 28],
     object_world: usize,
+
+    last_char: u16,
+    last_char_index: u16,
+    last_char_row: u16,
+
+    last_cell_address: usize,
+    cell_palette_index: u16,
+    cell_flip_horizontally: bool,
+    cell_flip_vertically: bool,
+    cell_char_index: u16,
 }
 
 impl DrawingProcess {
@@ -49,6 +59,15 @@ impl DrawingProcess {
         DrawingProcess {
             buffer: [[0; 384]; 28],
             object_world: 3,
+            last_char: 0,
+            last_char_index: u16::MAX,
+            last_char_row: u16::MAX,
+
+            last_cell_address: usize::MAX,
+            cell_palette_index: u16::MAX,
+            cell_flip_horizontally: false,
+            cell_flip_vertically: false,
+            cell_char_index: u16::MAX,
         }
     }
 
@@ -65,6 +84,9 @@ impl DrawingProcess {
                 *column = fill;
             }
         }
+
+        self.last_char_index = u16::MAX;
+        self.last_cell_address = usize::MAX;
 
         // Draw rows in the buffer one-at-a-time
         self.object_world = 3;
@@ -134,26 +156,29 @@ impl DrawingProcess {
                 let cell_address = background.get_cell_address(bg_x, bg_y);
 
                 // load that cell data
-                let cell_data = memory.read_halfword(cell_address);
-                let palette_index = (cell_data >> 14) & 0x0003;
-                let flip_horizontally = (cell_data & 0x2000) != 0;
-                let flip_vertically = (cell_data & 0x1000) != 0;
-                let char_index = cell_data & 0x07ff;
+                if self.last_cell_address != cell_address {
+                    let cell_data = memory.read_halfword(cell_address);
+                    self.last_cell_address = cell_address;
+                    self.cell_palette_index = (cell_data >> 14) & 0x0003;
+                    self.cell_flip_horizontally = (cell_data & 0x2000) != 0;
+                    self.cell_flip_vertically = (cell_data & 0x1000) != 0;
+                    self.cell_char_index = cell_data & 0x07ff;
+                }
 
                 // figure out which pixel in the character we're rendering
                 let mut char_x = modulus(bg_x, 8);
                 let mut char_y = modulus(bg_y, 8);
-                if flip_horizontally {
+                if self.cell_flip_horizontally {
                     char_x = 7 - char_x;
                 }
-                if flip_vertically {
+                if self.cell_flip_vertically {
                     char_y = 7 - char_y;
                 }
-                let pixel = self.get_char_pixel(memory, char_index, char_x, char_y);
+                let pixel = self.get_char_pixel(memory, self.cell_char_index, char_x, char_y);
                 if pixel == 0 {
                     continue;
                 }
-                let color = self.get_palette_color(memory, GPLT0, palette_index, pixel);
+                let color = self.get_palette_color(memory, GPLT0, self.cell_palette_index, pixel);
 
                 self.draw_pixel(dest_x + column, dest_y + row, color);
             }
@@ -219,10 +244,10 @@ impl DrawingProcess {
         let flip_vertical = (memory.read_halfword(obj_address + 6) & JVFLP) != 0;
         let jca = memory.read_halfword(obj_address + 6) & JCA;
 
-        for x in 0..8 {
-            for y in 0..8 {
+        for y in 0..8 {
+            let char_y = if flip_vertical { 7 - y } else { y } as u16;
+            for x in 0..8 {
                 let char_x = if flip_horizontal { 7 - x } else { x } as u16;
-                let char_y = if flip_vertical { 7 - y } else { y } as u16;
                 let pixel = self.get_char_pixel(memory, jca, char_x, char_y);
                 if pixel == 0 {
                     continue;
@@ -234,10 +259,14 @@ impl DrawingProcess {
         }
     }
 
-    fn get_char_pixel(&self, memory: &Memory, index: u16, x: u16, y: u16) -> u16 {
-        let char_row =
-            memory.read_halfword(CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2));
-        let pixel = (char_row >> (x * 2)) & 0x3;
+    fn get_char_pixel(&mut self, memory: &Memory, index: u16, x: u16, y: u16) -> u16 {
+        if self.last_char_index != index || self.last_char_row != y {
+            let address = CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2);
+            self.last_char = memory.read_halfword(address);
+            self.last_char_index = index;
+            self.last_char_row = y;
+        }
+        let pixel = (self.last_char >> (x * 2)) & 0x3;
         pixel
     }
 
@@ -253,7 +282,7 @@ impl DrawingProcess {
         }
         let row_index = row as usize / 8;
         let current_value = &mut self.buffer[row_index][column as usize];
-        let row_offset = modulus(row, 8);
+        let row_offset = row as u16 % 8;
         *current_value &= !(0b11 << (row_offset * 2));
         *current_value |= color << (row_offset * 2);
     }
@@ -266,8 +295,8 @@ enum BGMode {
 struct Background<'a> {
     memory: &'a Memory,
     pub mode: BGMode,
-    pub bgmap_width: i16,
-    pub bgmap_height: i16,
+    pub bg_width: i16,
+    pub bg_height: i16,
     pub bgmap_base: usize,
     pub overplane_cell: Option<usize>,
 
@@ -298,7 +327,7 @@ impl<'a> Background<'a> {
                 bgmap_height
             ));
         }
-        let bgmap_base = (header & BG_MAP_BASE) as usize;
+        let bgmap_base = (header & BG_MAP_BASE) as usize * 8192;
         let has_overplane = (header & OVERPLANE_FLAG) != 0;
         let overplane_cell = if has_overplane {
             let overplane = memory.read_halfword(address + 20);
@@ -315,8 +344,8 @@ impl<'a> Background<'a> {
         Ok(Background {
             memory,
             mode,
-            bgmap_width,
-            bgmap_height,
+            bg_width: bgmap_width * 512,
+            bg_height: bgmap_height * 512,
             bgmap_base,
             overplane_cell,
             param_base,
@@ -340,7 +369,6 @@ impl<'a> Background<'a> {
                 let address = self.param_base + (y as usize * 16);
                 // These are stored as 13.3 fixed-point numbers,
                 // shift left 6 to give precision 9
-                // TODO: it looks like all these fields really should be 0x07ff, maybe sign extension is busted?
                 let x_base = (self.memory.read_halfword(address) as i16 as i32) << 6;
                 let y_base = (self.memory.read_halfword(address + 4) as i16 as i32) << 6;
 
@@ -373,27 +401,30 @@ impl<'a> Background<'a> {
 
     pub fn get_cell_address(&self, x: i16, y: i16) -> usize {
         // for now, assume everything is background map 0
-        let bg_width = self.bgmap_width * 512;
-        let bg_height = self.bgmap_height * 512;
+        let bg_width = self.bg_width;
+        let bg_height = self.bg_height;
 
-        let mut bg_x = x;
-        if bg_x < 0 || bg_x >= bg_width {
-            bg_x = match self.overplane_cell {
+        let bg_x = if 0 <= x && x < bg_width {
+            x as usize
+        } else {
+            match self.overplane_cell {
                 Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
-                None => modulus(bg_x, bg_width) as i16,
-            };
-        }
-        let mut bg_y = y;
-        if bg_y < 0 || bg_y >= bg_height {
-            bg_y = match self.overplane_cell {
-                Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
-                None => modulus(bg_y, bg_height) as i16,
-            };
-        }
+                None => modulus(x, bg_width) as usize,
+            }
+        };
 
-        let row = bg_y as usize / 8;
-        let column = bg_x as usize / 8;
+        let bg_y = if 0 <= y && y < bg_height {
+            y as usize
+        } else {
+            match self.overplane_cell {
+                Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
+                None => modulus(y, bg_height) as usize,
+            }
+        };
+
+        let row = bg_y / 8;
+        let column = bg_x / 8;
         let index = row * 64 + column;
-        BACKGROUND_MAP_MEMORY + (self.bgmap_base * 8192) + (index * 2)
+        BACKGROUND_MAP_MEMORY + self.bgmap_base + (index * 2)
     }
 }
