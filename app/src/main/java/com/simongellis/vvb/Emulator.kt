@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.SystemClock
+import java.io.File
 import java.nio.ByteBuffer
+import java.util.*
 import kotlin.concurrent.thread
 
 class Emulator(context: Context) {
@@ -13,6 +15,9 @@ class Emulator(context: Context) {
     private var _thread: Thread? = null
     private var _running = false
     private var _gameLoaded = false
+
+    private var _sram: File? = null
+    private var _sramBuffer = ByteBuffer.allocateDirect(8 * 1024)
 
     private var _activeInputs = 0
 
@@ -30,11 +35,29 @@ class Emulator(context: Context) {
         }
     }
 
-    fun loadGamePak(file: Uri) {
-        val rom = loadFile(file)
+    fun loadGamePak(romUri: Uri) {
         pause()
-        nativeLoadGamePakRom(rom)
+        val rom = loadFile(romUri)
+
+        val sram = File(_context.filesDir, getSRAMFilename(romUri))
+        _sram = sram
+
+        if (sram.exists()) {
+            _sramBuffer.rewind()
+            _sramBuffer.put(sram.readBytes())
+        } else {
+            Arrays.fill(_sramBuffer.array(), 0)
+        }
+
+        _sramBuffer.rewind()
+        nativeLoadGamePak(rom, _sramBuffer)
+
         _gameLoaded = true
+    }
+
+    private fun getSRAMFilename(romUri: Uri): String {
+        val pathEnd = romUri.lastPathSegment!!
+        return pathEnd.substringAfterLast('/').replace(Regex("\\.[^.]+$"), ".srm")
     }
 
     fun loadImage() {
@@ -57,8 +80,12 @@ class Emulator(context: Context) {
     }
 
     fun pause() {
+        if (!_running) {
+            return
+        }
         _running = false
         _thread?.join()
+        saveSRAM()
         _activeInputs = 0
     }
 
@@ -88,6 +115,14 @@ class Emulator(context: Context) {
         }
     }
 
+    private fun saveSRAM() {
+        val sram = _sram ?: return
+        _sramBuffer.rewind()
+        nativeReadSRAM(_sramBuffer)
+        _sramBuffer.rewind()
+        sram.outputStream().channel.use { it.write(_sramBuffer) }
+    }
+
     private fun loadResource(id: Int): ByteBuffer {
         val options = BitmapFactory.Options()
         options.inScaled = false
@@ -100,8 +135,9 @@ class Emulator(context: Context) {
 
     private external fun nativeConstructor()
     private external fun nativeDestructor()
-    private external fun nativeLoadGamePakRom(rom: ByteBuffer)
+    private external fun nativeLoadGamePak(rom: ByteBuffer, sram: ByteBuffer)
     private external fun nativeTick(nanoseconds: Int, inputMask: Int)
+    private external fun nativeReadSRAM(buffer: ByteBuffer)
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
 
     companion object {

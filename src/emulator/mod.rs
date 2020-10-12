@@ -35,9 +35,14 @@ impl Emulator {
         self.video.get_frame_channel()
     }
 
-    pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
-        self.memory.load_game_pak_rom(rom)?;
+    pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
+        self.memory.load_game_pak(rom, sram)?;
         self.reset();
+        Ok(())
+    }
+
+    pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
+        self.memory.read_sram(buffer);
         Ok(())
     }
 
@@ -153,17 +158,30 @@ pub mod jni {
         jni_helpers::java_take::<Emulator>(env, this)
     }
 
-    java_func!(Emulator_nativeLoadGamePakRom, load_game_pak_rom, JByteBuffer);
-    fn load_game_pak_rom(env: &JNIEnv, this: jobject, rom: JByteBuffer) -> Result<()> {
+    java_func!(Emulator_nativeLoadGamePak, load_game_pak, JByteBuffer, JByteBuffer);
+    fn load_game_pak(
+        env: &JNIEnv,
+        this: jobject,
+        rom: JByteBuffer,
+        sram: JByteBuffer,
+    ) -> Result<()> {
         let rom = env.get_direct_buffer_address(rom)?;
+        let sram = env.get_direct_buffer_address(sram)?;
         let mut this = get_emulator(env, this)?;
-        this.load_game_pak_rom(rom)
+        this.load_game_pak(rom, sram)
     }
 
     java_func!(Emulator_nativeTick, tick, jint, jint);
     fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint, input_state: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
         this.tick(nanoseconds as u64, input_state as u16)
+    }
+
+    java_func!(Emulator_nativeReadSRAM, read_sram, JByteBuffer);
+    fn read_sram(env: &JNIEnv, this: jobject, buffer: JByteBuffer) -> Result<()> {
+        let this = get_emulator(env, this)?;
+        let buffer = env.get_direct_buffer_address(buffer)?;
+        this.read_sram(buffer)
     }
 
     java_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);

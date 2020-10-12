@@ -23,7 +23,7 @@ impl Memory {
         memory
     }
 
-    pub fn load_game_pak_rom(&mut self, rom: &[u8]) -> Result<()> {
+    pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
         let rom_size = rom.len();
         if rom_size.count_ones() != 1 {
             return Err(anyhow::anyhow!("ROM size must be a power of two"));
@@ -33,6 +33,7 @@ impl Memory {
         }
         self.rom_mask = 0x07000000 + rom_size - 1;
         self.memory[0x07000000..0x07000000 + rom_size].copy_from_slice(rom);
+        self.memory[0x06000000..0x06000000 + sram.len()].copy_from_slice(sram);
         self.init();
         Ok(())
     }
@@ -98,6 +99,10 @@ impl Memory {
         u32::from_le_bytes(*bytes)
     }
 
+    pub fn read_sram(&self, buffer: &mut [u8]) {
+        buffer.copy_from_slice(&self.memory[0x06000000..0x06002000]);
+    }
+
     pub fn read_range(&self, range: Range<usize>) -> &[u8] {
         &self.memory[range]
     }
@@ -115,7 +120,7 @@ impl Memory {
             0x03000000..=0x03FFFFFF => Address::Unmapped,
             0x04000000..=0x04FFFFFF => Address::Unmapped, // Game Pak Expansion, never used
             0x05000000..=0x05FFFFFF => self.resolve_wram_address(address),
-            0x06000000..=0x06FFFFFF => Address::Unmapped, // TODO: Game Pak RAM
+            0x06000000..=0x06FFFFFF => self.resolve_game_pak_ram_address(address),
             0x07000000..=0x07FFFFFF => self.resolve_game_pak_rom_address(address),
             _ => unsafe { unreachable_unchecked() },
         }
@@ -143,7 +148,11 @@ impl Memory {
     }
 
     fn resolve_wram_address(&self, address: usize) -> Address {
-        Address::Mapped(address & 0x0500FFFF, None)
+        Address::Mapped(address & 0x0500ffff, None)
+    }
+
+    fn resolve_game_pak_ram_address(&self, address: usize) -> Address {
+        Address::Mapped(address & 0x06001fff, None)
     }
 
     fn resolve_game_pak_rom_address(&self, address: usize) -> Address {
@@ -225,14 +234,16 @@ mod tests {
     #[test]
     fn can_load_game_pak_rom() {
         let mut memory = Memory::new();
-        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
+        memory
+            .load_game_pak(&[0x78, 0x56, 0x34, 0x12], &[])
+            .unwrap();
     }
 
     #[test]
     #[should_panic(expected = "ROM size must be a power of two")]
     fn asserts_rom_is_power_of_two() {
         let mut memory = Memory::new();
-        memory.load_game_pak_rom(&[0x78, 0x56, 0x34]).unwrap();
+        memory.load_game_pak(&[0x78, 0x56, 0x34], &[]).unwrap();
     }
 
     #[test]
@@ -240,13 +251,15 @@ mod tests {
     fn asserts_rom_is_small_enough() {
         let mut memory = Memory::new();
         let too_much_rom = vec![0u8; 0x01000000];
-        memory.load_game_pak_rom(too_much_rom.as_slice()).unwrap();
+        memory.load_game_pak(too_much_rom.as_slice(), &[]).unwrap();
     }
 
     #[test]
     fn can_read_game_pak_rom() {
         let mut memory = Memory::new();
-        memory.load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12]).unwrap();
+        memory
+            .load_game_pak(&[0x78, 0x56, 0x34, 0x12], &[])
+            .unwrap();
         assert_eq!(memory.read_word(0x07000000), 0x12345678);
     }
 
@@ -254,10 +267,21 @@ mod tests {
     fn can_read_game_pak_rom_mirrored_by_size() {
         let mut memory = Memory::new();
         memory
-            .load_game_pak_rom(&[0x78, 0x56, 0x34, 0x12, 0x89, 0x57, 0x34, 0x06])
+            .load_game_pak(&[0x78, 0x56, 0x34, 0x12, 0x89, 0x57, 0x34, 0x06], &[])
             .unwrap();
         assert_eq!(memory.read_word(0x07000000), 0x12345678);
         assert_eq!(memory.read_word(0x07000004), 0x06345789);
         assert_eq!(memory.read_word(0x07000008), 0x12345678);
+    }
+
+    #[test]
+    fn can_read_game_pak_ram_mirrored_by_8k() {
+        let mut memory = Memory::new();
+        memory
+            .load_game_pak(&[0x69], &[0x78, 0x56, 0x34, 0x12])
+            .unwrap();
+        assert_eq!(memory.read_word(0x06000000), 0x12345678);
+        assert_eq!(memory.read_word(0x06000004), 0);
+        assert_eq!(memory.read_word(0x06002000), 0x12345678);
     }
 }

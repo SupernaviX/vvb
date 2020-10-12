@@ -1039,7 +1039,7 @@ mod tests {
         cpu.pc = 0x07000000;
 
         let mut memory = Memory::new();
-        memory.load_game_pak_rom(&[0; 256]).unwrap();
+        memory.load_game_pak(&[0; 256], &[]).unwrap();
         let mut address = cpu.pc;
         for instr in instructions {
             for byte in instr {
