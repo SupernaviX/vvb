@@ -36,7 +36,11 @@ const JVFLP: u16 = 0x1000;
 const JCA: u16 = 0x07ff;
 
 fn modulus(a: i16, b: i16) -> u16 {
-    (if a < 0 { (a % b) + b } else { a % b }) as u16
+    if b.count_ones() == 1 {
+        (a & (b - 1)) as u16
+    } else {
+        a.rem_euclid(b) as u16
+    }
 }
 
 pub struct DrawingProcess {
@@ -383,11 +387,11 @@ impl<'a> Background<'a> {
                 let mut px = x as i32;
                 if parallax < 0 {
                     if let Eye::Left = eye {
-                        px += parallax;
+                        px -= parallax;
                     }
                 } else {
                     if let Eye::Right = eye {
-                        px += parallax;
+                        px -= parallax;
                     }
                 }
 
