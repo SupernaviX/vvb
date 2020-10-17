@@ -31,8 +31,8 @@ fn main() -> Result<()> {
     let start = std::time::Instant::now();
 
     for _ in 0..ITERATIONS {
-        xp.draw_eye(&mut memory, Eye::Left, left_buf_address)?;
-        xp.draw_eye(&mut memory, Eye::Right, right_buf_address)?;
+        xp.draw_eye(&mut memory, Eye::Left, left_buf_address);
+        xp.draw_eye(&mut memory, Eye::Right, right_buf_address);
     }
 
     let duration = start.elapsed().as_nanos();

@@ -257,7 +257,7 @@ impl Video {
 
                     if self.drawing {
                         // Actually draw on the background buffer
-                        self.draw(memory)?;
+                        self.draw(memory);
                     }
                 }
                 5 => {
@@ -427,16 +427,14 @@ impl Video {
     }
 
     // Perform the drawing procedure, writing to whichever framebuffer is inactive
-    fn draw(&mut self, memory: &mut Memory) -> Result<()> {
+    fn draw(&mut self, memory: &mut Memory) {
         let buffer = self.display_buffer.toggle();
 
         let left_buf_address = self.get_buffer_address(Left, buffer);
-        self.xp_module.draw_eye(memory, Left, left_buf_address)?;
+        self.xp_module.draw_eye(memory, Left, left_buf_address);
 
         let right_buf_address = self.get_buffer_address(Right, buffer);
-        self.xp_module.draw_eye(memory, Right, right_buf_address)?;
-
-        Ok(())
+        self.xp_module.draw_eye(memory, Right, right_buf_address);
     }
 }
 

@@ -1,6 +1,5 @@
 use crate::emulator::memory::Memory;
 use crate::emulator::video::Eye;
-use anyhow::Result;
 
 const BACKGROUND_MAP_MEMORY: usize = 0x00020000;
 const WORLD_ATTRIBUTE_MEMORY: usize = 0x0003d800;
@@ -76,7 +75,7 @@ impl DrawingProcess {
     }
 
     // Draws the contents of the given eye to the screen
-    pub fn draw_eye(&mut self, memory: &mut Memory, eye: Eye, buf_address: usize) -> Result<()> {
+    pub fn draw_eye(&mut self, memory: &mut Memory, eye: Eye, buf_address: usize) {
         // Clear both frames to BKCOL
         let bkcol = memory.read_halfword(BKCOL) & 0x03;
         let fill = (0..16)
@@ -95,7 +94,7 @@ impl DrawingProcess {
         // Draw rows in the buffer one-at-a-time
         self.object_world = 3;
         for world in (0..32).rev() {
-            let done = self.draw_world(memory, eye, world)?;
+            let done = self.draw_world(memory, eye, world);
             if done {
                 break;
             }
@@ -107,27 +106,25 @@ impl DrawingProcess {
                 memory.write_halfword(address, *column);
             }
         }
-
-        Ok(())
     }
 
-    fn draw_world(&mut self, memory: &Memory, eye: Eye, world: usize) -> Result<bool> {
+    fn draw_world(&mut self, memory: &Memory, eye: Eye, world: usize) -> bool {
         let world_address = WORLD_ATTRIBUTE_MEMORY + (world * 32);
         let header = memory.read_halfword(world_address);
         if (header & END_FLAG) != 0 {
             // END flag set, we're done rendering
-            return Ok(true);
+            return true;
         }
         let left_enabled = (header & LON) != 0;
         let right_enabled = (header & RON) != 0;
         if !left_enabled && !right_enabled {
             // This world is blank, move on to the next
-            return Ok(false);
+            return false;
         }
         let bgm = (header & BGM) >> 12;
         if bgm == 3 {
             self.draw_object_world(memory, eye);
-            return Ok(false);
+            return false;
         }
 
         let eye_enabled = match eye {
@@ -136,10 +133,10 @@ impl DrawingProcess {
         };
         if !eye_enabled {
             // This eye is blank
-            return Ok(false);
+            return false;
         }
 
-        let background = Background::parse(memory, world_address)?;
+        let background = Background::parse(memory, world_address);
 
         let dest_x = memory.read_halfword(world_address + 2) as i16;
         let dest_parallax_x = memory.read_halfword(world_address + 4) as i16;
@@ -188,7 +185,7 @@ impl DrawingProcess {
             }
         }
 
-        return Ok(false);
+        return false;
     }
 
     fn draw_object_world(&mut self, memory: &Memory, eye: Eye) {
@@ -294,13 +291,14 @@ impl DrawingProcess {
 
 enum BGMode {
     Normal,
+    HBias,
     Affine,
 }
 struct Background<'a> {
     memory: &'a Memory,
     pub mode: BGMode,
-    pub bg_width: i16,
-    pub bg_height: i16,
+    pub bgmap_width: i16,
+    pub bgmap_height: i16,
     pub bgmap_base: usize,
     pub overplane_cell: Option<usize>,
 
@@ -310,28 +308,20 @@ struct Background<'a> {
     pub param_base: usize,
 }
 impl<'a> Background<'a> {
-    pub fn parse(memory: &Memory, address: usize) -> Result<Background> {
+    pub fn parse(memory: &Memory, address: usize) -> Background {
         let header = memory.read_halfword(address);
         let bgm = (header & BGM) >> 12;
         let mode = match bgm {
-            0 => BGMode::Normal,
             2 => BGMode::Affine,
-            m => return Err(anyhow::anyhow!("Unsupported BGM {}!", m)),
+            1 => BGMode::HBias,
+            _ => BGMode::Normal,
         };
 
         let scx = (header & SCX) >> 10;
         let scy = (header & SCY) >> 8;
         let bgmap_width = 2i16.pow(scx as u32);
         let bgmap_height = 2i16.pow(scy as u32);
-        if bgmap_width != 1 || bgmap_height != 1 {
-            // TODO: support multiple background maps
-            return Err(anyhow::anyhow!(
-                "Too many background maps ({}x{})!",
-                bgmap_width,
-                bgmap_height
-            ));
-        }
-        let bgmap_base = (header & BG_MAP_BASE) as usize * 8192;
+        let bgmap_base = (header & BG_MAP_BASE) as usize;
         let has_overplane = (header & OVERPLANE_FLAG) != 0;
         let overplane_cell = if has_overplane {
             let overplane = memory.read_halfword(address + 20);
@@ -345,18 +335,18 @@ impl<'a> Background<'a> {
         let src_parallax_x = memory.read_halfword(address + 10) as i16;
         let src_y = memory.read_halfword(address + 12) as i16;
 
-        Ok(Background {
+        Background {
             memory,
             mode,
-            bg_width: bgmap_width * 512,
-            bg_height: bgmap_height * 512,
+            bgmap_width,
+            bgmap_height,
             bgmap_base,
             overplane_cell,
             param_base,
             src_x,
             src_parallax_x,
             src_y,
-        })
+        }
     }
 
     pub fn get_coords(&self, eye: Eye, x: i16, y: i16) -> (i16, i16) {
@@ -367,6 +357,21 @@ impl<'a> Background<'a> {
                 match eye {
                     Eye::Left => (x - self.src_parallax_x, y),
                     Eye::Right => (x + self.src_parallax_x, y),
+                }
+            }
+            BGMode::HBias => {
+                let address = self.param_base + (y as usize * 4);
+                let x = x + self.src_x;
+                let y = y + self.src_y;
+                match eye {
+                    Eye::Left => {
+                        let offset = self.memory.read_halfword(address) as i16;
+                        (x - self.src_parallax_x + offset, y)
+                    }
+                    Eye::Right => {
+                        let offset = self.memory.read_halfword(address + 2) as i16;
+                        (x + self.src_parallax_x + offset, y)
+                    }
                 }
             }
             BGMode::Affine => {
@@ -387,11 +392,11 @@ impl<'a> Background<'a> {
                 let mut px = x as i32;
                 if parallax < 0 {
                     if let Eye::Left = eye {
-                        px -= parallax;
+                        px += parallax;
                     }
                 } else {
                     if let Eye::Right = eye {
-                        px -= parallax;
+                        px += parallax;
                     }
                 }
 
@@ -404,9 +409,8 @@ impl<'a> Background<'a> {
     }
 
     pub fn get_cell_address(&self, x: i16, y: i16) -> usize {
-        // for now, assume everything is background map 0
-        let bg_width = self.bg_width;
-        let bg_height = self.bg_height;
+        let bg_width = self.bgmap_width * 512;
+        let bg_height = self.bgmap_height * 512;
 
         let bg_x = if 0 <= x && x < bg_width {
             x as usize
@@ -426,9 +430,13 @@ impl<'a> Background<'a> {
             }
         };
 
-        let row = bg_y / 8;
-        let column = bg_x / 8;
+        let map_x = bg_x / 512;
+        let map_y = bg_y / 512;
+        let map_index = self.bgmap_base + map_x + (map_y * self.bgmap_width as usize);
+
+        let row = (bg_y % 512) / 8;
+        let column = (bg_x % 512) / 8;
         let index = row * 64 + column;
-        BACKGROUND_MAP_MEMORY + self.bgmap_base + (index * 2)
+        BACKGROUND_MAP_MEMORY + (map_index * 8192) + (index * 2)
     }
 }
