@@ -1,15 +1,24 @@
 package com.simongellis.vvb
 
+import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 
 class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+    private var _pointer = 0L
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        nativeInitialize()
+
+        val audio = ContextCompat.getSystemService(applicationContext, AudioManager::class.java)!!
+        val sampleRate = audio.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE).toInt()
+        val framesPerBurst = audio.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER).toInt()
+
+        nativeInitialize(sampleRate, framesPerBurst)
         setContentView(R.layout.activity_main)
         supportFragmentManager
             .beginTransaction()
@@ -52,6 +61,6 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
         }
     }
 
-    private external fun nativeInitialize()
+    private external fun nativeInitialize(sampleRate: Int, framesPerBurst: Int)
     private external fun nativeChangeDeviceParams()
 }

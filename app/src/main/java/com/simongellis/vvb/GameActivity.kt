@@ -10,6 +10,7 @@ import kotlinx.android.synthetic.main.activity_game.*
 class GameActivity : AppCompatActivity() {
     private lateinit var _emulator: Emulator
     private lateinit var _renderer: Renderer
+    private lateinit var _audio: Audio
     private lateinit var _inputBindingMapper: InputBindingMapper
 
 
@@ -17,6 +18,7 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _emulator = Emulator.getInstance(applicationContext)
         _renderer = Renderer(_emulator)
+        _audio = Audio(_emulator)
         _inputBindingMapper = InputBindingMapper(applicationContext)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -47,6 +49,7 @@ class GameActivity : AppCompatActivity() {
         surface_view.onResume()
         _renderer.ensureDeviceParams()
         // _emulator.loadImage()
+        _audio.play()
         _emulator.resume()
     }
 
@@ -54,11 +57,13 @@ class GameActivity : AppCompatActivity() {
         super.onPause()
         surface_view.onPause()
         _emulator.pause()
+        _audio.pause()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         _inputBindingMapper.destroy()
+        // _audio.destroy()
         _renderer.destroy()
     }
 }
