@@ -1,3 +1,4 @@
+pub mod audio;
 mod cpu;
 use cpu::{Event, CPU};
 mod hardware;
@@ -7,6 +8,7 @@ use memory::Memory;
 pub mod video;
 use video::{Eye, FrameChannel, Video};
 
+use crate::emulator::audio::{AudioController, AudioPlayer};
 use anyhow::Result;
 use log::debug;
 use std::cmp;
@@ -16,6 +18,7 @@ pub struct Emulator {
     tick_calls: u64,
     memory: Memory,
     cpu: CPU,
+    audio: AudioController,
     video: Video,
     hardware: Hardware,
 }
@@ -26,6 +29,7 @@ impl Emulator {
             tick_calls: 0,
             memory: Memory::new(),
             cpu: CPU::new(),
+            audio: AudioController::new(),
             video: Video::new(),
             hardware: Hardware::new(),
         }
@@ -33,6 +37,10 @@ impl Emulator {
 
     pub fn get_frame_channel(&mut self) -> FrameChannel {
         self.video.get_frame_channel()
+    }
+
+    pub fn get_audio_player(&mut self) -> AudioPlayer {
+        self.audio.get_player()
     }
 
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
@@ -100,11 +108,14 @@ impl Emulator {
             // If the CPU wrote somewhere interesting during execution, it would stop and return an event
             // Do what we have to do based on which event was returned
             match cpu_result.event {
-                Some(Event::HardwareWrite { address }) => {
-                    self.hardware.process_event(&mut self.memory, address);
+                Some(Event::AudioWrite { address }) => {
+                    self.audio.process_event(&mut self.memory, address);
                 }
                 Some(Event::DisplayControlWrite { address }) => {
                     self.video.process_event(&mut self.memory, address);
+                }
+                Some(Event::HardwareWrite { address }) => {
+                    self.hardware.process_event(&mut self.memory, address);
                 }
                 _ => (),
             };

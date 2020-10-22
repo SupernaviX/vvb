@@ -115,7 +115,7 @@ impl Memory {
         let address = address & 0x07FFFFFF;
         match address {
             0x00000000..=0x00FFFFFF => self.resolve_vip_address(address),
-            0x01000000..=0x01FFFFFF => Address::Unmapped, // TODO: VSU
+            0x01000000..=0x01FFFFFF => self.resolve_vsu_address(address),
             0x02000000..=0x02FFFFFF => self.resolve_hardware_address(address),
             0x03000000..=0x03FFFFFF => Address::Unmapped,
             0x04000000..=0x04FFFFFF => Address::Unmapped, // Game Pak Expansion, never used
@@ -140,6 +140,11 @@ impl Memory {
             0x0007e000..=0x0007ffff => Address::Mapped(address - 0x60000, None),
             _ => unsafe { unreachable_unchecked() },
         }
+    }
+
+    fn resolve_vsu_address(&self, address: usize) -> Address {
+        let address = address & 0x010007ff;
+        Address::Mapped(address, Some(Event::AudioWrite { address }))
     }
 
     fn resolve_hardware_address(&self, address: usize) -> Address {

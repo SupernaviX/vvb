@@ -1,10 +1,11 @@
+use crate::emulator::audio::AudioPlayer;
+
 use anyhow::Result;
 #[cfg(target_os = "android")]
 use oboe::{
     AudioOutputCallback, AudioOutputStream, AudioStream, AudioStreamAsync, AudioStreamBuilder,
     DataCallbackResult, Mono, Output, PerformanceMode, SampleRateConversionQuality, SharingMode,
 };
-use std::f32::consts::PI;
 
 pub fn init(sample_rate: i32, frames_per_burst: i32) {
     log::debug!(
@@ -19,56 +20,9 @@ pub fn init(sample_rate: i32, frames_per_burst: i32) {
     }
 }
 
-// Structure for sound generator
-struct SineWave {
-    frequency: f32,
-    gain: f32,
-    waveform: Option<Vec<i16>>,
-    index: usize,
-}
-
-#[allow(dead_code)]
-impl SineWave {
-    fn init(&mut self, sample_rate: i32) {
-        let sample_count = sample_rate as f32 / self.frequency;
-        let samples: Vec<i16> = (0..sample_count as usize)
-            .map(|i| self.gain * f32::sin((i as f32) * 2.0 * PI / sample_count))
-            .map(|sample| (sample * 32768.0) as i16)
-            .collect();
-        self.waveform = samples.into();
-    }
-
-    fn play(&mut self, frames: &mut [i16]) {
-        let waveform = self.waveform.as_ref().unwrap();
-        let mut buf_index = 0;
-        while buf_index < frames.len() {
-            let batch_size = (waveform.len() - self.index).min(frames.len() - buf_index);
-            frames[buf_index..buf_index + batch_size]
-                .copy_from_slice(&waveform[self.index..self.index + batch_size]);
-            buf_index += batch_size;
-            self.index += batch_size;
-            if self.index >= waveform.len() {
-                self.index = 0;
-            }
-        }
-    }
-}
-
-// Default constructor for sound generator
-impl Default for SineWave {
-    fn default() -> Self {
-        Self {
-            frequency: 440.0,
-            gain: 0.5,
-            waveform: None,
-            index: 0,
-        }
-    }
-}
-
 // Audio output callback trait implementation
 #[cfg(target_os = "android")]
-impl AudioOutputCallback for SineWave {
+impl AudioOutputCallback for AudioPlayer {
     // Define type for frames which we would like to process
     type FrameType = (i16, Mono);
 
@@ -79,19 +33,22 @@ impl AudioOutputCallback for SineWave {
         frames: &mut [i16],
     ) -> DataCallbackResult {
         // Configure our wave generator
-        if self.waveform.is_none() {
+        if !self.is_initialized() {
             self.init(stream.get_sample_rate());
         }
 
-        self.play(frames);
-
-        // Notify the oboe that stream is continued
-        DataCallbackResult::Continue
+        match self.play(frames) {
+            Ok(()) => DataCallbackResult::Continue,
+            Err(err) => {
+                log::error!("{}", err);
+                DataCallbackResult::Stop
+            }
+        }
     }
 }
 
 #[cfg(target_os = "android")]
-struct Audio(AudioStreamAsync<Output, SineWave>);
+struct Audio(AudioStreamAsync<Output, AudioPlayer>);
 
 #[cfg(not(target_os = "android"))]
 struct Audio;
@@ -102,7 +59,7 @@ unsafe impl Send for Audio {}
 
 #[cfg(target_os = "android")]
 impl Audio {
-    fn new() -> Result<Audio> {
+    fn new(player: AudioPlayer) -> Result<Audio> {
         // Create playback stream
         let stream = AudioStreamBuilder::default()
             // select desired performance mode
@@ -117,7 +74,7 @@ impl Audio {
             .set_sample_rate(41700)
             .set_sample_rate_conversion_quality(SampleRateConversionQuality::Fastest)
             // set our generator as callback
-            .set_callback(SineWave::default())
+            .set_callback(player)
             // open the output stream
             .open_stream()?;
         Ok(Audio(stream))
@@ -136,7 +93,7 @@ impl Audio {
 
 #[cfg(not(target_os = "android"))]
 impl Audio {
-    fn new() -> Result<Audio> {
+    fn new(_player: AudioPlayer) -> Result<Audio> {
         Ok(Audio)
     }
     fn play(&mut self) -> Result<()> {
@@ -150,6 +107,7 @@ impl Audio {
 #[rustfmt::skip::macros(java_func)]
 pub mod jni {
     use super::Audio;
+    use crate::emulator::Emulator;
     use crate::{java_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::jobject;
@@ -161,8 +119,9 @@ pub mod jni {
     }
 
     java_func!(Audio_nativeConstructor, constructor, jobject);
-    fn constructor(env: &JNIEnv, this: jobject, _emulator: jobject) -> Result<()> {
-        let audio = Audio::new()?;
+    fn constructor(env: &JNIEnv, this: jobject, emulator: jobject) -> Result<()> {
+        let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+        let audio = Audio::new(emulator.get_audio_player())?;
         jni_helpers::java_init(env, this, audio)
     }
 

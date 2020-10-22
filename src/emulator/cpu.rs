@@ -127,8 +127,9 @@ pub struct CPUProcessingResult {
     pub event: Option<Event>,
 }
 pub enum Event {
-    HardwareWrite { address: usize },
     DisplayControlWrite { address: usize },
+    AudioWrite { address: usize },
+    HardwareWrite { address: usize },
     ReturnFromInterrupt,
 }
 
