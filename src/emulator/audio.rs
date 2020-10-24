@@ -1,22 +1,27 @@
 use crate::emulator::memory::Memory;
 use anyhow::Result;
-use std::f32::consts::PI;
 use std::sync::mpsc;
 use std::sync::mpsc::TryRecvError;
 
 #[derive(Debug)]
 enum AudioInstruction {
-    Play,
+    Play { waveforms: Option<[[i16; 32]; 5]> },
     Stop,
 }
 
 pub struct AudioController {
     player: Option<mpsc::Sender<AudioInstruction>>,
+    waveforms: [[i16; 32]; 5],
+    waveforms_stale: bool,
 }
 
 impl AudioController {
     pub fn new() -> AudioController {
-        AudioController { player: None }
+        AudioController {
+            player: None,
+            waveforms: [[0; 32]; 5],
+            waveforms_stale: false,
+        }
     }
 
     pub fn get_player(&mut self) -> AudioPlayer {
@@ -24,9 +29,7 @@ impl AudioController {
         self.player = Some(tx);
         AudioPlayer {
             controller: rx,
-            frequency: 440.0,
-            gain: 0.5,
-            waveform: None,
+            waveforms: self.waveforms,
             playing: false,
             index: 0,
         }
@@ -36,12 +39,11 @@ impl AudioController {
         let value = memory.read_byte(address);
         if address < 0x01000280 {
             let rel_addr = address - 0x01000000;
-            log::debug!(
-                "Waveform {}[{}] := 0x{:02x}",
-                (rel_addr / 128) + 1,
-                (rel_addr % 128) / 4,
-                value
-            );
+            let waveform = rel_addr / 128;
+            let index = (rel_addr % 128) / 4;
+            log::debug!("Waveform {}[{}] := 0x{:02x}", waveform + 1, index, value);
+            self.waveforms[waveform][index] = (((value as i16) & 0x3f) - 32) * 32;
+            self.waveforms_stale = true;
             return;
         }
         if address < 0x01000300 {
@@ -68,9 +70,16 @@ impl AudioController {
                     );
 
                     if enabled {
-                        self.send_instruction(AudioInstruction::Play)
+                        self.send_instruction(AudioInstruction::Play {
+                            waveforms: if self.waveforms_stale {
+                                Some(self.waveforms)
+                            } else {
+                                None
+                            },
+                        });
+                        self.waveforms_stale = false;
                     } else {
-                        self.send_instruction(AudioInstruction::Stop)
+                        self.send_instruction(AudioInstruction::Stop);
                     }
                 }
                 (channel, 0x04) => {
@@ -177,26 +186,12 @@ impl AudioController {
 
 pub struct AudioPlayer {
     controller: mpsc::Receiver<AudioInstruction>,
-    frequency: f32,
-    gain: f32,
-    waveform: Option<Vec<i16>>,
+    waveforms: [[i16; 32]; 5],
     playing: bool,
     index: usize,
 }
 
 impl AudioPlayer {
-    pub fn is_initialized(&self) -> bool {
-        self.waveform.is_some()
-    }
-    pub fn init(&mut self, sample_rate: i32) {
-        let sample_count = sample_rate as f32 / self.frequency;
-        let samples: Vec<i16> = (0..sample_count as usize)
-            .map(|i| self.gain * f32::sin((i as f32) * 2.0 * PI / sample_count))
-            .map(|sample| (sample * 32768.0) as i16)
-            .collect();
-        self.waveform = samples.into();
-    }
-
     pub fn play(&mut self, frames: &mut [i16]) -> Result<()> {
         self.process_instructions()?;
         if !self.playing {
@@ -205,7 +200,7 @@ impl AudioPlayer {
             }
             return Ok(());
         }
-        let waveform = self.waveform.as_ref().unwrap();
+        let waveform = &self.waveforms[0];
         let mut buf_index = 0;
         while buf_index < frames.len() {
             let batch_size = (waveform.len() - self.index).min(frames.len() - buf_index);
@@ -234,7 +229,12 @@ impl AudioPlayer {
 
     fn handle_instruction(&mut self, instruction: AudioInstruction) {
         match instruction {
-            AudioInstruction::Play => self.playing = true,
+            AudioInstruction::Play { waveforms } => {
+                if let Some(waveforms) = waveforms {
+                    self.waveforms = waveforms;
+                }
+                self.playing = true
+            }
             AudioInstruction::Stop => self.playing = false,
         };
     }

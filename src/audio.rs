@@ -29,14 +29,9 @@ impl AudioOutputCallback for AudioPlayer {
     // Implement sound data output callback
     fn on_audio_ready(
         &mut self,
-        stream: &mut dyn AudioOutputStream,
+        _stream: &mut dyn AudioOutputStream,
         frames: &mut [i16],
     ) -> DataCallbackResult {
-        // Configure our wave generator
-        if !self.is_initialized() {
-            self.init(stream.get_sample_rate());
-        }
-
         match self.play(frames) {
             Ok(()) => DataCallbackResult::Continue,
             Err(err) => {
