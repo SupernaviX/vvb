@@ -1,38 +1,76 @@
 use crate::emulator::memory::Memory;
-use anyhow::Result;
-use std::sync::mpsc;
-use std::sync::mpsc::TryRecvError;
-
-#[derive(Debug)]
-enum AudioInstruction {
-    Play { waveforms: Option<[[i16; 32]; 5]> },
-    Stop,
-}
+use ringbuf::{Consumer, Producer, RingBuffer};
 
 pub struct AudioController {
-    player: Option<mpsc::Sender<AudioInstruction>>,
+    cycle: u64,
+    buffer: Option<Producer<i16>>,
     waveforms: [[i16; 32]; 5],
-    waveforms_stale: bool,
+    channels: [Channel; 5],
+}
+
+#[derive(Default)]
+struct Channel {
+    enabled: bool,
+    waveform: usize,
+    frequency: usize,
+    frequency_counter: usize,
+    index: usize,
+}
+impl Channel {
+    fn set_settings(&mut self, enabled: bool, _auto: bool, _interval: usize) {
+        self.enabled = enabled;
+        self.frequency_counter = 0;
+        self.index = 0;
+    }
+    fn set_waveform(&mut self, waveform: usize) {
+        if self.enabled {
+            return;
+        }
+        self.waveform = waveform;
+        self.frequency_counter = 0;
+    }
+    fn set_frequency(&mut self, frequency: usize) {
+        self.frequency = 2048 - frequency;
+        self.frequency_counter = 0;
+    }
+    fn next(&mut self, waveforms: &[[i16; 32]; 5]) -> i16 {
+        if !self.enabled {
+            return 0;
+        }
+        self.frequency_counter += 120; // ~120 base cycles per audio frame
+        while self.frequency_counter > self.frequency {
+            self.index += 1;
+            if self.index == 32 {
+                self.index = 0;
+            }
+            self.frequency_counter -= self.frequency;
+        }
+        waveforms[self.waveform][self.index]
+    }
 }
 
 impl AudioController {
     pub fn new() -> AudioController {
         AudioController {
-            player: None,
+            cycle: 0,
+            buffer: None,
             waveforms: [[0; 32]; 5],
-            waveforms_stale: false,
+            channels: Default::default(),
         }
     }
 
+    pub fn init(&mut self) {
+        self.cycle = 0;
+        self.buffer = None;
+        self.waveforms = [[0; 32]; 5];
+        self.channels = Default::default();
+    }
+
     pub fn get_player(&mut self) -> AudioPlayer {
-        let (tx, rx) = mpsc::channel();
-        self.player = Some(tx);
-        AudioPlayer {
-            controller: rx,
-            waveforms: self.waveforms,
-            playing: false,
-            index: 0,
-        }
+        let buffer = RingBuffer::new(41700);
+        let (producer, consumer) = buffer.split();
+        self.buffer = Some(producer);
+        AudioPlayer { buffer: consumer }
     }
 
     pub fn process_event(&mut self, memory: &mut Memory, address: usize) {
@@ -43,7 +81,6 @@ impl AudioController {
             let index = (rel_addr % 128) / 4;
             log::debug!("Waveform {}[{}] := 0x{:02x}", waveform + 1, index, value);
             self.waveforms[waveform][index] = (((value as i16) & 0x3f) - 32) * 32;
-            self.waveforms_stale = true;
             return;
         }
         if address < 0x01000300 {
@@ -60,7 +97,7 @@ impl AudioController {
                 (channel, 0x00) => {
                     let enabled = value & 0x80 != 0;
                     let auto = value & 0x20 != 0;
-                    let interval = value & 0x1f;
+                    let interval = value as usize & 0x1f;
                     log::debug!(
                         "Channel {} sound interval: enabled={} auto={} interval={}",
                         channel + 1,
@@ -68,18 +105,8 @@ impl AudioController {
                         auto,
                         interval
                     );
-
-                    if enabled {
-                        self.send_instruction(AudioInstruction::Play {
-                            waveforms: if self.waveforms_stale {
-                                Some(self.waveforms)
-                            } else {
-                                None
-                            },
-                        });
-                        self.waveforms_stale = false;
-                    } else {
-                        self.send_instruction(AudioInstruction::Stop);
+                    if channel < 5 {
+                        self.channels[channel].set_settings(enabled, auto, interval);
                     }
                 }
                 (channel, 0x04) => {
@@ -93,16 +120,22 @@ impl AudioController {
                     );
                 }
                 (channel, 0x08) => {
-                    let low = value as u16;
-                    let high = memory.read_byte(address + 4) as u16;
+                    let low = value as usize;
+                    let high = memory.read_byte(address + 4) as usize;
                     let frequency = ((high & 0x07) << 8) + low;
                     log::debug!("Channel {} frequency (low): {}", channel + 1, frequency);
+                    if channel < 5 {
+                        self.channels[channel].set_frequency(frequency);
+                    }
                 }
                 (channel, 0x0c) => {
-                    let low = memory.read_byte(address - 4) as u16;
-                    let high = value as u16;
+                    let low = memory.read_byte(address - 4) as usize;
+                    let high = value as usize;
                     let frequency = ((high & 0x07) << 8) + low;
                     log::debug!("Channel {} frequency (high): {}", channel + 1, frequency);
+                    if channel < 5 {
+                        self.channels[channel].set_frequency(frequency);
+                    }
                 }
                 (channel, 0x10) => {
                     let val = value >> 4;
@@ -143,8 +176,9 @@ impl AudioController {
                     }
                 }
                 (channel @ 0..=4, 0x18) => {
-                    let wave = value & 0x07;
+                    let wave = value as usize & 0x07;
                     log::debug!("Channel {} waveform: {}", channel + 1, wave + 1);
+                    self.channels[channel].set_waveform(wave);
                 }
                 (4, 0x1c) => {
                     let clock = value >> 7;
@@ -173,69 +207,31 @@ impl AudioController {
         }
     }
 
-    fn send_instruction(&mut self, instruction: AudioInstruction) {
-        match &self.player {
-            Some(channel) => match channel.send(instruction) {
-                Ok(()) => (),
-                Err(_) => self.player = None,
-            },
-            None => (),
-        };
+    pub fn run(&mut self, _memory: &mut Memory, target_cycle: u64) {
+        let mut values = Vec::with_capacity((target_cycle - self.cycle) as usize / 480);
+        let waveforms = &self.waveforms;
+        while self.cycle < target_cycle {
+            let new_value = self.channels.iter_mut().map(|c| c.next(waveforms)).sum();
+            values.push(new_value);
+            self.cycle += 480; // approximate number of cycles per frame
+        }
+        if let Some(buffer) = self.buffer.as_mut() {
+            buffer.push_slice(&values);
+        }
     }
 }
 
 pub struct AudioPlayer {
-    controller: mpsc::Receiver<AudioInstruction>,
-    waveforms: [[i16; 32]; 5],
-    playing: bool,
-    index: usize,
+    buffer: Consumer<i16>,
 }
 
 impl AudioPlayer {
-    pub fn play(&mut self, frames: &mut [i16]) -> Result<()> {
-        self.process_instructions()?;
-        if !self.playing {
-            for frame in frames {
-                *frame = 0;
-            }
-            return Ok(());
-        }
-        let waveform = &self.waveforms[0];
-        let mut buf_index = 0;
-        while buf_index < frames.len() {
-            let batch_size = (waveform.len() - self.index).min(frames.len() - buf_index);
-            frames[buf_index..buf_index + batch_size]
-                .copy_from_slice(&waveform[self.index..self.index + batch_size]);
-            buf_index += batch_size;
-            self.index += batch_size;
-            if self.index >= waveform.len() {
-                self.index = 0;
-            }
-        }
-        Ok(())
-    }
+    pub fn play(&mut self, frames: &mut [i16]) {
+        let count = self.buffer.pop_slice(frames);
 
-    fn process_instructions(&mut self) -> Result<()> {
-        loop {
-            match self.controller.try_recv() {
-                Ok(instruction) => self.handle_instruction(instruction),
-                Err(TryRecvError::Empty) => return Ok(()),
-                Err(TryRecvError::Disconnected) => {
-                    return Err(anyhow::anyhow!("Lost connection to controller"))
-                }
-            };
+        // If we don't know what to play, play nothing
+        for missing in &mut frames[count..] {
+            *missing = 0;
         }
-    }
-
-    fn handle_instruction(&mut self, instruction: AudioInstruction) {
-        match instruction {
-            AudioInstruction::Play { waveforms } => {
-                if let Some(waveforms) = waveforms {
-                    self.waveforms = waveforms;
-                }
-                self.playing = true
-            }
-            AudioInstruction::Stop => self.playing = false,
-        };
     }
 }

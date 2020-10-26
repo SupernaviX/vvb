@@ -42,6 +42,9 @@ impl Memory {
         for vram in self.memory[0x00000000..=0x00077fff].iter_mut() {
             *vram = 0;
         }
+        for audio in self.memory[0x01000000..=0x010007ff].iter_mut() {
+            *audio = 0;
+        }
         for hardware in self.memory[0x02000000..=0x0200003f].iter_mut() {
             *hardware = 0;
         }

@@ -32,13 +32,8 @@ impl AudioOutputCallback for AudioPlayer {
         _stream: &mut dyn AudioOutputStream,
         frames: &mut [i16],
     ) -> DataCallbackResult {
-        match self.play(frames) {
-            Ok(()) => DataCallbackResult::Continue,
-            Err(err) => {
-                log::error!("{}", err);
-                DataCallbackResult::Stop
-            }
-        }
+        self.play(frames);
+        DataCallbackResult::Continue
     }
 }
 

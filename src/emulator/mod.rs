@@ -58,6 +58,7 @@ impl Emulator {
         self.cycle = 0;
         self.tick_calls = 0;
         self.cpu.init();
+        self.audio.init();
         self.video.init(&mut self.memory);
         self.hardware.init(&mut self.memory);
         log::debug!(
@@ -102,6 +103,7 @@ impl Emulator {
 
             // Have the other components catch up
             let cpu_cycle = cpu_result.cycle;
+            self.audio.run(&mut self.memory, cpu_cycle);
             self.video.run(&mut self.memory, cpu_cycle)?;
             self.hardware.run(&mut self.memory, cpu_cycle);
 
