@@ -61,7 +61,7 @@ impl Audio {
             // select channels configuration
             .set_channel_count::<Stereo>()
             // virtual boy sample rate is mercifully low
-            .set_sample_rate(41700)
+            .set_sample_rate(41667)
             .set_sample_rate_conversion_quality(SampleRateConversionQuality::Fastest)
             // set our generator as callback
             .set_callback(player)

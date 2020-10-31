@@ -1,6 +1,10 @@
 use crate::emulator::memory::Memory;
 use ringbuf::{Consumer, Producer, RingBuffer};
 
+const PCM_BASE_CYCLES_PER_FRAME: usize = 120;
+const NOISE_BASE_CYCLES_PER_FRAME: usize = 12;
+const INTERVAL_FRAMES_PER_CYCLE: usize = 160;
+
 #[derive(Debug)]
 enum Direction {
     Decay,
@@ -26,6 +30,7 @@ impl ChannelType {
 
 struct Channel {
     enabled: bool,
+    enabled_counter: Option<usize>,
     frequency: usize,
     frequency_counter: usize,
     envelope: u16,
@@ -58,6 +63,7 @@ impl Channel {
     fn new(channel_type: ChannelType) -> Self {
         Channel {
             enabled: false,
+            enabled_counter: None,
             frequency: 0,
             frequency_counter: 0,
             envelope: 0,
@@ -65,8 +71,13 @@ impl Channel {
             channel_type,
         }
     }
-    fn set_settings(&mut self, enabled: bool, _auto: bool, _interval: usize) {
+    fn set_enabled(&mut self, enabled: bool, auto: bool, interval: usize) {
         self.enabled = enabled;
+        if auto {
+            self.enabled_counter = Some(INTERVAL_FRAMES_PER_CYCLE * (interval + 1));
+        } else {
+            self.enabled_counter = None;
+        }
         self.frequency_counter = 0;
         self.channel_type.reset();
     }
@@ -85,6 +96,14 @@ impl Channel {
     }
 
     fn next(&mut self, waveforms: &[[u16; 32]; 5]) -> (u16, u16) {
+        if let Some(counter) = self.enabled_counter.as_mut() {
+            if *counter > 0 {
+                *counter -= 1;
+            } else {
+                self.enabled = false;
+                self.enabled_counter = None;
+            }
+        }
         if !self.enabled {
             return (0, 0);
         }
@@ -106,7 +125,7 @@ impl Channel {
     fn sample(&mut self, waveforms: &[[u16; 32]; 5]) -> u16 {
         match &mut self.channel_type {
             ChannelType::PCM { waveform, index } => {
-                self.frequency_counter += 120; // ~120 base cycles per audio frame
+                self.frequency_counter += PCM_BASE_CYCLES_PER_FRAME;
                 while self.frequency_counter > self.frequency {
                     *index += 1;
                     if *index == 32 {
@@ -118,7 +137,7 @@ impl Channel {
             }
             ChannelType::Noise { tap, register } => {
                 let tap_mask = 1 << *tap;
-                self.frequency_counter += 12; // ~12 base cycles per audio frame
+                self.frequency_counter += NOISE_BASE_CYCLES_PER_FRAME;
                 while self.frequency_counter > self.frequency {
                     let bit = ((*register & 0x0080) >> 7) ^ ((*register & tap_mask) >> *tap);
                     *register = (*register << 1) | bit;
@@ -197,7 +216,7 @@ impl AudioController {
                         auto,
                         interval
                     );
-                    self.channels[channel].set_settings(enabled, auto, interval);
+                    self.channels[channel].set_enabled(enabled, auto, interval);
                 }
                 (channel, 0x04) => {
                     let left_vol = (value as u16 >> 4) & 0x0f;
