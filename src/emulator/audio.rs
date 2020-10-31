@@ -7,27 +7,70 @@ enum Direction {
     Grow,
 }
 
-#[derive(Default)]
+enum ChannelType {
+    PCM { waveform: usize, index: usize },
+    Noise { tap: u16, register: u16 },
+}
+impl ChannelType {
+    fn reset(&mut self) {
+        match self {
+            ChannelType::PCM { index, .. } => {
+                *index = 0;
+            }
+            ChannelType::Noise { register, .. } => {
+                *register = 0xffff;
+            }
+        }
+    }
+}
+
 struct Channel {
     enabled: bool,
-    waveform: usize,
     frequency: usize,
     frequency_counter: usize,
     envelope: u16,
     volume: u16,
-    index: usize,
+    channel_type: ChannelType,
 }
 impl Channel {
+    fn default_set() -> [Self; 6] {
+        [
+            Channel::pcm(),
+            Channel::pcm(),
+            Channel::pcm(),
+            Channel::pcm(),
+            Channel::pcm(),
+            Channel::noise(),
+        ]
+    }
+    fn pcm() -> Self {
+        Channel::new(ChannelType::PCM { waveform: 0, index: 0 })
+    }
+    fn noise() -> Self {
+        Channel::new(ChannelType::Noise { tap: 0, register: 0xffff })
+    }
+    fn new(channel_type: ChannelType) -> Self {
+        Channel {
+            enabled: false,
+            frequency: 0,
+            frequency_counter: 0,
+            envelope: 0,
+            volume: 0,
+            channel_type,
+        }
+    }
     fn set_settings(&mut self, enabled: bool, _auto: bool, _interval: usize) {
         self.enabled = enabled;
         self.frequency_counter = 0;
-        self.index = 0;
+        self.channel_type.reset();
     }
-    fn set_waveform(&mut self, waveform: usize) {
+    fn set_waveform(&mut self, waveform_index: usize) {
         if self.enabled {
             return;
         }
-        self.waveform = waveform;
+        if let ChannelType::PCM { waveform, .. } = &mut self.channel_type {
+            *waveform = waveform_index;
+        }
         self.frequency_counter = 0;
     }
     fn set_frequency(&mut self, frequency: usize) {
@@ -39,19 +82,38 @@ impl Channel {
         if !self.enabled {
             return 0;
         }
-        self.frequency_counter += 120; // ~120 base cycles per audio frame
-        while self.frequency_counter > self.frequency {
-            self.index += 1;
-            if self.index == 32 {
-                self.index = 0;
-            }
-            self.frequency_counter -= self.frequency;
-        }
         let mut amplitude = self.envelope * self.volume;
         if amplitude != 0 {
             amplitude += 1
         };
-        amplitude * waveforms[self.waveform][self.index]
+        let sample = self.sample(waveforms);
+        amplitude * sample
+    }
+
+    fn sample(&mut self, waveforms: &[[u16; 32]; 5]) -> u16 {
+        match &mut self.channel_type {
+            ChannelType::PCM { waveform, index } => {
+                self.frequency_counter += 120; // ~120 base cycles per audio frame
+                while self.frequency_counter > self.frequency {
+                    *index += 1;
+                    if *index == 32 {
+                        *index = 0;
+                    }
+                    self.frequency_counter -= self.frequency;
+                }
+                waveforms[*waveform][*index]
+            }
+            ChannelType::Noise { tap, register} => {
+                let tap_mask = 1 << *tap;
+                self.frequency_counter += 12; // ~12 base cycles per audio frame
+                while self.frequency_counter > self.frequency {
+                    let bit = ((*register & 0x0080) >> 7) ^ ((*register & tap_mask) >> *tap);
+                    *register = (*register << 1) | bit;
+                    self.frequency_counter -= self.frequency;
+                }
+                if *register & 0x0001 != 0 { 0 } else { 63 }
+            }
+        }
     }
 }
 
@@ -59,7 +121,7 @@ pub struct AudioController {
     cycle: u64,
     buffer: Option<Producer<i16>>,
     waveforms: [[u16; 32]; 5],
-    channels: [Channel; 5],
+    channels: [Channel; 6],
 }
 
 impl AudioController {
@@ -68,7 +130,7 @@ impl AudioController {
             cycle: 0,
             buffer: None,
             waveforms: [[0; 32]; 5],
-            channels: Default::default(),
+            channels: Channel::default_set(),
         }
     }
 
@@ -76,7 +138,7 @@ impl AudioController {
         self.cycle = 0;
         self.buffer = None;
         self.waveforms = [[0; 32]; 5];
-        self.channels = Default::default();
+        self.channels = Channel::default_set();
     }
 
     pub fn get_player(&mut self) -> AudioPlayer {
@@ -118,9 +180,7 @@ impl AudioController {
                         auto,
                         interval
                     );
-                    if channel < 5 {
-                        self.channels[channel].set_settings(enabled, auto, interval);
-                    }
+                    self.channels[channel].set_settings(enabled, auto, interval);
                 }
                 (channel, 0x04) => {
                     let left_vol = (value as u16 >> 4) & 0x0f;
@@ -131,28 +191,22 @@ impl AudioController {
                         left_vol,
                         right_vol
                     );
-                    if channel < 5 {
-                        // TODO: stereo
-                        self.channels[channel].volume = left_vol;
-                    }
+                    // TODO: stereo
+                    self.channels[channel].volume = left_vol;
                 }
                 (channel, 0x08) => {
                     let low = value as usize;
                     let high = memory.read_byte(address + 4) as usize;
                     let frequency = ((high & 0x07) << 8) + low;
                     log::debug!("Channel {} frequency (low): {}", channel + 1, frequency);
-                    if channel < 5 {
-                        self.channels[channel].set_frequency(frequency);
-                    }
+                    self.channels[channel].set_frequency(frequency);
                 }
                 (channel, 0x0c) => {
                     let low = memory.read_byte(address - 4) as usize;
                     let high = value as usize;
                     let frequency = ((high & 0x07) << 8) + low;
                     log::debug!("Channel {} frequency (high): {}", channel + 1, frequency);
-                    if channel < 5 {
-                        self.channels[channel].set_frequency(frequency);
-                    }
+                    self.channels[channel].set_frequency(frequency);
                 }
                 (channel, 0x10) => {
                     let val = (value >> 4) as u16;
@@ -169,9 +223,7 @@ impl AudioController {
                         dir,
                         interval
                     );
-                    if channel < 5 {
-                        self.channels[channel].envelope = val;
-                    }
+                    self.channels[channel].envelope = val;
                 }
                 (channel, 0x14) => {
                     let repeat = value & 0x02 != 0;
