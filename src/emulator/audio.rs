@@ -1,6 +1,7 @@
 use crate::emulator::memory::Memory;
 use ringbuf::{Consumer, Producer, RingBuffer};
 
+const CPU_CYCLES_PER_FRAME: u64 = 480;
 const PCM_BASE_CYCLES_PER_FRAME: usize = 120;
 const NOISE_BASE_CYCLES_PER_FRAME: usize = 12;
 const FRAMES_PER_INTERVAL_CYCLE: usize = 160;
@@ -116,7 +117,7 @@ impl Channel {
     }
     fn noise() -> Self {
         Channel::new(ChannelType::Noise {
-            tap: 0,
+            tap: 14,
             register: 0xffff,
         })
     }
@@ -143,13 +144,26 @@ impl Channel {
         self.channel_type.reset();
     }
     fn set_waveform(&mut self, waveform_index: usize) {
-        if self.enabled {
-            return;
-        }
         if let ChannelType::PCM { waveform, .. } = &mut self.channel_type {
             *waveform = waveform_index;
         }
         self.frequency_counter = 0;
+    }
+    fn set_tap(&mut self, new_tap: u8) {
+        if let ChannelType::Noise { tap, register } = &mut self.channel_type {
+            // Each valid input maps to a bit, which results in a different sequence length
+            *tap = match new_tap {
+                0 => 14, // length 32767
+                1 => 10, // length 1953
+                2 => 13, // length 254
+                3 => 4,  // length 217
+                4 => 8,  // length 73
+                5 => 6,  // length 63
+                6 => 9,  // length 42
+                _ => 11, // length 28
+            };
+            *register = 0xffff;
+        }
     }
     fn set_frequency(&mut self, frequency: usize) {
         self.frequency = 2048 - frequency;
@@ -350,6 +364,12 @@ impl AudioController {
                             func
                         );
                     }
+
+                    if channel == 5 {
+                        let tap = value >> 4 & 0x07;
+                        log::debug!("Channel 6 tap: {}", tap);
+                        self.channels[5].set_tap(tap);
+                    }
                 }
                 (channel @ 0..=4, 0x18) => {
                     let wave = value as usize & 0x07;
@@ -384,7 +404,7 @@ impl AudioController {
     }
 
     pub fn run(&mut self, _memory: &mut Memory, target_cycle: u64) {
-        let mut values = Vec::with_capacity((target_cycle - self.cycle) as usize / 480);
+        let mut values = Vec::new();
         let waveforms = &self.waveforms;
         while self.cycle < target_cycle {
             let frame = self
@@ -393,7 +413,7 @@ impl AudioController {
                 .map(|c| c.next(waveforms))
                 .fold((0, 0), |acc, val| (acc.0 + val.0, acc.1 + val.1));
             values.push(self.to_output_frame(frame));
-            self.cycle += 480; // approximate number of cycles per frame
+            self.cycle += CPU_CYCLES_PER_FRAME;
         }
         if let Some(buffer) = self.buffer.as_mut() {
             buffer.push_slice(&values);
