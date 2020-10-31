@@ -1,11 +1,10 @@
 use crate::emulator::memory::Memory;
 use ringbuf::{Consumer, Producer, RingBuffer};
 
-pub struct AudioController {
-    cycle: u64,
-    buffer: Option<Producer<i16>>,
-    waveforms: [[i16; 32]; 5],
-    channels: [Channel; 5],
+#[derive(Debug)]
+enum Direction {
+    Decay,
+    Grow,
 }
 
 #[derive(Default)]
@@ -14,6 +13,8 @@ struct Channel {
     waveform: usize,
     frequency: usize,
     frequency_counter: usize,
+    envelope: u16,
+    volume: u16,
     index: usize,
 }
 impl Channel {
@@ -33,7 +34,8 @@ impl Channel {
         self.frequency = 2048 - frequency;
         self.frequency_counter = 0;
     }
-    fn next(&mut self, waveforms: &[[i16; 32]; 5]) -> i16 {
+
+    fn next(&mut self, waveforms: &[[u16; 32]; 5]) -> u16 {
         if !self.enabled {
             return 0;
         }
@@ -45,8 +47,19 @@ impl Channel {
             }
             self.frequency_counter -= self.frequency;
         }
-        waveforms[self.waveform][self.index]
+        let mut amplitude = self.envelope * self.volume;
+        if amplitude != 0 {
+            amplitude += 1
+        };
+        amplitude * waveforms[self.waveform][self.index]
     }
+}
+
+pub struct AudioController {
+    cycle: u64,
+    buffer: Option<Producer<i16>>,
+    waveforms: [[u16; 32]; 5],
+    channels: [Channel; 5],
 }
 
 impl AudioController {
@@ -80,7 +93,7 @@ impl AudioController {
             let waveform = rel_addr / 128;
             let index = (rel_addr % 128) / 4;
             log::debug!("Waveform {}[{}] := 0x{:02x}", waveform + 1, index, value);
-            self.waveforms[waveform][index] = (((value as i16) & 0x3f) - 32) * 32;
+            self.waveforms[waveform][index] = (value as u16) & 0x3f;
             return;
         }
         if address < 0x01000300 {
@@ -110,7 +123,7 @@ impl AudioController {
                     }
                 }
                 (channel, 0x04) => {
-                    let left_vol = (value >> 4) & 0x0f;
+                    let left_vol = (value as u16 >> 4) & 0x0f;
                     let right_vol = value & 0x0f;
                     log::debug!(
                         "Channel {} volume: left={} right={}",
@@ -118,6 +131,10 @@ impl AudioController {
                         left_vol,
                         right_vol
                     );
+                    if channel < 5 {
+                        // TODO: stereo
+                        self.channels[channel].volume = left_vol;
+                    }
                 }
                 (channel, 0x08) => {
                     let low = value as usize;
@@ -138,16 +155,23 @@ impl AudioController {
                     }
                 }
                 (channel, 0x10) => {
-                    let val = value >> 4;
-                    let dir = if value & 0x08 != 0 { "grow" } else { "decay" };
+                    let val = (value >> 4) as u16;
+                    let dir = if value & 0x08 != 0 {
+                        Direction::Grow
+                    } else {
+                        Direction::Decay
+                    };
                     let interval = value & 0x07;
                     log::debug!(
-                        "Channel {} envelope: value={} dir={} interval={}",
+                        "Channel {} envelope: value={} dir={:?} interval={}",
                         channel + 1,
                         val,
                         dir,
                         interval
                     );
+                    if channel < 5 {
+                        self.channels[channel].envelope = val;
+                    }
                 }
                 (channel, 0x14) => {
                     let repeat = value & 0x02 != 0;
@@ -211,8 +235,8 @@ impl AudioController {
         let mut values = Vec::with_capacity((target_cycle - self.cycle) as usize / 480);
         let waveforms = &self.waveforms;
         while self.cycle < target_cycle {
-            let new_value = self.channels.iter_mut().map(|c| c.next(waveforms)).sum();
-            values.push(new_value);
+            let new_value: u16 = self.channels.iter_mut().map(|c| c.next(waveforms)).sum();
+            values.push((new_value >> 6) as i16 * 10);
             self.cycle += 480; // approximate number of cycles per frame
         }
         if let Some(buffer) = self.buffer.as_mut() {
