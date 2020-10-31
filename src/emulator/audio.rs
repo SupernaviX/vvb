@@ -176,7 +176,7 @@ impl Channel {
     }
 
     fn amplitude(&self, volume: u16) -> u16 {
-        let amplitude = self.envelope.value * volume;
+        let amplitude = (self.envelope.value * volume) >> 3;
         if amplitude != 0 {
             amplitude + 1
         } else {
@@ -401,7 +401,7 @@ impl AudioController {
     }
 
     fn to_output_frame(&self, frame: (u16, u16)) -> (i16, i16) {
-        ((frame.0 >> 6) as i16 * 15, (frame.1 >> 6) as i16 * 15)
+        ((frame.0 >> 6) as i16 * 128, (frame.1 >> 6) as i16 * 128)
     }
 }
 
