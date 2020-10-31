@@ -29,7 +29,7 @@ struct Channel {
     frequency: usize,
     frequency_counter: usize,
     envelope: u16,
-    volume: u16,
+    volume: (u16, u16),
     channel_type: ChannelType,
 }
 impl Channel {
@@ -44,10 +44,16 @@ impl Channel {
         ]
     }
     fn pcm() -> Self {
-        Channel::new(ChannelType::PCM { waveform: 0, index: 0 })
+        Channel::new(ChannelType::PCM {
+            waveform: 0,
+            index: 0,
+        })
     }
     fn noise() -> Self {
-        Channel::new(ChannelType::Noise { tap: 0, register: 0xffff })
+        Channel::new(ChannelType::Noise {
+            tap: 0,
+            register: 0xffff,
+        })
     }
     fn new(channel_type: ChannelType) -> Self {
         Channel {
@@ -55,7 +61,7 @@ impl Channel {
             frequency: 0,
             frequency_counter: 0,
             envelope: 0,
-            volume: 0,
+            volume: (0, 0),
             channel_type,
         }
     }
@@ -78,16 +84,23 @@ impl Channel {
         self.frequency_counter = 0;
     }
 
-    fn next(&mut self, waveforms: &[[u16; 32]; 5]) -> u16 {
+    fn next(&mut self, waveforms: &[[u16; 32]; 5]) -> (u16, u16) {
         if !self.enabled {
-            return 0;
+            return (0, 0);
         }
-        let mut amplitude = self.envelope * self.volume;
-        if amplitude != 0 {
-            amplitude += 1
-        };
         let sample = self.sample(waveforms);
-        amplitude * sample
+        let left = self.amplitude(self.volume.0) * sample;
+        let right = self.amplitude(self.volume.1) * sample;
+        (left, right)
+    }
+
+    fn amplitude(&self, volume: u16) -> u16 {
+        let amplitude = self.envelope * volume;
+        if amplitude != 0 {
+            amplitude + 1
+        } else {
+            0
+        }
     }
 
     fn sample(&mut self, waveforms: &[[u16; 32]; 5]) -> u16 {
@@ -103,7 +116,7 @@ impl Channel {
                 }
                 waveforms[*waveform][*index]
             }
-            ChannelType::Noise { tap, register} => {
+            ChannelType::Noise { tap, register } => {
                 let tap_mask = 1 << *tap;
                 self.frequency_counter += 12; // ~12 base cycles per audio frame
                 while self.frequency_counter > self.frequency {
@@ -111,7 +124,11 @@ impl Channel {
                     *register = (*register << 1) | bit;
                     self.frequency_counter -= self.frequency;
                 }
-                if *register & 0x0001 != 0 { 0 } else { 63 }
+                if *register & 0x0001 != 0 {
+                    0
+                } else {
+                    63
+                }
             }
         }
     }
@@ -119,7 +136,7 @@ impl Channel {
 
 pub struct AudioController {
     cycle: u64,
-    buffer: Option<Producer<i16>>,
+    buffer: Option<Producer<(i16, i16)>>,
     waveforms: [[u16; 32]; 5],
     channels: [Channel; 6],
 }
@@ -184,15 +201,14 @@ impl AudioController {
                 }
                 (channel, 0x04) => {
                     let left_vol = (value as u16 >> 4) & 0x0f;
-                    let right_vol = value & 0x0f;
+                    let right_vol = value as u16 & 0x0f;
                     log::debug!(
                         "Channel {} volume: left={} right={}",
                         channel + 1,
                         left_vol,
                         right_vol
                     );
-                    // TODO: stereo
-                    self.channels[channel].volume = left_vol;
+                    self.channels[channel].volume = (left_vol, right_vol);
                 }
                 (channel, 0x08) => {
                     let low = value as usize;
@@ -287,8 +303,12 @@ impl AudioController {
         let mut values = Vec::with_capacity((target_cycle - self.cycle) as usize / 480);
         let waveforms = &self.waveforms;
         while self.cycle < target_cycle {
-            let new_value: u16 = self.channels.iter_mut().map(|c| c.next(waveforms)).sum();
-            values.push((new_value >> 6) as i16 * 10);
+            let output = self
+                .channels
+                .iter_mut()
+                .map(|c| c.next(waveforms))
+                .fold((0, 0), |acc, val| (acc.0 + val.0, acc.1 + val.1));
+            values.push(((output.0 >> 6) as i16 * 10, (output.1 >> 6) as i16 * 10));
             self.cycle += 480; // approximate number of cycles per frame
         }
         if let Some(buffer) = self.buffer.as_mut() {
@@ -298,16 +318,16 @@ impl AudioController {
 }
 
 pub struct AudioPlayer {
-    buffer: Consumer<i16>,
+    buffer: Consumer<(i16, i16)>,
 }
 
 impl AudioPlayer {
-    pub fn play(&mut self, frames: &mut [i16]) {
+    pub fn play(&mut self, frames: &mut [(i16, i16)]) {
         let count = self.buffer.pop_slice(frames);
 
         // If we don't know what to play, play nothing
         for missing in &mut frames[count..] {
-            *missing = 0;
+            *missing = (0, 0);
         }
     }
 }

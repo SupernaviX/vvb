@@ -4,7 +4,7 @@ use anyhow::Result;
 #[cfg(target_os = "android")]
 use oboe::{
     AudioOutputCallback, AudioOutputStream, AudioStream, AudioStreamAsync, AudioStreamBuilder,
-    DataCallbackResult, Mono, Output, PerformanceMode, SampleRateConversionQuality, SharingMode,
+    DataCallbackResult, Output, PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo,
 };
 
 pub fn init(sample_rate: i32, frames_per_burst: i32) {
@@ -24,13 +24,13 @@ pub fn init(sample_rate: i32, frames_per_burst: i32) {
 #[cfg(target_os = "android")]
 impl AudioOutputCallback for AudioPlayer {
     // Define type for frames which we would like to process
-    type FrameType = (i16, Mono);
+    type FrameType = (i16, Stereo);
 
     // Implement sound data output callback
     fn on_audio_ready(
         &mut self,
         _stream: &mut dyn AudioOutputStream,
-        frames: &mut [i16],
+        frames: &mut [(i16, i16)],
     ) -> DataCallbackResult {
         self.play(frames);
         DataCallbackResult::Continue
@@ -59,7 +59,7 @@ impl Audio {
             // select sound sample format
             .set_format::<i16>()
             // select channels configuration
-            .set_channel_count::<Mono>()
+            .set_channel_count::<Stereo>()
             // virtual boy sample rate is mercifully low
             .set_sample_rate(41700)
             .set_sample_rate_conversion_quality(SampleRateConversionQuality::Fastest)
