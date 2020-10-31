@@ -3,12 +3,18 @@ use ringbuf::{Consumer, Producer, RingBuffer};
 
 const PCM_BASE_CYCLES_PER_FRAME: usize = 120;
 const NOISE_BASE_CYCLES_PER_FRAME: usize = 12;
-const INTERVAL_FRAMES_PER_CYCLE: usize = 160;
+const FRAMES_PER_INTERVAL_CYCLE: usize = 160;
+const FRAMES_PER_ENVELOPE_CYCLE: usize = 640;
 
 #[derive(Debug)]
 enum Direction {
     Decay,
     Grow,
+}
+impl Default for Direction {
+    fn default() -> Self {
+        Direction::Decay
+    }
 }
 
 enum ChannelType {
@@ -28,12 +34,66 @@ impl ChannelType {
     }
 }
 
+#[derive(Default)]
+struct Envelope {
+    value: u16,
+    direction: Direction,
+    interval: usize,
+    enabled: bool,
+    repeat: bool,
+    repeat_value: u16,
+    counter: usize,
+}
+impl Envelope {
+    fn set(&mut self, value: u16, direction: Direction, interval: usize) {
+        self.value = value;
+        self.repeat_value = value;
+        self.direction = direction;
+        self.interval = (interval + 1) * FRAMES_PER_ENVELOPE_CYCLE;
+        self.counter = 0;
+    }
+    fn set_modification(&mut self, enabled: bool, repeat: bool) {
+        self.enabled = enabled;
+        self.repeat = repeat;
+        self.counter = 0;
+    }
+    fn tick(&mut self) {
+        if !self.enabled {
+            return;
+        }
+        self.counter += 1;
+        if self.counter >= self.interval {
+            self.counter -= self.interval;
+            let (value, done) = match self.direction {
+                Direction::Grow => {
+                    if self.value == 15 {
+                        (15, true)
+                    } else {
+                        (self.value + 1, false)
+                    }
+                }
+                Direction::Decay => {
+                    if self.value == 0 {
+                        (0, true)
+                    } else {
+                        (self.value - 1, false)
+                    }
+                }
+            };
+            self.value = value;
+            if done && self.repeat {
+                self.value = self.repeat_value;
+            }
+        }
+    }
+}
+
 struct Channel {
     enabled: bool,
     enabled_counter: Option<usize>,
     frequency: usize,
     frequency_counter: usize,
-    envelope: u16,
+    envelope: Envelope,
     volume: (u16, u16),
     channel_type: ChannelType,
 }
@@ -64,9 +124,9 @@ impl Channel {
         Channel {
             enabled: false,
             enabled_counter: None,
-            frequency: 0,
+            frequency: 2048,
             frequency_counter: 0,
-            envelope: 0,
+            envelope: Default::default(),
             volume: (0, 0),
             channel_type,
         }
@@ -74,11 +134,12 @@ impl Channel {
     fn set_enabled(&mut self, enabled: bool, auto: bool, interval: usize) {
         self.enabled = enabled;
         if auto {
-            self.enabled_counter = Some(INTERVAL_FRAMES_PER_CYCLE * (interval + 1));
+            self.enabled_counter = Some(FRAMES_PER_INTERVAL_CYCLE * (interval + 1));
         } else {
             self.enabled_counter = None;
         }
         self.frequency_counter = 0;
+        self.envelope.counter = 0;
         self.channel_type.reset();
     }
     fn set_waveform(&mut self, waveform_index: usize) {
@@ -110,11 +171,12 @@ impl Channel {
         let sample = self.sample(waveforms);
         let left = self.amplitude(self.volume.0) * sample;
         let right = self.amplitude(self.volume.1) * sample;
+        self.envelope.tick();
         (left, right)
     }
 
     fn amplitude(&self, volume: u16) -> u16 {
-        let amplitude = self.envelope * volume;
+        let amplitude = self.envelope.value * volume;
         if amplitude != 0 {
             amplitude + 1
         } else {
@@ -250,7 +312,7 @@ impl AudioController {
                     } else {
                         Direction::Decay
                     };
-                    let interval = value & 0x07;
+                    let interval = value as usize & 0x07;
                     log::debug!(
                         "Channel {} envelope: value={} dir={:?} interval={}",
                         channel + 1,
@@ -258,17 +320,20 @@ impl AudioController {
                         dir,
                         interval
                     );
-                    self.channels[channel].envelope = val;
+                    self.channels[channel].envelope.set(val, dir, interval);
                 }
                 (channel, 0x14) => {
-                    let repeat = value & 0x02 != 0;
                     let enabled = value & 0x01 != 0;
+                    let repeat = value & 0x02 != 0;
                     log::debug!(
-                        "Channel {} envelope: repeat={} enabled={}",
+                        "Channel {} envelope: enabled={} repeat={}",
                         channel + 1,
+                        enabled,
                         repeat,
-                        enabled
                     );
+                    self.channels[channel]
+                        .envelope
+                        .set_modification(enabled, repeat);
 
                     if channel == 4 {
                         let enabled = value & 0x40 != 0;
@@ -322,17 +387,21 @@ impl AudioController {
         let mut values = Vec::with_capacity((target_cycle - self.cycle) as usize / 480);
         let waveforms = &self.waveforms;
         while self.cycle < target_cycle {
-            let output = self
+            let frame = self
                 .channels
                 .iter_mut()
                 .map(|c| c.next(waveforms))
                 .fold((0, 0), |acc, val| (acc.0 + val.0, acc.1 + val.1));
-            values.push(((output.0 >> 6) as i16 * 10, (output.1 >> 6) as i16 * 10));
+            values.push(self.to_output_frame(frame));
             self.cycle += 480; // approximate number of cycles per frame
         }
         if let Some(buffer) = self.buffer.as_mut() {
             buffer.push_slice(&values);
         }
+    }
+
+    fn to_output_frame(&self, frame: (u16, u16)) -> (i16, i16) {
+        ((frame.0 >> 6) as i16 * 15, (frame.1 >> 6) as i16 * 15)
     }
 }
 
