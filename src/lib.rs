@@ -17,7 +17,7 @@ pub use renderer::jni::*;
 
 java_func!(MainActivity_nativeInitialize, init, jint, jint);
 fn init(env: &JNIEnv, this: jobject, sample_rate: jint, frames_per_burst: jint) -> Result<()> {
-    android_logger::init_once(Config::default().with_min_level(Level::Debug));
+    android_logger::init_once(Config::default().with_min_level(Level::Info));
     debug!("Hello from vvb");
 
     let vm = env.get_java_vm()?;
