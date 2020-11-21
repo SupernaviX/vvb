@@ -602,9 +602,10 @@ impl AudioPlayer {
     pub fn play(&mut self, frames: &mut [(i16, i16)]) {
         let count = self.buffer.pop_slice(frames);
 
-        // If we don't know what to play, play nothing
+        // If we don't know what to play, play that last thing again
+        let value = if count == 0 { (0, 0) } else { frames[count - 1] };
         for missing in &mut frames[count..] {
-            *missing = (0, 0);
+            *missing = value;
         }
     }
 }
