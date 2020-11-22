@@ -1,6 +1,7 @@
 pub mod audio;
+use audio::{AudioController, AudioPlayer};
 mod cpu;
-use cpu::{Event, CPU};
+use cpu::{Event, EventHandler, CPU};
 mod hardware;
 use hardware::Hardware;
 pub mod memory;
@@ -8,7 +9,6 @@ use memory::Memory;
 pub mod video;
 use video::{Eye, FrameChannel, Video};
 
-use crate::emulator::audio::{AudioController, AudioPlayer};
 use anyhow::Result;
 use log::debug;
 use std::cell::RefCell;
@@ -19,32 +19,41 @@ pub struct Emulator {
     cycle: u64,
     tick_calls: u64,
     memory: Rc<RefCell<Memory>>,
-    cpu: CPU,
-    audio: AudioController,
-    video: Video,
-    hardware: Hardware,
+    cpu: CPU<EmulatorEventHandler>,
+    audio: Rc<RefCell<AudioController>>,
+    video: Rc<RefCell<Video>>,
+    hardware: Rc<RefCell<Hardware>>,
 }
 unsafe impl Send for Emulator {} // Never actually sent to other threads so it's fine
 impl Emulator {
     fn new() -> Emulator {
         let memory = Rc::new(RefCell::new(Memory::new()));
+        let audio = Rc::new(RefCell::new(AudioController::new(Rc::clone(&memory))));
+        let video = Rc::new(RefCell::new(Video::new(Rc::clone(&memory))));
+        let hardware = Rc::new(RefCell::new(Hardware::new(Rc::clone(&memory))));
+        let handler = EmulatorEventHandler {
+            audio: Rc::clone(&audio),
+            video: Rc::clone(&video),
+            hardware: Rc::clone(&hardware),
+        };
+        let cpu = CPU::new(Rc::clone(&memory), handler);
         Emulator {
             cycle: 0,
             tick_calls: 0,
-            memory: Rc::clone(&memory),
-            cpu: CPU::new(Rc::clone(&memory)),
-            audio: AudioController::new(Rc::clone(&memory)),
-            video: Video::new(Rc::clone(&memory)),
-            hardware: Hardware::new(Rc::clone(&memory)),
+            memory,
+            cpu,
+            audio,
+            video,
+            hardware,
         }
     }
 
     pub fn get_frame_channel(&mut self) -> FrameChannel {
-        self.video.get_frame_channel()
+        self.video.borrow_mut().get_frame_channel()
     }
 
     pub fn get_audio_player(&mut self) -> AudioPlayer {
-        self.audio.get_player()
+        self.audio.borrow_mut().get_player()
     }
 
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
@@ -62,9 +71,9 @@ impl Emulator {
         self.cycle = 0;
         self.tick_calls = 0;
         self.cpu.init();
-        self.audio.init();
-        self.video.init();
-        self.hardware.init();
+        self.audio.borrow_mut().init();
+        self.video.borrow_mut().init();
+        self.hardware.borrow_mut().init();
         let memory = self.memory.borrow();
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
@@ -92,13 +101,16 @@ impl Emulator {
             debug!("Current PSW: 0x{:08x}", self.cpu.sys_registers[5]);
             debug!("Cycles per tick: {}", target_cycle / self.tick_calls);
         }
-        self.hardware.process_inputs(input_state);
+        self.hardware.borrow_mut().process_inputs(input_state);
 
         while self.cycle < target_cycle {
             // Find how long we can run before something interesting happens
             let next_event_cycle = cmp::min(
                 target_cycle,
-                cmp::min(self.hardware.next_event(), self.video.next_event()),
+                cmp::min(
+                    self.hardware.borrow().next_event(),
+                    self.video.borrow().next_event(),
+                ),
             );
 
             // Run the CPU for at least that many cycles
@@ -108,30 +120,15 @@ impl Emulator {
 
             // Have the other components catch up
             let cpu_cycle = cpu_result.cycle;
-            self.audio.run(cpu_cycle);
-            self.video.run(cpu_cycle)?;
-            self.hardware.run(cpu_cycle);
-
-            // If the CPU wrote somewhere interesting during execution, it would stop and return an event
-            // Do what we have to do based on which event was returned
-            match cpu_result.event {
-                Some(Event::AudioWrite { address }) => {
-                    self.audio.process_event(address);
-                }
-                Some(Event::DisplayControlWrite { address }) => {
-                    self.video.process_event(address);
-                }
-                Some(Event::HardwareWrite { address }) => {
-                    self.hardware.process_event(address);
-                }
-                _ => (),
-            };
+            self.audio.borrow_mut().run(cpu_cycle);
+            self.video.borrow_mut().run(cpu_cycle)?;
+            self.hardware.borrow_mut().run(cpu_cycle);
 
             // Components are caught up and their events are handled, now apply any pending interrupts
-            if let Some(interrupt) = self.video.active_interrupt() {
+            if let Some(interrupt) = self.video.borrow().active_interrupt() {
                 self.cpu.request_interrupt(&interrupt);
             }
-            if let Some(interrupt) = self.hardware.active_interrupt() {
+            if let Some(interrupt) = self.hardware.borrow().active_interrupt() {
                 self.cpu.request_interrupt(&interrupt);
             }
 
@@ -141,11 +138,43 @@ impl Emulator {
     }
 
     pub fn load_image(&self, left_eye: &[u8], right_eye: &[u8]) -> Result<()> {
-        self.video.load_frame(Eye::Left, left_eye);
-        self.video.send_frame(Eye::Left)?;
-        self.video.load_frame(Eye::Right, right_eye);
-        self.video.send_frame(Eye::Right)?;
+        let video = self.video.borrow();
+        video.load_frame(Eye::Left, left_eye);
+        video.send_frame(Eye::Left)?;
+        video.load_frame(Eye::Right, right_eye);
+        video.send_frame(Eye::Right)?;
         Ok(())
+    }
+}
+
+struct EmulatorEventHandler {
+    audio: Rc<RefCell<AudioController>>,
+    video: Rc<RefCell<Video>>,
+    hardware: Rc<RefCell<Hardware>>,
+}
+impl EventHandler for EmulatorEventHandler {
+    fn handle(&mut self, event: Event, cycle: u64) -> Result<bool> {
+        // If the CPU wrote somewhere interesting during execution, it would stop and return an event
+        // Do what we have to do based on which event was returned
+        match event {
+            Event::AudioWrite { address } => {
+                let mut audio = self.audio.borrow_mut();
+                audio.run(cycle);
+                audio.process_event(address);
+                Ok(true)
+            }
+            Event::DisplayControlWrite { address } => {
+                let mut video = self.video.borrow_mut();
+                video.run(cycle)?;
+                Ok(video.process_event(address))
+            }
+            Event::HardwareWrite { address } => {
+                let mut hardware = self.hardware.borrow_mut();
+                hardware.run(cycle);
+                Ok(hardware.process_event(address))
+            }
+            _ => Ok(false),
+        }
     }
 }
 

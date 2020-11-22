@@ -64,12 +64,12 @@ impl Hardware {
 
     // Get any unacknowledged interrupt from this module
     pub fn active_interrupt(&self) -> Option<Interrupt> {
-        self.interrupt.clone()
+        self.interrupt
     }
 
     // The CPU has written to somewhere in the hardware address space
     // Update whatever internal state we need to in response
-    pub fn process_event(&mut self, address: usize) {
+    pub fn process_event(&mut self, address: usize) -> bool {
         if address == THR || address == TLR {
             // A game set the timer, so start counting down from the new value
             self.reload_value = self.read_timer();
@@ -79,6 +79,8 @@ impl Hardware {
             // A game wrote to the timer control register, do what we gotta do
             self.update_timer_settings();
         }
+        // The CPU only needs to stop what it's doing if an interrupt is active
+        self.interrupt.is_none()
     }
 
     fn update_timer_settings(&mut self) {

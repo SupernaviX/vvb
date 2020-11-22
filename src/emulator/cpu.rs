@@ -38,19 +38,21 @@ fn bit_range_mask(start: u32, length: u32) -> u32 {
     ((i32::MIN >> length - 1) as u32) >> (32 - length - start)
 }
 
-pub struct CPU {
+pub struct CPU<THandler: EventHandler> {
     cycle: u64,
     memory: Rc<RefCell<Memory>>,
+    handler: THandler,
     bitstring_cycle: u64,
     pub pc: usize,
     pub registers: [u32; 32],
     pub sys_registers: [u32; 32],
 }
-impl CPU {
-    pub fn new(memory: Rc<RefCell<Memory>>) -> CPU {
+impl<THandler: EventHandler> CPU<THandler> {
+    pub fn new(memory: Rc<RefCell<Memory>>, handler: THandler) -> Self {
         let mut cpu = CPU {
             cycle: 0,
             memory,
+            handler,
             bitstring_cycle: 0,
             pc: 0xfffffff0,
             registers: [0; 32],
@@ -79,13 +81,34 @@ impl CPU {
     }
 
     pub fn run(&mut self, target_cycle: u64) -> Result<CPUProcessingResult> {
-        let mut process = CPUProcess::new(self);
-        process.run(target_cycle)?;
-        let pc = process.pc;
-        let cycle = process.cycle;
-        let bitstring_cycle = process.bitstring_cycle;
-        let event = process.event;
-        drop(process);
+        let mut pc = self.pc;
+        let mut cycle = self.cycle;
+        let mut bitstring_cycle = self.bitstring_cycle;
+        let mut event;
+        loop {
+            let mut process = CPUProcess {
+                pc,
+                cycle,
+                bitstring_cycle,
+                event: None,
+                memory: self.memory.borrow_mut(),
+                registers: &mut self.registers,
+                sys_registers: &mut self.sys_registers,
+            };
+            process.run(target_cycle)?;
+            pc = process.pc;
+            cycle = process.cycle;
+            bitstring_cycle = process.bitstring_cycle;
+            event = process.event;
+            drop(process);
+
+            if let Some(event) = event {
+                if self.handler.handle(event, cycle)? {
+                    continue;
+                }
+            }
+            break;
+        }
 
         self.pc = pc;
         self.bitstring_cycle = bitstring_cycle;
@@ -132,12 +155,17 @@ pub struct CPUProcessingResult {
     pub cycle: u64,
     pub event: Option<Event>,
 }
+
 #[derive(Clone, Copy)]
 pub enum Event {
     DisplayControlWrite { address: usize },
     AudioWrite { address: usize },
     HardwareWrite { address: usize },
     ReturnFromInterrupt,
+}
+
+pub trait EventHandler {
+    fn handle(&mut self, event: Event, cycle: u64) -> Result<bool>;
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -147,27 +175,16 @@ pub struct Interrupt {
     pub handler: usize,
 }
 
-pub struct CPUProcess<'a> {
-    pub cycle: u64,
-    pub bitstring_cycle: u64,
-    pub pc: usize,
-    pub event: Option<Event>,
+struct CPUProcess<'a> {
+    pc: usize,
+    cycle: u64,
+    bitstring_cycle: u64,
+    event: Option<Event>,
     memory: RefMut<'a, Memory>,
     registers: &'a mut [u32; 32],
     sys_registers: &'a mut [u32; 32],
 }
 impl<'a> CPUProcess<'a> {
-    pub fn new(cpu: &'a mut CPU) -> CPUProcess<'a> {
-        CPUProcess {
-            cycle: cpu.cycle,
-            bitstring_cycle: cpu.bitstring_cycle,
-            pc: cpu.pc,
-            event: None,
-            memory: cpu.memory.borrow_mut(),
-            registers: &mut cpu.registers,
-            sys_registers: &mut cpu.sys_registers,
-        }
-    }
     pub fn run(&mut self, target_cycle: u64) -> Result<()> {
         while self.cycle < target_cycle && self.event.is_none() {
             let instr = self.read_pc();
@@ -953,8 +970,9 @@ impl<'a> CPUProcess<'a> {
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Interrupt, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG};
+    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Interrupt, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event};
     use crate::emulator::memory::Memory;
+    use anyhow::Result;
     use std::cell::{RefCell};
     use std::rc::Rc;
 
@@ -1044,9 +1062,17 @@ mod tests {
     fn xh(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001001) }
     fn reti() -> Vec<u8> { _op_2(0b011001, 0, 0) }
 
-    fn rom(instructions: Vec<Vec<u8>>) -> (CPU, Rc<RefCell<Memory>>) {
+    struct NoopEventHandler;
+    impl EventHandler for NoopEventHandler {
+        fn handle(&mut self, _event: Event, _cycle: u64) -> Result<bool> {
+            Ok(false)
+        }
+    }
+
+    fn rom(instructions: Vec<Vec<u8>>) -> (CPU<NoopEventHandler>, Rc<RefCell<Memory>>) {
         let memory = Rc::new(RefCell::new(Memory::new()));
-        let mut cpu = CPU::new(Rc::clone(&memory));
+        let handler = NoopEventHandler;
+        let mut cpu = CPU::new(Rc::clone(&memory), handler);
         cpu.pc = 0x07000000;
 
         {

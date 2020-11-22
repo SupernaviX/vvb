@@ -162,7 +162,7 @@ impl Video {
         None
     }
 
-    pub fn process_event(&mut self, address: usize) {
+    pub fn process_event(&mut self, address: usize) -> bool {
         let mut memory = self.memory.borrow_mut();
         if address == DPCTRL {
             let mut dpctrl = memory.read_halfword(DPCTRL);
@@ -216,6 +216,9 @@ impl Video {
             self.pending_interrupts &= !memory.read_halfword(INTCLR);
             memory.write_halfword(INTPND, self.pending_interrupts);
         }
+
+        // If we have no active interrupts, the event is handled
+        (self.enabled_interrupts & self.pending_interrupts) == 0
     }
 
     pub fn run(&mut self, target_cycle: u64) -> Result<()> {
