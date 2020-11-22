@@ -51,7 +51,7 @@ impl Renderer {
 
     pub fn ensure_device_params(&mut self) {
         self.cardboard_stale = true;
-        if let None = QrCode::get_saved_device_params() {
+        if QrCode::get_saved_device_params().is_none() {
             QrCode::scan_qr_code_and_save_device_params();
         }
     }

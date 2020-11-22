@@ -1,3 +1,5 @@
+#![allow(clippy::missing_safety_doc)]
+
 mod audio;
 pub mod emulator;
 mod jni_helpers;

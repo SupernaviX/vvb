@@ -14,7 +14,7 @@ pub fn check_error(action: &str) -> Result<()> {
     }
 }
 
-pub fn temp_array<T: Copy + Default, F: FnOnce(*mut T) -> ()>(cb: F) -> T {
+pub fn temp_array<T: Copy + Default, F: FnOnce(*mut T)>(cb: F) -> T {
     let mut tmp_array: [T; 1] = Default::default();
     cb(tmp_array.as_mut_ptr());
     tmp_array[0]

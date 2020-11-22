@@ -139,7 +139,7 @@ impl Hardware {
 
     fn read_timer(&self) -> u16 {
         let memory = self.memory.borrow();
-        return (memory.read_halfword(THR) as u16) << 8 | memory.read_halfword(TLR) as u16;
+        (memory.read_halfword(THR) as u16) << 8 | memory.read_halfword(TLR) as u16
     }
 
     fn write_timer(&self, value: u16) {

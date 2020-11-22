@@ -228,7 +228,7 @@ impl Video {
         let mut curr_ms = self.cycle / 20000;
         let next_ms = target_cycle / 20000;
         while curr_ms < next_ms {
-            curr_ms = curr_ms + 1;
+            curr_ms += 1;
             self.cycle += curr_ms * 20000;
 
             match curr_ms % 20 {

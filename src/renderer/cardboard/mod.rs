@@ -21,7 +21,7 @@ pub struct CardboardRenderer {
 impl CardboardRenderer {
     pub fn new(screen_size: (i32, i32)) -> Result<Option<CardboardRenderer>> {
         let params = QrCode::get_saved_device_params();
-        if let None = params {
+        if params.is_none() {
             return Ok(None);
         }
         let params = params.unwrap();
@@ -51,7 +51,7 @@ impl CardboardRenderer {
                 0,
                 gl::RGB,
                 gl::UNSIGNED_BYTE,
-                0 as *const _,
+                std::ptr::null(),
             );
         }
         check_error("prepare a texture for cardboard")?;
@@ -109,17 +109,15 @@ impl CardboardRenderer {
         render_contents()?;
         self.distortion_renderer.render_eye_to_display(
             0,
-            0,
-            0,
-            self.screen_size.0,
-            self.screen_size.1,
+            (0, 0),
+            self.screen_size,
             &self.left_eye,
             &self.right_eye,
         );
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
         }
-        return check_error("render to cardboard");
+        check_error("render to cardboard")
     }
 }
 impl Drop for CardboardRenderer {

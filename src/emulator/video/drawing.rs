@@ -58,6 +58,11 @@ pub struct DrawingProcess {
     cell_char_index: u16,
 }
 
+impl Default for DrawingProcess {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl DrawingProcess {
     pub fn new() -> DrawingProcess {
         DrawingProcess {
@@ -186,7 +191,7 @@ impl DrawingProcess {
             }
         }
 
-        return false;
+        false
     }
 
     fn draw_object_world(&mut self, memory: &RefMut<Memory>, eye: Eye) {
@@ -268,8 +273,7 @@ impl DrawingProcess {
             self.last_char_index = index;
             self.last_char_row = y;
         }
-        let pixel = (self.last_char >> (x * 2)) & 0x3;
-        pixel
+        (self.last_char >> (x * 2)) & 0x3
     }
 
     fn get_palette_color(
@@ -280,8 +284,7 @@ impl DrawingProcess {
         pixel: u16,
     ) -> u16 {
         let palette = memory.read_halfword(base + (index as usize * 2));
-        let color = (palette >> (pixel * 2)) & 0x03;
-        color
+        (palette >> (pixel * 2)) & 0x03
     }
 
     fn draw_pixel(&mut self, column: i16, row: i16, color: u16) {
@@ -397,6 +400,7 @@ impl<'a> Background<'a> {
 
                 // Parallax applies to only the left eye if negative, only the right if positive
                 let mut px = x as i32;
+                #[allow(clippy::collapsible_if)]
                 if parallax < 0 {
                     if let Eye::Left = eye {
                         px += parallax;

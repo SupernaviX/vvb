@@ -75,7 +75,7 @@ unsafe fn make_shader(type_: GLenum, source: &str) -> Result<GLuint> {
     let shader_str = c_string!(source)?;
     let shader_arr = [shader_str.as_ptr()];
     let shader_source = shader_arr.as_ptr();
-    gl::ShaderSource(shader_id, 1, shader_source, 0 as *const _);
+    gl::ShaderSource(shader_id, 1, shader_source, std::ptr::null());
     check_error("load a shader's source")?;
     gl::CompileShader(shader_id);
     check_error("compile a shader")?;
@@ -99,7 +99,7 @@ unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<()> {
     }
     let mut buf = vec![0; length as usize];
     let buf_ptr = buf.as_mut_ptr() as *mut GLchar;
-    gl::GetShaderInfoLog(shader_id, length, 0 as *mut _, buf_ptr);
+    gl::GetShaderInfoLog(shader_id, length, std::ptr::null_mut(), buf_ptr);
     let cstr = CStr::from_bytes_with_nul(buf.as_slice())?;
 
     let log = cstr.to_str()?;
@@ -123,7 +123,7 @@ unsafe fn init_gl_texture(texture_id: GLuint) -> Result<()> {
         0,
         gl::RGB,
         gl::UNSIGNED_BYTE,
-        0 as *const _,
+        std::ptr::null(),
     );
     check_error("load a texture")?;
 

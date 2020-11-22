@@ -5,7 +5,7 @@ use log::error;
 use std::fmt::Display;
 use std::sync::MutexGuard;
 
-pub fn to_java_exception<T, E>(env: &JNIEnv, res: Result<T, E>) -> ()
+pub fn to_java_exception<T, E>(env: &JNIEnv, res: Result<T, E>)
 where
     E: Display,
 {
@@ -54,7 +54,7 @@ macro_rules! java_func {
     (name $name:ident func $func:ident params ($($pname:ident: $ptype:ty),*)) => {
         paste! {
             #[no_mangle]
-            pub unsafe extern "C" fn [<Java_com_simongellis_vvb_ $name>](env: JNIEnv, this: jobject $(, $pname: $ptype)*) -> () {
+            pub unsafe extern "C" fn [<Java_com_simongellis_vvb_ $name>](env: JNIEnv, this: jobject $(, $pname: $ptype)*) {
                 let result = $func(&env, this $(, $pname)*);
                 crate::jni_helpers::to_java_exception(&env, result);
             }

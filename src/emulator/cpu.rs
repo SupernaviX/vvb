@@ -26,7 +26,7 @@ const ZERO_FLAG: u32 = 0x00000001;
 const INTERRUPTS_DISABLED_MASK: u32 = INTERRUPT_DISABLE_FLAG | EX_PENDING_FLAG | NMI_PENDING_FLAG;
 
 fn nth_bit_set(value: u32, n: u32) -> bool {
-    return (value & (1 << n)) != 0;
+    (value & (1 << n)) != 0
 }
 
 #[inline]
@@ -35,7 +35,7 @@ fn sign_bit(value: u32) -> bool {
 }
 
 fn bit_range_mask(start: u32, length: u32) -> u32 {
-    ((i32::MIN >> length - 1) as u32) >> (32 - length - start)
+    ((i32::MIN >> (length - 1)) as u32) >> (32 - length - start)
 }
 
 pub struct CPU<THandler: EventHandler> {

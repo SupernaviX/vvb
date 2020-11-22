@@ -13,6 +13,11 @@ pub struct Memory {
     memory: Vec<u8>,
     rom_mask: usize,
 }
+impl Default for Memory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl Memory {
     pub fn new() -> Memory {
         let mut memory = Memory {
@@ -111,7 +116,7 @@ impl Memory {
     }
 
     pub fn write_range(&mut self, range: Range<usize>, data: &[u8]) {
-        &mut self.memory[range].copy_from_slice(data);
+        self.memory[range].copy_from_slice(data);
     }
 
     fn resolve_address(&self, address: usize) -> Address {
@@ -129,6 +134,7 @@ impl Memory {
         }
     }
 
+    #[allow(clippy::match_overlapping_arm)]
     fn resolve_vip_address(&self, address: usize) -> Address {
         let address = address & 0x0007ffff;
         match address {

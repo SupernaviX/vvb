@@ -123,16 +123,16 @@ impl LensDistortion {
             )
         };
         #[cfg(not(target_os = "android"))]
-        let raw = 0 as *mut sys::CardboardLensDistortion;
+        let raw = std::ptr::null_mut();
         LensDistortion(raw)
     }
-    #[allow(unused_mut)]
+    #[allow(unused_mut, clippy::let_and_return)]
     pub fn get_distortion_mesh(&self, eye: CardboardEye) -> CardboardMesh {
         let mut mesh = CardboardMesh {
-            indices: 0 as *const _,
+            indices: std::ptr::null(),
             n_indices: 0,
-            vertices: 0 as *const _,
-            uvs: 0 as *const _,
+            vertices: std::ptr::null(),
+            uvs: std::ptr::null(),
             n_vertices: 0,
         };
         #[cfg(target_os = "android")]
@@ -159,7 +159,7 @@ impl DistortionRenderer {
         #[cfg(target_os = "android")]
         let raw = unsafe { CardboardDistortionRenderer_create() };
         #[cfg(not(target_os = "android"))]
-        let raw = 0 as *mut sys::CardboardDistortionRenderer;
+        let raw = std::ptr::null_mut();
         DistortionRenderer(raw)
     }
 
@@ -173,10 +173,8 @@ impl DistortionRenderer {
     pub fn render_eye_to_display(
         &self,
         target_display: i32,
-        x: i32,
-        y: i32,
-        width: i32,
-        height: i32,
+        position: (i32, i32),
+        size: (i32, i32),
         left_eye: &TextureDescription,
         right_eye: &TextureDescription,
     ) {
@@ -185,10 +183,10 @@ impl DistortionRenderer {
             CardboardDistortionRenderer_renderEyeToDisplay(
                 self.0,
                 target_display,
-                x,
-                y,
-                width,
-                height,
+                position.0,
+                position.1,
+                size.0,
+                size.1,
                 left_eye,
                 right_eye,
             );
@@ -210,7 +208,7 @@ pub struct QrCode;
 impl QrCode {
     #[allow(unused_mut)]
     pub fn get_saved_device_params() -> Option<DeviceParams> {
-        let mut buffer = 0 as *const c_uchar;
+        let mut buffer = std::ptr::null();
         let mut size: c_int = 0;
         #[cfg(target_os = "android")]
         unsafe {
