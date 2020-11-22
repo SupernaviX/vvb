@@ -570,8 +570,11 @@ impl AudioController {
             };
             return;
         }
-        if address == 0x01000580 && value != 0 {
+        if address == 0x01000580 && value & 1 != 0 {
             log::debug!("Stop all sound!");
+            for channel in &mut self.channels {
+                channel.set_enabled(false, false, 0);
+            }
             return;
         }
     }
