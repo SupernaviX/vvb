@@ -153,7 +153,7 @@ impl Hardware {
         let tcr = memory.read_byte(TCR);
         let enabled = (tcr & T_ENABLED) != 0;
         if enabled && self.reload_value != 0 {
-            let interval = if (tcr & T_INTERVAL) == 1 { 400 } else { 2000 };
+            let interval = if (tcr & T_INTERVAL) != 0 { 400 } else { 2000 };
             self.next_tick = self.cycle + interval;
         } else {
             self.next_tick = u64::MAX;
