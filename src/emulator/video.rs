@@ -76,6 +76,8 @@ pub enum Eye {
 }
 use crate::emulator::cpu::Interrupt;
 use crate::emulator::video::drawing::DrawingProcess;
+use std::cell::{Ref, RefCell};
+use std::rc::Rc;
 use Eye::{Left, Right};
 
 pub type EyeBuffer = Vec<u8>;
@@ -89,6 +91,7 @@ pub type FrameChannel = mpsc::Receiver<Frame>;
 
 pub struct Video {
     cycle: u64,
+    memory: Rc<RefCell<Memory>>,
     displaying: bool,
     drawing: bool,
     xp_module: DrawingProcess,
@@ -101,9 +104,10 @@ pub struct Video {
     buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
 impl Video {
-    pub fn new() -> Video {
+    pub fn new(memory: Rc<RefCell<Memory>>) -> Video {
         Video {
             cycle: 0,
+            memory,
             displaying: false,
             drawing: false,
             xp_module: DrawingProcess::new(),
@@ -120,7 +124,7 @@ impl Video {
         }
     }
 
-    pub fn init(&mut self, memory: &mut Memory) {
+    pub fn init(&mut self) {
         self.cycle = 0;
         self.displaying = false;
         self.drawing = false;
@@ -129,6 +133,7 @@ impl Video {
         self.pending_interrupts = 0;
         self.enabled_interrupts = 0;
         self.display_buffer = Buffer0;
+        let mut memory = self.memory.borrow_mut();
         memory.write_halfword(DPCTRL, self.dpctrl_flags);
         memory.write_halfword(DPSTTS, self.dpctrl_flags);
         memory.write_halfword(INTPND, self.pending_interrupts);
@@ -157,7 +162,8 @@ impl Video {
         None
     }
 
-    pub fn process_event(&mut self, memory: &mut Memory, address: usize) {
+    pub fn process_event(&mut self, address: usize) {
+        let mut memory = self.memory.borrow_mut();
         if address == DPCTRL {
             let mut dpctrl = memory.read_halfword(DPCTRL);
 
@@ -212,9 +218,9 @@ impl Video {
         }
     }
 
-    pub fn run(&mut self, memory: &mut Memory, target_cycle: u64) -> Result<()> {
-        let mut dpctrl = memory.read_halfword(DPCTRL);
-        let mut xpctrl = memory.read_halfword(XPCTRL);
+    pub fn run(&mut self, target_cycle: u64) -> Result<()> {
+        let mut dpctrl = self.memory.borrow().read_halfword(DPCTRL);
+        let mut xpctrl = self.memory.borrow().read_halfword(XPCTRL);
 
         let mut curr_ms = self.cycle / 20000;
         let next_ms = target_cycle / 20000;
@@ -257,13 +263,13 @@ impl Video {
 
                     if self.drawing {
                         // Actually draw on the background buffer
-                        self.draw(memory);
+                        self.draw();
                     }
                 }
                 5 => {
                     if self.displaying {
                         // Actually display the left eye
-                        self.build_frame(memory, Left);
+                        self.build_frame(Left);
                         self.send_frame(Left)?;
                     }
 
@@ -296,7 +302,7 @@ impl Video {
                 15 => {
                     if self.displaying {
                         // Actually display the right eye
-                        self.build_frame(memory, Right);
+                        self.build_frame(Right);
                         self.send_frame(Right)?;
                     }
                 }
@@ -309,6 +315,8 @@ impl Video {
             };
         }
         self.cycle = target_cycle;
+
+        let mut memory = self.memory.borrow_mut();
         memory.write_halfword(INTPND, self.pending_interrupts);
 
         // calculate CTA
@@ -373,19 +381,20 @@ impl Video {
         Ok(())
     }
 
-    fn build_frame(&self, memory: &Memory, eye: Eye) {
+    fn build_frame(&self, eye: Eye) {
         let buf_address = self.get_buffer_address(eye, self.display_buffer);
         let eye_buffer = &mut self.buffers[eye as usize]
             .lock()
             .expect("Buffer lock was poisoned!");
 
+        let memory = self.memory.borrow();
         for (col, col_offset) in (0..(384 * 64)).step_by(64).enumerate() {
             // colors to render
-            let colors = self.get_brightnesses(memory, eye, col);
+            let colors = self.get_brightnesses(&memory, eye, col);
 
             for (row_offset, top_row) in (0..224).step_by(4).enumerate().step_by(2) {
                 let address = buf_address + col_offset + row_offset;
-                let pixels = memory.read_halfword(address) as u16;
+                let pixels = memory.read_halfword(address);
                 for (row, pixel) in (0..16).step_by(2).map(|i| (pixels >> i) & 0b11).enumerate() {
                     let index = col + (top_row + row) * 384;
                     eye_buffer[index] = colors[pixel as usize];
@@ -394,7 +403,7 @@ impl Video {
         }
     }
 
-    fn get_brightnesses(&self, memory: &Memory, eye: Eye, col: usize) -> [u8; 4] {
+    fn get_brightnesses(&self, memory: &Ref<Memory>, eye: Eye, col: usize) -> [u8; 4] {
         let cta_index = 0x52 + 95 - (col / 4);
         let cta = match eye {
             Eye::Left => 0x0003dc00 + (cta_index * 2),
@@ -410,7 +419,7 @@ impl Video {
         [color0 as u8, color1 as u8, color2 as u8, color3 as u8]
     }
 
-    fn get_brightness(&self, memory: &Memory, address: usize, repeat: u16, len: u16) -> u16 {
+    fn get_brightness(&self, memory: &Ref<Memory>, address: usize, repeat: u16, len: u16) -> u16 {
         let brt = memory.read_halfword(address);
 
         // experimentally chosen conversion factor from led-duration-in-50-ns-increments to 8-bit color
@@ -427,14 +436,16 @@ impl Video {
     }
 
     // Perform the drawing procedure, writing to whichever framebuffer is inactive
-    fn draw(&mut self, memory: &mut Memory) {
+    fn draw(&mut self) {
         let buffer = self.display_buffer.toggle();
+        let mut memory = self.memory.borrow_mut();
 
         let left_buf_address = self.get_buffer_address(Left, buffer);
-        self.xp_module.draw_eye(memory, Left, left_buf_address);
+        self.xp_module.draw_eye(&mut memory, Left, left_buf_address);
 
         let right_buf_address = self.get_buffer_address(Right, buffer);
-        self.xp_module.draw_eye(memory, Right, right_buf_address);
+        self.xp_module
+            .draw_eye(&mut memory, Right, right_buf_address);
     }
 }
 
@@ -446,277 +457,302 @@ mod tests {
     };
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     fn ms_to_cycles(ms: u64) -> u64 {
         ms * 20000
     }
 
-    fn write_dpctrl(video: &mut Video, memory: &mut Memory, value: u16) {
-        memory.write_halfword(DPCTRL, value);
-        video.process_event(memory, DPCTRL);
+    fn write_dpctrl(video: &mut Video, memory: &RefCell<Memory>, value: u16) {
+        memory.borrow_mut().write_halfword(DPCTRL, value);
+        video.process_event(DPCTRL);
     }
-    fn write_xpctrl(video: &mut Video, memory: &mut Memory, value: u16) {
-        memory.write_halfword(XPCTRL, value);
-        video.process_event(memory, XPCTRL);
+    fn write_xpctrl(video: &mut Video, memory: &RefCell<Memory>, value: u16) {
+        memory.borrow_mut().write_halfword(XPCTRL, value);
+        video.process_event(XPCTRL);
     }
-    fn write_intenb(video: &mut Video, memory: &mut Memory, value: u16) {
-        memory.write_halfword(INTENB, value);
-        video.process_event(memory, INTENB);
+    fn write_intenb(video: &mut Video, memory: &RefCell<Memory>, value: u16) {
+        memory.borrow_mut().write_halfword(INTENB, value);
+        video.process_event(INTENB);
     }
-    fn write_intclr(video: &mut Video, memory: &mut Memory, value: u16) {
-        memory.write_halfword(INTCLR, value);
-        video.process_event(memory, INTCLR);
+    fn write_intclr(video: &mut Video, memory: &RefCell<Memory>, value: u16) {
+        memory.borrow_mut().write_halfword(INTCLR, value);
+        video.process_event(INTCLR);
+    }
+
+    fn get_video() -> (Video, Rc<RefCell<Memory>>) {
+        let memory = Rc::new(RefCell::new(Memory::new()));
+        let video = Video::new(Rc::clone(&memory));
+        (video, memory)
     }
 
     #[test]
     fn can_emulate_two_frames_of_dpstts_while_drawing_is_off() {
-        let mut video = Video::new();
-        let mut memory = Memory::new();
+        let (mut video, memory) = get_video();
 
-        video.init(&mut memory);
-        write_dpctrl(&mut video, &mut memory, DISP);
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
 
         // start 2 frames in, because that's the first time we see a rising FCLK
-        video.run(&mut memory, ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(40)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(43)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
+        video.run(ms_to_cycles(43)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | FCLK | L0BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(48)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(48)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(50)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(50)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(53)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
+        video.run(ms_to_cycles(53)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | R0BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(58)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(58)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(60)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(63)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
+        video.run(ms_to_cycles(63)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | FCLK | L0BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(68)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(68)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(70)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(70)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(73)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
+        video.run(ms_to_cycles(73)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | R0BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(78)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(78)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(80)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(80)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
     }
 
     #[test]
     fn can_emulate_two_frames_of_dpstts_while_drawing_is_on() {
-        let mut video = Video::new();
-        let mut memory = Memory::new();
+        let (mut video, memory) = get_video();
 
-        video.init(&mut memory);
-        write_dpctrl(&mut video, &mut memory, DISP);
-        write_xpctrl(&mut video, &mut memory, XPEN);
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
+        write_xpctrl(&mut video, &memory, XPEN);
 
         // start 2 frames in, because that's the first time we see a rising FCLK
-        video.run(&mut memory, ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(40)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(43)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L0BSY);
+        video.run(ms_to_cycles(43)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | FCLK | L0BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(48)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(48)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(50)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(50)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(53)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | R0BSY);
+        video.run(ms_to_cycles(53)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | R0BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(58)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(58)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(60)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(63)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK | L1BSY);
+        video.run(ms_to_cycles(63)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | FCLK | L1BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(68)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(68)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
 
-        video.run(&mut memory, ms_to_cycles(70)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(70)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(73)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | R1BSY);
+        video.run(ms_to_cycles(73)).unwrap();
+        assert_eq!(
+            memory.borrow().read_halfword(DPSTTS),
+            DISP | SCANRDY | R1BSY
+        );
 
-        video.run(&mut memory, ms_to_cycles(78)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY);
+        video.run(ms_to_cycles(78)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
-        video.run(&mut memory, ms_to_cycles(80)).unwrap();
-        assert_eq!(memory.read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+        video.run(ms_to_cycles(80)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
     }
 
     #[test]
     fn can_emulate_two_frames_of_xpstts_while_drawing_is_on() {
-        let mut video = Video::new();
-        let mut memory = Memory::new();
+        let (mut video, memory) = get_video();
 
-        video.init(&mut memory);
-        write_dpctrl(&mut video, &mut memory, DISP);
-        write_xpctrl(&mut video, &mut memory, XPEN);
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
+        write_xpctrl(&mut video, &memory, XPEN);
 
         // start 2 frames in, because that's the first time we see a rising FCLK
-        video.run(&mut memory, ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN | F1BSY);
+        video.run(ms_to_cycles(40)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY);
 
-        video.run(&mut memory, ms_to_cycles(45)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        video.run(ms_to_cycles(45)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(50)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        video.run(ms_to_cycles(50)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(55)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        video.run(ms_to_cycles(55)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN | F0BSY);
+        video.run(ms_to_cycles(60)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
 
-        video.run(&mut memory, ms_to_cycles(65)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        video.run(ms_to_cycles(65)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(70)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        video.run(ms_to_cycles(70)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(75)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        video.run(ms_to_cycles(75)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(80)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN | F1BSY);
+        video.run(ms_to_cycles(80)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY);
     }
 
     #[test]
     fn can_turn_off_xpstts_midframe() {
-        let mut video = Video::new();
-        let mut memory = Memory::new();
+        let (mut video, memory) = get_video();
 
-        video.init(&mut memory);
-        write_dpctrl(&mut video, &mut memory, DISP);
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
 
         // turn on drawing 2 frames in, because that's the first time we see a rising FCLK
-        video.run(&mut memory, ms_to_cycles(39)).unwrap();
-        write_xpctrl(&mut video, &mut memory, XPEN);
-        video.run(&mut memory, ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN | F0BSY);
+        video.run(ms_to_cycles(39)).unwrap();
+        write_xpctrl(&mut video, &memory, XPEN);
+        video.run(ms_to_cycles(40)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
 
         // turn off drawing
-        write_xpctrl(&mut video, &mut memory, 0);
-        video.run(&mut memory, ms_to_cycles(42)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), F0BSY);
+        write_xpctrl(&mut video, &memory, 0);
+        video.run(ms_to_cycles(42)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), F0BSY);
 
-        video.run(&mut memory, ms_to_cycles(45)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), 0);
+        video.run(ms_to_cycles(45)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), 0);
 
-        video.run(&mut memory, ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), 0);
+        video.run(ms_to_cycles(60)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), 0);
     }
 
     #[test]
     fn can_turn_on_xpstts_midframe() {
-        let mut video = Video::new();
-        let mut memory = Memory::new();
+        let (mut video, memory) = get_video();
 
-        video.init(&mut memory);
-        write_dpctrl(&mut video, &mut memory, DISP);
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
 
         // start >2 frames in, because that's the first time we see a rising FCLK
-        video.run(&mut memory, ms_to_cycles(41)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), 0);
+        video.run(ms_to_cycles(41)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), 0);
 
         // turn on drawing
-        write_xpctrl(&mut video, &mut memory, XPEN);
-        video.run(&mut memory, ms_to_cycles(42)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        write_xpctrl(&mut video, &memory, XPEN);
+        video.run(ms_to_cycles(42)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(45)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN);
+        video.run(ms_to_cycles(45)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
-        video.run(&mut memory, ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.read_halfword(XPSTTS), XPEN | F0BSY);
+        video.run(ms_to_cycles(60)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
     }
 
     #[test]
     fn can_trigger_framestart_interrupt() {
-        let mut video = Video::new();
-        let mut memory = Memory::new();
+        let (mut video, memory) = get_video();
 
-        video.init(&mut memory);
-        write_dpctrl(&mut video, &mut memory, DISP);
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
 
         // While INTENB is unset, set INTPND but don't trigger interrupts
-        video.run(&mut memory, ms_to_cycles(37)).unwrap();
-        assert_ne!(memory.read_halfword(INTPND) & FRAMESTART, 0);
+        video.run(ms_to_cycles(37)).unwrap();
+        assert_ne!(memory.borrow().read_halfword(INTPND) & FRAMESTART, 0);
         assert!(video.active_interrupt().is_none());
 
         // Interrupt can be cleared by writing to DPRST
-        write_dpctrl(&mut video, &mut memory, DISP | DPRST);
-        video.run(&mut memory, ms_to_cycles(38)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND) & FRAMESTART, 0);
+        write_dpctrl(&mut video, &memory, DISP | DPRST);
+        video.run(ms_to_cycles(38)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(INTPND) & FRAMESTART, 0);
 
         // Interrupt is triggered on FCLK going high
-        write_dpctrl(&mut video, &mut memory, DISP);
-        write_intenb(&mut video, &mut memory, FRAMESTART);
-        video.run(&mut memory, ms_to_cycles(40)).unwrap();
-        assert_ne!(memory.read_halfword(INTPND) & FRAMESTART, 0);
+        write_dpctrl(&mut video, &memory, DISP);
+        write_intenb(&mut video, &memory, FRAMESTART);
+        video.run(ms_to_cycles(40)).unwrap();
+        assert_ne!(memory.borrow().read_halfword(INTPND) & FRAMESTART, 0);
         assert!(video.active_interrupt().is_some());
 
         // Interrupt can be cleared by writing to INTCLR
-        write_intclr(&mut video, &mut memory, FRAMESTART);
-        video.run(&mut memory, ms_to_cycles(41)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND) & FRAMESTART, 0);
+        write_intclr(&mut video, &memory, FRAMESTART);
+        video.run(ms_to_cycles(41)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(INTPND) & FRAMESTART, 0);
         assert!(video.active_interrupt().is_none());
     }
 
     #[test]
     fn can_trigger_xpend_interrupt() {
-        let mut video = Video::new();
-        let mut memory = Memory::new();
+        let (mut video, memory) = get_video();
 
-        video.init(&mut memory);
-        write_dpctrl(&mut video, &mut memory, DISP);
-        write_xpctrl(&mut video, &mut memory, XPEN);
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
+        write_xpctrl(&mut video, &memory, XPEN);
 
         // While INTENB is unset, set INTPND but don't trigger interrupts
-        video.run(&mut memory, ms_to_cycles(37)).unwrap();
-        assert_ne!(memory.read_halfword(INTPND) & XPEND, 0);
+        video.run(ms_to_cycles(37)).unwrap();
+        assert_ne!(memory.borrow().read_halfword(INTPND) & XPEND, 0);
         assert!(video.active_interrupt().is_none());
 
         // Interrupt can be cleared by writing to XPRST
-        write_xpctrl(&mut video, &mut memory, XPRST);
-        video.run(&mut memory, ms_to_cycles(38)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND) & XPEND, 0);
+        write_xpctrl(&mut video, &memory, XPRST);
+        video.run(ms_to_cycles(38)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(INTPND) & XPEND, 0);
 
         // Interrupt is triggered when "drawing" completes
-        write_xpctrl(&mut video, &mut memory, XPEN);
-        write_intenb(&mut video, &mut memory, XPEND);
-        video.run(&mut memory, ms_to_cycles(45)).unwrap();
-        assert_ne!(memory.read_halfword(INTPND) & XPEND, 0);
+        write_xpctrl(&mut video, &memory, XPEN);
+        write_intenb(&mut video, &memory, XPEND);
+        video.run(ms_to_cycles(45)).unwrap();
+        assert_ne!(memory.borrow().read_halfword(INTPND) & XPEND, 0);
         assert!(video.active_interrupt().is_some());
 
         // Interrupt can be cleared by writing to INTCLR
-        write_intclr(&mut video, &mut memory, XPEND);
-        video.run(&mut memory, ms_to_cycles(46)).unwrap();
-        assert_eq!(memory.read_halfword(INTPND) & XPEND, 0);
+        write_intclr(&mut video, &memory, XPEND);
+        video.run(ms_to_cycles(46)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(INTPND) & XPEND, 0);
         assert!(video.active_interrupt().is_none());
     }
 }

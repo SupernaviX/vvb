@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::cell::RefCell;
 use std::env;
 use std::io::Read;
 use vvb::emulator::memory::Memory;
@@ -20,8 +21,10 @@ fn main() -> Result<()> {
     let mut buf = vec![];
     file.read_to_end(&mut buf)?;
 
-    let mut memory = Memory::new();
-    memory.write_range(0x00000000..0x00080000, &buf);
+    let memory = RefCell::new(Memory::new());
+    memory
+        .borrow_mut()
+        .write_range(0x00000000..0x00080000, &buf);
 
     let mut xp = DrawingProcess::new();
 
@@ -31,8 +34,8 @@ fn main() -> Result<()> {
     let start = std::time::Instant::now();
 
     for _ in 0..ITERATIONS {
-        xp.draw_eye(&mut memory, Eye::Left, left_buf_address);
-        xp.draw_eye(&mut memory, Eye::Right, right_buf_address);
+        xp.draw_eye(&mut memory.borrow_mut(), Eye::Left, left_buf_address);
+        xp.draw_eye(&mut memory.borrow_mut(), Eye::Right, right_buf_address);
     }
 
     let duration = start.elapsed().as_nanos();

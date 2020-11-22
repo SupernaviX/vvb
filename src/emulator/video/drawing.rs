@@ -1,5 +1,6 @@
 use crate::emulator::memory::Memory;
 use crate::emulator::video::Eye;
+use std::cell::RefMut;
 
 const BACKGROUND_MAP_MEMORY: usize = 0x00020000;
 const WORLD_ATTRIBUTE_MEMORY: usize = 0x0003d800;
@@ -75,7 +76,7 @@ impl DrawingProcess {
     }
 
     // Draws the contents of the given eye to the screen
-    pub fn draw_eye(&mut self, memory: &mut Memory, eye: Eye, buf_address: usize) {
+    pub fn draw_eye(&mut self, memory: &mut RefMut<Memory>, eye: Eye, buf_address: usize) {
         // Clear both frames to BKCOL
         let bkcol = memory.read_halfword(BKCOL) & 0x03;
         let fill = (0..16)
@@ -94,7 +95,7 @@ impl DrawingProcess {
         // Draw rows in the buffer one-at-a-time
         self.object_world = 3;
         for world in (0..32).rev() {
-            let done = self.draw_world(memory, eye, world);
+            let done = self.draw_world(&memory, eye, world);
             if done {
                 break;
             }
@@ -108,7 +109,7 @@ impl DrawingProcess {
         }
     }
 
-    fn draw_world(&mut self, memory: &Memory, eye: Eye, world: usize) -> bool {
+    fn draw_world(&mut self, memory: &RefMut<Memory>, eye: Eye, world: usize) -> bool {
         let world_address = WORLD_ATTRIBUTE_MEMORY + (world * 32);
         let header = memory.read_halfword(world_address);
         if (header & END_FLAG) != 0 {
@@ -188,7 +189,7 @@ impl DrawingProcess {
         return false;
     }
 
-    fn draw_object_world(&mut self, memory: &Memory, eye: Eye) {
+    fn draw_object_world(&mut self, memory: &RefMut<Memory>, eye: Eye) {
         let end_register = SPT0 + (self.object_world * 2);
         let mut obj_index = memory.read_halfword(end_register) as usize & 0x03ff;
 
@@ -210,7 +211,7 @@ impl DrawingProcess {
         }
     }
 
-    fn draw_object(&mut self, memory: &Memory, eye: Eye, obj_address: usize) {
+    fn draw_object(&mut self, memory: &RefMut<Memory>, eye: Eye, obj_address: usize) {
         let visible = match eye {
             Eye::Left => (memory.read_halfword(obj_address + 2) & JLON) != 0,
             Eye::Right => (memory.read_halfword(obj_address + 2) & JRON) != 0,
@@ -260,7 +261,7 @@ impl DrawingProcess {
         }
     }
 
-    fn get_char_pixel(&mut self, memory: &Memory, index: u16, x: u16, y: u16) -> u16 {
+    fn get_char_pixel(&mut self, memory: &RefMut<Memory>, index: u16, x: u16, y: u16) -> u16 {
         if self.last_char_index != index || self.last_char_row != y {
             let address = CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2);
             self.last_char = memory.read_halfword(address);
@@ -271,7 +272,13 @@ impl DrawingProcess {
         pixel
     }
 
-    fn get_palette_color(&self, memory: &Memory, base: usize, index: u16, pixel: u16) -> u16 {
+    fn get_palette_color(
+        &self,
+        memory: &RefMut<Memory>,
+        base: usize,
+        index: u16,
+        pixel: u16,
+    ) -> u16 {
         let palette = memory.read_halfword(base + (index as usize * 2));
         let color = (palette >> (pixel * 2)) & 0x03;
         color
@@ -295,7 +302,7 @@ enum BGMode {
     Affine,
 }
 struct Background<'a> {
-    memory: &'a Memory,
+    memory: &'a RefMut<'a, Memory>,
     pub mode: BGMode,
     pub bgmap_width: i16,
     pub bgmap_height: i16,
@@ -308,7 +315,7 @@ struct Background<'a> {
     pub param_base: usize,
 }
 impl<'a> Background<'a> {
-    pub fn parse(memory: &Memory, address: usize) -> Background {
+    pub fn parse(memory: &'a RefMut<'a, Memory>, address: usize) -> Background {
         let header = memory.read_halfword(address);
         let bgm = (header & BGM) >> 12;
         let mode = match bgm {

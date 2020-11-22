@@ -1,5 +1,7 @@
 use super::memory::Memory;
 use anyhow::Result;
+use std::cell::{RefCell, RefMut};
+use std::rc::Rc;
 
 // ECR: exception cause register
 const ECR: usize = 4;
@@ -38,15 +40,17 @@ fn bit_range_mask(start: u32, length: u32) -> u32 {
 
 pub struct CPU {
     cycle: u64,
+    memory: Rc<RefCell<Memory>>,
     bitstring_cycle: u64,
     pub pc: usize,
     pub registers: [u32; 32],
     pub sys_registers: [u32; 32],
 }
 impl CPU {
-    pub fn new() -> CPU {
+    pub fn new(memory: Rc<RefCell<Memory>>) -> CPU {
         let mut cpu = CPU {
             cycle: 0,
+            memory,
             bitstring_cycle: 0,
             pc: 0xfffffff0,
             registers: [0; 32],
@@ -74,13 +78,15 @@ impl CPU {
         }
     }
 
-    pub fn run(&mut self, memory: &mut Memory, target_cycle: u64) -> Result<CPUProcessingResult> {
-        let mut process = CPUProcess::new(self, memory);
+    pub fn run(&mut self, target_cycle: u64) -> Result<CPUProcessingResult> {
+        let mut process = CPUProcess::new(self);
         process.run(target_cycle)?;
         let pc = process.pc;
         let cycle = process.cycle;
         let bitstring_cycle = process.bitstring_cycle;
         let event = process.event;
+        drop(process);
+
         self.pc = pc;
         self.bitstring_cycle = bitstring_cycle;
         self.cycle = cycle;
@@ -126,6 +132,7 @@ pub struct CPUProcessingResult {
     pub cycle: u64,
     pub event: Option<Event>,
 }
+#[derive(Clone, Copy)]
 pub enum Event {
     DisplayControlWrite { address: usize },
     AudioWrite { address: usize },
@@ -145,18 +152,18 @@ pub struct CPUProcess<'a> {
     pub bitstring_cycle: u64,
     pub pc: usize,
     pub event: Option<Event>,
-    memory: &'a mut Memory,
+    memory: RefMut<'a, Memory>,
     registers: &'a mut [u32; 32],
     sys_registers: &'a mut [u32; 32],
 }
 impl<'a> CPUProcess<'a> {
-    pub fn new(cpu: &'a mut CPU, memory: &'a mut Memory) -> CPUProcess<'a> {
+    pub fn new(cpu: &'a mut CPU) -> CPUProcess<'a> {
         CPUProcess {
             cycle: cpu.cycle,
             bitstring_cycle: cpu.bitstring_cycle,
             pc: cpu.pc,
             event: None,
-            memory,
+            memory: cpu.memory.borrow_mut(),
             registers: &mut cpu.registers,
             sys_registers: &mut cpu.sys_registers,
         }
@@ -948,6 +955,8 @@ impl<'a> CPUProcess<'a> {
 mod tests {
     use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Interrupt, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG};
     use crate::emulator::memory::Memory;
+    use std::cell::{RefCell};
+    use std::rc::Rc;
 
     fn _op_1(opcode: u8, r2: u8, r1: u8) -> Vec<u8> {
         vec![(r2 << 5) | r1, (opcode << 2) | (r2 >> 3)]
@@ -1035,26 +1044,30 @@ mod tests {
     fn xh(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001001) }
     fn reti() -> Vec<u8> { _op_2(0b011001, 0, 0) }
 
-    fn rom(instructions: &[Vec<u8>]) -> (CPU, Memory) {
-        let mut cpu = CPU::new();
+    fn rom(instructions: Vec<Vec<u8>>) -> (CPU, Rc<RefCell<Memory>>) {
+        let memory = Rc::new(RefCell::new(Memory::new()));
+        let mut cpu = CPU::new(Rc::clone(&memory));
         cpu.pc = 0x07000000;
 
-        let mut memory = Memory::new();
-        memory.load_game_pak(&[0; 256], &[]).unwrap();
-        let mut address = cpu.pc;
-        for instr in instructions {
-            for byte in instr {
-                memory.write_byte(address, *byte);
-                address += 1;
+        {
+            let mut memory = memory.as_ref().borrow_mut();
+            memory.load_game_pak(&[0; 256], &[]).unwrap();
+            let mut address = cpu.pc;
+            for instr in instructions {
+                for byte in instr {
+                    memory.write_byte(address, byte);
+                    address += 1;
+                }
             }
         }
+
         (cpu, memory)
     }
 
-    fn add_interrupt_handler(memory: &mut Memory, mut address: usize, instructions: &[Vec<u8>]) {
+    fn add_interrupt_handler(memory: &mut Memory, mut address: usize, instructions: Vec<Vec<u8>>) {
         for instr in instructions {
             for byte in instr {
-                memory.write_byte(address, *byte);
+                memory.write_byte(address, byte);
                 address += 1;
             }
         }
@@ -1062,175 +1075,177 @@ mod tests {
 
     #[test]
     fn does_nothing_on_zero_cycles() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        cpu.run(&mut memory, 0).unwrap();
+        cpu.run(0).unwrap();
         assert_eq!(cpu.pc, 0x07000000);
     }
 
     #[test]
     fn runs_one_cycle_at_a_time() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        cpu.run(&mut memory, 1).unwrap();
+        assert_eq!(cpu.pc, 0x07000000);
+        cpu.run(1).unwrap();
+        assert_eq!(cpu.pc, 0x07000004);
         assert_eq!(cpu.registers[31], 0x07000000);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 0x07000420);
     }
 
     #[test]
     fn cannot_overwrite_zero() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(0, 0, 0x0700),
         ]);
-        cpu.run(&mut memory, 1).unwrap();
+        cpu.run(1).unwrap();
         assert_eq!(cpu.registers[0], 0);
     }
 
     #[test]
     fn does_nothing_when_ahead_of_current_cycle() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        cpu.run(&mut memory, 1).unwrap();
+        cpu.run(1).unwrap();
         assert_eq!(cpu.registers[31], 0x07000000);
-        cpu.run(&mut memory, 1).unwrap();
+        cpu.run(1).unwrap();
         assert_eq!(cpu.registers[31], 0x07000000);
     }
 
     #[test]
     fn jumps_to_address() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(31, 0, 0x0700),
             movea(31, 31, 0x0420),
             jmp(31),
         ]);
-        cpu.run(&mut memory, 5).unwrap();
+        cpu.run(5).unwrap();
         assert_eq!(cpu.pc, 0x07000420);
     }
 
     #[test]
     fn reads_from_memory() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             ld_b(31, 30, 16),
         ]);
-        memory.write_byte(0x07000052, 69);
-        cpu.run(&mut memory, 7).unwrap();
+        memory.borrow_mut().write_byte(0x07000052, 69);
+        cpu.run(7).unwrap();
         assert_eq!(cpu.registers[31], 69);
     }
 
     #[test]
     fn sign_extends_for_reads() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             ld_b(31, 30, -16),
         ]);
-        memory.write_byte(0x07000032, 0xfe);
-        cpu.run(&mut memory, 7).unwrap();
+        memory.borrow_mut().write_byte(0x07000032, 0xfe);
+        cpu.run(7).unwrap();
         assert_eq!(cpu.registers[31] as i32, -2);
     }
 
     #[test]
     fn zero_extends_for_loads() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             in_b(31, 30, -16),
         ]);
-        memory.write_byte(0x07000032, 0xfe);
-        cpu.run(&mut memory, 7).unwrap();
+        memory.borrow_mut().write_byte(0x07000032, 0xfe);
+        cpu.run(7).unwrap();
         assert_eq!(cpu.registers[31], 0x000000fe);
     }
 
     #[test]
     fn masks_lower_bits_of_addresses_for_multibyte_reads() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(10, 0, 0x0500),
             ld_h(11, 10, 1),
             ld_w(12, 10, 2),
         ]);
-        memory.write_word(0x05000000, 0x12345678);
-        cpu.run(&mut memory, 11).unwrap();
+        memory.borrow_mut().write_word(0x05000000, 0x12345678);
+        cpu.run(11).unwrap();
         assert_eq!(cpu.registers[11], 0x5678);
         assert_eq!(cpu.registers[12], 0x12345678);
     }
 
     #[test]
     fn writes_to_memory() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             movea(31, 0, 0x0069),
             st_b(31, 30, 16),
         ]);
-        cpu.run(&mut memory, 7).unwrap();
-        assert_eq!(memory.read_byte(0x07000052), 0x69);
+        cpu.run(7).unwrap();
+        assert_eq!(memory.borrow().read_byte(0x07000052), 0x69);
     }
 
     #[test]
     fn sign_extends_for_writes() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             movea(31, 0, -2i16 as u16),
             st_b(31, 30, -16),
         ]);
-        cpu.run(&mut memory, 7).unwrap();
-        assert_eq!(memory.read_byte(0x07000032) as i8, -2);
+        cpu.run(7).unwrap();
+        assert_eq!(memory.borrow().read_byte(0x07000032) as i8, -2);
     }
 
     #[test]
     fn masks_lower_bits_of_addresses_for_multibyte_writes() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(10, 0, 0x0500),
             movhi(11, 0, 0x1234),
             movea(11, 11, 0x5678),
             st_h(11, 10, 1),
             st_w(11, 10, 10),
         ]);
-        memory.write_word(0x05000000, 0x12345678);
-        cpu.run(&mut memory, 13).unwrap();
-        assert_eq!(memory.read_halfword(0x05000000), 0x5678);
-        assert_eq!(memory.read_word(0x05000008), 0x12345678);
+        memory.borrow_mut().write_word(0x05000000, 0x12345678);
+        cpu.run(13).unwrap();
+        assert_eq!(memory.borrow().read_halfword(0x05000000), 0x5678);
+        assert_eq!(memory.borrow().read_word(0x05000008), 0x12345678);
     }
 
     #[test]
     fn truncates_during_stores() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(30, 0, 0x0700),
             movea(30, 30, 0x0042),
             movea(31, 0, 257),
             st_b(31, 30, 16),
         ]);
-        cpu.run(&mut memory, 7).unwrap();
-        assert_eq!(memory.read_byte(0x07000052), 1);
+        cpu.run(7).unwrap();
+        assert_eq!(memory.borrow().read_byte(0x07000052), 1);
     }
 
     #[test]
     fn does_addition() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(29, 0, 4),
             addi(31, 29, 5)
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 9);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
     fn sets_overflow_flag_on_addition_signed_wraparound() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             // most straightforward way I can find to set a register to i32::MAX
             movhi(29, 0, 0x0001),
             add_i(29, 0xff),
@@ -1239,7 +1254,7 @@ mod tests {
             // i32::MAX + 1 == i32.min
             addi(31, 29, 1),
         ]);
-        cpu.run(&mut memory, 4).unwrap();
+        cpu.run(4).unwrap();
         assert_eq!(cpu.registers[29] as i32, i32::MAX);
         assert_eq!(cpu.registers[31] as i32, i32::MIN);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, OVERFLOW_FLAG | SIGN_FLAG);
@@ -1247,30 +1262,30 @@ mod tests {
 
     #[test]
     fn sets_carry_flag_on_addition_unsigned_wraparound() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(29, 0, 0xffff),
             addi(31, 29, 1)
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 0);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, ZERO_FLAG | CARRY_FLAG);
     }
 
     #[test]
     fn does_subtraction() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 4),
             movea(30, 0, 5),
             sub(31,30),
         ]);
-        cpu.run(&mut memory, 3).unwrap();
+        cpu.run(3).unwrap();
         assert_eq!(cpu.registers[31] as i32, -1);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
     }
 
     #[test]
     fn sets_overflow_flag_on_subtraction_signed_wraparound() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             // most straightforward way I can find to set a register to i32::MIN
             movhi(31, 0, 0x8000),
             movea(30, 0, 1),
@@ -1278,73 +1293,73 @@ mod tests {
             // i32::MIN - 1 == i32.MAX
             sub(31, 30),
         ]);
-        cpu.run(&mut memory, 3).unwrap();
+        cpu.run(3).unwrap();
         assert_eq!(cpu.registers[31] as i32, i32::MAX);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, OVERFLOW_FLAG);
     }
 
     #[test]
     fn sets_carry_flag_on_subtraction_unsigned_wraparound() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(29, 0, 1),
             sub(31, 29),
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], u32::MAX);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, SIGN_FLAG | CARRY_FLAG);
     }
 
     #[test]
     fn does_cmp() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31,30),
         ]);
-        cpu.run(&mut memory, 3).unwrap();
+        cpu.run(3).unwrap();
         assert_eq!(cpu.registers[31], 4);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, CARRY_FLAG | SIGN_FLAG);
     }
 
     #[test]
     fn handles_multiplication() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, 3),
             movea(11, 0, 6),
             movea(12, 0, -4i16 as u16),
             mulu(11, 10),
             mul(12, 11),
         ]);
-        cpu.run(&mut memory, 16).unwrap();
+        cpu.run(16).unwrap();
         assert_eq!(cpu.registers[11], 18);
         assert_eq!(cpu.registers[30], 0);
 
-        cpu.run(&mut memory, 29).unwrap();
+        cpu.run(29).unwrap();
         assert_eq!(cpu.registers[12] as i32, -72);
         assert_eq!(cpu.registers[30] as i32, -1);
     }
 
     #[test]
     fn handles_division() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, -72i16 as u16),
             movea(11, 0, -4i16 as u16),
             movea(12, 0, 4),
             div(10, 11),
             divu(10, 12),
         ]);
-        cpu.run(&mut memory, 39).unwrap();
+        cpu.run(39).unwrap();
         assert_eq!(cpu.registers[10], 18);
         assert_eq!(cpu.registers[30], 0);
 
-        cpu.run(&mut memory, 77).unwrap();
+        cpu.run(77).unwrap();
         assert_eq!(cpu.registers[10], 4);
         assert_eq!(cpu.registers[30], 2);
     }
 
     #[test]
     fn handles_bcond_true() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31, 30),
@@ -1352,14 +1367,14 @@ mod tests {
             movea(1, 0, 1),
             movea(2, 0, 1),
         ]);
-        cpu.run(&mut memory, 7).unwrap();
+        cpu.run(7).unwrap();
         assert_eq!(cpu.registers[1], 0);
         assert_eq!(cpu.registers[2], 1);
     }
 
     #[test]
     fn handles_bcond_false() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31, 30),
@@ -1367,90 +1382,90 @@ mod tests {
             movea(1, 0, 1),
             movea(2, 0, 1),
         ]);
-        cpu.run(&mut memory, 5).unwrap();
+        cpu.run(5).unwrap();
         assert_eq!(cpu.registers[1], 1);
         assert_eq!(cpu.registers[2], 0);
     }
 
     #[test]
     fn handles_setf_true() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31, 30),
             setf(1, 6),
         ]);
-        cpu.run(&mut memory, 4).unwrap();
+        cpu.run(4).unwrap();
         assert_eq!(cpu.registers[1], 1);
     }
 
     #[test]
     fn handles_setf_false() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 4),
             movea(30, 0, 5),
             cmp_r(31, 30),
             setf(1, 11),
         ]);
-        cpu.run(&mut memory, 4).unwrap();
+        cpu.run(4).unwrap();
         assert_eq!(cpu.registers[1], 0);
     }
 
     #[test]
     fn can_jump_relative() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             jr(0x123456),
         ]);
-        cpu.run(&mut memory, 3).unwrap();
+        cpu.run(3).unwrap();
         assert_eq!(cpu.pc, 0x07123456);
     }
 
     #[test]
     fn can_jump_and_link() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             jal(0x123456),
         ]);
-        cpu.run(&mut memory, 3).unwrap();
+        cpu.run(3).unwrap();
         assert_eq!(cpu.registers[31], 0x07000004);
         assert_eq!(cpu.pc, 0x07123456);
     }
 
     #[test]
     fn can_shl_with_carry() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(31, 0, 0x8000),
             shl_i(31, 1),
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 0);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, CARRY_FLAG | ZERO_FLAG);
     }
 
     #[test]
     fn can_shr_with_zero_filling() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(31, 0, 0x8000),
             shr_i(31, 1),
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 0x40000000);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
     fn can_shr_with_sign_extension() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(31, 0, 0x8000),
             sar_i(31, 1),
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 0xc0000000);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, SIGN_FLAG);
     }
 
     #[test]
     fn can_run_logic() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 0x0f0f),
 
             mov_r(30, 31),
@@ -1465,7 +1480,7 @@ mod tests {
             mov_r(27, 29),
             xor(27, 30),
         ]);
-        cpu.run(&mut memory, 9).unwrap();
+        cpu.run(9).unwrap();
         assert_eq!(cpu.registers[30], 0xfffff0f0);
         assert_eq!(cpu.registers[29], 0xffffffff);
         assert_eq!(cpu.registers[28], 0x0f0f);
@@ -1474,49 +1489,49 @@ mod tests {
 
     #[test]
     fn andi_0xffff_should_preserve_high_bits() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, 0x1082),
             andi(11, 10, 0xffff),
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[11], 0x1082);
     }
 
     #[test]
     fn ori_0xffff_should_set_to_0xffff() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, 0x1082),
             ori(11, 10, 0xffff),
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[11], 0xffff);
     }
 
     #[test]
     fn xori_0xffff_should_flip_bits() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, 0x1082),
             xori(11, 10, 0xffff),
         ]);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[11], 0xef7d);
     }
 
     #[test]
     fn can_ldsr_and_stsr() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(31, 0, 0x0040),
             ldsr(31, 5),
             stsr(30, 5),
         ]);
-        cpu.run(&mut memory, 17).unwrap();
+        cpu.run(17).unwrap();
         assert_eq!(cpu.sys_registers[5], 0x00000040);
         assert_eq!(cpu.registers[30], 0x00000040);
     }
 
     #[test]
     fn can_run_bitstring_operations() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movhi(10, 0, 0x0500),
             movhi(11, 0, 0x0500),
             movea(11, 11, 0x1000),
@@ -1541,40 +1556,40 @@ mod tests {
         let final_cycle = first_cycle + 12;
         let bitstring_op_pc = 0x0700003c;
 
-        cpu.run(&mut memory, setup_cycles).unwrap();
+        cpu.run(setup_cycles).unwrap();
         assert_eq!(cpu.registers[10], 0x05000000);
         assert_eq!(cpu.registers[11], 0x05001000);
         assert_eq!(cpu.registers[12], 0x77777777);
         assert_eq!(cpu.registers[13], 0x55555555);
-        assert_eq!(memory.read_word(0x05000000), 0x77777777);
-        assert_eq!(memory.read_word(0x05001000), 0x55555555);
+        assert_eq!(memory.borrow().read_word(0x05000000), 0x77777777);
+        assert_eq!(memory.borrow().read_word(0x05001000), 0x55555555);
 
         // First cycle, instruction shouldn't be done
-        cpu.run(&mut memory, first_cycle).unwrap();
+        cpu.run(first_cycle).unwrap();
         assert_eq!(cpu.pc, bitstring_op_pc);
         assert_eq!(cpu.registers[30], 0x05000004);
         assert_eq!(cpu.registers[29], 0x05001004);
         assert_eq!(cpu.registers[28], 18);
         assert_eq!(cpu.registers[27], 6);
         assert_eq!(cpu.registers[26], 0);
-        assert_eq!(memory.read_word(0x05001000), 0xddd55555);
-        assert_eq!(memory.read_word(0x05001004), 0x55555555);
+        assert_eq!(memory.borrow().read_word(0x05001000), 0xddd55555);
+        assert_eq!(memory.borrow().read_word(0x05001004), 0x55555555);
 
         // NOW we should be done
-        cpu.run(&mut memory, final_cycle).unwrap();
+        cpu.run(final_cycle).unwrap();
         assert_eq!(cpu.pc, bitstring_op_pc + 2);
         assert_eq!(cpu.registers[30], 0x05000004);
         assert_eq!(cpu.registers[29], 0x05001004);
         assert_eq!(cpu.registers[28], 0);
         assert_eq!(cpu.registers[27], 24);
         assert_eq!(cpu.registers[26], 18);
-        assert_eq!(memory.read_word(0x05001000), 0xddd55555);
-        assert_eq!(memory.read_word(0x05001004), 0x5555dddd);
+        assert_eq!(memory.borrow().read_word(0x05001000), 0xddd55555);
+        assert_eq!(memory.borrow().read_word(0x05001004), 0x5555dddd);
     }
 
     #[test]
     fn can_do_float_things() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, 3),
             cvt_ws(11, 10),
             movea(10, 0, 14),
@@ -1584,7 +1599,7 @@ mod tests {
             divf_s(12, 11),
             cvt_sw(14, 12),
         ]);
-        cpu.run(&mut memory, 134).unwrap();
+        cpu.run(134).unwrap();
         assert_eq!(f32::from_bits(cpu.registers[11]), 3.0);
         assert_eq!(f32::from_bits(cpu.registers[12]), 17.0 / 3.0);
         assert_eq!(cpu.registers[13], 17);
@@ -1593,31 +1608,31 @@ mod tests {
 
     #[test]
     fn can_run_mpyhw() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, 9),
             movea(11, 0, 6),
             mpyhw(10, 11),
         ]);
-        cpu.run(&mut memory, 11).unwrap();
+        cpu.run(11).unwrap();
         assert_eq!(cpu.registers[10], 54);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
     fn can_mpyhw_negative_numbers() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movea(10, 0, -9i16 as u16),
             movea(11, 0, 6),
             mpyhw(10, 11),
         ]);
-        cpu.run(&mut memory, 11).unwrap();
+        cpu.run(11).unwrap();
         assert_eq!(cpu.registers[10] as i32, -54);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
     #[test]
     fn can_run_extended_opcodes() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, _memory) = rom(vec![
             movhi(10, 0, 0x1234),
             movea(10, 10, 0x5678),
             mov_r(11, 10),
@@ -1626,7 +1641,7 @@ mod tests {
             xb(11),
             xh(12),
         ]);
-        cpu.run(&mut memory, 33).unwrap();
+        cpu.run(33).unwrap();
         assert_eq!(cpu.registers[10], 0x1e6a2c48);
         assert_eq!(cpu.registers[11], 0x12347856);
         assert_eq!(cpu.registers[12], 0x56781234);
@@ -1634,10 +1649,10 @@ mod tests {
 
     #[test]
     fn can_request_interrupt() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movea(31, 0, 1),
         ]);
-        add_interrupt_handler(&mut memory, 0xfffffe10, &[
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xfffffe10, vec![
             movea(31, 0, 2),
             reti(),
         ]);
@@ -1655,24 +1670,24 @@ mod tests {
         assert_eq!(cpu.sys_registers[EIPC], 0x07000000);
         assert_eq!(cpu.sys_registers[EIPSW], 0);
 
-        cpu.run(&mut memory, 1).unwrap();
+        cpu.run(1).unwrap();
         assert_eq!(cpu.registers[31], 2);
 
         // Run another 10 cycles for RETI
-        cpu.run(&mut memory, 11).unwrap();
+        cpu.run(11).unwrap();
         assert_eq!(cpu.pc, 0x07000000);
-        cpu.run(&mut memory, 12).unwrap();
+        cpu.run(12).unwrap();
         assert_eq!(cpu.registers[31], 1);
     }
 
     #[test]
     fn can_not_request_interrupt_when_disabled() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movea(31, 0, 1),
             movea(31, 0, 2),
             movea(31, 0, 3),
         ]);
-        add_interrupt_handler(&mut memory, 0xfffffe10, &[
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xfffffe10, vec![
             movea(31, 0, 9001),
         ]);
 
@@ -1684,29 +1699,29 @@ mod tests {
 
         cpu.sys_registers[PSW] = INTERRUPT_DISABLE_FLAG;
         cpu.request_interrupt(&interrupt);
-        cpu.run(&mut memory, 1).unwrap();
+        cpu.run(1).unwrap();
         assert_eq!(cpu.registers[31], 1);
 
         cpu.sys_registers[PSW] = EX_PENDING_FLAG;
         cpu.request_interrupt(&interrupt);
-        cpu.run(&mut memory, 2).unwrap();
+        cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 2);
 
         cpu.sys_registers[PSW] = NMI_PENDING_FLAG;
         cpu.request_interrupt(&interrupt);
-        cpu.run(&mut memory, 3).unwrap();
+        cpu.run(3).unwrap();
         assert_eq!(cpu.registers[31], 3);
     }
 
     #[test]
     fn can_not_request_interrupt_when_current_interrupt_takes_priority() {
-        let (mut cpu, mut memory) = rom(&[
+        let (mut cpu, memory) = rom(vec![
             movea(31, 0, 1),
         ]);
-        add_interrupt_handler(&mut memory, 0xfffffe10, &[
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xfffffe10, vec![
             movea(31, 0, 2),
         ]);
-        add_interrupt_handler(&mut memory, 0xfffffe40, &[
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xfffffe40, vec![
             movea(31, 0, 3),
         ]);
         cpu.sys_registers[PSW] = 0;
@@ -1725,7 +1740,7 @@ mod tests {
         cpu.sys_registers[PSW] ^= EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG;
         cpu.request_interrupt(&low_priority_interrupt);
 
-        cpu.run(&mut memory, 1).unwrap();
+        cpu.run(1).unwrap();
         assert_eq!(cpu.registers[31], 3);
     }
 }

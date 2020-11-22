@@ -11,27 +11,31 @@ use video::{Eye, FrameChannel, Video};
 use crate::emulator::audio::{AudioController, AudioPlayer};
 use anyhow::Result;
 use log::debug;
+use std::cell::RefCell;
 use std::cmp;
+use std::rc::Rc;
 
 pub struct Emulator {
     cycle: u64,
     tick_calls: u64,
-    memory: Memory,
+    memory: Rc<RefCell<Memory>>,
     cpu: CPU,
     audio: AudioController,
     video: Video,
     hardware: Hardware,
 }
+unsafe impl Send for Emulator {} // Never actually sent to other threads so it's fine
 impl Emulator {
     fn new() -> Emulator {
+        let memory = Rc::new(RefCell::new(Memory::new()));
         Emulator {
             cycle: 0,
             tick_calls: 0,
-            memory: Memory::new(),
-            cpu: CPU::new(),
-            audio: AudioController::new(),
-            video: Video::new(),
-            hardware: Hardware::new(),
+            memory: Rc::clone(&memory),
+            cpu: CPU::new(Rc::clone(&memory)),
+            audio: AudioController::new(Rc::clone(&memory)),
+            video: Video::new(Rc::clone(&memory)),
+            hardware: Hardware::new(Rc::clone(&memory)),
         }
     }
 
@@ -44,13 +48,13 @@ impl Emulator {
     }
 
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
-        self.memory.load_game_pak(rom, sram)?;
+        self.memory.borrow_mut().load_game_pak(rom, sram)?;
         self.reset();
         Ok(())
     }
 
     pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
-        self.memory.read_sram(buffer);
+        self.memory.borrow().read_sram(buffer);
         Ok(())
     }
 
@@ -59,18 +63,19 @@ impl Emulator {
         self.tick_calls = 0;
         self.cpu.init();
         self.audio.init();
-        self.video.init(&mut self.memory);
-        self.hardware.init(&mut self.memory);
+        self.video.init();
+        self.hardware.init();
+        let memory = self.memory.borrow();
         log::debug!(
             "{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
-            self.memory.read_halfword(0xfffffff0),
-            self.memory.read_halfword(0xfffffff2),
-            self.memory.read_halfword(0xfffffff4),
-            self.memory.read_halfword(0xfffffff6),
-            self.memory.read_halfword(0xfffffff8),
-            self.memory.read_halfword(0xfffffffa),
-            self.memory.read_halfword(0xfffffffc),
-            self.memory.read_halfword(0xfffffffe),
+            memory.read_halfword(0xfffffff0),
+            memory.read_halfword(0xfffffff2),
+            memory.read_halfword(0xfffffff4),
+            memory.read_halfword(0xfffffff6),
+            memory.read_halfword(0xfffffff8),
+            memory.read_halfword(0xfffffffa),
+            memory.read_halfword(0xfffffffc),
+            memory.read_halfword(0xfffffffe),
         );
     }
 
@@ -87,7 +92,7 @@ impl Emulator {
             debug!("Current PSW: 0x{:08x}", self.cpu.sys_registers[5]);
             debug!("Cycles per tick: {}", target_cycle / self.tick_calls);
         }
-        self.hardware.process_inputs(&mut self.memory, input_state);
+        self.hardware.process_inputs(input_state);
 
         while self.cycle < target_cycle {
             // Find how long we can run before something interesting happens
@@ -99,25 +104,25 @@ impl Emulator {
             // Run the CPU for at least that many cycles
             // (specifically, until next_event_cycle + however long it takes to finish the current op)
             // This is safe as long as it doesn't START a new op AFTER that interesting cycle
-            let cpu_result = self.cpu.run(&mut self.memory, next_event_cycle)?;
+            let cpu_result = self.cpu.run(next_event_cycle)?;
 
             // Have the other components catch up
             let cpu_cycle = cpu_result.cycle;
-            self.audio.run(&mut self.memory, cpu_cycle);
-            self.video.run(&mut self.memory, cpu_cycle)?;
-            self.hardware.run(&mut self.memory, cpu_cycle);
+            self.audio.run(cpu_cycle);
+            self.video.run(cpu_cycle)?;
+            self.hardware.run(cpu_cycle);
 
             // If the CPU wrote somewhere interesting during execution, it would stop and return an event
             // Do what we have to do based on which event was returned
             match cpu_result.event {
                 Some(Event::AudioWrite { address }) => {
-                    self.audio.process_event(&mut self.memory, address);
+                    self.audio.process_event(address);
                 }
                 Some(Event::DisplayControlWrite { address }) => {
-                    self.video.process_event(&mut self.memory, address);
+                    self.video.process_event(address);
                 }
                 Some(Event::HardwareWrite { address }) => {
-                    self.hardware.process_event(&mut self.memory, address);
+                    self.hardware.process_event(address);
                 }
                 _ => (),
             };

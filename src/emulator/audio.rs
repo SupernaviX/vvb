@@ -1,5 +1,7 @@
 use crate::emulator::memory::Memory;
 use ringbuf::{Consumer, Producer, RingBuffer};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 const CPU_CYCLES_PER_FRAME: u64 = 480;
 const PCM_BASE_CYCLES_PER_FRAME: usize = 120;
@@ -388,6 +390,7 @@ impl Channel {
 
 pub struct AudioController {
     cycle: u64,
+    memory: Rc<RefCell<Memory>>,
     buffer: Option<Producer<(i16, i16)>>,
     waveforms: [[u16; 32]; 5],
     mod_data: [usize; 32],
@@ -395,9 +398,10 @@ pub struct AudioController {
 }
 
 impl AudioController {
-    pub fn new() -> AudioController {
+    pub fn new(memory: Rc<RefCell<Memory>>) -> AudioController {
         AudioController {
             cycle: 0,
+            memory,
             buffer: None,
             waveforms: [[0; 32]; 5],
             mod_data: [0; 32],
@@ -420,7 +424,8 @@ impl AudioController {
         AudioPlayer { buffer: consumer }
     }
 
-    pub fn process_event(&mut self, memory: &mut Memory, address: usize) {
+    pub fn process_event(&mut self, address: usize) {
+        let memory = self.memory.borrow();
         let value = memory.read_byte(address);
         if address < 0x01000280 {
             let rel_addr = address - 0x01000000;
@@ -571,7 +576,7 @@ impl AudioController {
         }
     }
 
-    pub fn run(&mut self, _memory: &mut Memory, target_cycle: u64) {
+    pub fn run(&mut self, target_cycle: u64) {
         let mut values = Vec::new();
         let waveforms = &self.waveforms;
         let mod_data = &self.mod_data;
@@ -603,7 +608,11 @@ impl AudioPlayer {
         let count = self.buffer.pop_slice(frames);
 
         // If we don't know what to play, play that last thing again
-        let value = if count == 0 { (0, 0) } else { frames[count - 1] };
+        let value = if count == 0 {
+            (0, 0)
+        } else {
+            frames[count - 1]
+        };
         for missing in &mut frames[count..] {
             *missing = value;
         }
