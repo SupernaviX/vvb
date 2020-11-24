@@ -198,7 +198,10 @@ impl Frequency {
             modification.mod_index = 0;
         }
     }
-    fn set(&mut self, value: usize) {
+    fn set(&mut self, low_byte: u8, high_byte: u8) {
+        let value = ((high_byte as usize & 0x07) << 8) + low_byte as usize;
+        // frequency can be anywhere from 0 to 2047
+        // subtract the passed in value from 2048 so that higher values give higher frequencies
         let value = 2048 - value;
         self.value = value;
         self.counter = 0;
@@ -427,156 +430,128 @@ impl AudioController {
     pub fn process_event(&mut self, address: usize) {
         let memory = self.memory.borrow();
         let value = memory.read_byte(address);
-        if address < 0x01000280 {
-            let rel_addr = address - 0x01000000;
-            let waveform = rel_addr / 128;
-            let index = (rel_addr % 128) / 4;
-            log::debug!("Waveform {}[{}] := 0x{:02x}", waveform + 1, index, value);
-            self.waveforms[waveform][index] = (value as u16) & 0x3f;
-            return;
-        }
-        if address < 0x01000300 {
-            let index = (address - 0x01000280) / 4;
-            log::debug!("Modulation[{}] := 0x{:02x}", index, value);
-            self.mod_data[index] = value as usize;
-            return;
-        }
-        if 0x01000400 <= address && address < 0x01000580 {
-            let rel_addr = address - 0x01000400;
-            match (rel_addr / 64, rel_addr % 64) {
-                (channel, 0x00) => {
-                    let enabled = value & 0x80 != 0;
-                    let auto = value & 0x20 != 0;
-                    let interval = value as usize & 0x1f;
-                    log::debug!(
-                        "Channel {} sound interval: enabled={} auto={} interval={}",
-                        channel + 1,
-                        enabled,
-                        auto,
-                        interval
-                    );
-                    self.channels[channel].set_enabled(enabled, auto, interval);
+        match address {
+            0x01000000..=0x0100027f => {
+                // Load waveform data (if all channels are disabled)
+                if self.channels.iter().all(|c| !c.enabled) {
+                    let rel_addr = address - 0x01000000;
+                    let waveform = rel_addr / 128;
+                    let index = (rel_addr % 128) / 4;
+                    self.waveforms[waveform][index] = (value as u16) & 0x3f;
                 }
-                (channel, 0x04) => {
-                    let left_vol = (value as u16 >> 4) & 0x0f;
-                    let right_vol = value as u16 & 0x0f;
-                    log::debug!(
-                        "Channel {} volume: left={} right={}",
-                        channel + 1,
-                        left_vol,
-                        right_vol
-                    );
-                    self.channels[channel].volume = (left_vol, right_vol);
+            }
+            0x01000280..=0x010002ff => {
+                // Load modulation data (if all channels are disabled)
+                if self.channels.iter().all(|c| !c.enabled) {
+                    let index = (address - 0x01000280) / 4;
+                    self.mod_data[index] = value as usize;
                 }
-                (channel, 0x08) => {
-                    let low = value as usize;
-                    let high = memory.read_byte(address + 4) as usize;
-                    let frequency = ((high & 0x07) << 8) + low;
-                    log::debug!("Channel {} frequency (low): {}", channel + 1, frequency);
-                    self.channels[channel].frequency.set(frequency);
-                }
-                (channel, 0x0c) => {
-                    let low = memory.read_byte(address - 4) as usize;
-                    let high = value as usize;
-                    let frequency = ((high & 0x07) << 8) + low;
-                    log::debug!("Channel {} frequency (high): {}", channel + 1, frequency);
-                    self.channels[channel].frequency.set(frequency);
-                }
-                (channel, 0x10) => {
-                    let val = (value >> 4) as u16;
-                    let dir = if value & 0x08 != 0 {
-                        Direction::Grow
-                    } else {
-                        Direction::Decay
-                    };
-                    let interval = value as usize & 0x07;
-                    log::debug!(
-                        "Channel {} envelope: value={} dir={:?} interval={}",
-                        channel + 1,
-                        val,
-                        dir,
-                        interval
-                    );
-                    self.channels[channel].envelope.set(val, dir, interval);
-                }
-                (channel, 0x14) => {
-                    let enabled = value & 0x01 != 0;
-                    let repeat = value & 0x02 != 0;
-                    log::debug!(
-                        "Channel {} envelope: enabled={} repeat={}",
-                        channel + 1,
-                        enabled,
-                        repeat,
-                    );
-                    self.channels[channel]
-                        .envelope
-                        .set_modification(enabled, repeat);
+            }
+            0x01000400..=0x0100057f => {
+                // various channel controls
+                let rel_addr = address - 0x01000400;
+                let channel = rel_addr / 64;
 
-                    if channel == 4 {
-                        let enabled = value & 0x40 != 0;
-                        let repeat = value & 0x20 != 0;
-                        let func = if value & 0x10 != 0 {
-                            ModFunction::Modulation
+                // Each channel is controlled by 64-byte address spaces with near-identical layouts
+                match rel_addr % 64 {
+                    0x00 => {
+                        // Channel enabled/disabled + auto-interval config
+                        let enabled = value & 0x80 != 0;
+                        let auto = value & 0x20 != 0;
+                        let interval = value as usize & 0x1f;
+                        self.channels[channel].set_enabled(enabled, auto, interval);
+                    }
+                    0x04 => {
+                        // Channel stereo volume
+                        let left_vol = (value as u16 >> 4) & 0x0f;
+                        let right_vol = value as u16 & 0x0f;
+                        self.channels[channel].volume = (left_vol, right_vol);
+                    }
+                    0x08 => {
+                        // Channel frequency (low byte)
+                        let low_byte = value;
+                        let high_byte = memory.read_byte(address + 4);
+                        self.channels[channel].frequency.set(low_byte, high_byte);
+                    }
+                    0x0c => {
+                        // Channel frequency (high byte)
+                        let low_byte = memory.read_byte(address - 4);
+                        let high_byte = value;
+                        self.channels[channel].frequency.set(low_byte, high_byte);
+                    }
+                    0x10 => {
+                        // Channel envelope settings
+                        let value = (value >> 4) as u16;
+                        let direction = if value & 0x08 != 0 {
+                            Direction::Grow
                         } else {
-                            ModFunction::Sweep
+                            Direction::Decay
                         };
-                        log::debug!(
-                            "Channel 5 modifications: enabled={} repeat={} func={:?}",
-                            enabled,
-                            repeat,
-                            func
-                        );
+                        let interval = value as usize & 0x07;
+                        self.channels[channel]
+                            .envelope
+                            .set(value, direction, interval);
+                    }
+                    0x14 => {
+                        // Channel envelope modification settings
+                        let enabled = value & 0x01 != 0;
+                        let repeat = value & 0x02 != 0;
+                        self.channels[channel]
+                            .envelope
+                            .set_modification(enabled, repeat);
+
+                        if channel == 4 {
+                            // Channel 5 has additional envelope specification settings
+                            // This is to support sweep/modulation control
+                            let enabled = value & 0x40 != 0;
+                            let repeat = value & 0x20 != 0;
+                            let func = if value & 0x10 != 0 {
+                                ModFunction::Modulation
+                            } else {
+                                ModFunction::Sweep
+                            };
+                            self.channels[4]
+                                .frequency
+                                .setup_mod_1(enabled, repeat, func);
+                        }
+                        if channel == 5 {
+                            // This sets the "tap" for the noise channel (channel 6)
+                            let tap = (value >> 4) & 0x07;
+                            self.channels[5].set_tap(tap);
+                        }
+                    }
+                    0x18 if channel < 5 => {
+                        // Set active waveform for the PCM channels (everything but 6)
+                        let wave = value as usize & 0x07;
+                        self.channels[channel].set_waveform(wave);
+                    }
+                    0x1c if channel == 4 => {
+                        // Sweep/modulation settings specifically for channel 5
+                        let clock = value >> 7;
+                        let interval = (value as usize >> 4) & 0x07;
+                        let dir = if value & 0x08 != 0 {
+                            Direction::Grow
+                        } else {
+                            Direction::Decay
+                        };
+                        let shift = value as usize & 0x07;
                         self.channels[4]
                             .frequency
-                            .setup_mod_1(enabled, repeat, func);
+                            .setup_mod_2(clock, interval, dir, shift);
                     }
-
-                    if channel == 5 {
-                        let tap = value >> 4 & 0x07;
-                        log::debug!("Channel 6 tap: {}", tap);
-                        self.channels[5].set_tap(tap);
-                    }
+                    _ => { /* unknown channels are harmless */ }
                 }
-                (channel @ 0..=4, 0x18) => {
-                    let wave = value as usize & 0x07;
-                    log::debug!("Channel {} waveform: {}", channel + 1, wave + 1);
-                    self.channels[channel].set_waveform(wave);
-                }
-                (4, 0x1c) => {
-                    let clock = value >> 7;
-                    let interval = (value as usize >> 4) & 0x07;
-                    let dir = if value & 0x08 != 0 {
-                        Direction::Grow
-                    } else {
-                        Direction::Decay
-                    };
-                    let shift = value as usize & 0x07;
-                    log::debug!(
-                        "Sweep/modulation: clock={} interval={} dir={:?} shift={}",
-                        clock,
-                        interval,
-                        dir,
-                        shift
-                    );
-                    self.channels[4]
-                        .frequency
-                        .setup_mod_2(clock, interval, dir, shift);
-                }
-                _ => log::warn!(
-                    "Unknown audio register: [0x{:08x}] := 0x{:02x}",
-                    address,
-                    value
-                ),
-            };
-            return;
-        }
-        if address == 0x01000580 && value & 1 != 0 {
-            log::debug!("Stop all sound!");
-            for channel in &mut self.channels {
-                channel.set_enabled(false, false, 0);
             }
-            return;
-        }
+            0x01000580 => {
+                // Stop all sound
+                if value & 1 != 0 {
+                    for channel in &mut self.channels {
+                        channel.set_enabled(false, false, 0);
+                    }
+                }
+            }
+            _ => { /* unknown channels are harmless */ }
+        };
     }
 
     pub fn run(&mut self, target_cycle: u64) {
