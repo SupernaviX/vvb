@@ -67,8 +67,8 @@ extern "C" {
         mesh: *mut sys::CardboardMesh,
     );
 
-    #[link_name = "CardboardDistortionRenderer_create"]
-    pub fn CardboardDistortionRenderer_create() -> *mut sys::CardboardDistortionRenderer;
+    #[link_name = "CardboardOpenGlEs2DistortionRenderer_create"]
+    pub fn CardboardOpenGlEs2DistortionRenderer_create() -> *mut sys::CardboardDistortionRenderer;
     #[link_name = "CardboardDistortionRenderer_destroy"]
     pub fn CardboardDistortionRenderer_destroy(renderer: *mut sys::CardboardDistortionRenderer);
     #[link_name = "CardboardDistortionRenderer_renderEyeToDisplay"]
@@ -157,7 +157,7 @@ pub struct DistortionRenderer(*mut sys::CardboardDistortionRenderer);
 impl DistortionRenderer {
     pub fn create() -> DistortionRenderer {
         #[cfg(target_os = "android")]
-        let raw = unsafe { CardboardDistortionRenderer_create() };
+        let raw = unsafe { CardboardOpenGlEs2DistortionRenderer_create() };
         #[cfg(not(target_os = "android"))]
         let raw = std::ptr::null_mut();
         DistortionRenderer(raw)
