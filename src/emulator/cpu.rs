@@ -43,6 +43,7 @@ pub struct CPU<THandler: EventHandler> {
     memory: Rc<RefCell<Memory>>,
     handler: THandler,
     bitstring_cycle: u64,
+    halted: bool,
     pub pc: usize,
     pub registers: [u32; 32],
     pub sys_registers: [u32; 32],
@@ -54,6 +55,7 @@ impl<THandler: EventHandler> CPU<THandler> {
             memory,
             handler,
             bitstring_cycle: 0,
+            halted: false,
             pc: 0xfffffff0,
             registers: [0; 32],
             sys_registers: [0; 32],
@@ -63,6 +65,7 @@ impl<THandler: EventHandler> CPU<THandler> {
     }
     pub fn init(&mut self) {
         self.cycle = 0;
+        self.halted = false;
         self.bitstring_cycle = 0;
         self.pc = 0xfffffff0;
         for reg in self.registers.iter_mut() {
@@ -84,12 +87,14 @@ impl<THandler: EventHandler> CPU<THandler> {
         let mut pc = self.pc;
         let mut cycle = self.cycle;
         let mut bitstring_cycle = self.bitstring_cycle;
-        let mut event;
-        loop {
+        let mut halted = self.halted;
+        let mut event = None;
+        while !halted {
             let mut process = CPUProcess {
                 pc,
                 cycle,
                 bitstring_cycle,
+                halted,
                 event: None,
                 memory: self.memory.borrow_mut(),
                 registers: &mut self.registers,
@@ -99,6 +104,7 @@ impl<THandler: EventHandler> CPU<THandler> {
             pc = process.pc;
             cycle = process.cycle;
             bitstring_cycle = process.bitstring_cycle;
+            halted = process.halted;
             event = process.event;
             drop(process);
 
@@ -110,9 +116,15 @@ impl<THandler: EventHandler> CPU<THandler> {
             break;
         }
 
+        // Make sure that we simulate time passing, even if the CPU is halted.
+        // This is safe because as long as the CPU is halted, we know that the next interrupt
+        // won't happen until at least target_cycle.
+        cycle = cycle.max(target_cycle);
+
         self.pc = pc;
-        self.bitstring_cycle = bitstring_cycle;
         self.cycle = cycle;
+        self.bitstring_cycle = bitstring_cycle;
+        self.halted = halted;
         Ok(CPUProcessingResult { cycle, event })
     }
     pub fn request_interrupt(&mut self, interrupt: &Interrupt) {
@@ -148,6 +160,7 @@ impl<THandler: EventHandler> CPU<THandler> {
         self.sys_registers[PSW] = psw;
 
         self.pc = interrupt.handler;
+        self.halted = false;
     }
 }
 
@@ -179,6 +192,7 @@ struct CPUProcess<'a> {
     pc: usize,
     cycle: u64,
     bitstring_cycle: u64,
+    halted: bool,
     event: Option<Event>,
     memory: RefMut<'a, Memory>,
     registers: &'a mut [u32; 32],
@@ -186,7 +200,7 @@ struct CPUProcess<'a> {
 }
 impl<'a> CPUProcess<'a> {
     pub fn run(&mut self, target_cycle: u64) -> Result<()> {
-        while self.cycle < target_cycle && self.event.is_none() {
+        while self.cycle < target_cycle && self.event.is_none() && !self.halted {
             let instr = self.read_pc();
             let opcode = (instr >> 10) & 0x003F;
             if (instr as u16) & 0xe000 == 0x8000 {
@@ -245,6 +259,8 @@ impl<'a> CPUProcess<'a> {
                 0b101010 => self.jr(instr),
 
                 0b010010 => self.setf(instr),
+
+                0b011010 => self.halt(),
 
                 0b011100 => self.ldsr(instr),
                 0b011101 => self.stsr(instr),
@@ -668,6 +684,10 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 3;
     }
 
+    fn halt(&mut self) {
+        self.halted = true;
+    }
+
     fn ldsr(&mut self, instr: u16) {
         let (reg2, reg_id) = self.parse_format_ii_opcode(instr);
         let reg_id = (reg_id & 0x1f) as usize;
@@ -1049,6 +1069,7 @@ mod tests {
     fn jal(disp: i32) -> Vec<u8> { _op_4(0b101011, disp) }
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
+    fn halt() -> Vec<u8> { _op_2(0b011010, 0, 0) }
     fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id) }
     fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id) }
     fn orbsu() -> Vec<u8> { _op_2(0b011111, 0, 0b01000) }
@@ -1767,6 +1788,54 @@ mod tests {
         cpu.request_interrupt(&low_priority_interrupt);
 
         cpu.run(1).unwrap();
+        assert_eq!(cpu.registers[31], 3);
+    }
+
+    #[test]
+    fn can_halt() {
+        let (mut cpu, _memory) = rom(vec![
+            movea(31, 0, 1),
+            halt(),
+            movea(31, 0, 2),
+        ]);
+
+        let res = cpu.run(1000000).unwrap();
+        assert_eq!(res.cycle, 1000000);
+        assert_eq!(cpu.registers[31], 1);
+
+        let res = cpu.run(2000000).unwrap();
+        assert_eq!(res.cycle, 2000000);
+        assert_eq!(cpu.registers[31], 1);
+    }
+
+    #[test]
+    fn can_unhalt_during_interrupt() {
+        let (mut cpu, memory) = rom(vec![
+            movea(31, 0, 1),
+            halt(),
+            movea(31, 0, 3),
+        ]);
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xfffffe40, vec![
+            movea(31, 0, 2),
+            reti(),
+        ]);
+        cpu.sys_registers[PSW] = 0;
+
+        let res = cpu.run(50).unwrap();
+        assert_eq!(res.cycle, 50);
+        assert_eq!(cpu.registers[31], 1);
+
+        cpu.request_interrupt(&Interrupt {
+            code: 0xfe40,
+            level: 4,
+            handler: 0xfffffe40,
+        });
+
+        let res = cpu.run(61).unwrap();
+        assert_eq!(res.cycle, 61);
+        assert_eq!(cpu.registers[31], 2);
+
+        cpu.run(62).unwrap();
         assert_eq!(cpu.registers[31], 3);
     }
 }
