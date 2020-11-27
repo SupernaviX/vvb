@@ -25,4 +25,7 @@
         app:colorChoices="@array/color_choices"
         app:numColumns="4"
         />
+    <Preference
+        app:key="video_preview"
+        app:title="@string/video_menu_preview"/>
 </PreferenceScreen>

@@ -6,8 +6,7 @@
     android:layout_height="match_parent"
     android:screenOrientation="landscape"
     android:configChanges="navigation|keyboard|keyboardHidden|orientation|screenSize"
-    android:keepScreenOn="true"
-    tools:context=".GameActivity">
+    android:keepScreenOn="true">
 
     <android.opengl.GLSurfaceView
         android:id="@+id/surface_view"

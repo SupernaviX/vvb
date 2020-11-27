@@ -20,5 +20,6 @@
     <string name="video_menu_screen_zoom_percent">Screen Zoom (percent)</string>
     <string name="video_menu_vertical_offset">Vertical Offset</string>
     <string name="video_menu_color">Color</string>
+    <string name="video_menu_preview">Preview</string>
     <string name="ui_settings_button_content_description">settings</string>
 </resources>

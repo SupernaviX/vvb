@@ -3,7 +3,6 @@ package com.simongellis.vvb
 import android.content.SharedPreferences
 import android.hardware.input.InputManager
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.edit
@@ -18,7 +17,7 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
 
     override fun onCreate(savedInstanceState: Bundle?) {
         _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-        _inputManager = getSystemService(context!!, InputManager::class.java)!!
+        _inputManager = getSystemService(requireContext(), InputManager::class.java)!!
         super.onCreate(savedInstanceState)
     }
 
@@ -41,7 +40,7 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
 
     override fun onResume() {
         super.onResume()
-        activity!!.setTitle(R.string.main_menu_input_setup)
+        requireActivity().setTitle(R.string.main_menu_input_setup)
     }
 
     override fun onPreferenceClick(preference: Preference): Boolean {
