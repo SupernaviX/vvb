@@ -274,7 +274,7 @@ impl VBScreenRenderer {
 
     pub fn render(&self) -> Result<()> {
         unsafe {
-            gl::ClearColor(0.0, 0.0, 1.0, 1.0);
+            gl::ClearColor(0.0, 0.0, 0.0, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
             check_error("clear the screen")?;
             gl::UseProgram(self.program_id);
