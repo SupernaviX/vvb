@@ -115,6 +115,7 @@ impl Renderer {
 pub struct Settings {
     screen_zoom: f32,
     vertical_offset: f32,
+    color: (u8, u8, u8),
 }
 
 #[rustfmt::skip::macros(java_func)]
@@ -137,9 +138,15 @@ pub mod jni {
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let screen_zoom_percent = env.get_field(this, "_screenZoom", "I")?.i()?;
         let vertical_offset = env.get_field(this, "_verticalOffset", "I")?.i()?;
+        let color = env.get_field(this, "_color", "I")?.i()?;
+
+        // android passes color as ARGB
+        let color = ((color >> 16) as u8, (color >> 8) as u8, color as u8);
+
         Ok(Settings {
             screen_zoom: (screen_zoom_percent as f32) / 100.0,
             vertical_offset: (vertical_offset as f32) / 100.0,
+            color,
         })
     }
 

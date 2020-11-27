@@ -154,6 +154,7 @@ pub struct VBScreenRenderer {
     buffers: [Vec<u8>; 2],
     screen_zoom: f32,
     vertical_offset: f32,
+    color: (u8, u8, u8),
 }
 impl VBScreenRenderer {
     pub fn new(settings: &Settings) -> Result<VBScreenRenderer> {
@@ -199,6 +200,7 @@ impl VBScreenRenderer {
                 buffers: [vec![0; EYE_BUFFER_SIZE], vec![0; EYE_BUFFER_SIZE]],
                 screen_zoom: settings.screen_zoom,
                 vertical_offset: settings.vertical_offset,
+                color: settings.color,
             }
         };
         Ok(state)
@@ -240,13 +242,15 @@ impl VBScreenRenderer {
     pub fn update(&mut self, frame: Frame) -> Result<()> {
         let eye = frame.eye as usize;
         let texture_id = self.texture_ids[eye];
+        let color = self.color;
 
         let buffer = &mut self.buffers[eye];
         let vb_data = frame.buffer.lock().expect("Buffer lock was poisoned!");
         for i in 0..vb_data.len() {
-            // vb_data is R, we need RGB
-            // Someday this can support other colors
-            buffer[i * 3] = vb_data[i];
+            // vb_data just has lightness values, convert them to RGB
+            buffer[i * 3] = ((vb_data[i] as u16) * (color.0 as u16) / 256) as u8;
+            buffer[i * 3 + 1] = ((vb_data[i] as u16) * (color.1 as u16) / 256) as u8;
+            buffer[i * 3 + 2] = ((vb_data[i] as u16) * (color.2 as u16) / 256) as u8;
         }
         drop(vb_data); // free the lock ASAP
 
