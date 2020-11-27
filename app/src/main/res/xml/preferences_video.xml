@@ -9,4 +9,12 @@
         app:showSeekBarValue="true"
         app:seekBarIncrement="5"
         app:defaultValue="65"/>
+    <SeekBarPreference
+        app:key="video_vertical_offset"
+        app:title="@string/video_menu_vertical_offset"
+        app:min="-100"
+        android:max="100"
+        app:showSeekBarValue="true"
+        app:seekBarIncrement="10"
+        app:defaultValue="0"/>
 </PreferenceScreen>

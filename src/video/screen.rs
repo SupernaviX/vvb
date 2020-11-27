@@ -1,10 +1,11 @@
 use super::gl;
 use super::gl::types::{GLboolean, GLchar, GLenum, GLfloat, GLint, GLshort, GLsizei, GLuint};
 use super::gl::utils::{check_error, temp_array, AsVoidptr};
+use super::Settings;
 use crate::emulator::video::{Eye, Frame};
 use anyhow::Result;
-use cgmath::{self, vec3, vec4, Matrix4, SquareMatrix};
-use log::{debug, error};
+use cgmath::{self, vec3, Matrix4, SquareMatrix};
+use log::error;
 use std::ffi::{CStr, CString};
 
 const GL_TRUE: GLboolean = 1;
@@ -152,9 +153,10 @@ pub struct VBScreenRenderer {
     mvs: [Vec<GLfloat>; 2],
     buffers: [Vec<u8>; 2],
     screen_zoom: f32,
+    vertical_offset: f32,
 }
 impl VBScreenRenderer {
-    pub fn new(screen_zoom: f32) -> Result<VBScreenRenderer> {
+    pub fn new(settings: &Settings) -> Result<VBScreenRenderer> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
             check_error("create a program")?;
@@ -195,7 +197,8 @@ impl VBScreenRenderer {
                 texture_ids,
                 mvs: [as_vec(Matrix4::identity()), as_vec(Matrix4::identity())],
                 buffers: [vec![0; EYE_BUFFER_SIZE], vec![0; EYE_BUFFER_SIZE]],
-                screen_zoom,
+                screen_zoom: settings.screen_zoom,
+                vertical_offset: settings.vertical_offset,
             }
         };
         Ok(state)
@@ -225,17 +228,12 @@ impl VBScreenRenderer {
                 0.0,
             );
 
-        let bottom_left = vm * vec4(-htw, -hth, 0.0, 1.0);
-        let top_right = vm * vec4(htw, hth, 0.0, 1.0);
-        debug!(
-            "Screen stretches from from {:?} to {:?}",
-            bottom_left, top_right
-        );
+        let offset = -self.vertical_offset;
         self.mvs[0] = as_vec(
-            vm * Matrix4::from_translation(vec3(-0.5, 0.0, 0.0)) * Matrix4::from_scale(scale),
+            vm * Matrix4::from_translation(vec3(-0.5, offset, 0.0)) * Matrix4::from_scale(scale),
         );
         self.mvs[1] = as_vec(
-            vm * Matrix4::from_translation(vec3(0.5, 0.0, 0.0)) * Matrix4::from_scale(scale),
+            vm * Matrix4::from_translation(vec3(0.5, offset, 0.0)) * Matrix4::from_scale(scale),
         );
     }
 
