@@ -5,9 +5,10 @@ import android.opengl.GLSurfaceView
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
-import kotlinx.android.synthetic.main.activity_game.*
+import com.simongellis.vvb.databinding.ActivityGameBinding
 
 class GameActivity : AppCompatActivity() {
+    private lateinit var _binding: ActivityGameBinding
     private lateinit var _emulator: Emulator
     private lateinit var _renderer: Renderer
     private lateinit var _audio: Audio
@@ -16,17 +17,19 @@ class GameActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        _binding = ActivityGameBinding.inflate(layoutInflater)
         _emulator = Emulator.getInstance(applicationContext)
         _renderer = Renderer(_emulator, Settings(applicationContext))
         _audio = Audio(_emulator)
         _inputBindingMapper = InputBindingMapper(applicationContext)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        setContentView(R.layout.activity_game)
+        setContentView(_binding.root)
 
-        surface_view.setEGLContextClientVersion(2)
-        surface_view.setRenderer(_renderer)
-        surface_view.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+        val surfaceView = _binding.surfaceView;
+        surfaceView.setEGLContextClientVersion(2)
+        surfaceView.setRenderer(_renderer)
+        surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
         _emulator.loadImage()
     }
@@ -46,7 +49,7 @@ class GameActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        surface_view.onResume()
+        _binding.surfaceView.onResume()
         _renderer.ensureDeviceParams()
         // _emulator.loadImage()
         _audio.play()
@@ -55,7 +58,7 @@ class GameActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        surface_view.onPause()
+        _binding.surfaceView.onPause()
         _emulator.pause()
         _audio.pause()
     }
