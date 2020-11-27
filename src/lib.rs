@@ -3,7 +3,7 @@
 mod audio;
 pub mod emulator;
 mod jni_helpers;
-mod renderer;
+mod video;
 
 use android_logger::{self, Config};
 use anyhow::Result;
@@ -11,11 +11,11 @@ use jni::sys::{jint, jobject};
 use jni::JNIEnv;
 use log::{debug, Level};
 use paste::paste;
-use renderer::{Cardboard, QrCode};
+use video::{Cardboard, QrCode};
 
 pub use audio::jni::*;
 pub use emulator::jni::*;
-pub use renderer::jni::*;
+pub use video::jni::*;
 
 java_func!(MainActivity_nativeInitialize, init, jint, jint);
 fn init(env: &JNIEnv, this: jobject, sample_rate: jint, frames_per_burst: jint) -> Result<()> {
