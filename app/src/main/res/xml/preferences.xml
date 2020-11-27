@@ -20,6 +20,11 @@
         app:fragment="com.simongellis.vvb.InputMenuFragment"
         tools:context=".InputMenuFragment"/>
     <Preference
+        app:key="video"
+        app:title="@string/main_menu_video_setup"
+        app:fragment="com.simongellis.vvb.VideoMenuFragment"
+        tools:context=".VideoMenuFragment"/>
+    <Preference
         app:key="switch_viewer"
         app:title="@string/main_menu_switch_viewer"/>
 </PreferenceScreen>

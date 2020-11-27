@@ -20,15 +20,17 @@ pub struct Renderer {
     cardboard: Option<CardboardRenderer>,
     cardboard_stale: bool,
     frame_channel: FrameChannel,
+    settings: Settings,
 }
 impl Renderer {
-    pub fn new(frame_channel: FrameChannel) -> Renderer {
+    pub fn new(frame_channel: FrameChannel, settings: Settings) -> Renderer {
         Renderer {
             screen_size: (0, 0),
             vb_screen: None,
             cardboard: None,
             cardboard_stale: true,
             frame_channel,
+            settings,
         }
     }
 
@@ -40,7 +42,7 @@ impl Renderer {
         self.vb_screen.take();
         self.cardboard.take();
 
-        self.vb_screen = Some(VBScreenRenderer::new()?);
+        self.vb_screen = Some(VBScreenRenderer::new(self.settings.screen_zoom)?);
         self.cardboard_stale = true;
 
         let device_params = QrCode::get_saved_device_params();
@@ -109,9 +111,14 @@ impl Renderer {
     }
 }
 
+#[derive(Debug)]
+pub struct Settings {
+    screen_zoom: f32,
+}
+
 #[rustfmt::skip::macros(java_func)]
 pub mod jni {
-    use super::Renderer;
+    use super::{Renderer, Settings};
     use crate::emulator::Emulator;
     use crate::{java_func, jni_helpers};
     use anyhow::Result;
@@ -126,10 +133,23 @@ pub mod jni {
         jni_helpers::java_get(env, this)
     }
 
-    java_func!(Renderer_nativeConstructor, constructor, jobject);
-    fn constructor(env: &JNIEnv, this: jobject, emulator: jobject) -> Result<()> {
+    fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+        let screen_zoom_percent = env.get_field(this, "_screenZoom", "I")?.i()?;
+        Ok(Settings {
+            screen_zoom: (screen_zoom_percent as f32) / 100.0,
+        })
+    }
+
+    java_func!(Renderer_nativeConstructor, constructor, jobject, jobject);
+    fn constructor(
+        env: &JNIEnv,
+        this: jobject,
+        emulator: jobject,
+        settings: jobject,
+    ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
-        let renderer = Renderer::new(emulator.get_frame_channel());
+        let settings = get_settings(&env, settings)?;
+        let renderer = Renderer::new(emulator.get_frame_channel(), settings);
         jni_helpers::java_init(env, this, renderer)
     }
 

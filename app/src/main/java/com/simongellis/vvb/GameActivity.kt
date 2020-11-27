@@ -17,7 +17,7 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _emulator = Emulator.getInstance(applicationContext)
-        _renderer = Renderer(_emulator)
+        _renderer = Renderer(_emulator, Settings(applicationContext))
         _audio = Audio(_emulator)
         _inputBindingMapper = InputBindingMapper(applicationContext)
 

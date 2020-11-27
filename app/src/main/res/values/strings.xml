@@ -4,6 +4,7 @@
     <string name="main_menu_load_game">Load Game</string>
     <string name="main_menu_switch_viewer">Switch Cardboard Viewer</string>
     <string name="main_menu_input_setup">Input Setup</string>
+    <string name="main_menu_video_setup">Video Setup</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
     <string name="input_menu_button_left">Left</string>
@@ -16,5 +17,6 @@
     <string name="input_menu_button_rt">R Trigger</string>
     <string name="input_menu_button_start">Start</string>
     <string name="input_menu_button_select">Select</string>
+    <string name="video_menu_screen_zoom_percent">Screen Zoom (percent)</string>
     <string name="ui_settings_button_content_description">settings</string>
 </resources>

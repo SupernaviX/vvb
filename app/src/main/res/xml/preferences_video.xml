@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <SeekBarPreference
+        app:key="video_screen_zoom_percent"
+        app:title="@string/video_menu_screen_zoom_percent"
+        app:min="0"
+        android:max="100"
+        app:showSeekBarValue="true"
+        app:seekBarIncrement="5"
+        app:defaultValue="65"/>
+</PreferenceScreen>

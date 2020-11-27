@@ -151,9 +151,10 @@ pub struct VBScreenRenderer {
     texture_ids: [GLuint; 2],
     mvs: [Vec<GLfloat>; 2],
     buffers: [Vec<u8>; 2],
+    screen_zoom: f32,
 }
 impl VBScreenRenderer {
-    pub fn new() -> Result<VBScreenRenderer> {
+    pub fn new(screen_zoom: f32) -> Result<VBScreenRenderer> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
             check_error("create a program")?;
@@ -194,6 +195,7 @@ impl VBScreenRenderer {
                 texture_ids,
                 mvs: [as_vec(Matrix4::identity()), as_vec(Matrix4::identity())],
                 buffers: [vec![0; EYE_BUFFER_SIZE], vec![0; EYE_BUFFER_SIZE]],
+                screen_zoom,
             }
         };
         Ok(state)
@@ -214,7 +216,7 @@ impl VBScreenRenderer {
         let scale_to_fit = (hsw / htw).min(hsh / hth);
 
         // Proportion of this scale to use
-        let scale = 0.65;
+        let scale = self.screen_zoom;
 
         let vm = projection
             * Matrix4::from_nonuniform_scale(
