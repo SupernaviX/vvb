@@ -97,7 +97,7 @@ impl<THandler: EventHandler> CPU<THandler> {
                 registers: &mut self.registers,
                 sys_registers: &mut self.sys_registers,
             };
-            process.run(target_cycle)?;
+            process.run(target_cycle);
             self.pc = process.pc;
             self.cycle = process.cycle;
             self.bitstring_cycle = process.bitstring_cycle;
@@ -231,7 +231,7 @@ struct CPUProcess<'a> {
     sys_registers: &'a mut [u32; 32],
 }
 impl<'a> CPUProcess<'a> {
-    pub fn run(&mut self, target_cycle: u64) -> Result<()> {
+    pub fn run(&mut self, target_cycle: u64) {
         while self.cycle < target_cycle
             && self.event.is_none()
             && self.exception.is_none()
@@ -305,7 +305,7 @@ impl<'a> CPUProcess<'a> {
                 0b010110 => self.cli(),
                 0b011001 => self.reti(),
 
-                0b011111 => self.bitstring_operation(instr)?,
+                0b011111 => self.bitstring_operation(instr),
 
                 0b111110 => {
                     // format 7 opcodes are format 1 with a subopcode suffix
@@ -332,7 +332,6 @@ impl<'a> CPUProcess<'a> {
                                 self.pc
                             );
                             self.exception = Some(Exception::error(0xff90, 0xffffff90));
-                            return Ok(());
                         }
                     }
                 }
@@ -342,11 +341,9 @@ impl<'a> CPUProcess<'a> {
                     self.pc -= 2;
                     log::warn!("Invalid opcode 0b{:06b} at 0x{:08x}", opcode, self.pc);
                     self.exception = Some(Exception::error(0xff90, 0xffffff90));
-                    return Ok(());
                 }
             };
         }
-        Ok(())
     }
 
     fn read_pc(&mut self) -> u16 {
@@ -765,14 +762,15 @@ impl<'a> CPUProcess<'a> {
         self.cycle += 10;
     }
 
-    fn bitstring_operation(&mut self, instr: u16) -> Result<()> {
+    fn bitstring_operation(&mut self, instr: u16) {
         let (_, opcode) = self.parse_format_ii_opcode(instr);
-        let is_search = (opcode & 0b000010) != 0;
+        let is_search = (opcode & 0b00010) != 0;
         if is_search {
-            return Err(anyhow::anyhow!(
-                "Bitwise search 0b{:06b} not supported",
-                opcode
-            ));
+            // TODO: support bitwise search operations
+            log::error!("Bitwise search 0b{:05b} not supported", opcode);
+            self.pc -= 4;
+            self.exception = Some(Exception::error(0xff90, 0xffffff90));
+            return;
         }
         if self.bitstring_cycle == 0 {
             // clear lower bits of word addresses
@@ -819,10 +817,10 @@ impl<'a> CPUProcess<'a> {
                 // XORNBSU
                 0b01110 => dst_word ^= !src_bits & mask,
                 _ => {
-                    return Err(anyhow::anyhow!(
-                        "Unrecognized bitstring opcode 0b{:05b}",
-                        opcode
-                    ))
+                    log::warn!("Unrecognized bitstring subopcode 0b{:05b}", opcode);
+                    self.pc -= 4;
+                    self.exception = Some(Exception::error(0xff90, 0xffffff90));
+                    return;
                 }
             };
             self.memory.write_word(dst_address, dst_word);
@@ -860,7 +858,6 @@ impl<'a> CPUProcess<'a> {
             self.bitstring_cycle += 1;
             self.pc -= 2;
         }
-        Ok(())
     }
 
     fn cmpf_s(&mut self, instr: u16) {
