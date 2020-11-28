@@ -84,17 +84,13 @@ impl<THandler: EventHandler> CPU<THandler> {
     }
 
     pub fn run(&mut self, target_cycle: u64) -> Result<CPUProcessingResult> {
-        let mut pc = self.pc;
-        let mut cycle = self.cycle;
-        let mut bitstring_cycle = self.bitstring_cycle;
-        let mut halted = self.halted;
         let mut event = None;
-        while !halted {
+        while !self.halted {
             let mut process = CPUProcess {
-                pc,
-                cycle,
-                bitstring_cycle,
-                halted,
+                pc: self.pc,
+                cycle: self.cycle,
+                bitstring_cycle: self.bitstring_cycle,
+                halted: self.halted,
                 event: None,
                 exception: None,
                 memory: self.memory.borrow_mut(),
@@ -102,23 +98,22 @@ impl<THandler: EventHandler> CPU<THandler> {
                 sys_registers: &mut self.sys_registers,
             };
             process.run(target_cycle)?;
-            pc = process.pc;
-            cycle = process.cycle;
-            bitstring_cycle = process.bitstring_cycle;
-            halted = process.halted;
+            self.pc = process.pc;
+            self.cycle = process.cycle;
+            self.bitstring_cycle = process.bitstring_cycle;
+            self.halted = process.halted;
             event = process.event;
             let exception = process.exception;
 
             drop(process);
 
             if let Some(event) = event {
-                if self.handler.handle(event, cycle)? {
+                if self.handler.handle(event, self.cycle)? {
                     continue;
                 }
             }
             if let Some(exception) = exception {
                 self.raise_exception(exception);
-                pc = self.pc;
                 continue;
             }
             break;
@@ -127,13 +122,12 @@ impl<THandler: EventHandler> CPU<THandler> {
         // Make sure that we simulate time passing, even if the CPU is halted.
         // This is safe because as long as the CPU is halted, we know that the next interrupt
         // won't happen until at least target_cycle.
-        cycle = cycle.max(target_cycle);
+        self.cycle = self.cycle.max(target_cycle);
 
-        self.pc = pc;
-        self.cycle = cycle;
-        self.bitstring_cycle = bitstring_cycle;
-        self.halted = halted;
-        Ok(CPUProcessingResult { cycle, event })
+        Ok(CPUProcessingResult {
+            cycle: self.cycle,
+            event,
+        })
     }
     pub fn raise_exception(&mut self, exception: Exception) {
         let mut psw = self.sys_registers[PSW];
@@ -238,7 +232,11 @@ struct CPUProcess<'a> {
 }
 impl<'a> CPUProcess<'a> {
     pub fn run(&mut self, target_cycle: u64) -> Result<()> {
-        while self.cycle < target_cycle && self.event.is_none() && !self.halted {
+        while self.cycle < target_cycle
+            && self.event.is_none()
+            && self.exception.is_none()
+            && !self.halted
+        {
             let instr = self.read_pc();
             let opcode = (instr >> 10) & 0x003F;
             if (instr as u16) & 0xe000 == 0x8000 {
@@ -274,8 +272,8 @@ impl<'a> CPUProcess<'a> {
                 0b000010 => self.sub(instr),
                 0b001000 => self.mul(instr),
                 0b001010 => self.mulu(instr),
-                0b001001 => self.div(instr)?,
-                0b001011 => self.divu(instr)?,
+                0b001001 => self.div(instr),
+                0b001011 => self.divu(instr),
 
                 0b001101 => self.and(instr),
                 0b101101 => self.andi(instr),
@@ -518,13 +516,14 @@ impl<'a> CPUProcess<'a> {
         self.update_psw_flags(loword == 0, sign_bit(loword), ov);
         self.cycle += 13;
     }
-    fn div(&mut self, instr: u16) -> Result<()> {
+    fn div(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let dividend = self.registers[reg2] as i32;
         let divisor = self.registers[reg1] as i32;
         if divisor == 0 {
-            // TODO this should trap
-            return Err(anyhow::anyhow!("Divide by zero at 0x{:08x}", self.pc - 2));
+            // trap for divide by 0
+            self.pc -= 2;
+            self.exception = Some(Exception::error(0xff80, 0xffffff80));
         } else if dividend == i32::MIN && divisor == -1 {
             self.set_register(30, 0);
             self.set_register(reg2, 0x80000000);
@@ -537,15 +536,15 @@ impl<'a> CPUProcess<'a> {
             self.update_psw_flags(quotient == 0, quotient < 0, false);
         }
         self.cycle += 38;
-        Ok(())
     }
-    fn divu(&mut self, instr: u16) -> Result<()> {
+    fn divu(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let dividend = self.registers[reg2];
         let divisor = self.registers[reg1];
         if divisor == 0 {
-            // TODO this should trap
-            return Err(anyhow::anyhow!("Divide by zero at 0x{:08x}", self.pc - 2));
+            // trap for divide by 0
+            self.pc -= 2;
+            self.exception = Some(Exception::error(0xff80, 0xffffff80));
         } else {
             let quotient = dividend / divisor;
             let remainder = dividend % divisor;
@@ -554,7 +553,6 @@ impl<'a> CPUProcess<'a> {
             self.update_psw_flags(quotient == 0, sign_bit(quotient), false);
         }
         self.cycle += 36;
-        Ok(())
     }
 
     fn and(&mut self, instr: u16) {
@@ -1110,8 +1108,8 @@ mod tests {
     fn jmp(r1: u8) -> Vec<u8> { _op_1(0b000110, 0, r1) }
     fn jr(disp: i32) -> Vec<u8> { _op_4(0b101010, disp) }
     fn halt() -> Vec<u8> { _op_2(0b011010, 0, 0) }
-    fn ldsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011100, r2, reg_id) }
-    fn stsr(r2: u8, reg_id: u8) -> Vec<u8> { _op_2(0b011101, r2, reg_id) }
+    fn ldsr(r2: u8, reg_id: usize) -> Vec<u8> { _op_2(0b011100, r2, reg_id as u8) }
+    fn stsr(r2: u8, reg_id: usize) -> Vec<u8> { _op_2(0b011101, r2, reg_id as u8) }
     fn orbsu() -> Vec<u8> { _op_2(0b011111, 0, 0b01000) }
     fn cvt_ws(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000010) }
     fn cvt_sw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000011) }
@@ -1448,6 +1446,43 @@ mod tests {
         cpu.run(77).unwrap();
         assert_eq!(cpu.registers[10], 4);
         assert_eq!(cpu.registers[30], 2);
+    }
+
+    #[test]
+    fn errors_on_divide_by_zero() {
+        let (mut cpu, memory) = rom(vec![
+            movea(10, 0, 1 as u16),
+            movea(11, 0, 0 as u16),
+            div(10, 11),
+            divu(10, 11),
+            movea(13, 0, 5),
+        ]);
+
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xffffff80, vec![
+            // Do a side effect
+            add_i(13, 1),
+            // increment the interrupt PC by 2
+            stsr(30, EIPC),
+            add_i(30, 2),
+            ldsr(30, EIPC),
+            // resume normal program
+            reti(),
+        ]);
+
+        // let the first divide-by-0 error
+        cpu.run(68).unwrap();
+        assert_eq!(cpu.pc, 0x0700000a);
+        assert_eq!(cpu.registers[13], 1);
+
+        // let the second divide-by-0 error
+        cpu.run(132).unwrap();
+        assert_eq!(cpu.pc, 0x0700000c);
+        assert_eq!(cpu.registers[13], 2);
+
+        // ensure normal execution has resumed
+        cpu.run(133).unwrap();
+        assert_eq!(cpu.pc, 0x07000010);
+        assert_eq!(cpu.registers[13], 5);
     }
 
     #[test]
@@ -1832,9 +1867,9 @@ mod tests {
             // perform some side effect
             movea(31, 0, 1),
             // increment the interrupt PC by 4
-            stsr(10, EIPC as u8),
+            stsr(10, EIPC),
             addi(10, 10, 4),
-            ldsr(10, EIPC as u8),
+            ldsr(10, EIPC),
             // return
             reti(),
         ]);
