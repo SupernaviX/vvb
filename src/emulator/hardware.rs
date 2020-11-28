@@ -1,5 +1,5 @@
 use super::memory::Memory;
-use crate::emulator::cpu::Interrupt;
+use crate::emulator::cpu::Exception;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -22,7 +22,7 @@ pub struct Hardware {
     next_tick: u64,
     reload_value: u16,
     zero_flag: bool,
-    interrupt: Option<Interrupt>,
+    interrupt: Option<Exception>,
 }
 impl Hardware {
     pub fn new(memory: Rc<RefCell<Memory>>) -> Hardware {
@@ -63,7 +63,7 @@ impl Hardware {
     }
 
     // Get any unacknowledged interrupt from this module
-    pub fn active_interrupt(&self) -> Option<Interrupt> {
+    pub fn active_interrupt(&self) -> Option<Exception> {
         self.interrupt
     }
 
@@ -117,11 +117,7 @@ impl Hardware {
 
                     // Maybe fire the interrupt
                     if (self.memory.borrow().read_byte(TCR) & T_INTERRUPT) != 0 {
-                        self.interrupt = Some(Interrupt {
-                            code: 0xfe10,
-                            level: 2,
-                            handler: 0xfffffe10,
-                        });
+                        self.interrupt = Some(Exception::interrupt(0xfe10, 1));
                     }
 
                     // Reset the timer

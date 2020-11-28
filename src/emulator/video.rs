@@ -74,7 +74,7 @@ pub enum Eye {
     Left,
     Right,
 }
-use crate::emulator::cpu::Interrupt;
+use crate::emulator::cpu::Exception;
 use crate::emulator::video::drawing::DrawingProcess;
 use std::cell::{Ref, RefCell};
 use std::rc::Rc;
@@ -151,13 +151,9 @@ impl Video {
         ((self.cycle / 20000) + 1) * 20000
     }
 
-    pub fn active_interrupt(&self) -> Option<Interrupt> {
+    pub fn active_interrupt(&self) -> Option<Exception> {
         if (self.enabled_interrupts & self.pending_interrupts) != 0 {
-            return Some(Interrupt {
-                code: 0xfe40,
-                level: 4,
-                handler: 0xfffffe40,
-            });
+            return Some(Exception::interrupt(0xfe40, 4));
         }
         None
     }

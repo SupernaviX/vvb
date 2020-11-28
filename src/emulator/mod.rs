@@ -125,11 +125,11 @@ impl Emulator {
             self.hardware.borrow_mut().run(cpu_cycle);
 
             // Components are caught up and their events are handled, now apply any pending interrupts
-            if let Some(interrupt) = self.video.borrow().active_interrupt() {
-                self.cpu.request_interrupt(&interrupt);
+            if let Some(exception) = self.video.borrow().active_interrupt() {
+                self.cpu.raise_exception(exception);
             }
-            if let Some(interrupt) = self.hardware.borrow().active_interrupt() {
-                self.cpu.request_interrupt(&interrupt);
+            if let Some(exception) = self.hardware.borrow().active_interrupt() {
+                self.cpu.raise_exception(exception);
             }
 
             self.cycle = cpu_cycle;

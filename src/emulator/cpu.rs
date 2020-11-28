@@ -96,6 +96,7 @@ impl<THandler: EventHandler> CPU<THandler> {
                 bitstring_cycle,
                 halted,
                 event: None,
+                exception: None,
                 memory: self.memory.borrow_mut(),
                 registers: &mut self.registers,
                 sys_registers: &mut self.sys_registers,
@@ -106,12 +107,19 @@ impl<THandler: EventHandler> CPU<THandler> {
             bitstring_cycle = process.bitstring_cycle;
             halted = process.halted;
             event = process.event;
+            let exception = process.exception;
+
             drop(process);
 
             if let Some(event) = event {
                 if self.handler.handle(event, cycle)? {
                     continue;
                 }
+            }
+            if let Some(exception) = exception {
+                self.raise_exception(exception);
+                pc = self.pc;
+                continue;
             }
             break;
         }
@@ -127,40 +135,46 @@ impl<THandler: EventHandler> CPU<THandler> {
         self.halted = halted;
         Ok(CPUProcessingResult { cycle, event })
     }
-    pub fn request_interrupt(&mut self, interrupt: &Interrupt) {
+    pub fn raise_exception(&mut self, exception: Exception) {
         let mut psw = self.sys_registers[PSW];
 
-        // if interrupts have been disabled, do nothing
-        if (psw & INTERRUPTS_DISABLED_MASK) != 0 {
-            return;
-        }
-        // if the current interrupt is more important, do nothing
-        let current_level = ((psw & INTERRUPT_LEVEL) >> 16) as u8;
-        if current_level > interrupt.level {
-            return;
-        }
+        // Extra logic for interrupts
+        if let ExceptionCategory::Interrupt { level } = exception.category {
+            // if interrupts have been disabled, do nothing
+            if (psw & INTERRUPTS_DISABLED_MASK) != 0 {
+                return;
+            }
 
-        let mut ecr = self.sys_registers[ECR];
-        let pc = self.pc;
+            // if the current interrupt is more important, do nothing
+            let current_level = ((psw & INTERRUPT_LEVEL) >> 16) as u8;
+            if current_level > level {
+                return;
+            }
+
+            // Store the interrupt level in PSW
+            psw &= !INTERRUPT_LEVEL;
+            psw |= (level as u32 + 1) << 16;
+
+            // If the CPU was halted, unhalt it
+            self.halted = false;
+        }
 
         // Save the state from before interrupt handling
-        self.sys_registers[EIPSW] = psw;
-        self.sys_registers[EIPC] = pc as u32;
+        self.sys_registers[EIPSW] = self.sys_registers[PSW];
+        self.sys_registers[EIPC] = self.pc as u32;
 
         // Update the state to process the interrupt
+        let mut ecr = self.sys_registers[ECR];
         ecr &= !EICC;
-        ecr |= interrupt.code as u32;
+        ecr |= exception.code as u32;
         self.sys_registers[ECR] = ecr;
 
         psw |= EX_PENDING_FLAG;
-        psw &= !INTERRUPT_LEVEL;
-        psw |= (interrupt.level as u32 + 1) << 16;
         psw |= INTERRUPT_DISABLE_FLAG;
         psw &= !ADDRESS_TRAP_ENABLE_FLAG;
         self.sys_registers[PSW] = psw;
 
-        self.pc = interrupt.handler;
-        self.halted = false;
+        self.pc = exception.handler;
     }
 }
 
@@ -182,10 +196,33 @@ pub trait EventHandler {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Interrupt {
-    pub code: u16,
-    pub level: u8,
-    pub handler: usize,
+pub enum ExceptionCategory {
+    Interrupt { level: u8 },
+    Error,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Exception {
+    code: u16,
+    handler: usize,
+    category: ExceptionCategory,
+}
+
+impl Exception {
+    pub fn interrupt(code: u16, level: u8) -> Self {
+        Exception {
+            code,
+            handler: 0xffff0000 | code as usize,
+            category: ExceptionCategory::Interrupt { level },
+        }
+    }
+    pub fn error(code: u16, handler: usize) -> Self {
+        Exception {
+            code,
+            handler,
+            category: ExceptionCategory::Error,
+        }
+    }
 }
 
 struct CPUProcess<'a> {
@@ -194,6 +231,7 @@ struct CPUProcess<'a> {
     bitstring_cycle: u64,
     halted: bool,
     event: Option<Event>,
+    exception: Option<Exception>,
     memory: RefMut<'a, Memory>,
     registers: &'a mut [u32; 32],
     sys_registers: &'a mut [u32; 32],
@@ -288,23 +326,25 @@ impl<'a> CPUProcess<'a> {
                         0b001000 => self.xb(instr),
                         0b001001 => self.xh(instr),
                         _ => {
-                            // TODO this should trap
-                            return Err(anyhow::anyhow!(
-                                "Unrecognized subopcode {:06b} at address 0x{:08x}",
+                            // Invalid opcode
+                            self.pc -= 4;
+                            log::warn!(
+                                "Invalid subopcode 0b{:06b} at 0x{:08x}",
                                 subopcode,
-                                self.pc - 4
-                            ));
+                                self.pc
+                            );
+                            self.exception = Some(Exception::error(0xff90, 0xffffff90));
+                            return Ok(());
                         }
                     }
                 }
 
                 _ => {
-                    // TODO this should trap
-                    return Err(anyhow::anyhow!(
-                        "Unrecognized opcode {:06b} at address 0x{:08x}",
-                        opcode,
-                        self.pc - 2
-                    ));
+                    // Invalid opcode
+                    self.pc -= 2;
+                    log::warn!("Invalid opcode 0b{:06b} at 0x{:08x}", opcode, self.pc);
+                    self.exception = Some(Exception::error(0xff90, 0xffffff90));
+                    return Ok(());
                 }
             };
         }
@@ -990,7 +1030,7 @@ impl<'a> CPUProcess<'a> {
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Interrupt, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event};
+    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event};
     use crate::emulator::memory::Memory;
     use anyhow::Result;
     use std::cell::{RefCell};
@@ -1082,6 +1122,12 @@ mod tests {
     fn xb(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001000) }
     fn xh(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001001) }
     fn reti() -> Vec<u8> { _op_2(0b011001, 0, 0) }
+    fn illegal(bytes: usize) -> Vec<u8> {
+        let illegal_opcode = 0b011011;
+        let mut res = vec![0; bytes];
+        res[1] = illegal_opcode << 2;
+        res
+    }
 
     struct NoopEventHandler;
     impl EventHandler for NoopEventHandler {
@@ -1695,7 +1741,7 @@ mod tests {
     }
 
     #[test]
-    fn can_request_interrupt() {
+    fn can_raise_interrupt() {
         let (mut cpu, memory) = rom(vec![
             movea(31, 0, 1),
         ]);
@@ -1705,11 +1751,8 @@ mod tests {
         ]);
         cpu.sys_registers[PSW] = 0;
 
-        cpu.request_interrupt(&Interrupt {
-            code: 0xfe10,
-            level: 1,
-            handler: 0xfffffe10,
-        });
+        cpu.raise_exception(Exception::interrupt(0xfe10, 1));
+
         assert_eq!(cpu.sys_registers[PSW], EX_PENDING_FLAG
             | 0x20000 // interrupt level 1
             | INTERRUPT_DISABLE_FLAG
@@ -1728,7 +1771,7 @@ mod tests {
     }
 
     #[test]
-    fn can_not_request_interrupt_when_disabled() {
+    fn can_not_raise_interrupt_when_disabled() {
         let (mut cpu, memory) = rom(vec![
             movea(31, 0, 1),
             movea(31, 0, 2),
@@ -1738,30 +1781,26 @@ mod tests {
             movea(31, 0, 9001),
         ]);
 
-        let interrupt = Interrupt {
-            code: 0xfe10,
-            level: 1,
-            handler: 0xfffffe10
-        };
+        let interrupt = Exception::interrupt(0xfe10, 1);
 
         cpu.sys_registers[PSW] = INTERRUPT_DISABLE_FLAG;
-        cpu.request_interrupt(&interrupt);
+        cpu.raise_exception(interrupt);
         cpu.run(1).unwrap();
         assert_eq!(cpu.registers[31], 1);
 
         cpu.sys_registers[PSW] = EX_PENDING_FLAG;
-        cpu.request_interrupt(&interrupt);
+        cpu.raise_exception(interrupt);
         cpu.run(2).unwrap();
         assert_eq!(cpu.registers[31], 2);
 
         cpu.sys_registers[PSW] = NMI_PENDING_FLAG;
-        cpu.request_interrupt(&interrupt);
+        cpu.raise_exception(interrupt);
         cpu.run(3).unwrap();
         assert_eq!(cpu.registers[31], 3);
     }
 
     #[test]
-    fn can_not_request_interrupt_when_current_interrupt_takes_priority() {
+    fn can_not_raise_interrupt_when_current_interrupt_takes_priority() {
         let (mut cpu, memory) = rom(vec![
             movea(31, 0, 1),
         ]);
@@ -1773,22 +1812,39 @@ mod tests {
         ]);
         cpu.sys_registers[PSW] = 0;
 
-        let high_priority_interrupt = Interrupt {
-            code: 0xfe40,
-            level: 4,
-            handler: 0xfffffe40,
-        };
-        let low_priority_interrupt = Interrupt {
-            code: 0xfe10,
-            level: 1,
-            handler: 0xfffffe10,
-        };
-        cpu.request_interrupt(&high_priority_interrupt);
+        let high_priority_interrupt = Exception::interrupt(0xfe40, 4);
+        let low_priority_interrupt = Exception::interrupt(0xfe10, 1);
+        cpu.raise_exception(high_priority_interrupt);
         cpu.sys_registers[PSW] ^= EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG;
-        cpu.request_interrupt(&low_priority_interrupt);
+        cpu.raise_exception(low_priority_interrupt);
 
         cpu.run(1).unwrap();
         assert_eq!(cpu.registers[31], 3);
+    }
+
+    #[test]
+    fn can_raise_error_on_illegal_opcode() {
+        let (mut cpu, memory) = rom(vec![
+            illegal(4),
+            movea(30, 0, 2),
+        ]);
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xffffff90, vec![
+            // perform some side effect
+            movea(31, 0, 1),
+            // increment the interrupt PC by 4
+            stsr(10, EIPC as u8),
+            addi(10, 10, 4),
+            ldsr(10, EIPC as u8),
+            // return
+            reti(),
+        ]);
+
+        cpu.run(28).unwrap();
+        assert_eq!(cpu.registers[31], 1);
+        assert_eq!(cpu.registers[30], 0);
+
+        cpu.run(29).unwrap();
+        assert_eq!(cpu.registers[30], 2);
     }
 
     #[test]
@@ -1825,11 +1881,7 @@ mod tests {
         assert_eq!(res.cycle, 50);
         assert_eq!(cpu.registers[31], 1);
 
-        cpu.request_interrupt(&Interrupt {
-            code: 0xfe40,
-            level: 4,
-            handler: 0xfffffe40,
-        });
+        cpu.raise_exception(Exception::interrupt(0xfe40, 4));
 
         let res = cpu.run(61).unwrap();
         assert_eq!(res.cycle, 61);
