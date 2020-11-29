@@ -15,10 +15,11 @@ const INTCLR: usize = 0x0005f804;
 
 // flags for the interrupt registers
 const XPEND: u16 = 0x4000;
+const FRAMESTART: u16 = 0x0010;
+const GAMESTART: u16 = 0x0008;
 const RFBEND: u16 = 0x0004;
 const LFBEND: u16 = 0x0002;
-const FRAMESTART: u16 = 0x0010;
-const DP_INTERRUPTS: u16 = RFBEND | LFBEND | FRAMESTART;
+const DP_INTERRUPTS: u16 = FRAMESTART | GAMESTART | RFBEND | LFBEND;
 const XP_INTERRUPTS: u16 = XPEND;
 
 const DPSTTS: usize = 0x0005f820;
@@ -41,6 +42,8 @@ const DP_READONLY_MASK: u16 = FCLK | SCANRDY | R1BSY | L1BSY | R0BSY | L0BSY;
 const BRTA: usize = 0x0005f824;
 const BRTB: usize = 0x0005f826;
 const BRTC: usize = 0x0005f828;
+
+const FRMCYC: usize = 0x0005f82e;
 
 const CTA: usize = 0x0005f830;
 
@@ -94,6 +97,7 @@ pub struct Video {
     memory: Rc<RefCell<Memory>>,
     displaying: bool,
     drawing: bool,
+    game_frame_counter: u8,
     xp_module: DrawingProcess,
     dpctrl_flags: u16,
     xpctrl_flags: u16,
@@ -110,6 +114,7 @@ impl Video {
             memory,
             displaying: false,
             drawing: false,
+            game_frame_counter: 0,
             xp_module: DrawingProcess::new(),
             dpctrl_flags: SCANRDY,
             xpctrl_flags: 0,
@@ -128,6 +133,7 @@ impl Video {
         self.cycle = 0;
         self.displaying = false;
         self.drawing = false;
+        self.game_frame_counter = 0;
         self.dpctrl_flags = SCANRDY;
         self.xpctrl_flags = 0;
         self.pending_interrupts = 0;
@@ -230,9 +236,17 @@ impl Video {
             match curr_ms % 20 {
                 0 => {
                     // If we're starting a display frame, check what's enabled
-                    // TODO: only start drawing at the start of a game frame
                     self.displaying = (dpctrl & DISP) != 0 && (dpctrl & DPRST) == 0;
-                    self.drawing = (xpctrl & XPEN) != 0;
+
+                    // If we're starting a game frame, start drawing (if enabled)
+                    if self.game_frame_counter == 0 {
+                        self.drawing = (xpctrl & XPEN) != 0;
+                        let frmcyc = self.memory.borrow().read_halfword(FRMCYC) & 0x0f;
+                        self.game_frame_counter = frmcyc as u8;
+                    } else {
+                        self.drawing = false;
+                        self.game_frame_counter -= 1;
+                    }
 
                     // Frame clock up
                     if self.displaying {
@@ -246,6 +260,7 @@ impl Video {
                             Buffer0 => F0BSY,
                             Buffer1 => F1BSY,
                         };
+                        self.pending_interrupts |= GAMESTART;
 
                         // Switch to displaying the other buffer
                         self.display_buffer = self.display_buffer.toggle();
@@ -452,7 +467,8 @@ impl Video {
 mod tests {
     use crate::emulator::memory::Memory;
     use crate::emulator::video::{
-        Video, DISP, DPCTRL, DPRST, FRAMESTART, INTCLR, INTENB, INTPND, XPEND, XPRST,
+        Video, DISP, DPCTRL, DPRST, FRAMESTART, FRMCYC, GAMESTART, INTCLR, INTENB, INTPND, XPEND,
+        XPRST,
     };
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
@@ -721,6 +737,40 @@ mod tests {
         video.run(ms_to_cycles(41)).unwrap();
         assert_eq!(memory.borrow().read_halfword(INTPND) & FRAMESTART, 0);
         assert!(video.active_interrupt().is_none());
+    }
+
+    #[test]
+    fn can_trigger_gamestart_interrupt_on_game_frames() {
+        let (mut video, memory) = get_video();
+
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP);
+        write_xpctrl(&mut video, &memory, XPEN);
+        // set FRMCYC to 1 so that there are 1+1==2 display frames per game frame
+        // note that this only takes effect after the first game frame
+        memory.borrow_mut().write_halfword(FRMCYC, 1);
+
+        // While INTENB is unset, set INTPND but don't trigger interrupts
+        video.run(ms_to_cycles(37)).unwrap();
+        assert_ne!(memory.borrow().read_halfword(INTPND) & GAMESTART, 0);
+        assert!(video.active_interrupt().is_none());
+
+        // Interrupt can be cleared by writing to DPRST
+        write_dpctrl(&mut video, &memory, DISP | DPRST);
+        video.run(ms_to_cycles(38)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(INTPND) & GAMESTART, 0);
+
+        // Interrupt is NOT triggered on FCLK going high, because only one display frame has passed
+        write_dpctrl(&mut video, &memory, DISP);
+        write_intenb(&mut video, &memory, GAMESTART);
+        video.run(ms_to_cycles(40)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(INTPND) & GAMESTART, 0);
+        assert!(video.active_interrupt().is_none());
+
+        // One display frame later, the interrupt is triggered for real
+        video.run(ms_to_cycles(60)).unwrap();
+        assert_ne!(memory.borrow().read_halfword(INTPND) & GAMESTART, 0);
+        assert!(video.active_interrupt().is_some());
     }
 
     #[test]
