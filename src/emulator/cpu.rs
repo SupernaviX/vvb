@@ -35,6 +35,9 @@ fn sign_bit(value: u32) -> bool {
 }
 
 fn bit_range_mask(start: u32, length: u32) -> u32 {
+    if length == 0 {
+        return 0;
+    }
     ((i32::MIN >> (length - 1)) as u32) >> (32 - length - start)
 }
 
@@ -764,14 +767,15 @@ impl<'a> CPUProcess<'a> {
 
     fn bitstring_operation(&mut self, instr: u16) {
         let (_, opcode) = self.parse_format_ii_opcode(instr);
-        let is_search = (opcode & 0b00010) != 0;
-        if is_search {
-            // TODO: support bitwise search operations
-            log::error!("Bitwise search 0b{:05b} not supported", opcode);
-            self.pc -= 4;
-            self.exception = Some(Exception::error(0xff90, 0xffffff90));
-            return;
+        let is_bitwise = (opcode & 0b01000) != 0;
+        if is_bitwise {
+            self.bitwise_operation(opcode)
+        } else {
+            self.bitstring_search(opcode);
         }
+    }
+
+    fn bitwise_operation(&mut self, opcode: u32) {
         if self.bitstring_cycle == 0 {
             // clear lower bits of word addresses
             self.registers[30] &= 0xfffffffc;
@@ -851,6 +855,106 @@ impl<'a> CPUProcess<'a> {
             self.cycle += 12;
         }
         if length == 0 {
+            // bitstring operation complete!
+            self.bitstring_cycle = 0;
+        } else {
+            // try again next cycle
+            self.bitstring_cycle += 1;
+            self.pc -= 2;
+        }
+    }
+
+    fn bitstring_search(&mut self, opcode: u32) {
+        if self.bitstring_cycle == 0 {
+            // clear lower bits of word address
+            self.registers[30] &= 0xfffffffc;
+            // clear higher bits of bit offset
+            self.registers[27] &= 0x0000001f;
+            // set zero flag until we find a match
+            self.sys_registers[PSW] |= ZERO_FLAG;
+        }
+        let mut src_address = self.registers[30] as usize;
+        let mut res_offset = self.registers[29];
+        let mut length = self.registers[28];
+        let mut src_offset = self.registers[27];
+
+        let search_down = opcode & 0b00001 != 0;
+        let search_for_1 = opcode & 0b00010 != 0;
+
+        let mut src = self.memory.read_word(src_address);
+        if search_for_1 {
+            src = !src;
+        }
+        // below this point, assume we're finding the first 0 in some direction
+
+        let found;
+        let skipped;
+        let processed;
+        if search_down {
+            let low_bits_ignored = (src_offset + 1) - length.min(src_offset + 1);
+            let high_bits_ignored = 31 - src_offset;
+            let mask_to_ignore = {
+                let mask_low = bit_range_mask(0, low_bits_ignored);
+                let mask_high = bit_range_mask(32 - high_bits_ignored, high_bits_ignored);
+                mask_low | mask_high
+            };
+            let unmatching_bits = u32::leading_ones(src | mask_to_ignore);
+            found = unmatching_bits != 32;
+            if found {
+                skipped = unmatching_bits - high_bits_ignored;
+                processed = skipped + 1;
+            } else {
+                skipped = unmatching_bits - low_bits_ignored - high_bits_ignored;
+                processed = skipped;
+            }
+            if processed > src_offset {
+                src_address -= 4;
+                src_offset = 31;
+            } else {
+                src_offset -= processed;
+            }
+        } else {
+            let low_bits_ignored = src_offset;
+            let high_bits_ignored = (32 - src_offset) - length.min(32 - src_offset);
+            let mask_to_ignore = {
+                let mask_low = bit_range_mask(0, low_bits_ignored);
+                let mask_high = bit_range_mask(32 - high_bits_ignored, high_bits_ignored);
+                mask_low | mask_high
+            };
+            let unmatching_bits = u32::trailing_ones(src | mask_to_ignore);
+            found = unmatching_bits != 32;
+            if found {
+                skipped = unmatching_bits - low_bits_ignored;
+                processed = skipped + 1;
+            } else {
+                skipped = unmatching_bits - low_bits_ignored - high_bits_ignored;
+                processed = skipped;
+            }
+            if src_offset + processed > 31 {
+                src_address += 4;
+                src_offset = 0;
+            } else {
+                src_offset += processed;
+            }
+        }
+        res_offset += skipped;
+        length -= processed;
+
+        if found {
+            self.sys_registers[PSW] &= !ZERO_FLAG;
+        }
+        self.registers[30] = src_address as u32;
+        self.registers[29] = res_offset;
+        self.registers[28] = length;
+        self.registers[27] = src_offset;
+
+        // use the worst-case cycle count for simplicity
+        if self.bitstring_cycle == 0 {
+            self.cycle += 51;
+        } else {
+            self.cycle += 3;
+        }
+        if found || length == 0 {
             // bitstring operation complete!
             self.bitstring_cycle = 0;
         } else {
@@ -1108,6 +1212,8 @@ mod tests {
     fn ldsr(r2: u8, reg_id: usize) -> Vec<u8> { _op_2(0b011100, r2, reg_id as u8) }
     fn stsr(r2: u8, reg_id: usize) -> Vec<u8> { _op_2(0b011101, r2, reg_id as u8) }
     fn orbsu() -> Vec<u8> { _op_2(0b011111, 0, 0b01000) }
+    fn sch0bsd() -> Vec<u8> { _op_2(0b011111, 0, 0b00001) }
+    fn sch1bsu() -> Vec<u8> { _op_2(0b011111, 0, 0b00010) }
     fn cvt_ws(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000010) }
     fn cvt_sw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000011) }
     fn addf_s(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000100) }
@@ -1710,6 +1816,102 @@ mod tests {
         assert_eq!(cpu.registers[26], 18);
         assert_eq!(memory.borrow().read_word(0x05001000), 0xddd55555);
         assert_eq!(memory.borrow().read_word(0x05001004), 0x5555dddd);
+    }
+
+    #[test]
+    fn can_run_downwards_bitstring_search() {
+        let (mut cpu, memory) = rom(vec![
+            movhi(10, 0, 0x0500),
+            movea(12, 0, u16::MAX),
+            sub(12, 10),
+            st_w(12, 10, 0),
+            movea(12, 0, u16::MAX),
+            st_w(12, 10, 4),
+            movea(30, 10, 4),
+            movea(28, 0, 34),
+            movea(27, 0, 26),
+            sch0bsd(),
+        ]);
+
+        let setup_cycles = 15;
+        let first_cycle = setup_cycles + 51;
+        let final_cycle = first_cycle + 3;
+        let bitstring_op_pc = 0x07000022;
+
+        cpu.run(setup_cycles).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc);
+        assert_eq!(cpu.registers[30], 0x05000004);
+        assert_eq!(cpu.registers[29], 0);
+        assert_eq!(cpu.registers[28], 34);
+        assert_eq!(cpu.registers[27], 26);
+        assert_eq!(memory.borrow().read_word(0x05000000), 0xfaffffff);
+        assert_eq!(memory.borrow().read_word(0x05000004), 0xffffffff);
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, 0);
+
+        // First cycle, instruction shouldn't be done yet
+        cpu.run(first_cycle).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc);
+        assert_eq!(cpu.registers[30], 0x05000000);
+        assert_eq!(cpu.registers[29], 27);
+        assert_eq!(cpu.registers[28], 7);
+        assert_eq!(cpu.registers[27], 31);
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, ZERO_FLAG);
+
+        // Final cycle, we're done
+        cpu.run(final_cycle).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc + 2);
+        assert_eq!(cpu.registers[30], 0x05000000);
+        assert_eq!(cpu.registers[29], 32);
+        assert_eq!(cpu.registers[28], 1);
+        assert_eq!(cpu.registers[27], 25);
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, 0);
+    }
+
+    #[test]
+    fn can_run_upwards_bitstring_search() {
+        let (mut cpu, memory) = rom(vec![
+            movhi(10, 0, 0x0500),
+            st_w(12, 10, 0),
+            movea(12, 0, 8),
+            st_w(12, 10, 4),
+            movea(30, 10, 0),
+            movea(28, 0, 34),
+            movea(27, 0, 26),
+            sch1bsu(),
+        ]);
+
+        let setup_cycles = 13;
+        let first_cycle = setup_cycles + 51;
+        let final_cycle = first_cycle + 3;
+        let bitstring_op_pc = 0x0700001c;
+
+        cpu.run(setup_cycles).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc);
+        assert_eq!(cpu.registers[30], 0x05000000);
+        assert_eq!(cpu.registers[29], 0);
+        assert_eq!(cpu.registers[28], 34);
+        assert_eq!(cpu.registers[27], 26);
+        assert_eq!(memory.borrow().read_word(0x05000000), 0x00000000);
+        assert_eq!(memory.borrow().read_word(0x05000004), 0x00000008);
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, 0);
+
+        // First cycle, instruction shouldn't be done yet
+        cpu.run(first_cycle).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc);
+        assert_eq!(cpu.registers[30], 0x05000004);
+        assert_eq!(cpu.registers[29], 6);
+        assert_eq!(cpu.registers[28], 28);
+        assert_eq!(cpu.registers[27], 0);
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, ZERO_FLAG);
+
+        // Final cycle, we're done
+        cpu.run(final_cycle).unwrap();
+        assert_eq!(cpu.pc, bitstring_op_pc + 2);
+        assert_eq!(cpu.registers[30], 0x05000004);
+        assert_eq!(cpu.registers[29], 9);
+        assert_eq!(cpu.registers[28], 24);
+        assert_eq!(cpu.registers[27], 4);
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, 0);
     }
 
     #[test]
