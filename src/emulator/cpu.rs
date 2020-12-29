@@ -307,6 +307,7 @@ impl<'a> CPUProcess<'a> {
 
                 0b011110 => self.sei(),
                 0b010110 => self.cli(),
+                0b011000 => self.trap(instr),
                 0b011001 => self.reti(),
 
                 0b011111 => self.bitstring_operation(instr),
@@ -734,6 +735,7 @@ impl<'a> CPUProcess<'a> {
             self.memory.write_word(address, exchange);
         }
         self.set_register(reg2, value);
+        self.cycle += 26;
     }
 
     fn halt(&mut self) {
@@ -770,6 +772,19 @@ impl<'a> CPUProcess<'a> {
         let psw = self.sys_registers[PSW];
         self.sys_registers[PSW] = psw & !INTERRUPT_DISABLE_FLAG;
         self.cycle += 12;
+    }
+
+    fn trap(&mut self, instr: u16) {
+        let (_, vector) = self.parse_format_ii_opcode(instr);
+        let vector = vector as u16 & 0x1f;
+        let code = 0xffa0 + vector;
+        let handler = if vector > 0x0f {
+            0xffffffb0
+        } else {
+            0xffffffa0
+        };
+        self.exception = Some(Exception::error(code, handler));
+        self.cycle += 15;
     }
 
     fn reti(&mut self) {
@@ -1143,7 +1158,7 @@ impl<'a> CPUProcess<'a> {
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event};
+    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR};
     use crate::emulator::memory::Memory;
     use anyhow::Result;
     use std::cell::{RefCell};
@@ -1237,6 +1252,7 @@ mod tests {
     fn rev(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001010) }
     fn xb(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001000) }
     fn xh(r2: u8) -> Vec<u8> { _op_7(0b111110, r2, 0, 0b001001) }
+    fn trap(vector: u8) -> Vec<u8> { _op_2(0b011000, 0, vector) }
     fn reti() -> Vec<u8> { _op_2(0b011001, 0, 0) }
     fn illegal(bytes: usize) -> Vec<u8> {
         let illegal_opcode = 0b011011;
@@ -2126,6 +2142,34 @@ mod tests {
         assert_eq!(cpu.registers[30], 0);
 
         cpu.run(29).unwrap();
+        assert_eq!(cpu.registers[30], 2);
+    }
+
+    #[test]
+    fn can_raise_error_on_trap() {
+        let (mut cpu, memory) = rom(vec![
+            trap(0x13),
+            movea(30, 0, 2),
+        ]);
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xffffffb0, vec![
+            // do a side effect
+            movea(31, 0, 1),
+            // return without touching the interrupt PC
+            reti(),
+        ]);
+
+        cpu.run(15).unwrap();
+        // Assert we're in the interrupt handler
+        assert_eq!(cpu.pc, 0xffffffb0);
+        assert_eq!(cpu.sys_registers[ECR], 0x0000ffb3);
+
+        cpu.run(26).unwrap();
+        // Assert we're back in normal code
+        assert_eq!(cpu.pc, 0x07000002);
+        assert_eq!(cpu.registers[31], 1);
+
+        cpu.run(27).unwrap();
+        assert_eq!(cpu.pc, 0x07000006);
         assert_eq!(cpu.registers[30], 2);
     }
 
