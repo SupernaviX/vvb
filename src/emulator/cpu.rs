@@ -297,6 +297,7 @@ impl<'a> CPUProcess<'a> {
                 0b000110 => self.jmp(instr),
                 0b101010 => self.jr(instr),
 
+                0b111010 => self.caxi(instr),
                 0b010010 => self.setf(instr),
 
                 0b011010 => self.halt(),
@@ -720,6 +721,19 @@ impl<'a> CPUProcess<'a> {
         let disp = self.parse_format_iv_opcode(instr);
         self.pc = (self.pc as i32 + disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
+    }
+
+    fn caxi(&mut self, instr: u16) {
+        let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
+        let address = (self.registers[reg1] as i32 + disp) as usize;
+        let value = self.memory.read_word(address);
+        let compare = self.registers[reg2];
+        self._subtract(compare, value);
+        if compare == value {
+            let exchange = self.registers[30];
+            self.memory.write_word(address, exchange);
+        }
+        self.set_register(reg2, value);
     }
 
     fn halt(&mut self) {
@@ -1214,6 +1228,7 @@ mod tests {
     fn orbsu() -> Vec<u8> { _op_2(0b011111, 0, 0b01000) }
     fn sch0bsd() -> Vec<u8> { _op_2(0b011111, 0, 0b00001) }
     fn sch1bsu() -> Vec<u8> { _op_2(0b011111, 0, 0b00010) }
+    fn caxi(r2: u8, r1: u8, disp: i16) -> Vec<u8> { _op_6(0b111010, r2, r1, disp) }
     fn cvt_ws(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000010) }
     fn cvt_sw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000011) }
     fn addf_s(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000100) }
@@ -1912,6 +1927,39 @@ mod tests {
         assert_eq!(cpu.registers[28], 24);
         assert_eq!(cpu.registers[27], 4);
         assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, 0);
+    }
+
+    #[test]
+    fn caxi_exchanges_when_r2_matches() {
+        let (mut cpu, memory) = rom(vec![
+            movhi(10, 0, 0x0500),
+            movea(12, 0, 1),
+            st_w(12, 10, 4),
+            movea(30, 0, 2),
+            caxi(12, 10, 4),
+        ]);
+
+        cpu.run(33).unwrap();
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, ZERO_FLAG);
+        assert_eq!(memory.borrow().read_word(0x05000004), 0x00000002);
+        assert_eq!(cpu.registers[12], 1);
+    }
+
+    #[test]
+    fn caxi_does_not_exchange_when_r2_does_not_match() {
+        let (mut cpu, memory) = rom(vec![
+            movhi(10, 0, 0x0500),
+            movea(12, 0, 1),
+            st_w(12, 10, 4),
+            movea(12, 0, 2),
+            movea(30, 0, 3),
+            caxi(12, 10, 4),
+        ]);
+
+        cpu.run(34).unwrap();
+        assert_eq!(cpu.sys_registers[PSW] & ZERO_FLAG, 0);
+        assert_eq!(memory.borrow().read_word(0x05000004), 0x00000001);
+        assert_eq!(cpu.registers[12], 1);
     }
 
     #[test]
