@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 // ECR: exception cause register
 const ECR: usize = 4;
+const FECC: u32 = 0xffff0000;
 const EICC: u32 = 0x0000ffff;
 // PSW: program status word
 const PSW: usize = 5;
@@ -12,6 +13,10 @@ const PSW: usize = 5;
 const EIPC: usize = 0;
 // EIPSW: exception interrupt PSW
 const EIPSW: usize = 1;
+// FEPC: fatal error PC (for duplexed exceptions)
+const FEPC: usize = 2;
+// FEPSW: fatal error PSW (for duplexed exceptions)
+const FEPSW: usize = 3;
 
 // PSW flags and masks
 const INTERRUPT_LEVEL: u32 = 0x000f0000;
@@ -76,11 +81,11 @@ impl<THandler: EventHandler> CPU<THandler> {
         }
         for sys_reg in 0..self.sys_registers.len() {
             self.sys_registers[sys_reg] = match sys_reg {
-                4 => 0x0000fff0,  // ECR
-                5 => 0x00008000,  // PSW
-                6 => 0x00008100,  // PIR
-                7 => 0x000000E0,  // TKCW
-                30 => 0x00000004, // it is a mystery
+                4 => 0x0000fff0,       // ECR
+                5 => NMI_PENDING_FLAG, // PSW
+                6 => 0x00008100,       // PIR
+                7 => 0x000000e0,       // TKCW
+                30 => 0x00000004,      // it is a mystery
                 _ => 0,
             };
         }
@@ -154,24 +159,54 @@ impl<THandler: EventHandler> CPU<THandler> {
 
             // If the CPU was halted, unhalt it
             self.halted = false;
+        } else if psw & NMI_PENDING_FLAG != 0 {
+            // If we hit a fatal exception, write some state to VRAM and give up
+            let code = 0xffff0000 | (exception.code as u32);
+            let pc = self.pc as u32;
+            log::error!(
+                "Fatal error! code: 0x{:08x}, PSW: 0x{:08x}, PC: 0x{:08x}",
+                code,
+                psw,
+                pc
+            );
+
+            let mut memory = self.memory.borrow_mut();
+            memory.write_word(0x00000000, code);
+            memory.write_word(0x00000004, psw);
+            memory.write_word(0x00000008, pc);
+
+            self.halted = true;
+            return;
         }
 
-        // Save the state from before interrupt handling
-        self.sys_registers[EIPSW] = self.sys_registers[PSW];
-        self.sys_registers[EIPC] = self.pc as u32;
-
-        // Update the state to process the interrupt
         let mut ecr = self.sys_registers[ECR];
-        ecr &= !EICC;
-        ecr |= exception.code as u32;
+        // Duplexed exceptions (exceptions thrown during exceptions) store state in different areas
+        if psw & EX_PENDING_FLAG != 0 {
+            // Save the PC and PSW to restore
+            self.sys_registers[FEPSW] = self.sys_registers[PSW];
+            self.sys_registers[FEPC] = self.pc as u32;
+
+            // Update ECR, PSW, and PC to reflect the interrupt
+            ecr &= !FECC;
+            ecr |= (exception.code as u32) << 16;
+            psw |= NMI_PENDING_FLAG;
+            self.pc = 0xffffffd0;
+        } else {
+            // Save the PC and PSW to restore
+            self.sys_registers[EIPSW] = self.sys_registers[PSW];
+            self.sys_registers[EIPC] = self.pc as u32;
+
+            // Update ECR, PSW, and PC to reflect the interrupt
+            ecr &= !EICC;
+            ecr |= exception.code as u32;
+            psw |= EX_PENDING_FLAG;
+            self.pc = exception.handler;
+        }
         self.sys_registers[ECR] = ecr;
 
-        psw |= EX_PENDING_FLAG;
         psw |= INTERRUPT_DISABLE_FLAG;
         psw &= !ADDRESS_TRAP_ENABLE_FLAG;
         self.sys_registers[PSW] = psw;
-
-        self.pc = exception.handler;
     }
 }
 
@@ -1158,7 +1193,7 @@ impl<'a> CPUProcess<'a> {
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR};
+    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR, FEPC, FEPSW};
     use crate::emulator::memory::Memory;
     use anyhow::Result;
     use std::cell::{RefCell};
@@ -1585,6 +1620,7 @@ mod tests {
     #[test]
     fn errors_on_divide_by_zero() {
         let (mut cpu, memory) = rom(vec![
+            ldsr(0, PSW), // clear PSW to clear the NMI_PENDING flag
             movea(10, 0, 1 as u16),
             movea(11, 0, 0 as u16),
             div(10, 11),
@@ -1604,18 +1640,18 @@ mod tests {
         ]);
 
         // let the first divide-by-0 error
-        cpu.run(68).unwrap();
-        assert_eq!(cpu.pc, 0x0700000a);
+        cpu.run(76).unwrap();
+        assert_eq!(cpu.pc, 0x0700000c);
         assert_eq!(cpu.registers[13], 1);
 
         // let the second divide-by-0 error
-        cpu.run(132).unwrap();
-        assert_eq!(cpu.pc, 0x0700000c);
+        cpu.run(140).unwrap();
+        assert_eq!(cpu.pc, 0x0700000e);
         assert_eq!(cpu.registers[13], 2);
 
         // ensure normal execution has resumed
-        cpu.run(133).unwrap();
-        assert_eq!(cpu.pc, 0x07000010);
+        cpu.run(141).unwrap();
+        assert_eq!(cpu.pc, 0x07000012);
         assert_eq!(cpu.registers[13], 5);
     }
 
@@ -2123,6 +2159,7 @@ mod tests {
     #[test]
     fn can_raise_error_on_illegal_opcode() {
         let (mut cpu, memory) = rom(vec![
+            ldsr(0, PSW), // clear PSW to clear the NMI_PENDING flag
             illegal(4),
             movea(30, 0, 2),
         ]);
@@ -2137,17 +2174,18 @@ mod tests {
             reti(),
         ]);
 
-        cpu.run(28).unwrap();
+        cpu.run(36).unwrap();
         assert_eq!(cpu.registers[31], 1);
         assert_eq!(cpu.registers[30], 0);
 
-        cpu.run(29).unwrap();
+        cpu.run(37).unwrap();
         assert_eq!(cpu.registers[30], 2);
     }
 
     #[test]
     fn can_raise_error_on_trap() {
         let (mut cpu, memory) = rom(vec![
+            ldsr(0, PSW), // clear PSW to clear the NMI_PENDING flag
             trap(0x13),
             movea(30, 0, 2),
         ]);
@@ -2158,18 +2196,18 @@ mod tests {
             reti(),
         ]);
 
-        cpu.run(15).unwrap();
+        cpu.run(23).unwrap();
         // Assert we're in the interrupt handler
         assert_eq!(cpu.pc, 0xffffffb0);
         assert_eq!(cpu.sys_registers[ECR], 0x0000ffb3);
 
-        cpu.run(26).unwrap();
+        cpu.run(34).unwrap();
         // Assert we're back in normal code
-        assert_eq!(cpu.pc, 0x07000002);
+        assert_eq!(cpu.pc, 0x07000004);
         assert_eq!(cpu.registers[31], 1);
 
-        cpu.run(27).unwrap();
-        assert_eq!(cpu.pc, 0x07000006);
+        cpu.run(35).unwrap();
+        assert_eq!(cpu.pc, 0x07000008);
         assert_eq!(cpu.registers[30], 2);
     }
 
@@ -2215,5 +2253,41 @@ mod tests {
 
         cpu.run(62).unwrap();
         assert_eq!(cpu.registers[31], 3);
+    }
+
+    #[test]
+    fn can_raise_duplexed_and_fatal_exceptions() {
+        let (mut cpu, memory) = rom(vec![
+            ldsr(0, PSW), // clear PSW to clear the NMI_PENDING flag
+            trap(0x09), // immediately error
+        ]);
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xffffffa0, vec![
+            trap(0x12), // immediately error again
+        ]);
+        add_interrupt_handler(&mut memory.borrow_mut(), 0xffffffd0, vec![
+            trap(0x07), // you have failed me for the last time
+        ]);
+
+        // Run until the first error
+        cpu.run(23).unwrap();
+        assert_eq!(cpu.pc, 0xffffffa0);
+        assert_eq!(cpu.sys_registers[PSW], EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG);
+        assert_eq!(cpu.sys_registers[EIPC], 0x07000004);
+        assert_eq!(cpu.sys_registers[EIPSW], 0x00000000);
+        assert_eq!(cpu.sys_registers[ECR], 0x0000ffa9);
+
+        // Run until the second error
+        cpu.run(38).unwrap();
+        assert_eq!(cpu.pc, 0xffffffd0);
+        assert_eq!(cpu.sys_registers[PSW], NMI_PENDING_FLAG | EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG);
+        assert_eq!(cpu.sys_registers[FEPC], 0xffffffa2);
+        assert_eq!(cpu.sys_registers[FEPSW], EX_PENDING_FLAG | INTERRUPT_DISABLE_FLAG);
+        assert_eq!(cpu.sys_registers[ECR], 0xffb2ffa9);
+
+        // Run until the final, fatal error
+        cpu.run(53).unwrap();
+        assert_eq!(memory.borrow().read_word(0x00000000), 0xffffffa7);
+        assert_eq!(memory.borrow().read_word(0x00000004), cpu.sys_registers[PSW]);
+        assert_eq!(memory.borrow().read_word(0x00000008), cpu.pc as u32);
     }
 }
