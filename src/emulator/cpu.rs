@@ -1,6 +1,7 @@
 use super::memory::Memory;
 use anyhow::Result;
 use std::cell::{RefCell, RefMut};
+use std::num::FpCategory;
 use std::rc::Rc;
 
 // ECR: exception cause register
@@ -24,6 +25,10 @@ const NMI_PENDING_FLAG: u32 = 0x00008000;
 const EX_PENDING_FLAG: u32 = 0x00004000;
 const ADDRESS_TRAP_ENABLE_FLAG: u32 = 0x00002000;
 const INTERRUPT_DISABLE_FLAG: u32 = 0x00001000;
+const FLOAT_RESERVED_OP_FLAG: u32 = 0x00000200;
+const FLOAT_INVALID_FLAG: u32 = 0x00000100;
+const FLOAT_ZERO_DIV_FLAG: u32 = 0x00000080;
+const FLOAT_OVERFLOW_FLAG: u32 = 0x00000040;
 const CARRY_FLAG: u32 = 0x00000008;
 const OVERFLOW_FLAG: u32 = 0x00000004;
 const SIGN_FLAG: u32 = 0x00000002;
@@ -1030,7 +1035,9 @@ impl<'a> CPUProcess<'a> {
 
     fn cmpf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = f32::from_bits(self.registers[reg2]) - f32::from_bits(self.registers[reg1]);
+        let val2 = self.get_float(self.registers[reg2]);
+        let val1 = self.get_float(self.registers[reg1]);
+        let value = val2 - val1;
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
         self.cycle += 10;
     }
@@ -1043,45 +1050,103 @@ impl<'a> CPUProcess<'a> {
     }
     fn cvt_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = f32::from_bits(self.registers[reg1]).round() as u32;
+        let fval = self.get_float(self.registers[reg1]).round();
+        let value = fval as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
+        let out_of_range = fval > u32::MAX as f32;
+        self.float_track_invalid(out_of_range);
         self.cycle += 14;
     }
     fn addf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = f32::from_bits(self.registers[reg2]) + f32::from_bits(self.registers[reg1]);
+        let val2 = self.get_float(self.registers[reg2]);
+        let val1 = self.get_float(self.registers[reg1]);
+        let value = val2 + val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.float_check_overflow(val1, val2, value);
         self.cycle += 28;
     }
     fn subf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = f32::from_bits(self.registers[reg2]) - f32::from_bits(self.registers[reg1]);
+        let val2 = self.get_float(self.registers[reg2]);
+        let val1 = self.get_float(self.registers[reg1]);
+        let value = val2 - val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.float_check_overflow(val1, val2, value);
         self.cycle += 28;
     }
     fn mulf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = f32::from_bits(self.registers[reg2]) * f32::from_bits(self.registers[reg1]);
+        let val2 = self.get_float(self.registers[reg2]);
+        let val1 = self.get_float(self.registers[reg1]);
+        let value = val2 * val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        self.float_check_overflow(val1, val2, value);
         self.cycle += 30;
     }
     fn divf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = f32::from_bits(self.registers[reg2]) / f32::from_bits(self.registers[reg1]);
-        self.registers[reg2] = value.to_bits();
-        self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        let val2 = self.get_float(self.registers[reg2]);
+        let val1 = self.get_float(self.registers[reg1]);
+        if val1 == 0.0 {
+            let zero_numerator = val2 == 0.0;
+            // if it's 0 / 0 this is an invalid operation
+            self.float_track_invalid(zero_numerator);
+            // otherwise it's divide-by-zero
+            self.update_psw_flag(FLOAT_ZERO_DIV_FLAG, !zero_numerator);
+            if !zero_numerator {
+                self.exception = Some(Exception::error(0xff68, 0xffffff60));
+            }
+            self.update_psw_flag(FLOAT_OVERFLOW_FLAG, false);
+        } else {
+            self.float_track_invalid(false);
+            self.update_psw_flag(FLOAT_ZERO_DIV_FLAG, false);
+            let value = val2 / val1;
+            self.float_check_overflow(val1, val2, value);
+            self.registers[reg2] = value.to_bits();
+            self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
+        }
         self.cycle += 44;
     }
     fn trnc_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = f32::from_bits(self.registers[reg1]).trunc() as u32;
+        let fval = self.get_float(self.registers[reg1]).trunc();
+        let value = fval as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
+        let out_of_range = fval > u32::MAX as f32;
+        self.float_track_invalid(out_of_range);
         self.cycle += 14;
+    }
+
+    fn get_float(&mut self, raw: u32) -> f32 {
+        let value = f32::from_bits(raw);
+        let invalid = matches!(value.classify(), FpCategory::Nan | FpCategory::Subnormal);
+        self.update_psw_flag(FLOAT_RESERVED_OP_FLAG, invalid);
+        if invalid {
+            // "Reserved operand" error
+            self.exception = Some(Exception::error(0xff60, 0xffffff60));
+        }
+        value
+    }
+
+    fn float_track_invalid(&mut self, invalid: bool) {
+        self.update_psw_flag(FLOAT_INVALID_FLAG, invalid);
+        if invalid {
+            self.exception = Some(Exception::error(0xff70, 0xffffff60));
+        }
+    }
+
+    fn float_check_overflow(&mut self, val1: f32, val2: f32, value: f32) {
+        let overflow = value.is_infinite() && (val1.is_finite() || val2.is_finite());
+        self.update_psw_flag(FLOAT_OVERFLOW_FLAG, overflow);
+        if overflow {
+            self.exception = Some(Exception::error(0xff64, 0xffffff60));
+        }
     }
 
     fn mpyhw(&mut self, instr: u16) {
@@ -1157,6 +1222,17 @@ impl<'a> CPUProcess<'a> {
         (reg2, reg1, disp)
     }
 
+    // Set a single flag in PSW
+    fn update_psw_flag(&mut self, mask: u32, value: bool) {
+        let mut psw = self.sys_registers[PSW];
+        if value {
+            psw |= mask;
+        } else {
+            psw &= !mask;
+        }
+        self.sys_registers[PSW] = psw;
+    }
+
     fn update_psw_flags(&mut self, z: bool, s: bool, ov: bool) {
         let mut psw = self.sys_registers[PSW];
         psw ^= psw & (ZERO_FLAG | SIGN_FLAG | OVERFLOW_FLAG);
@@ -1193,7 +1269,7 @@ impl<'a> CPUProcess<'a> {
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR, FEPC, FEPSW};
+    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR, FEPC, FEPSW, FLOAT_ZERO_DIV_FLAG, FLOAT_INVALID_FLAG, FLOAT_RESERVED_OP_FLAG, FLOAT_OVERFLOW_FLAG};
     use crate::emulator::memory::Memory;
     use anyhow::Result;
     use std::cell::{RefCell};
@@ -1282,6 +1358,7 @@ mod tests {
     fn cvt_ws(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000010) }
     fn cvt_sw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000011) }
     fn addf_s(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000100) }
+    fn mulf_s(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000110) }
     fn divf_s(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b000111) }
     fn mpyhw(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001100) }
     fn rev(r2: u8, r1: u8) -> Vec<u8> { _op_7(0b111110, r2, r1, 0b001010) }
@@ -2031,6 +2108,63 @@ mod tests {
         assert_eq!(f32::from_bits(cpu.registers[12]), 17.0 / 3.0);
         assert_eq!(cpu.registers[13], 17);
         assert_eq!(cpu.registers[14], 6);
+    }
+
+    #[test]
+    fn can_report_reserved_op_float_errors() {
+        let (mut cpu, _memory) = rom(vec![
+            ldsr(0, PSW),
+            movhi(10, 0, 0x7fc0), // manually create a NaN
+            cvt_sw(11, 10)
+        ]);
+        cpu.run(23).unwrap();
+        assert_ne!(cpu.sys_registers[PSW] & FLOAT_RESERVED_OP_FLAG, 0);
+        assert_eq!(cpu.pc, 0xffffff60);
+        assert_eq!(cpu.sys_registers[ECR], 0x0000ff60);
+
+    }
+
+    #[test]
+    fn can_report_invalid_op_float_errors() {
+        let (mut cpu, _memory) = rom(vec![
+            ldsr(0, PSW),
+            divf_s(0, 0),
+        ]);
+        cpu.run(52).unwrap();
+        assert_ne!(cpu.sys_registers[PSW] & FLOAT_INVALID_FLAG, 0);
+        assert_eq!(cpu.pc, 0xffffff60);
+        assert_eq!(cpu.sys_registers[ECR], 0x0000ff70);
+    }
+
+    #[test]
+    fn can_report_divide_by_zero_float_errors() {
+        let (mut cpu, _memory) = rom(vec![
+            ldsr(0, PSW),
+            movea(10, 0, 1),
+            cvt_ws(11, 10),
+            divf_s(11, 0),
+        ]);
+        cpu.run(69).unwrap();
+        assert_ne!(cpu.sys_registers[PSW] & FLOAT_ZERO_DIV_FLAG, 0);
+        assert_eq!(cpu.pc, 0xffffff60);
+        assert_eq!(cpu.sys_registers[ECR], 0x0000ff68);
+    }
+
+    #[test]
+    fn can_report_overflow_float_errors() {
+        let (mut cpu, _memory) = rom(vec![
+            ldsr(0, PSW),
+
+            movhi(10, 0, 0x7f80), // manually create the highest finite f32 value
+            movea(11, 0, 1),
+            sub(10, 11),
+
+            mulf_s(10, 10),
+        ]);
+        cpu.run(41).unwrap();
+        assert_ne!(cpu.sys_registers[PSW] & FLOAT_OVERFLOW_FLAG, 0);
+        assert_eq!(cpu.pc, 0xffffff60);
+        assert_eq!(cpu.sys_registers[ECR], 0x0000ff64);
     }
 
     #[test]
