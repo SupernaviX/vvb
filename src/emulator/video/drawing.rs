@@ -36,22 +36,19 @@ const JVFLP: u16 = 0x1000;
 const JCA: u16 = 0x07ff;
 
 fn modulus(a: i16, b: i16) -> u16 {
-    if b.count_ones() == 1 {
-        (a & (b - 1)) as u16
-    } else {
-        a.rem_euclid(b) as u16
-    }
+    debug_assert_eq!(b.count_ones(), 1);
+    (a & (b - 1)) as u16
 }
 
 pub struct DrawingProcess {
     buffer: [[u16; 384]; 28],
     object_world: usize,
 
-    last_char: u16,
-    last_char_index: u16,
-    last_char_row: u16,
+    last_char_rel_address: u16,
+    last_char_data: u16,
 
     last_cell_address: usize,
+    last_cell_data: u16,
     cell_palette_index: u16,
     cell_flip_horizontally: bool,
     cell_flip_vertically: bool,
@@ -68,11 +65,12 @@ impl DrawingProcess {
         DrawingProcess {
             buffer: [[0; 384]; 28],
             object_world: 3,
-            last_char: 0,
-            last_char_index: u16::MAX,
-            last_char_row: u16::MAX,
+
+            last_char_rel_address: u16::MAX,
+            last_char_data: 0,
 
             last_cell_address: usize::MAX,
+            last_cell_data: u16::MAX,
             cell_palette_index: u16::MAX,
             cell_flip_horizontally: false,
             cell_flip_vertically: false,
@@ -94,8 +92,9 @@ impl DrawingProcess {
             }
         }
 
-        self.last_char_index = u16::MAX;
+        self.last_char_rel_address = u16::MAX;
         self.last_cell_address = usize::MAX;
+        self.last_cell_data = u16::MAX;
 
         // Draw rows in the buffer one-at-a-time
         self.object_world = 3;
@@ -163,14 +162,7 @@ impl DrawingProcess {
                 let cell_address = background.get_cell_address(bg_x, bg_y);
 
                 // load that cell data
-                if self.last_cell_address != cell_address {
-                    let cell_data = memory.read_halfword(cell_address);
-                    self.last_cell_address = cell_address;
-                    self.cell_palette_index = (cell_data >> 14) & 0x0003;
-                    self.cell_flip_horizontally = (cell_data & 0x2000) != 0;
-                    self.cell_flip_vertically = (cell_data & 0x1000) != 0;
-                    self.cell_char_index = cell_data & 0x07ff;
-                }
+                self.update_cell_data(memory, cell_address);
 
                 // figure out which pixel in the character we're rendering
                 let mut char_x = modulus(bg_x, 8);
@@ -192,6 +184,20 @@ impl DrawingProcess {
         }
 
         false
+    }
+
+    fn update_cell_data(&mut self, memory: &RefMut<Memory>, cell_address: usize) {
+        if self.last_cell_address != cell_address {
+            self.last_cell_address = cell_address;
+            let cell_data = memory.read_halfword(cell_address);
+            if self.last_cell_data != cell_data {
+                self.last_cell_data = cell_data;
+                self.cell_palette_index = (cell_data >> 14) & 0x0003;
+                self.cell_flip_horizontally = (cell_data & 0x2000) != 0;
+                self.cell_flip_vertically = (cell_data & 0x1000) != 0;
+                self.cell_char_index = cell_data & 0x07ff;
+            }
+        }
     }
 
     fn draw_object_world(&mut self, memory: &RefMut<Memory>, eye: Eye) {
@@ -267,13 +273,13 @@ impl DrawingProcess {
     }
 
     fn get_char_pixel(&mut self, memory: &RefMut<Memory>, index: u16, x: u16, y: u16) -> u16 {
-        if self.last_char_index != index || self.last_char_row != y {
-            let address = CHARACTER_TABLE + (index as usize * 16) + (y as usize * 2);
-            self.last_char = memory.read_halfword(address);
-            self.last_char_index = index;
-            self.last_char_row = y;
+        let relative_address = (index << 3) + y;
+        if self.last_char_rel_address != relative_address {
+            self.last_char_rel_address = relative_address;
+            let address = CHARACTER_TABLE + ((relative_address as usize) << 1);
+            self.last_char_data = memory.read_halfword(address);
         }
-        (self.last_char >> (x * 2)) & 0x3
+        (self.last_char_data >> (x << 1)) & 0x3
     }
 
     fn get_palette_color(
@@ -291,11 +297,11 @@ impl DrawingProcess {
         if column < 0 || row < 0 || column >= 384 || row >= 224 {
             return;
         }
-        let row_index = row as usize / 8;
+        let row_index = row as usize >> 3;
         let current_value = &mut self.buffer[row_index][column as usize];
-        let row_offset = row as u16 % 8;
-        *current_value &= !(0b11 << (row_offset * 2));
-        *current_value |= color << (row_offset * 2);
+        let row_offset = (row as u16 & 0x7) << 1;
+        *current_value &= !(0b11 << row_offset);
+        *current_value |= color << row_offset;
     }
 }
 
@@ -307,8 +313,12 @@ enum BGMode {
 struct Background<'a> {
     memory: &'a RefMut<'a, Memory>,
     pub mode: BGMode,
+    pub scx: u32,
+    pub scy: u32,
     pub bgmap_width: i16,
     pub bgmap_height: i16,
+    pub bg_width: i16,
+    pub bg_height: i16,
     pub bgmap_base: usize,
     pub overplane_cell: Option<usize>,
 
@@ -327,10 +337,10 @@ impl<'a> Background<'a> {
             _ => BGMode::Normal,
         };
 
-        let scx = (header & SCX) >> 10;
-        let scy = (header & SCY) >> 8;
-        let bgmap_width = 2i16.pow(scx as u32);
-        let bgmap_height = 2i16.pow(scy as u32);
+        let scx = ((header & SCX) >> 10) as u32;
+        let scy = ((header & SCY) >> 8) as u32;
+        let bgmap_width = 2i16.pow(scx);
+        let bgmap_height = 2i16.pow(scy);
         let bgmap_base = (header & BG_MAP_BASE) as usize;
         let has_overplane = (header & OVERPLANE_FLAG) != 0;
         let overplane_cell = if has_overplane {
@@ -348,8 +358,12 @@ impl<'a> Background<'a> {
         Background {
             memory,
             mode,
+            scx,
+            scy,
             bgmap_width,
             bgmap_height,
+            bg_width: bgmap_width << 9,
+            bg_height: bgmap_height << 9,
             bgmap_base,
             overplane_cell,
             param_base,
@@ -420,34 +434,26 @@ impl<'a> Background<'a> {
     }
 
     pub fn get_cell_address(&self, x: i16, y: i16) -> usize {
-        let bg_width = self.bgmap_width * 512;
-        let bg_height = self.bgmap_height * 512;
-
-        let bg_x = if 0 <= x && x < bg_width {
-            x as usize
-        } else {
-            match self.overplane_cell {
-                Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
-                None => modulus(x, bg_width) as usize,
+        let bg_x;
+        let bg_y;
+        if let Some(index) = self.overplane_cell {
+            if x < 0 || x >= self.bg_width || y < 0 || y >= self.bg_height {
+                return BACKGROUND_MAP_MEMORY + (index << 1);
             }
+            bg_x = x as usize;
+            bg_y = y as usize;
+        } else {
+            bg_x = modulus(x, self.bg_width) as usize;
+            bg_y = modulus(y, self.bg_height) as usize;
         };
 
-        let bg_y = if 0 <= y && y < bg_height {
-            y as usize
-        } else {
-            match self.overplane_cell {
-                Some(index) => return BACKGROUND_MAP_MEMORY + (index * 2),
-                None => modulus(y, bg_height) as usize,
-            }
-        };
+        let map_x = bg_x >> 9;
+        let map_y = bg_y >> 9;
+        let map_index = self.bgmap_base + map_x + (map_y << self.scx);
 
-        let map_x = bg_x / 512;
-        let map_y = bg_y / 512;
-        let map_index = self.bgmap_base + map_x + (map_y * self.bgmap_width as usize);
-
-        let row = (bg_y % 512) / 8;
-        let column = (bg_x % 512) / 8;
-        let index = row * 64 + column;
-        BACKGROUND_MAP_MEMORY + (map_index * 8192) + (index * 2)
+        let row = (bg_y & 0x1ff) >> 3;
+        let column = (bg_x & 0x1ff) >> 3;
+        let index = (row << 6) + column;
+        BACKGROUND_MAP_MEMORY + (map_index << 13) + (index << 1)
     }
 }
