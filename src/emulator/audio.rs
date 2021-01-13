@@ -420,11 +420,15 @@ impl AudioController {
         self.channels = Channel::default_set();
     }
 
-    pub fn get_player(&mut self) -> AudioPlayer {
-        let buffer = RingBuffer::new(41700);
+    pub fn get_player(&mut self, volume: i16, buffer_size: usize) -> AudioPlayer {
+        let capacity = buffer_size * 833;
+        let buffer = RingBuffer::new(capacity);
         let (producer, consumer) = buffer.split();
         self.buffer = Some(producer);
-        AudioPlayer { buffer: consumer }
+        AudioPlayer {
+            buffer: consumer,
+            volume,
+        }
     }
 
     pub fn process_event(&mut self, address: usize) {
@@ -573,18 +577,25 @@ impl AudioController {
     }
 
     fn to_output_frame(&self, frame: (u16, u16)) -> (i16, i16) {
-        ((frame.0 >> 6) as i16 * 128, (frame.1 >> 6) as i16 * 128)
+        ((frame.0 >> 6) as i16, (frame.1 >> 6) as i16)
     }
 }
 
+const AUDIO_CONVERSION_FACTOR: i16 = i16::MAX / 685;
+
 pub struct AudioPlayer {
     buffer: Consumer<(i16, i16)>,
+    volume: i16,
 }
 
 impl AudioPlayer {
     pub fn play(&mut self, frames: &mut [(i16, i16)]) {
         let count = self.buffer.pop_slice(frames);
-
+        let volume = AUDIO_CONVERSION_FACTOR * self.volume / 100;
+        for frame in &mut frames[..count] {
+            frame.0 *= volume;
+            frame.1 *= volume;
+        }
         // If we don't know what to play, play that last thing again
         let value = if count == 0 {
             (0, 0)

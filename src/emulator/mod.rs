@@ -52,8 +52,8 @@ impl Emulator {
         self.video.borrow_mut().get_frame_channel()
     }
 
-    pub fn get_audio_player(&mut self) -> AudioPlayer {
-        self.audio.borrow_mut().get_player()
+    pub fn get_audio_player(&mut self, buffer_size: usize, volume: i16) -> AudioPlayer {
+        self.audio.borrow_mut().get_player(volume, buffer_size)
     }
 
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {

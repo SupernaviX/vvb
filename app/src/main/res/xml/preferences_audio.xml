@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <SeekBarPreference
+        app:key="audio_volume"
+        app:title="@string/audio_menu_volume"
+        app:min="0"
+        android:max="100"
+        app:showSeekBarValue="true"
+        app:seekBarIncrement="5"
+        app:defaultValue="100"/>
+    <SeekBarPreference
+        app:key="audio_buffer_size"
+        app:title="@string/audio_menu_buffer_size"
+        app:min="2"
+        android:max="8"
+        app:showSeekBarValue="true"
+        app:seekBarIncrement="1"
+        app:defaultValue="4"/>
+</PreferenceScreen>

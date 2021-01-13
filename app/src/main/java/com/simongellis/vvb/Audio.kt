@@ -1,10 +1,10 @@
 package com.simongellis.vvb
 
-class Audio(emulator: Emulator) {
+class Audio(emulator: Emulator, settings: Settings) {
     private var _pointer = 0L
 
     init {
-        nativeConstructor(emulator)
+        nativeConstructor(emulator, settings)
     }
 
     fun finalize() {
@@ -25,7 +25,7 @@ class Audio(emulator: Emulator) {
         nativePause()
     }
 
-    private external fun nativeConstructor(emulator: Emulator)
+    private external fun nativeConstructor(emulator: Emulator, settings: Settings)
     private external fun nativeDestructor()
     private external fun nativePlay()
     private external fun nativePause()

@@ -5,6 +5,7 @@
     <string name="main_menu_switch_viewer">Switch Cardboard Viewer</string>
     <string name="main_menu_input_setup">Input Setup</string>
     <string name="main_menu_video_setup">Video Setup</string>
+    <string name="main_menu_audio_setup">Audio Setup</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
     <string name="input_menu_button_left">Left</string>
@@ -21,5 +22,7 @@
     <string name="video_menu_vertical_offset">Vertical Offset</string>
     <string name="video_menu_color">Color</string>
     <string name="video_menu_preview">Preview</string>
+    <string name="audio_menu_volume">Volume</string>
+    <string name="audio_menu_buffer_size">Buffer Size (in frames)</string>
     <string name="ui_settings_button_content_description">settings</string>
 </resources>

@@ -25,6 +25,11 @@
         app:fragment="com.simongellis.vvb.VideoMenuFragment"
         tools:context=".VideoMenuFragment"/>
     <Preference
+        app:key="audio"
+        app:title="@string/main_menu_audio_setup"
+        app:fragment="com.simongellis.vvb.AudioMenuFragment"
+        tools:context=".AudioMenuFragment"/>
+    <Preference
         app:key="switch_viewer"
         app:title="@string/main_menu_switch_viewer"/>
 </PreferenceScreen>

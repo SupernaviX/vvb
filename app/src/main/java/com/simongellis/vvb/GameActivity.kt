@@ -19,8 +19,9 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         _binding = ActivityGameBinding.inflate(layoutInflater)
         _emulator = Emulator.getInstance(applicationContext)
-        _renderer = Renderer(_emulator, Settings(applicationContext))
-        _audio = Audio(_emulator)
+        val settings = Settings(applicationContext)
+        _renderer = Renderer(_emulator, settings)
+        _audio = Audio(_emulator, settings)
         _inputBindingMapper = InputBindingMapper(applicationContext)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -66,7 +67,7 @@ class GameActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         _inputBindingMapper.destroy()
-        // _audio.destroy()
+        _audio.destroy()
         _renderer.destroy()
     }
 }
