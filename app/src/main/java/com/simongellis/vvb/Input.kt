@@ -1,6 +1,6 @@
 package com.simongellis.vvb
 
-enum class Input(val prefName: String, val bitMask: Int) {
+enum class Input(val prefName: String?, val bitMask: Int) {
     LL("input_ll", 0x0200),
     LR("input_lr", 0x0100),
     LU("input_lu", 0x0800),
@@ -16,5 +16,8 @@ enum class Input(val prefName: String, val bitMask: Int) {
     LT("input_lt", 0x0020),
     RT("input_rt", 0x0010),
     SELECT("input_select", 0x2000),
-    START("input_start", 0x1000)
+    START("input_start", 0x1000),
+
+    // This "input" is always set by the controller
+    SIGNATURE(null, 0x0002),
 }

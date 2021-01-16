@@ -2,12 +2,15 @@ use super::memory::Memory;
 use crate::emulator::cpu::Exception;
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicU16, Ordering};
+use std::sync::Arc;
 
 const SDLR: usize = 0x02000010;
 const SDHR: usize = 0x02000014;
 const TLR: usize = 0x02000018;
 const THR: usize = 0x0200001c;
 const TCR: usize = 0x02000020;
+const SCR: usize = 0x02000028;
 
 // TCR bits
 const T_INTERVAL: u8 = 0x10;
@@ -16,12 +19,21 @@ const T_CLEAR_ZERO: u8 = 0x04;
 const T_IS_ZERO: u8 = 0x02;
 const T_ENABLED: u8 = 0x01;
 
+// SCR bits
+const S_HW_READ: u8 = 0x04;
+const S_HW_STAT: u8 = 0x02;
+const S_HW_ABORT: u8 = 0x01;
+
+const HARDWARE_READ_CYCLES: u64 = 10240;
+
 pub struct Hardware {
     cycle: u64,
     memory: Rc<RefCell<Memory>>,
     next_tick: u64,
+    next_controller_read: u64,
     reload_value: u16,
     zero_flag: bool,
+    controller_state: Option<Arc<AtomicU16>>,
     interrupt: Option<Exception>,
 }
 impl Hardware {
@@ -30,8 +42,10 @@ impl Hardware {
             cycle: 0,
             memory,
             next_tick: u64::MAX,
+            next_controller_read: u64::MAX,
             reload_value: 0,
             zero_flag: false,
+            controller_state: None,
             interrupt: None,
         }
     }
@@ -39,6 +53,7 @@ impl Hardware {
     pub fn init(&mut self) {
         self.cycle = 0;
         self.next_tick = u64::MAX;
+        self.next_controller_read = u64::MAX;
         self.reload_value = 0;
         self.zero_flag = false;
         self.interrupt = None;
@@ -48,18 +63,15 @@ impl Hardware {
         memory.write_halfword(THR, 0xff);
     }
 
-    pub fn process_inputs(&self, input_state: u16) {
-        // Always set flag 0x02 on the lower register, "real" controllers do
-        let sdlr = input_state & 0xff | 0x02;
-        let sdhr = (input_state >> 8) & 0xff;
-        let mut memory = self.memory.borrow_mut();
-        memory.write_halfword(SDLR, sdlr);
-        memory.write_halfword(SDHR, sdhr);
+    pub fn get_controller_state(&mut self) -> Arc<AtomicU16> {
+        let controller_state = Arc::new(AtomicU16::new(0));
+        self.controller_state = Some(Arc::clone(&controller_state));
+        controller_state
     }
 
     // When is the next time that this module will do something that affects other modules?
     pub fn next_event(&self) -> u64 {
-        self.next_tick
+        self.next_tick.min(self.next_controller_read)
     }
 
     // Get any unacknowledged interrupt from this module
@@ -78,6 +90,10 @@ impl Hardware {
         if address == TCR {
             // A game wrote to the timer control register, do what we gotta do
             self.update_timer_settings();
+        }
+        if address == SCR {
+            // A game is attempting to read controller input
+            self.handle_controller_read();
         }
         // The CPU only needs to stop what it's doing if an interrupt is active
         self.interrupt.is_none()
@@ -102,6 +118,22 @@ impl Hardware {
             self.zero_flag = false;
         }
         self.correct_tcr();
+    }
+
+    fn handle_controller_read(&mut self) {
+        let mut memory = self.memory.borrow_mut();
+        let value = memory.read_byte(SCR);
+        let mut new_value = value | S_HW_READ;
+        if value & S_HW_ABORT != 0 {
+            // hardware read was cancelled
+            self.next_controller_read = u64::MAX;
+            new_value &= !S_HW_STAT;
+        } else if value & S_HW_READ != 0 {
+            // hardware read has begun
+            self.next_controller_read = self.cycle + HARDWARE_READ_CYCLES;
+            new_value |= S_HW_STAT;
+        }
+        memory.write_byte(SCR, new_value);
     }
 
     pub fn run(&mut self, target_cycle: u64) {
@@ -131,6 +163,11 @@ impl Hardware {
             }
         }
         self.correct_tcr();
+        if self.cycle >= self.next_controller_read {
+            // hardware read completed
+            self.read_controller();
+            self.next_controller_read = u64::MAX;
+        }
     }
 
     fn read_timer(&self) -> u16 {
@@ -168,20 +205,43 @@ impl Hardware {
         tcr |= T_CLEAR_ZERO;
         memory.write_byte(TCR, tcr);
     }
+
+    fn read_controller(&self) {
+        let input_state = match self.controller_state.as_ref() {
+            Some(state) => state.load(Ordering::Relaxed),
+            None => 0x0000,
+        };
+        let sdlr = input_state & 0xff;
+        let sdhr = (input_state >> 8) & 0xff;
+        let mut memory = self.memory.borrow_mut();
+        memory.write_halfword(SDLR, sdlr);
+        memory.write_halfword(SDHR, sdhr);
+
+        // Mark in SCR that we've finished reading
+        let scr = memory.read_byte(SCR);
+        memory.write_byte(SCR, scr & !S_HW_STAT);
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::emulator::hardware::{
-        Hardware, TCR, THR, TLR, T_CLEAR_ZERO, T_ENABLED, T_INTERRUPT, T_IS_ZERO,
+        Hardware, SCR, SDHR, SDLR, S_HW_ABORT, S_HW_READ, S_HW_STAT, TCR, THR, TLR, T_CLEAR_ZERO,
+        T_ENABLED, T_INTERRUPT, T_IS_ZERO,
     };
     use crate::emulator::memory::Memory;
     use std::cell::RefCell;
     use std::rc::Rc;
+    use std::sync::atomic::Ordering;
 
     fn set_tcr(hardware: &mut Hardware, memory: &Rc<RefCell<Memory>>, value: u8) {
         memory.borrow_mut().write_byte(TCR, value);
         hardware.process_event(TCR);
+    }
+
+    fn set_scr(hardware: &mut Hardware, memory: &Rc<RefCell<Memory>>, value: u8) {
+        memory.borrow_mut().write_byte(SCR, value);
+        hardware.process_event(SCR);
     }
 
     fn set_timer(hardware: &mut Hardware, memory: &Rc<RefCell<Memory>>, value: u16) {
@@ -297,5 +357,53 @@ mod tests {
         hardware.run(9000);
         assert_eq!(memory.borrow().read_byte(TCR), T_ENABLED | T_CLEAR_ZERO);
         assert!(hardware.active_interrupt().is_none());
+    }
+
+    #[test]
+    fn performs_hardware_read() {
+        let (mut hardware, memory) = get_hardware();
+
+        // "start" pushing a button on the controller
+        let state = hardware.get_controller_state();
+        state.store(0x1002, Ordering::Relaxed);
+
+        // Kick off the hardware read
+        set_scr(&mut hardware, &memory, S_HW_READ);
+        assert_eq!(hardware.next_event(), 10240);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_STAT);
+
+        // Wait for the hardware read to complete
+        hardware.run(hardware.next_event());
+        assert_eq!(hardware.next_event(), u64::MAX);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x10);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x02);
+        assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ);
+    }
+
+    #[test]
+    fn aborts_hardware_read() {
+        let (mut hardware, memory) = get_hardware();
+
+        // "start" pushing a button on the controller
+        let state = hardware.get_controller_state();
+        state.store(0x1002, Ordering::Relaxed);
+
+        // Kick off the hardware read
+        set_scr(&mut hardware, &memory, S_HW_READ);
+        assert_eq!(hardware.next_event(), 10240);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_STAT);
+
+        // run, but abort the hardware read before it should go off
+        hardware.run(5120);
+        set_scr(&mut hardware, &memory, S_HW_ABORT);
+        hardware.run(10240);
+        assert_eq!(hardware.next_event(), u64::MAX);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_ABORT);
     }
 }

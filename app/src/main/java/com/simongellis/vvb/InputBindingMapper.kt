@@ -23,7 +23,7 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
             .map { _inputManager.getInputDevice(it).descriptor to it }
             .toMap()
 
-        Input.values().forEach { input ->
+        Input.values().filter { it.prefName != null }.forEach { input ->
             val savedBinding = prefs.getString(input.prefName, null)
             if (savedBinding != null) {
                 val (device, keyCodeStr) = savedBinding.split("::")

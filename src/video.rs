@@ -126,7 +126,6 @@ pub mod jni {
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
-    use paste::paste;
 
     fn get_renderer<'a>(
         env: &'a JNIEnv,

@@ -108,7 +108,6 @@ pub mod jni {
     use anyhow::Result;
     use jni::sys::jobject;
     use jni::JNIEnv;
-    use paste::paste;
 
     fn get_audio<'a>(env: &'a JNIEnv, this: jobject) -> jni_helpers::JavaGetResult<'a, Audio> {
         jni_helpers::java_get(env, this)

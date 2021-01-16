@@ -14,6 +14,8 @@ use log::debug;
 use std::cell::RefCell;
 use std::cmp;
 use std::rc::Rc;
+use std::sync::atomic::AtomicU16;
+use std::sync::Arc;
 
 pub struct Emulator {
     cycle: u64,
@@ -56,6 +58,10 @@ impl Emulator {
         self.audio.borrow_mut().get_player(volume, buffer_size)
     }
 
+    pub fn get_controller_state(&mut self) -> Arc<AtomicU16> {
+        self.hardware.borrow_mut().get_controller_state()
+    }
+
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
         self.memory.borrow_mut().load_game_pak(rom, sram)?;
         self.reset();
@@ -88,7 +94,7 @@ impl Emulator {
         );
     }
 
-    pub fn tick(&mut self, nanoseconds: u64, input_state: u16) -> Result<()> {
+    pub fn tick(&mut self, nanoseconds: u64) -> Result<()> {
         let cycles = nanoseconds / 50;
         let target_cycle = self.cycle + cycles;
 
@@ -101,7 +107,6 @@ impl Emulator {
             debug!("Current PSW: 0x{:08x}", self.cpu.sys_registers[5]);
             debug!("Cycles per tick: {}", target_cycle / self.tick_calls);
         }
-        self.hardware.borrow_mut().process_inputs(input_state);
 
         while self.cycle < target_cycle {
             // Find how long we can run before something interesting happens
@@ -186,7 +191,6 @@ pub mod jni {
     use jni::objects::JByteBuffer;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
-    use paste::paste;
 
     fn get_emulator<'a>(
         env: &'a JNIEnv,
@@ -218,10 +222,10 @@ pub mod jni {
         this.load_game_pak(rom, sram)
     }
 
-    java_func!(Emulator_nativeTick, tick, jint, jint);
-    fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint, input_state: jint) -> Result<()> {
+    java_func!(Emulator_nativeTick, tick, jint);
+    fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
-        this.tick(nanoseconds as u64, input_state as u16)
+        this.tick(nanoseconds as u64)
     }
 
     java_func!(Emulator_nativeReadSRAM, read_sram, JByteBuffer);

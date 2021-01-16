@@ -19,8 +19,6 @@ class Emulator(context: Context) {
     private var _sram: File? = null
     private var _sramBuffer = ByteBuffer.allocateDirect(8 * 1024)
 
-    private var _activeInputs = 0
-
     init {
         nativeConstructor()
     }
@@ -86,22 +84,13 @@ class Emulator(context: Context) {
         _running = false
         _thread?.join()
         saveSRAM()
-        _activeInputs = 0
-    }
-
-    fun keyDown(input: Input) {
-        _activeInputs = _activeInputs or input.bitMask
-    }
-
-    fun keyUp(input: Input) {
-        _activeInputs = _activeInputs and input.bitMask.inv()
     }
 
     private fun run() {
         var then = SystemClock.elapsedRealtimeNanos()
         while (_running) {
             val now = SystemClock.elapsedRealtimeNanos()
-            nativeTick((now - then).toInt(), _activeInputs)
+            nativeTick((now - then).toInt())
             then = now
         }
     }
@@ -136,7 +125,7 @@ class Emulator(context: Context) {
     private external fun nativeConstructor()
     private external fun nativeDestructor()
     private external fun nativeLoadGamePak(rom: ByteBuffer, sram: ByteBuffer)
-    private external fun nativeTick(nanoseconds: Int, inputMask: Int)
+    private external fun nativeTick(nanoseconds: Int)
     private external fun nativeReadSRAM(buffer: ByteBuffer)
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
 

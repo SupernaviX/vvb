@@ -1,6 +1,7 @@
 #![allow(clippy::missing_safety_doc)]
 
 mod audio;
+mod controller;
 pub mod emulator;
 mod jni_helpers;
 mod video;
@@ -10,10 +11,10 @@ use anyhow::Result;
 use jni::sys::{jint, jobject};
 use jni::JNIEnv;
 use log::{debug, Level};
-use paste::paste;
 use video::{Cardboard, QrCode};
 
 pub use audio::jni::*;
+pub use controller::jni::*;
 pub use emulator::jni::*;
 pub use video::jni::*;
 

@@ -52,7 +52,7 @@ macro_rules! java_func {
         java_func!(name $name func $func params (p0: $param0, p1: $param1));
     };
     (name $name:ident func $func:ident params ($($pname:ident: $ptype:ty),*)) => {
-        paste! {
+        paste::paste! {
             #[no_mangle]
             pub unsafe extern "C" fn [<Java_com_simongellis_vvb_ $name>](env: JNIEnv, this: jobject $(, $pname: $ptype)*) {
                 let result = $func(&env, this $(, $pname)*);
