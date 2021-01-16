@@ -90,7 +90,10 @@ class Emulator(context: Context) {
         var then = SystemClock.elapsedRealtimeNanos()
         while (_running) {
             val now = SystemClock.elapsedRealtimeNanos()
-            nativeTick((now - then).toInt())
+            // By default, emulate however much time passed since the last tick,
+            // but cap it to 1 second in case of extreme lag
+            val duration = kotlin.math.min((now - then).toInt(), 1_000_000_000)
+            nativeTick(duration)
             then = now
         }
     }
