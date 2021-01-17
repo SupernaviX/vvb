@@ -5,6 +5,6 @@ import androidx.preference.PreferenceFragmentCompat
 
 class AudioMenuFragment: PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        addPreferencesFromResource(R.xml.preferences_audio)
+        setPreferencesFromResource(R.xml.preferences_audio, rootKey)
     }
 }

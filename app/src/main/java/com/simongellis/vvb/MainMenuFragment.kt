@@ -10,7 +10,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
     private val GAME_CHOSEN = 2
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        addPreferencesFromResource(R.xml.preferences)
+        setPreferencesFromResource(R.xml.preferences, rootKey)
 
         findPreference<Preference>("resume_game")?.setOnPreferenceClickListener {
             playGame()

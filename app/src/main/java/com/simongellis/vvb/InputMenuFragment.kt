@@ -22,7 +22,7 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        addPreferencesFromResource(R.xml.preferences_input)
+        setPreferencesFromResource(R.xml.preferences_input, rootKey)
         Input.values().forEach { input ->
             input.prefName?.also { configureInputPreference(it) }
         }

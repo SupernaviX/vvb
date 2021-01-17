@@ -9,21 +9,22 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 
 class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
-    private var _pointer = 0L
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        val audio = ContextCompat.getSystemService(applicationContext, AudioManager::class.java)!!
-        val sampleRate = audio.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE).toInt()
-        val framesPerBurst = audio.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER).toInt()
-
-        nativeInitialize(sampleRate, framesPerBurst)
         setContentView(R.layout.activity_main)
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.fragment_container, MainMenuFragment())
-            .commit()
+
+        // Only run initialization once
+        if (savedInstanceState == null) {
+            val audio = ContextCompat.getSystemService(applicationContext, AudioManager::class.java)!!
+            val sampleRate = audio.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE).toInt()
+            val framesPerBurst = audio.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER).toInt()
+            nativeInitialize(sampleRate, framesPerBurst)
+
+            supportFragmentManager
+                .beginTransaction()
+                .replace(R.id.fragment_container, MainMenuFragment())
+                .commit()
+        }
     }
 
     override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
