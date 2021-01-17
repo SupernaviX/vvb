@@ -220,7 +220,7 @@ pub struct CPUProcessingResult {
     pub event: Option<Event>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Event {
     DisplayControlWrite { address: usize },
     AudioWrite { address: usize },
@@ -409,42 +409,42 @@ impl<'a> CPUProcess<'a> {
     }
     fn movhi(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.set_register(reg2, self.registers[reg1] + (imm << 16));
+        self.set_register(reg2, self.registers[reg1].wrapping_add(imm << 16));
         self.cycle += 1;
     }
     fn movea(&mut self, instr: u16) {
         let (reg2, reg1, imm) = self.parse_format_v_opcode(instr);
-        self.set_register(reg2, self.registers[reg1] + imm);
+        self.set_register(reg2, self.registers[reg1].wrapping_add(imm));
         self.cycle += 1;
     }
 
     fn ld_b(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize;
         self.set_register(reg2, self.memory.read_byte(address) as i8 as u32);
         self.cycle += 5;
     }
     fn ld_h(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffe;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize & 0xfffffffe;
         self.set_register(reg2, self.memory.read_halfword(address) as i16 as u32);
         self.cycle += 5;
     }
     fn ld_w(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffc;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize & 0xfffffffc;
         self.set_register(reg2, self.memory.read_word(address));
         self.cycle += 5;
     }
     fn in_b(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize;
         self.set_register(reg2, (self.memory.read_byte(address) as u32) & 0x000000ff);
         self.cycle += 5;
     }
     fn in_h(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffe;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize & 0xfffffffe;
         self.set_register(
             reg2,
             (self.memory.read_halfword(address) as u32) & 0x0000ffff,
@@ -453,20 +453,20 @@ impl<'a> CPUProcess<'a> {
     }
     fn in_w(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffc;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize & 0xfffffffc;
         self.set_register(reg2, self.memory.read_word(address));
         self.cycle += 5;
     }
 
     fn st_b(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize;
         self.event = self.memory.write_byte(address, self.registers[reg2] as u8);
         self.cycle += 4;
     }
     fn st_h(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffe;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize & 0xfffffffe;
         self.event = self
             .memory
             .write_halfword(address, self.registers[reg2] as u16);
@@ -474,7 +474,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn st_w(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize & 0xfffffffc;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize & 0xfffffffc;
         self.event = self.memory.write_word(address, self.registers[reg2]);
         self.cycle += 4;
     }
@@ -712,7 +712,7 @@ impl<'a> CPUProcess<'a> {
         let (cond, disp) = self.parse_format_iii_opcode(instr);
         if self._condition(cond) {
             // jump is relative to start of instruction
-            self.pc = (self.pc as i32 + disp - 2) as usize & 0xfffffffe;
+            self.pc = (self.pc as i32).wrapping_add(disp - 2) as usize & 0xfffffffe;
             self.cycle += 3;
         } else {
             self.cycle += 1;
@@ -750,7 +750,7 @@ impl<'a> CPUProcess<'a> {
     fn jal(&mut self, instr: u16) {
         let disp = self.parse_format_iv_opcode(instr);
         self.set_register(31, self.pc as u32);
-        self.pc = (self.pc as i32 + disp - 4) as usize & 0xfffffffe;
+        self.pc = (self.pc as i32).wrapping_add(disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
     fn jmp(&mut self, instr: u16) {
@@ -760,13 +760,13 @@ impl<'a> CPUProcess<'a> {
     }
     fn jr(&mut self, instr: u16) {
         let disp = self.parse_format_iv_opcode(instr);
-        self.pc = (self.pc as i32 + disp - 4) as usize & 0xfffffffe;
+        self.pc = (self.pc as i32).wrapping_add(disp - 4) as usize & 0xfffffffe;
         self.cycle += 3;
     }
 
     fn caxi(&mut self, instr: u16) {
         let (reg2, reg1, disp) = self.parse_format_vi_opcode(instr);
-        let address = (self.registers[reg1] as i32 + disp) as usize;
+        let address = (self.registers[reg1] as i32).wrapping_add(disp) as usize;
         let value = self.memory.read_word(address);
         let compare = self.registers[reg2];
         self._subtract(compare, value);
