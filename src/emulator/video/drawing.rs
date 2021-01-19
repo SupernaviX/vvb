@@ -1,7 +1,7 @@
 use crate::emulator::memory::{Memory, Region};
 use crate::emulator::video::Eye;
 use std::cell::{Ref, RefMut};
-use std::sync::{Arc, Condvar, Mutex};
+use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::thread::JoinHandle;
 
 const BACKGROUND_MAP_MEMORY: usize = 0x00020000;
@@ -42,46 +42,73 @@ fn modulus(a: i16, b: i16) -> u16 {
     (a & (b - 1)) as u16
 }
 
-struct DrawingState {
-    memory: Memory,
-    worker: DrawingWorker,
-    processing: bool,
-    terminated: bool,
-}
-impl DrawingState {
-    pub fn new() -> Self {
-        Self {
-            memory: Memory::vram_only(),
-            worker: DrawingWorker::new(),
-            processing: false,
-            terminated: false,
-        }
-    }
-    pub fn load(&mut self, memory: Ref<Memory>) {
-        if let Some(real_vram) = memory.read_region(Region::Vram) {
-            if let Some(vram) = self.memory.write_region(Region::Vram) {
-                vram.copy_from_slice(real_vram);
-            }
-        }
-    }
-    pub fn draw(&mut self) {
-        self.worker.draw(&self.memory);
-    }
-}
+// Coordinates the drawing process between two workers on their own threads
 pub struct DrawingProcess {
-    shared: Arc<(Mutex<DrawingState>, Condvar, Condvar)>,
-    thread: Option<JoinHandle<()>>,
+    memory: Arc<RwLock<Memory>>,
+    workers: [Worker; 2],
+}
+impl Default for DrawingProcess {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl DrawingProcess {
     pub fn new() -> Self {
-        let shared = Arc::new((
-            Mutex::new(DrawingState::new()),
+        let memory = Arc::new(RwLock::new(Memory::vram_only()));
+        let workers = [
+            Worker::new(Arc::clone(&memory), Eye::Left),
+            Worker::new(Arc::clone(&memory), Eye::Right),
+        ];
+        Self { memory, workers }
+    }
+
+    // Capture the current contents of vram and start drawing in the background
+    pub fn start(&mut self, memory: Ref<Memory>) {
+        if let Some(real_vram) = memory.read_region(Region::Vram) {
+            if let Some(vram) = self.memory.write().unwrap().write_region(Region::Vram) {
+                vram.copy_from_slice(real_vram);
+            }
+        }
+        for worker in self.workers.iter_mut() {
+            worker.start();
+        }
+    }
+
+    // Draw the contents of the given eye to the given address in memory
+    pub fn draw_eye(&mut self, memory: &mut RefMut<Memory>, eye: Eye, buf_address: usize) {
+        let worker = &self.workers[eye as usize];
+        worker.draw_eye(memory, buf_address);
+    }
+}
+
+type WorkerState = (Mutex<ThreadState>, Condvar, Condvar);
+
+// Owns and communicates with the thread that draws a given eye.
+struct Worker {
+    state: Arc<WorkerState>,
+    thread: Option<JoinHandle<()>>,
+}
+impl Drop for Worker {
+    fn drop(&mut self) {
+        {
+            let (state, start, _) = &*self.state;
+            let mut state = state.lock().unwrap();
+            state.terminated = true;
+            start.notify_one();
+        }
+        self.thread.take().unwrap().join().unwrap();
+    }
+}
+impl Worker {
+    pub fn new(memory: Arc<RwLock<Memory>>, eye: Eye) -> Self {
+        let state = Arc::new((
+            Mutex::new(ThreadState::new(memory, eye)),
             Condvar::new(),
             Condvar::new(),
         ));
-        let state = Arc::clone(&shared);
-        let thread = Some(std::thread::spawn(move || {
-            let (state, start, stop) = &*state;
+        let shared = Arc::clone(&state);
+        let thread = std::thread::spawn(move || {
+            let (state, start, stop) = &*shared;
             loop {
                 let mut state = state.lock().unwrap();
                 while !state.terminated && !state.processing {
@@ -97,56 +124,56 @@ impl DrawingProcess {
                 }
             }
             stop.notify_one();
-        }));
-        Self { shared, thread }
+        });
+        Worker {
+            state,
+            thread: Some(thread),
+        }
     }
 
-    pub fn start(&mut self, memory: Ref<Memory>) {
-        let (state, start, _) = &*self.shared;
+    // Wake the thread up so it starts drawing
+    pub fn start(&mut self) {
+        let (state, start, _) = &*self.state;
         let mut state = state.lock().unwrap();
-        state.load(memory);
         state.processing = true;
         start.notify_one();
     }
 
-    pub fn try_draw_eye(&mut self, memory: &mut RefMut<Memory>, eye: Eye, buf_address: usize) {
-        let (state, _, _) = &*self.shared;
-        if let Ok(state) = state.try_lock() {
-            if !state.processing {
-                state.worker.update_eye(memory, eye, buf_address);
-            }
-        }
-    }
-
-    pub fn draw_eye(&mut self, memory: &mut RefMut<Memory>, eye: Eye, buf_address: usize) {
-        let (state, _, stop) = &*self.shared;
+    // Block until the thread has finished drawing,
+    // and then write the results to the given address
+    pub fn draw_eye(&self, memory: &mut RefMut<Memory>, buf_address: usize) {
+        let (state, _, stop) = &*self.state;
         let mut state = state.lock().unwrap();
         while state.processing {
             state = stop.wait(state).unwrap();
         }
-        state.worker.update_eye(memory, eye, buf_address);
-    }
-}
-impl Default for DrawingProcess {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-impl Drop for DrawingProcess {
-    fn drop(&mut self) {
-        {
-            let (state, start, _) = &*self.shared;
-            let mut state = state.lock().unwrap();
-            state.terminated = true;
-            start.notify_one();
-        }
-        self.thread.take().unwrap().join().unwrap();
+        state.logic.update(memory, buf_address);
     }
 }
 
-struct DrawingWorker {
-    buf_left: [[u16; 384]; 28],
-    buf_right: [[u16; 384]; 28],
+struct ThreadState {
+    memory: Arc<RwLock<Memory>>,
+    logic: DrawingLogic,
+    processing: bool,
+    terminated: bool,
+}
+impl ThreadState {
+    pub fn new(memory: Arc<RwLock<Memory>>, eye: Eye) -> Self {
+        Self {
+            memory,
+            logic: DrawingLogic::new(eye),
+            processing: false,
+            terminated: false,
+        }
+    }
+    pub fn draw(&mut self) {
+        self.logic.draw(&self.memory.read().unwrap());
+    }
+}
+
+struct DrawingLogic {
+    eye: Eye,
+    buffer: [[u16; 384]; 28],
     object_world: usize,
 
     last_char_rel_address: u16,
@@ -160,16 +187,11 @@ struct DrawingWorker {
     cell_char_index: u16,
 }
 
-impl Default for DrawingWorker {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-impl DrawingWorker {
-    pub fn new() -> Self {
+impl DrawingLogic {
+    pub fn new(eye: Eye) -> Self {
         Self {
-            buf_left: [[0; 384]; 28],
-            buf_right: [[0; 384]; 28],
+            eye,
+            buffer: [[0; 384]; 28],
             object_world: 3,
 
             last_char_rel_address: u16::MAX,
@@ -184,9 +206,8 @@ impl DrawingWorker {
         }
     }
 
-    pub fn update_eye(&self, memory: &mut RefMut<Memory>, eye: Eye, buf_address: usize) {
-        let buf = self.get_buffer(eye);
-        for (row_offset, row) in buf.iter().enumerate() {
+    pub fn update(&self, memory: &mut RefMut<Memory>, buf_address: usize) {
+        for (row_offset, row) in self.buffer.iter().enumerate() {
             for (column_offset, column) in row.iter().enumerate() {
                 let address = buf_address + (column_offset * 64) + (row_offset * 2);
                 memory.write_halfword(address, *column);
@@ -194,20 +215,15 @@ impl DrawingWorker {
         }
     }
 
+    // Prepares the buffer with the contents of the appropriate eye
     pub fn draw(&mut self, memory: &Memory) {
-        self.draw_eye(memory, Eye::Left);
-        self.draw_eye(memory, Eye::Right);
-    }
-
-    // Prepares the buffers with the contents of the given eye
-    pub fn draw_eye(&mut self, memory: &Memory, eye: Eye) {
         // Clear both frames to BKCOL
         let bkcol = memory.read_halfword(BKCOL) & 0x03;
         let fill = (0..16)
             .step_by(2)
             .map(|shift| bkcol << shift)
             .fold(0, |a, b| a | b);
-        for row in self.mut_buffer(eye).iter_mut() {
+        for row in self.buffer.iter_mut() {
             for column in row.iter_mut() {
                 *column = fill;
             }
@@ -220,14 +236,14 @@ impl DrawingWorker {
         // Draw rows in the buffer one-at-a-time
         self.object_world = 3;
         for world in (0..32).rev() {
-            let done = self.draw_world(memory, eye, world);
+            let done = self.draw_world(memory, world);
             if done {
                 break;
             }
         }
     }
 
-    fn draw_world(&mut self, memory: &Memory, eye: Eye, world: usize) -> bool {
+    fn draw_world(&mut self, memory: &Memory, world: usize) -> bool {
         let world_address = WORLD_ATTRIBUTE_MEMORY + (world * 32);
         let header = memory.read_halfword(world_address);
         if (header & END_FLAG) != 0 {
@@ -242,11 +258,11 @@ impl DrawingWorker {
         }
         let bgm = (header & BGM) >> 12;
         if bgm == 3 {
-            self.draw_object_world(memory, eye);
+            self.draw_object_world(memory);
             return false;
         }
 
-        let eye_enabled = match eye {
+        let eye_enabled = match self.eye {
             Eye::Left => left_enabled,
             Eye::Right => right_enabled,
         };
@@ -264,7 +280,7 @@ impl DrawingWorker {
         let height = i16::max(memory.read_halfword(world_address + 16) as i16 + 1, 8);
 
         // Apply parallax based on which eye this is
-        let dest_x = match eye {
+        let dest_x = match self.eye {
             Eye::Left => dest_x - dest_parallax_x,
             Eye::Right => dest_x + dest_parallax_x,
         };
@@ -272,7 +288,7 @@ impl DrawingWorker {
         for row in 0..height {
             for column in 0..width {
                 // figure out which cell in this background map is being read
-                let (bg_x, bg_y) = background.get_coords(eye, column, row);
+                let (bg_x, bg_y) = background.get_coords(self.eye, column, row);
                 let cell_address = background.get_cell_address(bg_x, bg_y);
 
                 // load that cell data
@@ -293,7 +309,7 @@ impl DrawingWorker {
                 }
                 let color = self.get_palette_color(memory, GPLT0, self.cell_palette_index, pixel);
 
-                self.draw_pixel(eye, dest_x + column, dest_y + row, color);
+                self.draw_pixel(dest_x + column, dest_y + row, color);
             }
         }
 
@@ -314,7 +330,7 @@ impl DrawingWorker {
         }
     }
 
-    fn draw_object_world(&mut self, memory: &Memory, eye: Eye) {
+    fn draw_object_world(&mut self, memory: &Memory) {
         let end_register = SPT0 + (self.object_world * 2);
         let mut obj_index = memory.read_halfword(end_register) as usize & 0x03ff;
 
@@ -330,14 +346,14 @@ impl DrawingWorker {
 
         while obj_index != target_obj_index {
             let obj_address = OBJECT_ATTRIBUTE_MEMORY + (obj_index * 8);
-            self.draw_object(memory, eye, obj_address);
+            self.draw_object(memory, obj_address);
 
             obj_index = if obj_index == 0 { 1023 } else { obj_index - 1 };
         }
     }
 
-    fn draw_object(&mut self, memory: &Memory, eye: Eye, obj_address: usize) {
-        let visible = match eye {
+    fn draw_object(&mut self, memory: &Memory, obj_address: usize) {
+        let visible = match self.eye {
             Eye::Left => (memory.read_halfword(obj_address + 2) & JLON) != 0,
             Eye::Right => (memory.read_halfword(obj_address + 2) & JRON) != 0,
         };
@@ -352,7 +368,7 @@ impl DrawingWorker {
             .wrapping_shl(6)
             .wrapping_shr(6);
         // apply parallax to the x coordinate
-        let jx = match eye {
+        let jx = match self.eye {
             Eye::Left => jx - jp,
             Eye::Right => jx + jp,
         };
@@ -381,7 +397,7 @@ impl DrawingWorker {
                 }
 
                 let color = self.get_palette_color(memory, JPLT0, jplts, pixel);
-                self.draw_pixel(eye, jx + x, jy + y, color);
+                self.draw_pixel(jx + x, jy + y, color);
             }
         }
     }
@@ -401,30 +417,15 @@ impl DrawingWorker {
         (palette >> (pixel * 2)) & 0x03
     }
 
-    fn draw_pixel(&mut self, eye: Eye, column: i16, row: i16, color: u16) {
+    fn draw_pixel(&mut self, column: i16, row: i16, color: u16) {
         if column < 0 || row < 0 || column >= 384 || row >= 224 {
             return;
         }
-        let buf = self.mut_buffer(eye);
         let row_index = row as usize >> 3;
-        let current_value = &mut buf[row_index][column as usize];
+        let current_value = &mut self.buffer[row_index][column as usize];
         let row_offset = (row as u16 & 0x7) << 1;
         *current_value &= !(0b11 << row_offset);
         *current_value |= color << row_offset;
-    }
-
-    fn get_buffer(&self, eye: Eye) -> &[[u16; 384]; 28] {
-        match eye {
-            Eye::Left => &self.buf_left,
-            Eye::Right => &self.buf_right,
-        }
-    }
-
-    fn mut_buffer(&mut self, eye: Eye) -> &mut [[u16; 384]; 28] {
-        match eye {
-            Eye::Left => &mut self.buf_left,
-            Eye::Right => &mut self.buf_right,
-        }
     }
 }
 
