@@ -1,17 +1,94 @@
 use crate::emulator::cpu::Event;
 use anyhow::Result;
 use std::convert::TryInto;
-use std::hint::unreachable_unchecked;
-use std::ops::Range;
 
-enum Address {
-    Mapped(usize, Option<Event>),
-    Unmapped,
+pub enum Region {
+    Vram = 0,
+    Audio = 1,
+    Hardware = 2,
+    Dram = 5,
+    Sram = 6,
+    Rom = 7,
+}
+struct MemoryRegion {
+    kind: Region,
+    value: Vec<u8>,
+    mask: usize,
+}
+impl MemoryRegion {
+    pub fn new(kind: Region, size: usize) -> Self {
+        MemoryRegion {
+            kind,
+            value: vec![0; size],
+            mask: size - 1,
+        }
+    }
+    pub fn from(kind: Region, data: &[u8]) -> Self {
+        MemoryRegion {
+            kind,
+            value: Vec::from(data),
+            mask: data.len() - 1,
+        }
+    }
+    pub fn clear(&mut self) {
+        for data in self.value[0x00000000..self.mask].iter_mut() {
+            *data = 0;
+        }
+    }
+    pub fn write_byte(&mut self, address: usize, value: u8) -> Option<Event> {
+        let (address, event) = self.resolve_address(address);
+        self.value[address] = value;
+        event
+    }
+    pub fn write_halfword(&mut self, address: usize, value: u16) -> Option<Event> {
+        let (address, event) = self.resolve_address(address);
+        self.value[address..address + 2].copy_from_slice(&value.to_le_bytes());
+        event
+    }
+    pub fn write_word(&mut self, address: usize, value: u32) -> Option<Event> {
+        let (address, event) = self.resolve_address(address);
+        self.value[address..address + 4].copy_from_slice(&value.to_le_bytes());
+        event
+    }
+    pub fn read_byte(&self, address: usize) -> u8 {
+        let (address, _) = self.resolve_address(address);
+        self.value[address]
+    }
+    pub fn read_halfword(&self, address: usize) -> u16 {
+        let (address, _) = self.resolve_address(address);
+        let bytes: &[u8; 2] = &self.value[address..address + 2].try_into().unwrap();
+        u16::from_le_bytes(*bytes)
+    }
+    pub fn read_word(&self, address: usize) -> u32 {
+        let (address, _) = self.resolve_address(address);
+        let bytes: &[u8; 4] = &self.value[address..address + 4].try_into().unwrap();
+        u32::from_le_bytes(*bytes)
+    }
+    fn resolve_address(&self, address: usize) -> (usize, Option<Event>) {
+        let relative = address & self.mask;
+        match self.kind {
+            Region::Vram => {
+                match relative {
+                    0x0005f800..=0x0005f870 => {
+                        (relative, Some(Event::DisplayControlWrite { address }))
+                    }
+                    // The following ranges mirror data from the character tables
+                    0x00078000..=0x00079fff => (relative - 0x72000, None),
+                    0x0007a000..=0x0007bfff => (relative - 0x6C000, None),
+                    0x0007c000..=0x0007dfff => (relative - 0x66000, None),
+                    0x0007e000..=0x0007ffff => (relative - 0x60000, None),
+                    _ => (relative, None),
+                }
+            }
+            Region::Audio => (relative, Some(Event::AudioWrite { address })),
+            Region::Hardware => (relative, Some(Event::HardwareWrite { address })),
+            _ => (relative, None),
+        }
+    }
 }
 
 pub struct Memory {
-    memory: Vec<u8>,
-    rom_mask: usize,
+    regions: [Option<MemoryRegion>; 8],
 }
 impl Default for Memory {
     fn default() -> Self {
@@ -19,13 +96,19 @@ impl Default for Memory {
     }
 }
 impl Memory {
-    pub fn new() -> Memory {
-        let mut memory = Memory {
-            memory: vec![0; 0x07FFFFFF],
-            rom_mask: 0,
-        };
-        memory.init();
-        memory
+    pub fn new() -> Self {
+        Self {
+            regions: [
+                Some(MemoryRegion::new(Region::Vram, 0x00080000)),
+                Some(MemoryRegion::new(Region::Audio, 0x00000800)),
+                Some(MemoryRegion::new(Region::Hardware, 0x00000040)),
+                None,
+                None, // Game Pak Expansion (never used)
+                Some(MemoryRegion::new(Region::Dram, 0x00010000)),
+                None, // Sram (loaded later)
+                None, // Rom (loaded later)
+            ],
+        }
     }
 
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
@@ -33,144 +116,99 @@ impl Memory {
         if rom_size.count_ones() != 1 {
             return Err(anyhow::anyhow!("ROM size must be a power of two"));
         }
-        if rom_size > 0x00FFFFFF {
+        if rom_size > 0x01000000 {
             return Err(anyhow::anyhow!("ROM size must be <= 16Mb"));
         }
-        self.rom_mask = 0x07000000 + rom_size - 1;
-        self.memory[0x07000000..0x07000000 + rom_size].copy_from_slice(rom);
-        self.memory[0x06000000..0x06000000 + sram.len()].copy_from_slice(sram);
+
+        if sram.is_empty() {
+            *self.mut_region(Region::Sram) = None;
+        } else {
+            *self.mut_region(Region::Sram) = Some(MemoryRegion::from(Region::Sram, sram));
+        }
+        *self.mut_region(Region::Rom) = Some(MemoryRegion::from(Region::Rom, rom));
         self.init();
         Ok(())
     }
 
     fn init(&mut self) {
-        for vram in self.memory[0x00000000..=0x00077fff].iter_mut() {
-            *vram = 0;
+        if let Some(region) = self.mut_region(Region::Vram) {
+            region.clear();
         }
-        for audio in self.memory[0x01000000..=0x010007ff].iter_mut() {
-            *audio = 0;
+        if let Some(region) = self.mut_region(Region::Audio) {
+            region.clear();
         }
-        for hardware in self.memory[0x02000000..=0x0200003f].iter_mut() {
-            *hardware = 0;
+        if let Some(region) = self.mut_region(Region::Hardware) {
+            region.clear();
         }
-        for dram in self.memory[0x05000000..=0x0500ffff].iter_mut() {
-            *dram = 0;
+        if let Some(region) = self.mut_region(Region::Dram) {
+            region.clear();
         }
     }
 
     pub fn write_byte(&mut self, address: usize, value: u8) -> Option<Event> {
-        if let Address::Mapped(resolved, event) = self.resolve_address(address) {
-            self.memory[resolved] = value;
-            return event;
+        match self.mut_region_of(address) {
+            Some(region) => region.write_byte(address, value),
+            None => None,
         }
-        None
     }
-
     pub fn write_halfword(&mut self, address: usize, value: u16) -> Option<Event> {
-        if let Address::Mapped(resolved, event) = self.resolve_address(address) {
-            self.memory[resolved..resolved + 2].copy_from_slice(&value.to_le_bytes());
-            return event;
+        match self.mut_region_of(address) {
+            Some(region) => region.write_halfword(address, value),
+            None => None,
         }
-        None
     }
-
     pub fn write_word(&mut self, address: usize, value: u32) -> Option<Event> {
-        if let Address::Mapped(resolved, event) = self.resolve_address(address) {
-            self.memory[resolved..resolved + 4].copy_from_slice(&value.to_le_bytes());
-            return event;
+        match self.mut_region_of(address) {
+            Some(region) => region.write_word(address, value),
+            None => None,
         }
-        None
     }
-
     pub fn read_byte(&self, address: usize) -> u8 {
-        match self.resolve_address(address) {
-            Address::Mapped(resolved, _) => self.memory[resolved],
-            Address::Unmapped => 0,
+        match self.get_region_of(address) {
+            Some(region) => region.read_byte(address),
+            None => 0,
         }
     }
-
     pub fn read_halfword(&self, address: usize) -> u16 {
-        let address = match self.resolve_address(address) {
-            Address::Mapped(resolved, _) => resolved,
-            Address::Unmapped => return 0,
-        };
-        let bytes: &[u8; 2] = &self.memory[address..address + 2].try_into().unwrap();
-        u16::from_le_bytes(*bytes)
+        match self.get_region_of(address) {
+            Some(region) => region.read_halfword(address),
+            None => 0,
+        }
     }
-
     pub fn read_word(&self, address: usize) -> u32 {
-        let address = match self.resolve_address(address) {
-            Address::Mapped(resolved, _) => resolved,
-            Address::Unmapped => return 0,
-        };
-        let bytes: &[u8; 4] = &self.memory[address..address + 4].try_into().unwrap();
-        u32::from_le_bytes(*bytes)
-    }
-
-    pub fn read_sram(&self, buffer: &mut [u8]) {
-        buffer.copy_from_slice(&self.memory[0x06000000..0x06002000]);
-    }
-
-    pub fn read_range(&self, range: Range<usize>) -> &[u8] {
-        &self.memory[range]
-    }
-
-    pub fn write_range(&mut self, range: Range<usize>, data: &[u8]) {
-        self.memory[range].copy_from_slice(data);
-    }
-
-    fn resolve_address(&self, address: usize) -> Address {
-        let address = address & 0x07FFFFFF;
-        match address {
-            0x00000000..=0x00FFFFFF => self.resolve_vip_address(address),
-            0x01000000..=0x01FFFFFF => self.resolve_vsu_address(address),
-            0x02000000..=0x02FFFFFF => self.resolve_hardware_address(address),
-            0x03000000..=0x03FFFFFF => Address::Unmapped,
-            0x04000000..=0x04FFFFFF => Address::Unmapped, // Game Pak Expansion, never used
-            0x05000000..=0x05FFFFFF => self.resolve_wram_address(address),
-            0x06000000..=0x06FFFFFF => self.resolve_game_pak_ram_address(address),
-            0x07000000..=0x07FFFFFF => self.resolve_game_pak_rom_address(address),
-            _ => unsafe { unreachable_unchecked() },
+        match self.get_region_of(address) {
+            Some(region) => region.read_word(address),
+            None => 0,
         }
     }
 
-    #[allow(clippy::match_overlapping_arm)]
-    fn resolve_vip_address(&self, address: usize) -> Address {
-        let address = address & 0x0007ffff;
-        match address {
-            0x0005f800..=0x0005f870 => {
-                Address::Mapped(address, Some(Event::DisplayControlWrite { address }))
-            }
-            0x00000000..=0x00077fff => Address::Mapped(address, None),
-            // The following ranges mirror data from the character tables
-            0x00078000..=0x00079fff => Address::Mapped(address - 0x72000, None),
-            0x0007a000..=0x0007bfff => Address::Mapped(address - 0x6C000, None),
-            0x0007c000..=0x0007dfff => Address::Mapped(address - 0x66000, None),
-            0x0007e000..=0x0007ffff => Address::Mapped(address - 0x60000, None),
-            _ => unsafe { unreachable_unchecked() },
+    pub fn read_region(&self, region: Region) -> Option<&[u8]> {
+        match self.get_region(region) {
+            Some(region) => Some(region.value.as_slice()),
+            None => None,
         }
     }
 
-    fn resolve_vsu_address(&self, address: usize) -> Address {
-        let address = address & 0x010007ff;
-        Address::Mapped(address, Some(Event::AudioWrite { address }))
+    pub fn write_region(&mut self, region: Region) -> Option<&mut [u8]> {
+        match self.mut_region(region) {
+            Some(region) => Some(region.value.as_mut_slice()),
+            None => None,
+        }
     }
 
-    fn resolve_hardware_address(&self, address: usize) -> Address {
-        let address = address & 0x0200003f;
-        Address::Mapped(address, Some(Event::HardwareWrite { address }))
+    fn get_region(&self, region: Region) -> &Option<MemoryRegion> {
+        &self.regions[region as usize]
     }
-
-    fn resolve_wram_address(&self, address: usize) -> Address {
-        Address::Mapped(address & 0x0500ffff, None)
+    fn mut_region(&mut self, region: Region) -> &mut Option<MemoryRegion> {
+        &mut self.regions[region as usize]
     }
-
-    fn resolve_game_pak_ram_address(&self, address: usize) -> Address {
-        Address::Mapped(address & 0x06001fff, None)
+    fn get_region_of(&self, address: usize) -> Option<&MemoryRegion> {
+        let index = (address >> 24) & 0x07;
+        self.regions[index].as_ref()
     }
-
-    fn resolve_game_pak_rom_address(&self, address: usize) -> Address {
-        Address::Mapped(address & self.rom_mask, None)
+    fn mut_region_of(&mut self, address: usize) -> Option<&mut MemoryRegion> {
+        let index = (address >> 24) & 0x07;
+        self.regions[index].as_mut()
     }
 }
 
@@ -264,7 +302,7 @@ mod tests {
     #[should_panic(expected = "ROM size must be <= 16Mb")]
     fn asserts_rom_is_small_enough() {
         let mut memory = Memory::new();
-        let too_much_rom = vec![0u8; 0x01000000];
+        let too_much_rom = vec![0u8; 0x02000000];
         memory.load_game_pak(too_much_rom.as_slice(), &[]).unwrap();
     }
 
@@ -291,9 +329,12 @@ mod tests {
     #[test]
     fn can_read_game_pak_ram_mirrored_by_8k() {
         let mut memory = Memory::new();
-        memory
-            .load_game_pak(&[0x69], &[0x78, 0x56, 0x34, 0x12])
-            .unwrap();
+        let mut sram = vec![0; 0x00002000];
+        sram[0] = 0x78;
+        sram[1] = 0x56;
+        sram[2] = 0x34;
+        sram[3] = 0x12;
+        memory.load_game_pak(&[0x69], &sram).unwrap();
         assert_eq!(memory.read_word(0x06000000), 0x12345678);
         assert_eq!(memory.read_word(0x06000004), 0);
         assert_eq!(memory.read_word(0x06002000), 0x12345678);

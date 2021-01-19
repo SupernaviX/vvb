@@ -2,7 +2,7 @@ use anyhow::Result;
 use std::cell::RefCell;
 use std::env;
 use std::io::Read;
-use vvb::emulator::memory::Memory;
+use vvb::emulator::memory::{Memory, Region};
 use vvb::emulator::video::drawing::DrawingProcess;
 use vvb::emulator::video::Eye;
 
@@ -22,9 +22,9 @@ fn main() -> Result<()> {
     file.read_to_end(&mut buf)?;
 
     let memory = RefCell::new(Memory::new());
-    memory
-        .borrow_mut()
-        .write_range(0x00000000..0x00080000, &buf);
+    if let Some(vram) = memory.borrow_mut().write_region(Region::Vram) {
+        vram.copy_from_slice(&buf);
+    }
 
     let mut xp = DrawingProcess::new();
 

@@ -5,7 +5,7 @@ use cpu::{Event, EventHandler, CPU};
 mod hardware;
 use hardware::Hardware;
 pub mod memory;
-use memory::Memory;
+use memory::{Memory, Region};
 pub mod video;
 use video::{Eye, FrameChannel, Video};
 
@@ -69,7 +69,9 @@ impl Emulator {
     }
 
     pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
-        self.memory.borrow().read_sram(buffer);
+        if let Some(sram) = self.memory.borrow().read_region(Region::Sram) {
+            buffer.copy_from_slice(sram);
+        }
         Ok(())
     }
 
