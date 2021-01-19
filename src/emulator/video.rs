@@ -255,7 +255,8 @@ impl Video {
                     }
 
                     if self.drawing {
-                        // "Start drawing" on whichever buffer was displayed before
+                        // Start drawing on whichever buffer was displayed before
+                        self.xp_module.start(self.memory.borrow());
                         self.xpctrl_flags |= match self.display_buffer {
                             Buffer0 => F0BSY,
                             Buffer1 => F1BSY,
@@ -274,13 +275,12 @@ impl Video {
                             Buffer1 => L1BSY,
                         };
                     }
-
+                }
+                5 => {
                     if self.drawing {
                         // Actually draw on the background buffer
                         self.draw();
                     }
-                }
-                5 => {
                     if self.displaying {
                         // Actually display the left eye
                         self.build_frame(Left);

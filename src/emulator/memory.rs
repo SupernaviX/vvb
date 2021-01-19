@@ -10,6 +10,11 @@ pub enum Region {
     Sram = 6,
     Rom = 7,
 }
+const VRAM_SIZE: usize = 0x00080000;
+const AUDIO_SIZE: usize = 0x00000800;
+const HARDWARE_SIZE: usize = 0x00000040;
+const DRAM_SIZE: usize = 0x00010000;
+
 struct MemoryRegion {
     kind: Region,
     value: Vec<u8>,
@@ -99,14 +104,28 @@ impl Memory {
     pub fn new() -> Self {
         Self {
             regions: [
-                Some(MemoryRegion::new(Region::Vram, 0x00080000)),
-                Some(MemoryRegion::new(Region::Audio, 0x00000800)),
-                Some(MemoryRegion::new(Region::Hardware, 0x00000040)),
+                Some(MemoryRegion::new(Region::Vram, VRAM_SIZE)),
+                Some(MemoryRegion::new(Region::Audio, AUDIO_SIZE)),
+                Some(MemoryRegion::new(Region::Hardware, HARDWARE_SIZE)),
                 None,
                 None, // Game Pak Expansion (never used)
-                Some(MemoryRegion::new(Region::Dram, 0x00010000)),
+                Some(MemoryRegion::new(Region::Dram, DRAM_SIZE)),
                 None, // Sram (loaded later)
                 None, // Rom (loaded later)
+            ],
+        }
+    }
+    pub fn vram_only() -> Self {
+        Self {
+            regions: [
+                Some(MemoryRegion::new(Region::Vram, VRAM_SIZE)),
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
+                None,
             ],
         }
     }

@@ -34,6 +34,7 @@ fn main() -> Result<()> {
     let start = std::time::Instant::now();
 
     for _ in 0..ITERATIONS {
+        xp.start(memory.borrow());
         xp.draw_eye(&mut memory.borrow_mut(), Eye::Left, left_buf_address);
         xp.draw_eye(&mut memory.borrow_mut(), Eye::Right, right_buf_address);
     }
