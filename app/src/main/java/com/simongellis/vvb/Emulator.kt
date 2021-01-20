@@ -9,9 +9,8 @@ import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.thread
 
-class Emulator(context: Context) {
+class Emulator {
     private var _pointer = 0L
-    private var _context = context
     private var _thread: Thread? = null
     private var _running = false
     private var _gameLoaded = false
@@ -33,11 +32,11 @@ class Emulator(context: Context) {
         }
     }
 
-    fun loadGamePak(romUri: Uri) {
+    fun loadGamePak(context: Context, romUri: Uri) {
         pause()
-        val rom = loadFile(romUri)
+        val rom = loadFile(context, romUri)
 
-        val sram = File(_context.filesDir, getSRAMFilename(romUri))
+        val sram = File(context.filesDir, getSRAMFilename(romUri))
         _sram = sram
 
         if (sram.exists()) {
@@ -58,10 +57,10 @@ class Emulator(context: Context) {
         return pathEnd.substringAfterLast('/').replace(Regex("\\.[^.]+$"), ".srm")
     }
 
-    fun loadImage() {
+    fun loadImage(context: Context) {
         nativeLoadImage(
-            loadResource(R.drawable.vbtitlescreen_left),
-            loadResource(R.drawable.vbtitlescreen_right)
+            loadResource(context, R.drawable.vbtitlescreen_left),
+            loadResource(context, R.drawable.vbtitlescreen_right)
         )
     }
 
@@ -98,8 +97,8 @@ class Emulator(context: Context) {
         }
     }
 
-    private fun loadFile(file: Uri): ByteBuffer {
-        _context.contentResolver.openInputStream(file)!!.use { inputStream ->
+    private fun loadFile(context: Context, file: Uri): ByteBuffer {
+        context.contentResolver.openInputStream(file)!!.use { inputStream ->
             val bytes = inputStream.readBytes()
             val rom = ByteBuffer.allocateDirect(bytes.size).put(bytes)
             rom.rewind()
@@ -115,10 +114,10 @@ class Emulator(context: Context) {
         sram.outputStream().channel.use { it.write(_sramBuffer) }
     }
 
-    private fun loadResource(id: Int): ByteBuffer {
+    private fun loadResource(context: Context, id: Int): ByteBuffer {
         val options = BitmapFactory.Options()
         options.inScaled = false
-        val bmp = BitmapFactory.decodeResource(_context.resources, id, options)
+        val bmp = BitmapFactory.decodeResource(context.resources, id, options)
         val buffer = ByteBuffer.allocateDirect(bmp.byteCount)
         bmp.copyPixelsToBuffer(buffer)
         buffer.rewind()
@@ -136,8 +135,8 @@ class Emulator(context: Context) {
         @Volatile
         private var INSTANCE: Emulator? = null
 
-        fun getInstance(context: Context): Emulator = INSTANCE ?: synchronized(this) {
-            INSTANCE ?: Emulator(context).also { INSTANCE = it }
+        fun getInstance(): Emulator = INSTANCE ?: synchronized(this) {
+            INSTANCE ?: Emulator().also { INSTANCE = it }
         }
     }
 }

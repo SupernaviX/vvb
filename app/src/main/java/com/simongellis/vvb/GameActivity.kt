@@ -18,7 +18,7 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityGameBinding.inflate(layoutInflater)
-        _emulator = Emulator.getInstance(applicationContext)
+        _emulator = Emulator.getInstance()
         val settings = Settings(applicationContext)
         _renderer = Renderer(_emulator, settings)
         _audio = Audio(_emulator, settings)
@@ -33,7 +33,7 @@ class GameActivity : AppCompatActivity() {
         surfaceView.setRenderer(_renderer)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
-        _emulator.loadImage()
+        _emulator.loadImage(applicationContext)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

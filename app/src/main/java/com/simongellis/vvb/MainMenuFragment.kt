@@ -33,7 +33,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         super.onResume()
         requireActivity().setTitle(R.string.app_name)
         findPreference<Preference>("resume_game")?.apply {
-            val emulator = Emulator.getInstance(requireContext())
+            val emulator = Emulator.getInstance()
             isVisible = emulator.isGameLoaded()
         }
     }
@@ -42,8 +42,8 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == GAME_CHOSEN && resultCode == Activity.RESULT_OK) {
             data?.data?.also { uri ->
-                val emulator = Emulator.getInstance(requireContext())
-                emulator.loadGamePak(uri)
+                val emulator = Emulator.getInstance()
+                emulator.loadGamePak(requireContext(), uri)
                 playGame()
             }
         }

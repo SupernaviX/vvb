@@ -24,5 +24,4 @@
     <string name="video_menu_preview">Preview</string>
     <string name="audio_menu_volume">Volume</string>
     <string name="audio_menu_buffer_size">Buffer Size (in frames)</string>
-    <string name="ui_settings_button_content_description">settings</string>
 </resources>

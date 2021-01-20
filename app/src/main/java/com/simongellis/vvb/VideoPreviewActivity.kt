@@ -14,7 +14,7 @@ class VideoPreviewActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityGameBinding.inflate(layoutInflater)
-        _emulator = Emulator.getInstance(applicationContext)
+        _emulator = Emulator.getInstance()
         _renderer = Renderer(_emulator, Settings(applicationContext))
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -25,7 +25,7 @@ class VideoPreviewActivity: AppCompatActivity() {
         surfaceView.setRenderer(_renderer)
         surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
-        _emulator.loadImage()
+        _emulator.loadImage(applicationContext)
     }
 
     override fun onResume() {
