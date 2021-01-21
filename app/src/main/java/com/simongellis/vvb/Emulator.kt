@@ -73,7 +73,7 @@ class Emulator {
             return
         }
         _running = true
-        _thread = thread(name = "EmulatorThread") { run() }
+        _thread = thread(name = "EmulatorThread", priority = -12) { run() }
     }
 
     fun pause() {
