@@ -565,6 +565,7 @@ impl<'a> CPUProcess<'a> {
         if divisor == 0 {
             // trap for divide by 0
             self.pc -= 2;
+            log::warn!("DIV by 0 at 0x{:08x}", self.pc);
             self.exception = Some(Exception::error(0xff80, 0xffffff80));
         } else if dividend == i32::MIN && divisor == -1 {
             self.set_register(30, 0);
@@ -586,6 +587,7 @@ impl<'a> CPUProcess<'a> {
         if divisor == 0 {
             // trap for divide by 0
             self.pc -= 2;
+            log::warn!("DIVU by 0 at 0x{:08x}", self.pc);
             self.exception = Some(Exception::error(0xff80, 0xffffff80));
         } else {
             let quotient = dividend / divisor;
@@ -1043,7 +1045,7 @@ impl<'a> CPUProcess<'a> {
     }
     fn cvt_ws(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let value = self.registers[reg1] as f32;
+        let value = self.registers[reg1] as i32 as f32;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
         self.cycle += 16;
@@ -1051,10 +1053,10 @@ impl<'a> CPUProcess<'a> {
     fn cvt_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let fval = self.get_float(self.registers[reg1]).round();
-        let value = fval as u32;
+        let value = fval as i32 as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
-        let out_of_range = fval > u32::MAX as f32;
+        let out_of_range = fval < i32::MIN as f32 || fval > i32::MAX as f32;
         self.float_track_invalid(out_of_range);
         self.cycle += 14;
     }
@@ -1099,6 +1101,8 @@ impl<'a> CPUProcess<'a> {
             // otherwise it's divide-by-zero
             self.update_psw_flag(FLOAT_ZERO_DIV_FLAG, !zero_numerator);
             if !zero_numerator {
+                self.pc -= 4;
+                log::warn!("DIVF.S by 0 at 0x{:08x}", self.pc);
                 self.exception = Some(Exception::error(0xff68, 0xffffff60));
             }
             self.update_psw_flag(FLOAT_OVERFLOW_FLAG, false);
@@ -1115,10 +1119,10 @@ impl<'a> CPUProcess<'a> {
     fn trnc_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
         let fval = self.get_float(self.registers[reg1]).trunc();
-        let value = fval as u32;
+        let value = fval as i32 as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
-        let out_of_range = fval > u32::MAX as f32;
+        let out_of_range = fval < i32::MIN as f32 || fval > i32::MAX as f32;
         self.float_track_invalid(out_of_range);
         self.cycle += 14;
     }
@@ -1129,6 +1133,8 @@ impl<'a> CPUProcess<'a> {
         self.update_psw_flag(FLOAT_RESERVED_OP_FLAG, invalid);
         if invalid {
             // "Reserved operand" error
+            self.pc -= 4;
+            log::warn!("Reserved operand at 0x{:08x}", self.pc);
             self.exception = Some(Exception::error(0xff60, 0xffffff60));
         }
         value
@@ -1137,6 +1143,8 @@ impl<'a> CPUProcess<'a> {
     fn float_track_invalid(&mut self, invalid: bool) {
         self.update_psw_flag(FLOAT_INVALID_FLAG, invalid);
         if invalid {
+            self.pc -= 4;
+            log::warn!("Invalid float at 0x{:08x}", self.pc);
             self.exception = Some(Exception::error(0xff70, 0xffffff60));
         }
     }
@@ -1145,6 +1153,8 @@ impl<'a> CPUProcess<'a> {
         let overflow = value.is_infinite() && (val1.is_finite() || val2.is_finite());
         self.update_psw_flag(FLOAT_OVERFLOW_FLAG, overflow);
         if overflow {
+            self.pc -= 4;
+            log::warn!("Overflowing float at 0x{:08x}", self.pc);
             self.exception = Some(Exception::error(0xff64, 0xffffff60));
         }
     }
@@ -2111,6 +2121,19 @@ mod tests {
     }
 
     #[test]
+    fn can_convert_negative_floats_to_and_from_int() {
+        let (mut cpu, _memory) = rom(vec![
+            movea(10, 0, -191i16 as u16),
+            cvt_ws(11, 10),
+            cvt_sw(12, 11),
+        ]);
+        cpu.run(31).unwrap();
+        assert_eq!(cpu.registers[10] as i32, -191);
+        assert_eq!(f32::from_bits(cpu.registers[11]), -191.0);
+        assert_eq!(cpu.registers[12] as i32, -191);
+    }
+
+    #[test]
     fn can_report_reserved_op_float_errors() {
         let (mut cpu, _memory) = rom(vec![
             ldsr(0, PSW),
@@ -2121,7 +2144,6 @@ mod tests {
         assert_ne!(cpu.sys_registers[PSW] & FLOAT_RESERVED_OP_FLAG, 0);
         assert_eq!(cpu.pc, 0xffffff60);
         assert_eq!(cpu.sys_registers[ECR], 0x0000ff60);
-
     }
 
     #[test]
