@@ -26,4 +26,4 @@ Several features are not implemented:
 
 ## Credits
 - Guy Perfect for writing the extremely helpful [Virtual Boy Sacred Tech Scroll](https://www.virtual-boy.com/documents/virtual-boy-sacred-tech-scroll/)
-- Pi Lanningham and Robert Kellett for rubber ducking
+- [Pi Lanningham](https://github.com/Quantumplation) and [Robert Kellett](https://github.com/Splagoon) for rubber ducking
