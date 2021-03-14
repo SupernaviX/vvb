@@ -183,8 +183,9 @@ impl Video {
             // Don't let the program overwrite the readonly flags
             dpctrl &= !DP_READONLY_MASK;
             dpctrl |= self.dpctrl_flags;
+            dpctrl &= !DPRST;
             memory.write_halfword(DPCTRL, dpctrl);
-            memory.write_halfword(DPSTTS, dpctrl & !DPRST);
+            memory.write_halfword(DPSTTS, dpctrl);
             memory.write_halfword(INTPND, self.pending_interrupts);
             memory.write_halfword(INTENB, self.enabled_interrupts);
         }
@@ -200,8 +201,9 @@ impl Video {
             // Don't let the program overwrite the readonly flags
             xpctrl &= !XP_READONLY_MASK;
             xpctrl |= self.xpctrl_flags;
+            xpctrl &= !XPRST;
             memory.write_halfword(XPCTRL, xpctrl);
-            memory.write_halfword(XPSTTS, xpctrl & !XPRST);
+            memory.write_halfword(XPSTTS, xpctrl);
             memory.write_halfword(INTPND, self.pending_interrupts);
             memory.write_halfword(INTENB, self.enabled_interrupts);
         }
@@ -620,6 +622,19 @@ mod tests {
         assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY);
 
         video.run(ms_to_cycles(80)).unwrap();
+        assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
+    }
+
+    #[test]
+    fn can_render_when_disp_and_dprst_are_both_set() {
+        let (mut video, memory) = get_video();
+
+        video.init();
+        write_dpctrl(&mut video, &memory, DISP | DPRST);
+        write_xpctrl(&mut video, &memory, XPEN);
+
+        // start 2 frames in, because that's the first time we see a rising FCLK
+        video.run(ms_to_cycles(40)).unwrap();
         assert_eq!(memory.borrow().read_halfword(DPSTTS), DISP | SCANRDY | FCLK);
     }
 
