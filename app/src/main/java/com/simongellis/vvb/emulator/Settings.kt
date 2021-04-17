@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.emulator
 
 import android.content.Context
 import androidx.preference.PreferenceManager

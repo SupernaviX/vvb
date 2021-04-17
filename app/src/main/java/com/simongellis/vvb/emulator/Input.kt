@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.emulator
 
 enum class Input(val prefName: String?, val bitMask: Int) {
     LL("input_ll", 0x0200),

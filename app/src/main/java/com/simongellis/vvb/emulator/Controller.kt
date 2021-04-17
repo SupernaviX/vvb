@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.emulator
 
 class Controller(emulator: Emulator) {
     private var _pointer = 0L

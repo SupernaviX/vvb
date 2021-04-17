@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.emulator
 
 class Audio(emulator: Emulator, settings: Settings) {
     private var _pointer = 0L

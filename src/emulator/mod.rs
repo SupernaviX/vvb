@@ -185,10 +185,10 @@ impl EventHandler for EmulatorEventHandler {
     }
 }
 
-#[rustfmt::skip::macros(java_func)]
+#[rustfmt::skip::macros(emulator_func)]
 pub mod jni {
     use super::Emulator;
-    use crate::{java_func, jni_helpers};
+    use crate::{emulator_func, jni_helpers};
     use anyhow::Result;
     use jni::objects::JByteBuffer;
     use jni::sys::{jint, jobject};
@@ -201,17 +201,17 @@ pub mod jni {
         jni_helpers::java_get(env, this)
     }
 
-    java_func!(Emulator_nativeConstructor, constructor);
+    emulator_func!(Emulator_nativeConstructor, constructor);
     fn constructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_init(env, this, Emulator::new())
     }
 
-    java_func!(Emulator_nativeDestructor, destructor);
+    emulator_func!(Emulator_nativeDestructor, destructor);
     fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<Emulator>(env, this)
     }
 
-    java_func!(Emulator_nativeLoadGamePak, load_game_pak, JByteBuffer, JByteBuffer);
+    emulator_func!(Emulator_nativeLoadGamePak, load_game_pak, JByteBuffer, JByteBuffer);
     fn load_game_pak(
         env: &JNIEnv,
         this: jobject,
@@ -224,20 +224,20 @@ pub mod jni {
         this.load_game_pak(rom, sram)
     }
 
-    java_func!(Emulator_nativeTick, tick, jint);
+    emulator_func!(Emulator_nativeTick, tick, jint);
     fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
         this.tick(nanoseconds as u64)
     }
 
-    java_func!(Emulator_nativeReadSRAM, read_sram, JByteBuffer);
+    emulator_func!(Emulator_nativeReadSRAM, read_sram, JByteBuffer);
     fn read_sram(env: &JNIEnv, this: jobject, buffer: JByteBuffer) -> Result<()> {
         let this = get_emulator(env, this)?;
         let buffer = env.get_direct_buffer_address(buffer)?;
         this.read_sram(buffer)
     }
 
-    java_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);
+    emulator_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);
     fn load_image(
         env: &JNIEnv,
         this: jobject,

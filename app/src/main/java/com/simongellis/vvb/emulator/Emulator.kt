@@ -1,9 +1,10 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.emulator
 
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.SystemClock
+import com.simongellis.vvb.R
 import java.io.File
 import java.nio.ByteBuffer
 import java.util.*

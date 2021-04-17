@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.emulator
 
 import android.opengl.GLSurfaceView
 import javax.microedition.khronos.egl.EGLConfig

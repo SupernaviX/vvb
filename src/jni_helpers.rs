@@ -43,13 +43,13 @@ pub fn java_take<T: 'static + Send>(env: &JNIEnv, this: jobject) -> Result<()> {
 #[macro_export]
 macro_rules! java_func {
     ($name:ident, $func:ident) => {
-        java_func!(name $name func $func params ());
+        crate::java_func!(name $name func $func params ());
     };
     ($name:ident, $func:ident, $param0:ty) => {
-        java_func!(name $name func $func params (p0: $param0));
+        crate::java_func!(name $name func $func params (p0: $param0));
     };
     ($name:ident, $func:ident, $param0:ty, $param1:ty) => {
-        java_func!(name $name func $func params (p0: $param0, p1: $param1));
+        crate::java_func!(name $name func $func params (p0: $param0, p1: $param1));
     };
     (name $name:ident func $func:ident params ($($pname:ident: $ptype:ty),*)) => {
         paste::paste! {
@@ -60,4 +60,13 @@ macro_rules! java_func {
             }
         }
     };
+}
+
+#[macro_export]
+macro_rules! emulator_func {
+    ($name:ident, $( $params:tt ),+) => {
+        paste::paste! {
+            crate::java_func!([<emulator_ $name>], $( $params ),+ );
+        }
+    }
 }

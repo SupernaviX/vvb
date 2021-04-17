@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.simongellis.vvb.emulator.Emulator
 
 class MainMenuFragment: PreferenceFragmentCompat() {
     private val GAME_CHOSEN = 2

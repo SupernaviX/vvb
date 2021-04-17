@@ -9,6 +9,7 @@ import androidx.core.content.edit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.simongellis.vvb.emulator.Input
 
 class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener {
     private var _control: String? = null

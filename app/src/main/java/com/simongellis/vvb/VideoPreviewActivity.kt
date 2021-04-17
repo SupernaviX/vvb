@@ -5,6 +5,9 @@ import android.opengl.GLSurfaceView
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.simongellis.vvb.databinding.ActivityGameBinding
+import com.simongellis.vvb.emulator.Emulator
+import com.simongellis.vvb.emulator.Renderer
+import com.simongellis.vvb.emulator.Settings
 
 class VideoPreviewActivity: AppCompatActivity() {
     private lateinit var _binding: ActivityGameBinding

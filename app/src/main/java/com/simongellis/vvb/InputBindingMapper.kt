@@ -5,6 +5,7 @@ import android.hardware.input.InputManager
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceManager
+import com.simongellis.vvb.emulator.Input
 import kotlin.collections.HashMap
 
 class InputBindingMapper(context: Context): InputManager.InputDeviceListener {

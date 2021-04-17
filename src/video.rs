@@ -118,11 +118,11 @@ pub struct Settings {
     color: (u8, u8, u8),
 }
 
-#[rustfmt::skip::macros(java_func)]
+#[rustfmt::skip::macros(emulator_func)]
 pub mod jni {
     use super::{Renderer, Settings};
     use crate::emulator::Emulator;
-    use crate::{java_func, jni_helpers};
+    use crate::{emulator_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
@@ -149,7 +149,7 @@ pub mod jni {
         })
     }
 
-    java_func!(Renderer_nativeConstructor, constructor, jobject, jobject);
+    emulator_func!(Renderer_nativeConstructor, constructor, jobject, jobject);
     fn constructor(
         env: &JNIEnv,
         this: jobject,
@@ -162,38 +162,38 @@ pub mod jni {
         jni_helpers::java_init(env, this, renderer)
     }
 
-    java_func!(Renderer_nativeDestructor, destructor);
+    emulator_func!(Renderer_nativeDestructor, destructor);
     fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<Renderer>(env, this)
     }
 
-    java_func!(Renderer_nativeOnSurfaceCreated, on_surface_created);
+    emulator_func!(Renderer_nativeOnSurfaceCreated, on_surface_created);
     fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
-    java_func!(Renderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
+    emulator_func!(Renderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
     fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height);
         Ok(())
     }
 
-    java_func!(Renderer_nativeOnDrawFrame, on_draw_frame);
+    emulator_func!(Renderer_nativeOnDrawFrame, on_draw_frame);
     fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()
     }
 
-    java_func!(Renderer_nativeEnsureDeviceParams, ensure_device_params);
+    emulator_func!(Renderer_nativeEnsureDeviceParams, ensure_device_params);
     fn ensure_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.ensure_device_params();
         Ok(())
     }
 
-    java_func!(Renderer_nativeChangeDeviceParams, change_device_params);
+    emulator_func!(Renderer_nativeChangeDeviceParams, change_device_params);
     fn change_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.change_device_params();
