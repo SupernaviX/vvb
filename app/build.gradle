@@ -33,7 +33,7 @@ android {
         }
     }
 
-    ndkVersion = "21.3.6528147"
+    ndkVersion = "22.1.7171670"
 }
 
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
@@ -70,10 +70,6 @@ task extractNdk(type: Copy)  {
             from zipTree("${project.rootDir}/cardboard-sdk/sdk-release.aar")
             into "libraries/"
             include "jni/**/libcardboard_api.so"
-        }
-        copy {
-            from "${project.rootDir}/cardboard-sdk/include/cardboard.h"
-            into "libraries/"
         }
     }
 }
