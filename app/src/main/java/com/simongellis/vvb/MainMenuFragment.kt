@@ -22,12 +22,6 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             startActivityForResult(preference.intent, GAME_CHOSEN)
             true
         }
-
-        findPreference<Preference>("switch_viewer")?.setOnPreferenceClickListener { _ ->
-            val activity = activity as MainActivity
-            activity.changeDeviceParams()
-            true
-        }
     }
 
     override fun onResume() {

@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
+    <DropDownPreference
+        app:key="video_mode"
+        app:title="@string/video_menu_mode"
+        android:entries="@array/video_mode_names"
+        app:useSimpleSummaryProvider="true"
+        android:entryValues="@array/video_modes"
+        app:defaultValue="ANAGLYPH"/>
     <SeekBarPreference
         app:key="video_screen_zoom_percent"
         app:title="@string/video_menu_screen_zoom_percent"
@@ -23,7 +30,10 @@
         app:defaultValue="@color/red"
         app:colorShape="square"
         app:colorChoices="@array/color_choices"
-        app:numColumns="4"
+        app:numColumns="4"/>
+    <Preference
+        app:key="video_switch_viewer"
+        app:title="@string/video_menu_switch_viewer"
         />
     <Preference
         app:key="video_preview"

@@ -2,7 +2,6 @@
     <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_resume_game">Resume Game</string>
     <string name="main_menu_load_game">Load Game</string>
-    <string name="main_menu_switch_viewer">Switch Cardboard Viewer</string>
     <string name="main_menu_input_setup">Input Setup</string>
     <string name="main_menu_video_setup">Video Setup</string>
     <string name="main_menu_audio_setup">Audio Setup</string>
@@ -20,7 +19,11 @@
     <string name="input_menu_button_select">Select</string>
     <string name="video_menu_screen_zoom_percent">Screen Zoom (percent)</string>
     <string name="video_menu_vertical_offset">Vertical Offset</string>
+    <string name="video_menu_mode">Mode</string>
+    <string name="video_menu_mode_anaglyph">Anaglyph (red/cyan)</string>
+    <string name="video_menu_mode_cardboard">Cardboard</string>
     <string name="video_menu_color">Color</string>
+    <string name="video_menu_switch_viewer">Switch Cardboard Viewer</string>
     <string name="video_menu_preview">Preview</string>
     <string name="audio_menu_volume">Volume</string>
     <string name="audio_menu_buffer_size">Buffer Size (in frames)</string>

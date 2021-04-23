@@ -10,4 +10,12 @@
         <item>@color/violet</item>
         <item>@color/white</item>
     </array>
+    <array name="video_mode_names">
+        <item>@string/video_menu_mode_anaglyph</item>
+        <item>@string/video_menu_mode_cardboard</item>
+    </array>
+    <array name="video_modes">
+        <item>ANAGLYPH</item>
+        <item>CARDBOARD</item>
+    </array>
 </resources>
