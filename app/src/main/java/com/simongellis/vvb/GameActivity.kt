@@ -11,7 +11,7 @@ import com.simongellis.vvb.emulator.*
 class GameActivity : AppCompatActivity() {
     private lateinit var _binding: ActivityGameBinding
     private lateinit var _emulator: Emulator
-    private lateinit var _renderer: Renderer
+    private lateinit var _renderer: CardboardRenderer
     private lateinit var _audio: Audio
     private lateinit var _controller: Controller
     private lateinit var _inputBindingMapper: InputBindingMapper
@@ -21,7 +21,7 @@ class GameActivity : AppCompatActivity() {
         _binding = ActivityGameBinding.inflate(layoutInflater)
         _emulator = Emulator.getInstance()
         val settings = Settings(applicationContext)
-        _renderer = Renderer(_emulator, settings)
+        _renderer = CardboardRenderer(_emulator, settings)
         _audio = Audio(_emulator, settings)
         _controller = Controller(_emulator)
         _inputBindingMapper = InputBindingMapper(applicationContext)

@@ -4,7 +4,7 @@ import android.opengl.GLSurfaceView
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
-class Renderer(emulator: Emulator, settings: Settings) : GLSurfaceView.Renderer {
+class CardboardRenderer(emulator: Emulator, settings: Settings) : GLSurfaceView.Renderer {
     private var _pointer = 0L
 
     init {

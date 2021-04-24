@@ -1,10 +1,13 @@
-use super::gl;
-use super::gl::types::{GLboolean, GLchar, GLenum, GLfloat, GLint, GLshort, GLsizei, GLuint};
-use super::gl::utils::{check_error, temp_array, AsVoidptr};
-use super::Settings;
 use crate::emulator::video::{Eye, Frame};
+use crate::video::gl;
+use crate::video::gl::types::{
+    GLboolean, GLchar, GLenum, GLfloat, GLint, GLshort, GLsizei, GLuint,
+};
+use crate::video::gl::utils::{check_error, temp_array, AsVoidptr};
 use anyhow::Result;
 use cgmath::{self, vec3, Matrix4, SquareMatrix};
+use jni::sys::jobject;
+use jni::JNIEnv;
 use log::error;
 use std::ffi::{CStr, CString};
 
@@ -343,4 +346,26 @@ impl Drop for VBScreenRenderer {
             }
         }
     }
+}
+
+#[derive(Debug)]
+pub struct Settings {
+    screen_zoom: f32,
+    vertical_offset: f32,
+    color: (u8, u8, u8),
+}
+
+pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+    let screen_zoom_percent = env.get_field(this, "_screenZoom", "I")?.i()?;
+    let vertical_offset = env.get_field(this, "_verticalOffset", "I")?.i()?;
+    let color = env.get_field(this, "_color", "I")?.i()?;
+
+    // android passes color as ARGB
+    let color = ((color >> 16) as u8, (color >> 8) as u8, color as u8);
+
+    Ok(Settings {
+        screen_zoom: (screen_zoom_percent as f32) / 100.0,
+        vertical_offset: (vertical_offset as f32) / 100.0,
+        color,
+    })
 }

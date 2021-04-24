@@ -6,19 +6,19 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.simongellis.vvb.databinding.ActivityGameBinding
 import com.simongellis.vvb.emulator.Emulator
-import com.simongellis.vvb.emulator.Renderer
+import com.simongellis.vvb.emulator.CardboardRenderer
 import com.simongellis.vvb.emulator.Settings
 
 class VideoPreviewActivity: AppCompatActivity() {
     private lateinit var _binding: ActivityGameBinding
     private lateinit var _emulator: Emulator
-    private lateinit var _renderer: Renderer
+    private lateinit var _renderer: CardboardRenderer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityGameBinding.inflate(layoutInflater)
         _emulator = Emulator.getInstance()
-        _renderer = Renderer(_emulator, Settings(applicationContext))
+        _renderer = CardboardRenderer(_emulator, Settings(applicationContext))
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setContentView(_binding.root)

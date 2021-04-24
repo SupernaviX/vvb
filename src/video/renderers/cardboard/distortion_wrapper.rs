@@ -1,14 +1,15 @@
-use super::gl;
-use super::gl::types::{GLint, GLuint};
-use super::gl::utils::{check_error, temp_array};
+use crate::video::cardboard::{
+    CardboardEye, DistortionRenderer, LensDistortion, QrCode, TextureDescription,
+};
 
-pub mod api;
-use api::{CardboardEye, DistortionRenderer, LensDistortion, QrCode, TextureDescription};
+use crate::video::gl;
+use crate::video::gl::types::{GLint, GLuint};
+use crate::video::gl::utils::{check_error, temp_array};
 
 use anyhow::Result;
 use log::error;
 
-pub struct CardboardRenderer {
+pub struct DistortionWrapper {
     #[allow(dead_code)]
     lens_distortion: LensDistortion,
     distortion_renderer: DistortionRenderer,
@@ -18,8 +19,8 @@ pub struct CardboardRenderer {
     left_eye: TextureDescription,
     right_eye: TextureDescription,
 }
-impl CardboardRenderer {
-    pub fn new(screen_size: (i32, i32)) -> Result<Option<CardboardRenderer>> {
+impl DistortionWrapper {
+    pub fn new(screen_size: (i32, i32)) -> Result<Option<Self>> {
         let params = QrCode::get_saved_device_params();
         if params.is_none() {
             return Ok(None);
@@ -79,7 +80,7 @@ impl CardboardRenderer {
         distortion_renderer.set_mesh(&left_mesh, CardboardEye::kLeft);
         distortion_renderer.set_mesh(&right_mesh, CardboardEye::kRight);
 
-        Ok(Some(CardboardRenderer {
+        Ok(Some(Self {
             lens_distortion,
             distortion_renderer,
             texture,
@@ -120,7 +121,7 @@ impl CardboardRenderer {
         check_error("render to cardboard")
     }
 }
-impl Drop for CardboardRenderer {
+impl Drop for DistortionWrapper {
     fn drop(&mut self) {
         unsafe {
             gl::DeleteFramebuffers(1, &self.framebuffer);
