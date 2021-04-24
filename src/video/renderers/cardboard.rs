@@ -54,11 +54,6 @@ impl CardboardRenderer {
         }
     }
 
-    pub fn change_device_params(&mut self) {
-        self.cardboard_stale = true;
-        QrCode::scan_qr_code_and_save_device_params();
-    }
-
     pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) {
         self.screen_size = (screen_width, screen_height);
         self.vb_screen
@@ -165,13 +160,6 @@ pub mod jni {
     fn ensure_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.ensure_device_params();
-        Ok(())
-    }
-
-    emulator_func!(CardboardRenderer_nativeChangeDeviceParams, change_device_params);
-    fn change_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
-        let mut this = get_renderer(env, this)?;
-        this.change_device_params();
         Ok(())
     }
 }

@@ -6,19 +6,9 @@ import android.os.Bundle
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.simongellis.vvb.emulator.VideoMode
 
 class VideoMenuFragment: PreferenceFragmentCompat() {
-    enum class VideoMode {
-        ANAGLYPH,
-        CARDBOARD;
-
-        companion object {
-            fun current(prefs: SharedPreferences): VideoMode {
-                val name = prefs.getString(Prefs.MODE.prefName, ANAGLYPH.name)!!
-                return valueOf(name)
-            }
-        }
-    }
     enum class Prefs(val prefName: String, val mode: VideoMode? = null) {
         MODE("video_mode"),
         ZOOM("video_screen_zoom_percent"),
@@ -38,7 +28,8 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences_video, rootKey)
 
-        val initialMode = VideoMode.current(_sharedPreferences)
+        val initialModeName = _sharedPreferences.getString(Prefs.MODE.prefName, VideoMode.ANAGLYPH.name)!!
+        val initialMode = VideoMode.valueOf(initialModeName)
         hidePreferencesByMode(initialMode)
 
         findPref(Prefs.MODE).setOnPreferenceChangeListener { _, newValue ->
