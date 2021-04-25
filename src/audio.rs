@@ -3,7 +3,7 @@ use crate::emulator::audio::AudioPlayer;
 use anyhow::Result;
 #[cfg(target_os = "android")]
 use oboe::{
-    AudioOutputCallback, AudioOutputStream, AudioStream, AudioStreamAsync, AudioStreamBuilder,
+    AudioOutputCallback, AudioOutputStream, AudioOutputStreamSafe, AudioStream, AudioStreamAsync, AudioStreamBuilder,
     DataCallbackResult, Output, PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo,
 };
 
@@ -29,7 +29,7 @@ impl AudioOutputCallback for AudioPlayer {
     // Implement sound data output callback
     fn on_audio_ready(
         &mut self,
-        _stream: &mut dyn AudioOutputStream,
+        _stream: &mut dyn AudioOutputStreamSafe,
         frames: &mut [(i16, i16)],
     ) -> DataCallbackResult {
         self.play(frames);
