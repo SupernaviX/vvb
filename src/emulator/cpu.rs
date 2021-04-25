@@ -51,7 +51,7 @@ fn bit_range_mask(start: u32, length: u32) -> u32 {
     ((i32::MIN >> (length - 1)) as u32) >> (32 - length - start)
 }
 
-pub struct CPU<THandler: EventHandler> {
+pub struct Cpu<THandler: EventHandler> {
     cycle: u64,
     memory: Rc<RefCell<Memory>>,
     handler: THandler,
@@ -61,9 +61,9 @@ pub struct CPU<THandler: EventHandler> {
     pub registers: [u32; 32],
     pub sys_registers: [u32; 32],
 }
-impl<THandler: EventHandler> CPU<THandler> {
+impl<THandler: EventHandler> Cpu<THandler> {
     pub fn new(memory: Rc<RefCell<Memory>>, handler: THandler) -> Self {
-        let mut cpu = CPU {
+        let mut cpu = Cpu {
             cycle: 0,
             memory,
             handler,
@@ -96,10 +96,10 @@ impl<THandler: EventHandler> CPU<THandler> {
         }
     }
 
-    pub fn run(&mut self, target_cycle: u64) -> Result<CPUProcessingResult> {
+    pub fn run(&mut self, target_cycle: u64) -> Result<CpuProcessingResult> {
         let mut event = None;
         while !self.halted {
-            let mut process = CPUProcess {
+            let mut process = CpuProcess {
                 pc: self.pc,
                 cycle: self.cycle,
                 bitstring_cycle: self.bitstring_cycle,
@@ -137,7 +137,7 @@ impl<THandler: EventHandler> CPU<THandler> {
         // won't happen until at least target_cycle.
         self.cycle = self.cycle.max(target_cycle);
 
-        Ok(CPUProcessingResult {
+        Ok(CpuProcessingResult {
             cycle: self.cycle,
             event,
         })
@@ -215,7 +215,7 @@ impl<THandler: EventHandler> CPU<THandler> {
     }
 }
 
-pub struct CPUProcessingResult {
+pub struct CpuProcessingResult {
     pub cycle: u64,
     pub event: Option<Event>,
 }
@@ -262,7 +262,7 @@ impl Exception {
     }
 }
 
-struct CPUProcess<'a> {
+struct CpuProcess<'a> {
     pc: usize,
     cycle: u64,
     bitstring_cycle: u64,
@@ -273,7 +273,7 @@ struct CPUProcess<'a> {
     registers: &'a mut [u32; 32],
     sys_registers: &'a mut [u32; 32],
 }
-impl<'a> CPUProcess<'a> {
+impl<'a> CpuProcess<'a> {
     pub fn run(&mut self, target_cycle: u64) {
         while self.cycle < target_cycle
             && self.event.is_none()
@@ -1279,7 +1279,7 @@ impl<'a> CPUProcess<'a> {
 #[cfg(test)]
 #[rustfmt::skip]
 mod tests {
-    use crate::emulator::cpu::{CPU, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR, FEPC, FEPSW, FLOAT_ZERO_DIV_FLAG, FLOAT_INVALID_FLAG, FLOAT_RESERVED_OP_FLAG, FLOAT_OVERFLOW_FLAG};
+    use crate::emulator::cpu::{Cpu, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR, FEPC, FEPSW, FLOAT_ZERO_DIV_FLAG, FLOAT_INVALID_FLAG, FLOAT_RESERVED_OP_FLAG, FLOAT_OVERFLOW_FLAG};
     use crate::emulator::memory::Memory;
     use anyhow::Result;
     use std::cell::{RefCell};
@@ -1390,10 +1390,10 @@ mod tests {
         }
     }
 
-    fn rom(instructions: Vec<Vec<u8>>) -> (CPU<NoopEventHandler>, Rc<RefCell<Memory>>) {
+    fn rom(instructions: Vec<Vec<u8>>) -> (Cpu<NoopEventHandler>, Rc<RefCell<Memory>>) {
         let memory = Rc::new(RefCell::new(Memory::new()));
         let handler = NoopEventHandler;
-        let mut cpu = CPU::new(Rc::clone(&memory), handler);
+        let mut cpu = Cpu::new(Rc::clone(&memory), handler);
         cpu.pc = 0x07000000;
 
         {

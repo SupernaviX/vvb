@@ -4,7 +4,7 @@ use crate::video::cardboard::QrCode;
 mod distortion_wrapper;
 use distortion_wrapper::DistortionWrapper;
 
-use super::common::{Settings, VBScreenRenderer};
+use super::common::{Settings, VbScreenRenderer};
 
 use anyhow::Result;
 use log::debug;
@@ -12,7 +12,7 @@ use std::sync::mpsc::TryRecvError;
 
 pub struct CardboardRenderer {
     screen_size: (i32, i32),
-    vb_screen: Option<VBScreenRenderer>,
+    vb_screen: Option<VbScreenRenderer>,
     distortion: Option<DistortionWrapper>,
     cardboard_stale: bool,
     frame_channel: FrameChannel,
@@ -38,7 +38,7 @@ impl CardboardRenderer {
         self.vb_screen.take();
         self.distortion.take();
 
-        self.vb_screen = Some(VBScreenRenderer::new(&self.settings)?);
+        self.vb_screen = Some(VbScreenRenderer::new(&self.settings)?);
         self.cardboard_stale = true;
 
         let device_params = QrCode::get_saved_device_params();

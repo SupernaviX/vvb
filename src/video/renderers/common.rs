@@ -146,7 +146,7 @@ unsafe fn init_gl_texture(texture_id: GLuint) -> Result<()> {
     Ok(())
 }
 
-pub struct VBScreenRenderer {
+pub struct VbScreenRenderer {
     program_id: GLuint,
     position_location: GLuint,
     tex_coord_location: GLuint,
@@ -159,8 +159,8 @@ pub struct VBScreenRenderer {
     vertical_offset: f32,
     color: (u8, u8, u8),
 }
-impl VBScreenRenderer {
-    pub fn new(settings: &Settings) -> Result<VBScreenRenderer> {
+impl VbScreenRenderer {
+    pub fn new(settings: &Settings) -> Result<VbScreenRenderer> {
         let state = unsafe {
             let program_id = gl::CreateProgram();
             check_error("create a program")?;
@@ -187,12 +187,12 @@ impl VBScreenRenderer {
             let texture_location =
                 gl::GetUniformLocation(program_id, c_string!("u_Texture")?.as_ptr());
 
-            let mut texture_ids = [0 as GLuint; 2];
+            let mut texture_ids = [0; 2];
             gl::GenTextures(2, texture_ids.as_mut_ptr());
             init_gl_texture(texture_ids[0])?;
             init_gl_texture(texture_ids[1])?;
 
-            VBScreenRenderer {
+            VbScreenRenderer {
                 program_id,
                 position_location,
                 tex_coord_location,
@@ -331,7 +331,7 @@ impl VBScreenRenderer {
         Ok(())
     }
 }
-impl Drop for VBScreenRenderer {
+impl Drop for VbScreenRenderer {
     fn drop(&mut self) {
         unsafe {
             if gl::IsProgram(self.program_id) == GL_TRUE {

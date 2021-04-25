@@ -1,7 +1,7 @@
 pub mod audio;
 use audio::{AudioController, AudioPlayer};
 mod cpu;
-use cpu::{Event, EventHandler, CPU};
+use cpu::{Cpu, Event, EventHandler};
 mod hardware;
 use hardware::Hardware;
 pub mod memory;
@@ -21,7 +21,7 @@ pub struct Emulator {
     cycle: u64,
     tick_calls: u64,
     memory: Rc<RefCell<Memory>>,
-    cpu: CPU<EmulatorEventHandler>,
+    cpu: Cpu<EmulatorEventHandler>,
     audio: Rc<RefCell<AudioController>>,
     video: Rc<RefCell<Video>>,
     hardware: Rc<RefCell<Hardware>>,
@@ -38,7 +38,7 @@ impl Emulator {
             video: Rc::clone(&video),
             hardware: Rc::clone(&hardware),
         };
-        let cpu = CPU::new(Rc::clone(&memory), handler);
+        let cpu = Cpu::new(Rc::clone(&memory), handler);
         Emulator {
             cycle: 0,
             tick_calls: 0,

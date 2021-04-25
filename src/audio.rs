@@ -3,8 +3,9 @@ use crate::emulator::audio::AudioPlayer;
 use anyhow::Result;
 #[cfg(target_os = "android")]
 use oboe::{
-    AudioOutputCallback, AudioOutputStream, AudioOutputStreamSafe, AudioStream, AudioStreamAsync, AudioStreamBuilder,
-    DataCallbackResult, Output, PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo,
+    AudioOutputCallback, AudioOutputStream, AudioOutputStreamSafe, AudioStream, AudioStreamAsync,
+    AudioStreamBuilder, DataCallbackResult, Output, PerformanceMode, SampleRateConversionQuality,
+    SharingMode, Stereo,
 };
 
 pub fn init(sample_rate: i32, frames_per_burst: i32) {

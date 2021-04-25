@@ -1,4 +1,5 @@
-#![allow(clippy::missing_safety_doc)]
+#![allow(clippy::missing_safety_doc)] // because auto-generated code
+#![allow(clippy::unnecessary_wraps)] // JNI interop is easier if everything returns Result
 
 mod audio;
 mod controller;

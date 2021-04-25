@@ -429,14 +429,14 @@ impl DrawingLogic {
     }
 }
 
-enum BGMode {
+enum BgMode {
     Normal,
     HBias,
     Affine,
 }
 struct Background<'a> {
     memory: &'a Memory,
-    pub mode: BGMode,
+    pub mode: BgMode,
     pub scx: u32,
     pub scy: u32,
     pub bgmap_width: i16,
@@ -456,9 +456,9 @@ impl<'a> Background<'a> {
         let header = memory.read_halfword(address);
         let bgm = (header & BGM) >> 12;
         let mode = match bgm {
-            2 => BGMode::Affine,
-            1 => BGMode::HBias,
-            _ => BGMode::Normal,
+            2 => BgMode::Affine,
+            1 => BgMode::HBias,
+            _ => BgMode::Normal,
         };
 
         let scx = ((header & SCX) >> 10) as u32;
@@ -499,7 +499,7 @@ impl<'a> Background<'a> {
 
     pub fn get_coords(&self, eye: Eye, x: i16, y: i16) -> (i16, i16) {
         match self.mode {
-            BGMode::Normal => {
+            BgMode::Normal => {
                 let x = x + self.src_x;
                 let y = y + self.src_y;
                 match eye {
@@ -507,7 +507,7 @@ impl<'a> Background<'a> {
                     Eye::Right => (x + self.src_parallax_x, y),
                 }
             }
-            BGMode::HBias => {
+            BgMode::HBias => {
                 let address = self.param_base + (y as usize * 4);
                 let x = x + self.src_x;
                 let y = y + self.src_y;
@@ -522,7 +522,7 @@ impl<'a> Background<'a> {
                     }
                 }
             }
-            BGMode::Affine => {
+            BgMode::Affine => {
                 let address = self.param_base + (y as usize * 16);
                 // These are stored as 13.3 fixed-point numbers,
                 // shift left 6 to give precision 9
@@ -538,7 +538,7 @@ impl<'a> Background<'a> {
 
                 // Parallax applies to only the left eye if negative, only the right if positive
                 let mut px = x as i32;
-                #[allow(clippy::collapsible_if)]
+                #[allow(clippy::collapsible_else_if)]
                 if parallax < 0 {
                     if let Eye::Left = eye {
                         px += parallax;

@@ -1,13 +1,13 @@
 use crate::emulator::video::FrameChannel;
 
-use super::common::{Settings, VBScreenRenderer};
+use super::common::{Settings, VbScreenRenderer};
 
 use anyhow::Result;
 use std::sync::mpsc::TryRecvError;
 
 pub struct AnaglyphRenderer {
     screen_size: (i32, i32),
-    vb_screen: Option<VBScreenRenderer>,
+    vb_screen: Option<VbScreenRenderer>,
     frame_channel: FrameChannel,
     settings: Settings,
 }
@@ -27,7 +27,7 @@ impl AnaglyphRenderer {
         // so if it already has a value then that value references already-freed resources,
         // and freeing them AFTER creating a new one will drop resources the new one is using.
         self.vb_screen.take();
-        self.vb_screen = Some(VBScreenRenderer::new(&self.settings)?);
+        self.vb_screen = Some(VbScreenRenderer::new(&self.settings)?);
         Ok(())
     }
 

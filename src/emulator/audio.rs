@@ -23,19 +23,19 @@ impl Default for Direction {
 }
 
 enum ChannelType {
-    PCM { waveform: usize, index: usize },
+    Pcm { waveform: usize, index: usize },
     Noise { tap: u16, register: u16 },
 }
 impl ChannelType {
     fn base_cycles_per_frame(&self) -> usize {
         match self {
-            ChannelType::PCM { .. } => PCM_BASE_CYCLES_PER_FRAME,
+            ChannelType::Pcm { .. } => PCM_BASE_CYCLES_PER_FRAME,
             ChannelType::Noise { .. } => NOISE_BASE_CYCLES_PER_FRAME,
         }
     }
     fn tick(&mut self) {
         match self {
-            ChannelType::PCM { index, .. } => {
+            ChannelType::Pcm { index, .. } => {
                 *index += 1;
                 if *index == 32 {
                     *index = 0;
@@ -50,7 +50,7 @@ impl ChannelType {
     }
     fn reset(&mut self) {
         match self {
-            ChannelType::PCM { index, .. } => {
+            ChannelType::Pcm { index, .. } => {
                 *index = 0;
             }
             ChannelType::Noise { register, .. } => {
@@ -289,7 +289,7 @@ impl Channel {
         ]
     }
     fn pcm() -> Self {
-        Channel::new(ChannelType::PCM {
+        Channel::new(ChannelType::Pcm {
             waveform: 0,
             index: 0,
         })
@@ -322,7 +322,7 @@ impl Channel {
         self.channel_type.reset();
     }
     fn set_waveform(&mut self, waveform_index: usize) {
-        if let ChannelType::PCM { waveform, .. } = &mut self.channel_type {
+        if let ChannelType::Pcm { waveform, .. } = &mut self.channel_type {
             *waveform = waveform_index;
         }
         self.frequency.reset();
@@ -379,7 +379,7 @@ impl Channel {
             self.channel_type.tick();
         }
         match &self.channel_type {
-            ChannelType::PCM { waveform, index } => waveforms[*waveform][*index],
+            ChannelType::Pcm { waveform, index } => waveforms[*waveform][*index],
             ChannelType::Noise { register, .. } => {
                 if *register & 0x0001 != 0 {
                     0
