@@ -4,7 +4,7 @@ use crate::video::cardboard::QrCode;
 mod distortion_wrapper;
 use distortion_wrapper::DistortionWrapper;
 
-use super::common::{Settings, VbScreenRenderer};
+use super::common::{Settings, StereoDisplay};
 
 use anyhow::Result;
 use log::debug;
@@ -12,33 +12,30 @@ use std::sync::mpsc::TryRecvError;
 
 pub struct CardboardRenderer {
     screen_size: (i32, i32),
-    vb_screen: Option<VbScreenRenderer>,
+    display: StereoDisplay,
     distortion: Option<DistortionWrapper>,
     cardboard_stale: bool,
     frame_channel: FrameChannel,
-    settings: Settings,
 }
 impl CardboardRenderer {
     pub fn new(frame_channel: FrameChannel, settings: Settings) -> Self {
         Self {
             screen_size: (0, 0),
-            vb_screen: None,
+            display: StereoDisplay::new(settings),
             distortion: None,
             cardboard_stale: true,
             frame_channel,
-            settings,
         }
     }
 
     pub fn on_surface_created(&mut self) -> Result<()> {
-        // If vb_screen or cardboard are already initialized, drop them.
+        // If cardboard is already initialized, drop it.
         // This method is called when the GLSurfaceView is first initialized,
-        // so if they already have values then those values reference already-freed resources,
-        // and freeing them AFTER creating new ones will drop resources the new ones are using.
-        self.vb_screen.take();
+        // so if it already has values then those values reference already-freed resources,
+        // and freeing it AFTER creating a new one will drop resources the new one is using.
         self.distortion.take();
 
-        self.vb_screen = Some(VbScreenRenderer::new(&self.settings)?);
+        self.display.init()?;
         self.cardboard_stale = true;
 
         let device_params = QrCode::get_saved_device_params();
@@ -54,13 +51,11 @@ impl CardboardRenderer {
         }
     }
 
-    pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) {
+    pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) -> Result<()> {
         self.screen_size = (screen_width, screen_height);
-        self.vb_screen
-            .as_mut()
-            .unwrap()
-            .on_surface_changed(screen_width, screen_height);
+        self.display.resize((screen_width, screen_height))?;
         self.cardboard_stale = true;
+        Ok(())
     }
 
     pub fn on_draw_frame(&mut self) -> Result<()> {
@@ -71,13 +66,13 @@ impl CardboardRenderer {
         self.distortion
             .as_ref()
             .unwrap()
-            .render(|| self.vb_screen.as_ref().unwrap().render())?;
+            .render(|| self.display.render())?;
         Ok(())
     }
 
     fn update_screen(&mut self) -> Result<()> {
         match self.frame_channel.try_recv() {
-            Ok(frame) => self.vb_screen.as_mut().unwrap().update(frame),
+            Ok(frame) => self.display.update(frame),
             Err(TryRecvError::Empty) => Ok(()),
             Err(TryRecvError::Disconnected) => Err(anyhow::anyhow!("Emulator has shut down")),
         }
@@ -146,8 +141,7 @@ pub mod jni {
     emulator_func!(CardboardRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
     fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
-        this.on_surface_changed(width, height);
-        Ok(())
+        this.on_surface_changed(width, height)
     }
 
     emulator_func!(CardboardRenderer_nativeOnDrawFrame, on_draw_frame);

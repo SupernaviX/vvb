@@ -1,52 +1,37 @@
+use super::common::{Settings, StereoDisplay};
 use crate::emulator::video::FrameChannel;
-
-use super::common::{Settings, VbScreenRenderer};
 
 use anyhow::Result;
 use std::sync::mpsc::TryRecvError;
 
 pub struct AnaglyphRenderer {
-    screen_size: (i32, i32),
-    vb_screen: Option<VbScreenRenderer>,
+    display: StereoDisplay,
     frame_channel: FrameChannel,
-    settings: Settings,
 }
 impl AnaglyphRenderer {
     pub fn new(frame_channel: FrameChannel, settings: Settings) -> Self {
         AnaglyphRenderer {
-            screen_size: (0, 0),
-            vb_screen: None,
+            display: StereoDisplay::new(settings),
             frame_channel,
-            settings,
         }
     }
 
     pub fn on_surface_created(&mut self) -> Result<()> {
-        // If vb_screen is already initialized, drop it.
-        // This method is called when the GLSurfaceView is first initialized,
-        // so if it already has a value then that value references already-freed resources,
-        // and freeing them AFTER creating a new one will drop resources the new one is using.
-        self.vb_screen.take();
-        self.vb_screen = Some(VbScreenRenderer::new(&self.settings)?);
-        Ok(())
+        self.display.init()
     }
 
-    pub fn on_surface_changed(&mut self, width: i32, height: i32) {
-        self.screen_size = (width, height);
-        self.vb_screen
-            .as_mut()
-            .unwrap()
-            .on_surface_changed(width, height);
+    pub fn on_surface_changed(&mut self, width: i32, height: i32) -> Result<()> {
+        self.display.resize((width, height))
     }
 
     pub fn on_draw_frame(&mut self) -> Result<()> {
         self.update_screen()?;
-        self.vb_screen.as_ref().unwrap().render()
+        self.display.render()
     }
 
     fn update_screen(&mut self) -> Result<()> {
         match self.frame_channel.try_recv() {
-            Ok(frame) => self.vb_screen.as_mut().unwrap().update(frame),
+            Ok(frame) => self.display.update(frame),
             Err(TryRecvError::Empty) => Ok(()),
             Err(TryRecvError::Disconnected) => Err(anyhow::anyhow!("Emulator has shut down")),
         }
@@ -97,8 +82,7 @@ pub mod jni {
     emulator_func!(AnaglyphRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
     fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
-        this.on_surface_changed(width, height);
-        Ok(())
+        this.on_surface_changed(width, height)
     }
 
     emulator_func!(AnaglyphRenderer_nativeOnDrawFrame, on_draw_frame);
