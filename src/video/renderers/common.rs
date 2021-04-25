@@ -9,7 +9,6 @@ use jni::JNIEnv;
 
 const VB_WIDTH: i32 = 384;
 const VB_HEIGHT: i32 = 224;
-const EYE_BUFFER_SIZE: usize = (VB_WIDTH * VB_HEIGHT) as usize * 3;
 
 fn base_model_view(screen_size: (i32, i32), tex_size: (i32, i32)) -> Matrix4<f32> {
     let hsw = screen_size.0 as GLfloat / 2.0;
@@ -31,14 +30,12 @@ fn base_model_view(screen_size: (i32, i32), tex_size: (i32, i32)) -> Matrix4<f32
 
 pub struct StereoDisplay {
     program: Program,
-    buffers: [Vec<u8>; 2],
     settings: Settings,
 }
 impl StereoDisplay {
     pub fn new(settings: Settings) -> Self {
         Self {
-            program: Program::new(2, (VB_WIDTH, VB_HEIGHT)),
-            buffers: [vec![0; EYE_BUFFER_SIZE], vec![0; EYE_BUFFER_SIZE]],
+            program: Program::new((VB_WIDTH, VB_HEIGHT), settings.color),
             settings,
         }
     }
@@ -48,35 +45,26 @@ impl StereoDisplay {
     }
 
     pub fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
+        self.program.resize(screen_size)?;
+
         let base_mv = base_model_view(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
         let scale = self.settings.screen_zoom;
         let offset = -self.settings.vertical_offset;
-        let model_views = vec![
+        self.program.set_model_views([
             base_mv
                 * Matrix4::from_translation(vec3(-0.5, offset, 0.0))
                 * Matrix4::from_scale(scale),
             base_mv
                 * Matrix4::from_translation(vec3(0.5, offset, 0.0))
                 * Matrix4::from_scale(scale),
-        ];
-        self.program.resize(screen_size, model_views)
+        ]);
+        Ok(())
     }
 
     pub fn update(&mut self, frame: Frame) -> Result<()> {
         let eye = frame.eye as usize;
-        let color = self.settings.color;
-
-        let buffer = &mut self.buffers[eye];
         let vb_data = frame.buffer.lock().expect("Buffer lock was poisoned!");
-        for i in 0..vb_data.len() {
-            // vb_data just has lightness values, convert them to RGB
-            buffer[i * 3] = ((vb_data[i] as u16) * (color.0 as u16) / 256) as u8;
-            buffer[i * 3 + 1] = ((vb_data[i] as u16) * (color.1 as u16) / 256) as u8;
-            buffer[i * 3 + 2] = ((vb_data[i] as u16) * (color.2 as u16) / 256) as u8;
-        }
-        drop(vb_data); // free the lock ASAP
-
-        self.program.update(eye, buffer)
+        self.program.update(eye, &vb_data)
     }
 
     pub fn render(&self) -> Result<()> {

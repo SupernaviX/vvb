@@ -8,6 +8,7 @@ import com.simongellis.vvb.emulator.Emulator
 
 class VideoPreviewActivity: AppCompatActivity() {
     private lateinit var _binding: ActivityGameBinding
+    private lateinit var _emulator: Emulator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -16,8 +17,8 @@ class VideoPreviewActivity: AppCompatActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         setContentView(_binding.root)
 
-        val emulator = Emulator.getInstance()
-        emulator.loadImage(applicationContext)
+        _emulator = Emulator.getInstance()
+        _emulator.loadImage(applicationContext)
     }
 
     override fun onPause() {
@@ -28,5 +29,6 @@ class VideoPreviewActivity: AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         _binding.gameView.onResume()
+        _emulator.loadImage(applicationContext)
     }
 }

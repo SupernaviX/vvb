@@ -37,13 +37,21 @@ macro_rules! c_string {
     };
 }
 
-fn as_vec<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
+fn matrix_as_f4v<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
     let mut res = Vec::with_capacity(16);
     let rows: [[S; 4]; 4] = mat.into();
     for row in rows.iter() {
         res.extend_from_slice(row);
     }
     res
+}
+fn color_as_4fv(color: (u8, u8, u8)) -> [GLfloat; 4] {
+    [
+        color.0 as GLfloat / 255.0,
+        color.1 as GLfloat / 255.0,
+        color.2 as GLfloat / 255.0,
+        1.0,
+    ]
 }
 
 const VERTEX_SHADER: &str = "\
@@ -61,8 +69,9 @@ const FRAGMENT_SHADER: &str = "\
 precision mediump float;
 varying vec2 v_TexCoord;
 uniform sampler2D u_Texture;
+uniform vec4 u_Color;
 void main() {
-    gl_FragColor = texture2D(u_Texture, v_TexCoord);
+    gl_FragColor = u_Color * texture2D(u_Texture, v_TexCoord).r;
 }
 ";
 
@@ -113,11 +122,11 @@ unsafe fn init_gl_texture(texture_id: GLuint, texture_size: (i32, i32)) -> Resul
     gl::TexImage2D(
         gl::TEXTURE_2D,
         0,
-        gl::RGB as GLint,
+        gl::LUMINANCE as GLint,
         texture_size.0 as GLsizei,
         texture_size.1 as GLsizei,
         0,
-        gl::RGB,
+        gl::LUMINANCE,
         gl::UNSIGNED_BYTE,
         std::ptr::null(),
     );
@@ -145,15 +154,15 @@ pub struct Program {
     tex_coord_location: GLuint,
     modelview_location: GLint,
     texture_location: GLint,
+    color_location: GLint,
     texture_size: (i32, i32),
 
-    // TODO: when my IDE shuts up about const generics, use em here
-    screens: usize,
-    texture_ids: Vec<GLuint>,
-    model_views: Vec<Vec<GLfloat>>,
+    texture_ids: [GLuint; 2],
+    texture_color: [GLfloat; 4],
+    model_views: [Vec<GLfloat>; 2],
 }
 impl Program {
-    pub fn new(screens: usize, texture_size: (i32, i32)) -> Self {
+    pub fn new(texture_size: (i32, i32), color: (u8, u8, u8)) -> Self {
         Self {
             // Initialize all the GL values to something invalid
             // All methods call gl::GetError pretty aggressively,
@@ -161,19 +170,23 @@ impl Program {
             program_id: 0,
             position_location: 0,
             tex_coord_location: 0,
-            modelview_location: 0,
-            texture_location: 0,
+            modelview_location: -1,
+            texture_location: -1,
+            color_location: -1,
             texture_size,
 
-            screens,
-            texture_ids: vec![0; screens], // never valid textures
-            model_views: vec![as_vec(Matrix4::identity()); screens],
+            texture_ids: [0; 2], // never valid textures
+            texture_color: color_as_4fv(color),
+            model_views: [
+                matrix_as_f4v(Matrix4::identity()),
+                matrix_as_f4v(Matrix4::identity()),
+            ],
         }
     }
 
     pub fn init(&mut self) -> Result<()> {
         unsafe {
-            let screens = self.texture_ids.len();
+            let textures = self.texture_ids.len() as GLint;
             self.program_id = gl::CreateProgram();
             check_error("create a program")?;
 
@@ -198,29 +211,29 @@ impl Program {
                 gl::GetUniformLocation(self.program_id, c_string!("u_MV")?.as_ptr());
             self.texture_location =
                 gl::GetUniformLocation(self.program_id, c_string!("u_Texture")?.as_ptr());
+            self.color_location =
+                gl::GetUniformLocation(self.program_id, c_string!("u_Color")?.as_ptr());
 
-            self.texture_ids = vec![0; screens];
-            gl::GenTextures(screens as GLint, self.texture_ids.as_mut_ptr());
+            gl::GenTextures(textures, self.texture_ids.as_mut_ptr());
             for texture_id in &self.texture_ids {
                 init_gl_texture(*texture_id, self.texture_size)?;
             }
+
+            // Set color here, because it's the same for the entire life of the program
+            gl::Uniform4fv(self.color_location, 1, self.texture_color.as_ptr());
         }
         Ok(())
     }
 
-    pub fn resize(
-        &mut self,
-        size: (GLint, GLint),
-        model_views: Vec<Matrix4<GLfloat>>,
-    ) -> Result<()> {
+    pub fn resize(&mut self, size: (GLint, GLint)) -> Result<()> {
         unsafe {
             gl::Viewport(0, 0, size.0, size.1);
-            check_error("setting the viewport")?;
+            check_error("setting the viewport")
         }
+    }
 
-        self.model_views = model_views.into_iter().map(as_vec).collect();
-
-        Ok(())
+    pub fn set_model_views(&mut self, model_views: [Matrix4<GLfloat>; 2]) {
+        self.model_views = [matrix_as_f4v(model_views[0]), matrix_as_f4v(model_views[1])];
     }
 
     pub fn update(&mut self, texture: usize, buffer: &[u8]) -> Result<()> {
@@ -234,12 +247,12 @@ impl Program {
                 0,
                 self.texture_size.0,
                 self.texture_size.1,
-                gl::RGB,
+                gl::LUMINANCE,
                 gl::UNSIGNED_BYTE,
                 buffer.as_voidptr(),
             );
         }
-        check_error("update part of the screen")?;
+        check_error("update a texture")?;
         Ok(())
     }
 
@@ -251,14 +264,14 @@ impl Program {
             gl::UseProgram(self.program_id);
             check_error("use the program")?;
 
-            for i in 0..self.screens {
-                self.render_screen(i)?;
+            for i in 0..self.texture_ids.len() {
+                self.render_texture(i)?;
             }
             Ok(())
         }
     }
 
-    unsafe fn render_screen(&self, index: usize) -> Result<()> {
+    unsafe fn render_texture(&self, index: usize) -> Result<()> {
         let texture_id = self.texture_ids[index];
         let model_view = &self.model_views[index];
 
@@ -291,13 +304,14 @@ impl Program {
         gl::ActiveTexture(gl::TEXTURE0);
         gl::BindTexture(gl::TEXTURE_2D, texture_id);
         gl::Uniform1i(self.texture_location, 0);
+
         gl::DrawElements(
             gl::TRIANGLES,
             SQUARE_INDICES.len() as i32,
             gl::UNSIGNED_SHORT,
             SQUARE_INDICES.as_voidptr(),
         );
-        check_error("render a screen")?;
+        check_error("render a texture")?;
         Ok(())
     }
 
@@ -307,7 +321,8 @@ impl Program {
             if gl::IsProgram(self.program_id) == GL_TRUE {
                 gl::DeleteProgram(self.program_id);
             }
-            gl::DeleteTextures(self.screens as i32, self.texture_ids.as_ptr());
+            let textures = self.texture_ids.len() as GLint;
+            gl::DeleteTextures(textures, self.texture_ids.as_ptr());
             check_error("cleaning up a Program")
         }
     }
