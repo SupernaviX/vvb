@@ -1,74 +1,130 @@
-use super::gl::Program;
+use super::gl::{
+    utils::{self, VB_HEIGHT, VB_WIDTH},
+    Program, Textures,
+};
 use crate::emulator::video::Frame;
-use crate::video::gl::types::GLfloat;
+use crate::video::gl::types::{GLfloat, GLint, GLuint};
 
 use anyhow::Result;
-use cgmath::{self, vec3, Matrix4};
+use cgmath::{self, vec3, Matrix4, SquareMatrix};
 use jni::sys::jobject;
 use jni::JNIEnv;
 
-const VB_WIDTH: i32 = 384;
-const VB_HEIGHT: i32 = 224;
-
-fn base_model_view(screen_size: (i32, i32), tex_size: (i32, i32)) -> Matrix4<f32> {
-    let hsw = screen_size.0 as GLfloat / 2.0;
-    let hsh = screen_size.1 as GLfloat / 2.0;
-    let htw = tex_size.0 as GLfloat / 2.0;
-    let hth = tex_size.1 as GLfloat / 2.0;
-
-    let projection = cgmath::ortho(-hsw, hsw, -hsh, hsh, 100.0, -100.0);
-
-    // Scale required to fill the entire screen
-    let scale_to_fit = (hsw / htw).min(hsh / hth);
-    projection
-        * Matrix4::from_nonuniform_scale(
-            VB_WIDTH as GLfloat * scale_to_fit,
-            VB_HEIGHT as GLfloat * scale_to_fit,
-            0.0,
-        )
+const VERTEX_SHADER: &str = "\
+attribute vec4 a_Pos;
+attribute vec2 a_TexCoord;
+uniform mat4 u_MV;
+varying vec2 v_TexCoord;
+void main() {
+    gl_Position = u_MV * a_Pos;
+    v_TexCoord = a_TexCoord;
 }
+";
+
+const FRAGMENT_SHADER: &str = "\
+precision mediump float;
+varying vec2 v_TexCoord;
+uniform sampler2D u_Texture;
+uniform vec4 u_Color;
+void main() {
+    gl_FragColor = u_Color * texture2D(u_Texture, v_TexCoord).r;
+}
+";
 
 pub struct StereoDisplay {
     program: Program,
-    settings: Settings,
+    textures: Textures,
+
+    position_location: GLuint,
+    tex_coord_location: GLuint,
+    modelview_location: GLint,
+    texture_location: GLint,
+    color_location: GLint,
+
+    texture_color: [GLfloat; 4],
+    transforms: [Matrix4<GLfloat>; 2],
+    model_views: [Vec<GLfloat>; 2],
 }
 impl StereoDisplay {
-    pub fn new(settings: Settings) -> Self {
+    pub fn new(settings: &Settings) -> Self {
+        let scale = settings.screen_zoom;
+        let offset = -settings.vertical_offset;
         Self {
-            program: Program::new((VB_WIDTH, VB_HEIGHT), settings.color),
-            settings,
+            program: Program::new(VERTEX_SHADER, FRAGMENT_SHADER),
+            textures: Textures::new(2, (VB_WIDTH, VB_HEIGHT)),
+
+            position_location: 0,
+            tex_coord_location: 0,
+            modelview_location: -1,
+            texture_location: -1,
+            color_location: -1,
+
+            texture_color: utils::color_as_4fv(settings.color),
+            transforms: [
+                Matrix4::from_translation(vec3(-0.5, offset, 0.0)) * Matrix4::from_scale(scale),
+                Matrix4::from_translation(vec3(0.5, offset, 0.0)) * Matrix4::from_scale(scale),
+            ],
+            model_views: [
+                utils::matrix_as_4fv(Matrix4::identity()),
+                utils::matrix_as_4fv(Matrix4::identity()),
+            ],
         }
     }
 
     pub fn init(&mut self) -> Result<()> {
-        self.program.init()
+        self.program.init()?;
+        self.textures.init()?;
+
+        self.position_location = self.program.get_attribute_location("a_Pos");
+        self.tex_coord_location = self.program.get_attribute_location("a_TexCoord");
+        self.modelview_location = self.program.get_uniform_location("u_MV");
+        self.texture_location = self.program.get_uniform_location("u_Texture");
+        self.color_location = self.program.get_uniform_location("u_Color");
+
+        // Set color here, because it's the same for the entire life of the program
+        self.program
+            .set_uniform_4fv(self.color_location, &self.texture_color);
+
+        Ok(())
     }
 
     pub fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
-        self.program.resize(screen_size)?;
+        self.program.set_viewport(screen_size)?;
 
-        let base_mv = base_model_view(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
-        let scale = self.settings.screen_zoom;
-        let offset = -self.settings.vertical_offset;
-        self.program.set_model_views([
-            base_mv
-                * Matrix4::from_translation(vec3(-0.5, offset, 0.0))
-                * Matrix4::from_scale(scale),
-            base_mv
-                * Matrix4::from_translation(vec3(0.5, offset, 0.0))
-                * Matrix4::from_scale(scale),
-        ]);
+        let base_mv = utils::base_model_view(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
+        self.model_views = [
+            utils::matrix_as_4fv(base_mv * self.transforms[0]),
+            utils::matrix_as_4fv(base_mv * self.transforms[1]),
+        ];
+
         Ok(())
     }
 
     pub fn update(&mut self, frame: Frame) -> Result<()> {
         let eye = frame.eye as usize;
         let vb_data = frame.buffer.lock().expect("Buffer lock was poisoned!");
-        self.program.update(eye, &vb_data)
+        self.textures.update(eye, &vb_data)
     }
 
     pub fn render(&self) -> Result<()> {
-        self.program.render()
+        self.program.start_render()?;
+        for i in 0..self.textures.ids.len() {
+            self.render_texture(i)?;
+        }
+        Ok(())
+    }
+
+    fn render_texture(&self, index: usize) -> Result<()> {
+        let texture_id = self.textures.ids[index];
+        let model_view = &self.model_views[index];
+
+        self.program
+            .set_uniform_texture(self.texture_location, texture_id);
+        self.program
+            .set_uniform_matrix_4fv(self.modelview_location, model_view);
+
+        self.program
+            .draw_square(self.position_location, self.tex_coord_location)
     }
 }
 

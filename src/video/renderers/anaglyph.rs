@@ -9,7 +9,7 @@ pub struct AnaglyphRenderer {
     frame_channel: FrameChannel,
 }
 impl AnaglyphRenderer {
-    pub fn new(frame_channel: FrameChannel, settings: Settings) -> Self {
+    pub fn new(frame_channel: FrameChannel, settings: &Settings) -> Self {
         AnaglyphRenderer {
             display: StereoDisplay::new(settings),
             frame_channel,
@@ -64,7 +64,7 @@ pub mod jni {
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
         let settings = get_settings(&env, settings)?;
-        let renderer = AnaglyphRenderer::new(emulator.get_frame_channel(), settings);
+        let renderer = AnaglyphRenderer::new(emulator.get_frame_channel(), &settings);
         jni_helpers::java_init(env, this, renderer)
     }
 

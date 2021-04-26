@@ -18,10 +18,10 @@ pub struct CardboardRenderer {
     frame_channel: FrameChannel,
 }
 impl CardboardRenderer {
-    pub fn new(frame_channel: FrameChannel, settings: Settings) -> Self {
+    pub fn new(frame_channel: FrameChannel, settings: &Settings) -> Self {
         Self {
             screen_size: (0, 0),
-            display: StereoDisplay::new(settings),
+            display: StereoDisplay::new(&settings),
             distortion: None,
             cardboard_stale: true,
             frame_channel,
@@ -123,7 +123,7 @@ pub mod jni {
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
         let settings = get_settings(&env, settings)?;
-        let renderer = CardboardRenderer::new(emulator.get_frame_channel(), settings);
+        let renderer = CardboardRenderer::new(emulator.get_frame_channel(), &settings);
         jni_helpers::java_init(env, this, renderer)
     }
 
