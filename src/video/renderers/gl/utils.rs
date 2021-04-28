@@ -1,5 +1,5 @@
 use crate::video::gl::types::GLfloat;
-use cgmath::Matrix4;
+use cgmath::{Matrix4, SquareMatrix};
 
 pub const VB_WIDTH: i32 = 384;
 pub const VB_HEIGHT: i32 = 224;
@@ -22,7 +22,7 @@ pub fn base_model_view(screen_size: (i32, i32), tex_size: (i32, i32)) -> Matrix4
         )
 }
 
-pub fn color_as_4fv(color: (u8, u8, u8)) -> [GLfloat; 4] {
+pub fn color_as_vector(color: (u8, u8, u8)) -> [GLfloat; 4] {
     [
         color.0 as GLfloat / 255.0,
         color.1 as GLfloat / 255.0,
@@ -31,11 +31,12 @@ pub fn color_as_4fv(color: (u8, u8, u8)) -> [GLfloat; 4] {
     ]
 }
 
-pub fn matrix_as_4fv<S: Clone>(mat: cgmath::Matrix4<S>) -> Vec<S> {
-    let mut res = Vec::with_capacity(16);
-    let rows: [[S; 4]; 4] = mat.into();
-    for row in rows.iter() {
-        res.extend_from_slice(row);
-    }
-    res
+pub fn to_matrix(mat: Matrix4<GLfloat>) -> [GLfloat; 16] {
+    let rows: [[GLfloat; 4]; 4] = mat.into();
+    // safety: pretty sure this is how arrays work
+    unsafe { std::mem::transmute(rows) }
+}
+
+pub fn identity_matrix() -> [GLfloat; 16] {
+    to_matrix(Matrix4::identity())
 }

@@ -1,4 +1,4 @@
-use super::gl::{
+use super::super::gl::{
     utils::{self, VB_HEIGHT, VB_WIDTH},
     Program, Textures,
 };
@@ -6,9 +6,7 @@ use crate::emulator::video::Frame;
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
 
 use anyhow::Result;
-use cgmath::{self, vec3, Matrix4, SquareMatrix};
-use jni::sys::jobject;
-use jni::JNIEnv;
+use cgmath::{self, vec3, Matrix4};
 
 const VERTEX_SHADER: &str = "\
 attribute vec4 a_Pos;
@@ -43,7 +41,7 @@ pub struct StereoDisplay {
 
     texture_color: [GLfloat; 4],
     transforms: [Matrix4<GLfloat>; 2],
-    model_views: [Vec<GLfloat>; 2],
+    model_views: [[GLfloat; 16]; 2],
 }
 impl StereoDisplay {
     pub fn new(settings: &Settings) -> Self {
@@ -59,15 +57,12 @@ impl StereoDisplay {
             texture_location: -1,
             color_location: -1,
 
-            texture_color: utils::color_as_4fv(settings.color),
+            texture_color: utils::color_as_vector(settings.color),
             transforms: [
                 Matrix4::from_translation(vec3(-0.5, offset, 0.0)) * Matrix4::from_scale(scale),
                 Matrix4::from_translation(vec3(0.5, offset, 0.0)) * Matrix4::from_scale(scale),
             ],
-            model_views: [
-                utils::matrix_as_4fv(Matrix4::identity()),
-                utils::matrix_as_4fv(Matrix4::identity()),
-            ],
+            model_views: [utils::identity_matrix(), utils::identity_matrix()],
         }
     }
 
@@ -83,7 +78,7 @@ impl StereoDisplay {
 
         // Set color here, because it's the same for the entire life of the program
         self.program
-            .set_uniform_4fv(self.color_location, &self.texture_color);
+            .set_uniform_vector(self.color_location, &self.texture_color);
 
         Ok(())
     }
@@ -93,8 +88,8 @@ impl StereoDisplay {
 
         let base_mv = utils::base_model_view(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
         self.model_views = [
-            utils::matrix_as_4fv(base_mv * self.transforms[0]),
-            utils::matrix_as_4fv(base_mv * self.transforms[1]),
+            utils::to_matrix(base_mv * self.transforms[0]),
+            utils::to_matrix(base_mv * self.transforms[1]),
         ];
 
         Ok(())
@@ -121,7 +116,7 @@ impl StereoDisplay {
         self.program
             .set_uniform_texture(self.texture_location, texture_id);
         self.program
-            .set_uniform_matrix_4fv(self.modelview_location, model_view);
+            .set_uniform_matrix(self.modelview_location, model_view);
 
         self.program
             .draw_square(self.position_location, self.tex_coord_location)
@@ -133,19 +128,4 @@ pub struct Settings {
     pub screen_zoom: f32,
     pub vertical_offset: f32,
     pub color: (u8, u8, u8),
-}
-
-pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
-    let screen_zoom_percent = env.get_field(this, "_screenZoom", "I")?.i()?;
-    let vertical_offset = env.get_field(this, "_verticalOffset", "I")?.i()?;
-    let color = env.get_field(this, "_color", "I")?.i()?;
-
-    // android passes color as ARGB
-    let color = ((color >> 16) as u8, (color >> 8) as u8, color as u8);
-
-    Ok(Settings {
-        screen_zoom: (screen_zoom_percent as f32) / 100.0,
-        vertical_offset: (vertical_offset as f32) / 100.0,
-        color,
-    })
 }

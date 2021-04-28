@@ -117,7 +117,7 @@ impl Program {
     pub fn set_viewport(&self, size: (GLint, GLint)) -> Result<()> {
         unsafe {
             gl::Viewport(0, 0, size.0, size.1);
-            check_error("setting the viewport")
+            check_error("set the viewport")
         }
     }
 
@@ -131,13 +131,23 @@ impl Program {
         unsafe { gl::GetUniformLocation(self.id, name.as_ptr()) }
     }
 
-    pub fn set_uniform_4fv(&self, location: GLint, value: &[GLfloat; 4]) {
+    pub fn set_uniform_vector(&self, location: GLint, value: &[GLfloat; 4]) {
         unsafe {
             gl::Uniform4fv(location, 1, value.as_ptr());
         }
     }
 
-    pub fn set_uniform_matrix_4fv(&self, location: GLint, value: &[GLfloat]) {
+    pub fn set_uniform_vector_array(&self, location: GLint, values: &[[GLfloat; 4]]) {
+        unsafe {
+            gl::Uniform4fv(
+                location,
+                values.len() as GLint,
+                values.as_ptr() as *const GLfloat,
+            );
+        }
+    }
+
+    pub fn set_uniform_matrix(&self, location: GLint, value: &[GLfloat; 16]) {
         unsafe {
             gl::UniformMatrix4fv(location, 1, GL_FALSE, value.as_ptr());
         }
@@ -148,6 +158,17 @@ impl Program {
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, id);
             gl::Uniform1i(location, 0);
+        }
+    }
+
+    pub fn set_uniform_texture_array(&self, location: GLint, ids: &[GLuint]) {
+        unsafe {
+            for (i, id) in ids.iter().enumerate() {
+                gl::ActiveTexture(gl::TEXTURE0 + i as GLuint);
+                gl::BindTexture(gl::TEXTURE_2D, *id);
+            }
+            let slots: Vec<GLint> = (0..ids.len() as GLint).collect();
+            gl::Uniform1iv(location, slots.len() as GLsizei, slots.as_ptr());
         }
     }
 
@@ -204,7 +225,7 @@ impl Program {
             }
         }
         self.id = 0;
-        check_error("cleaning up a Program")
+        check_error("clean up a Program")
     }
 }
 impl Drop for Program {

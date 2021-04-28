@@ -1,10 +1,11 @@
 use crate::emulator::video::FrameChannel;
 use crate::video::cardboard::QrCode;
 
+mod display;
+use display::{Settings, StereoDisplay};
+
 mod distortion_wrapper;
 use distortion_wrapper::DistortionWrapper;
-
-use super::common::{Settings, StereoDisplay};
 
 use anyhow::Result;
 use log::debug;
@@ -99,13 +100,25 @@ impl CardboardRenderer {
 
 #[rustfmt::skip::macros(emulator_func)]
 pub mod jni {
-    use super::super::common::get_settings;
-    use super::CardboardRenderer;
+    use super::{CardboardRenderer, Settings};
     use crate::emulator::Emulator;
+    use crate::jni_helpers::EnvExtensions;
     use crate::{emulator_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
+
+    pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+        let screen_zoom = env.get_percent(this, "_screenZoom")?;
+        let vertical_offset = env.get_percent(this, "_verticalOffset")?;
+        let color = env.get_color(this, "_color")?;
+
+        Ok(Settings {
+            screen_zoom,
+            vertical_offset,
+            color,
+        })
+    }
 
     fn get_renderer<'a>(
         env: &'a JNIEnv,

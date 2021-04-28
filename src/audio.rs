@@ -105,6 +105,7 @@ pub struct Settings {
 pub mod jni {
     use super::{Audio, Settings};
     use crate::emulator::Emulator;
+    use crate::jni_helpers::EnvExtensions;
     use crate::{emulator_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::jobject;
@@ -115,8 +116,8 @@ pub mod jni {
     }
 
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
-        let volume = env.get_field(this, "_volume", "I")?.i()?;
-        let buffer_size = env.get_field(this, "_bufferSize", "I")?.i()?;
+        let volume = env.get_int(this, "_volume")?;
+        let buffer_size = env.get_int(this, "_bufferSize")?;
 
         Ok(Settings {
             volume: volume as i16,

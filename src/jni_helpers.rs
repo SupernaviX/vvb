@@ -39,6 +39,26 @@ pub fn java_take<T: 'static + Send>(env: &JNIEnv, this: jobject) -> Result<()> {
     env.take_rust_field(this, POINTER_FIELD)?;
     Ok(())
 }
+pub trait EnvExtensions {
+    fn get_int(&self, this: jobject, field: &str) -> Result<i32>;
+    fn get_percent(&self, this: jobject, field: &str) -> Result<f32>;
+    fn get_color(&self, this: jobject, field: &str) -> Result<(u8, u8, u8)>;
+}
+impl<'a> EnvExtensions for JNIEnv<'a> {
+    fn get_int(&self, this: jobject, field: &str) -> Result<i32> {
+        let res = self.get_field(this, field, "I")?.i()?;
+        Ok(res)
+    }
+    fn get_percent(&self, this: jobject, field: &str) -> Result<f32> {
+        let res = self.get_int(this, field)?;
+        Ok((res as f32) / 100.0)
+    }
+    fn get_color(&self, this: jobject, field: &str) -> Result<(u8, u8, u8)> {
+        let color = self.get_int(this, field)?;
+        // android passes color as ARGB
+        Ok(((color >> 16) as u8, (color >> 8) as u8, color as u8))
+    }
+}
 
 #[macro_export]
 macro_rules! java_func {

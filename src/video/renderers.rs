@@ -1,6 +1,5 @@
 mod anaglyph;
 mod cardboard;
-mod common;
 mod gl;
 
 pub mod jni {

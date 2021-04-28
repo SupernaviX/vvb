@@ -61,6 +61,7 @@ impl Textures {
     pub fn update(&mut self, index: usize, buffer: &[u8]) -> Result<()> {
         let id = self.ids[index];
         unsafe {
+            gl::ActiveTexture(gl::TEXTURE0 + index as GLuint);
             gl::BindTexture(gl::TEXTURE_2D, id);
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
