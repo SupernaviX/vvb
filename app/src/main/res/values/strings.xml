@@ -20,9 +20,14 @@
     <string name="video_menu_screen_zoom_percent">Screen Zoom (percent)</string>
     <string name="video_menu_vertical_offset">Vertical Offset</string>
     <string name="video_menu_mode">Mode</string>
-    <string name="video_menu_mode_anaglyph">Anaglyph (red/cyan)</string>
+    <string name="video_menu_mode_anaglyph">Anaglyph (two-color)</string>
     <string name="video_menu_mode_cardboard">Cardboard</string>
     <string name="video_menu_color">Color</string>
+    <string name="video_menu_color_left">Left Eye Color</string>
+    <string name="video_menu_color_right">Right Eye Color</string>
+    <string name="video_menu_invalid_colors_title">Invalid Colors</string>
+    <string name="video_menu_invalid_colors_message">The left and right eye colors "overlap" on at least one color channel. The 3D effect may not work properly.</string>
+    <string name="video_menu_invalid_colors_button">OK</string>
     <string name="video_menu_switch_viewer">Switch Cardboard Viewer</string>
     <string name="video_menu_preview">Preview</string>
     <string name="audio_menu_volume">Volume</string>

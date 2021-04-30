@@ -1,8 +1,8 @@
 use crate::emulator::video::FrameChannel;
 
+use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
 use super::gl::{utils, Program, Textures};
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
-use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
 use anyhow::Result;
 use cgmath::{vec3, Matrix4};
 use std::sync::mpsc::TryRecvError;
@@ -139,7 +139,10 @@ pub mod jni {
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "_screenZoom")?;
         let vertical_offset = env.get_percent(this, "_verticalOffset")?;
-        let colors = [(0xff, 0x00, 0x00), (0x00, 0xff, 0xff)];
+        let colors = [
+            env.get_color(this, "_colorLeft")?,
+            env.get_color(this, "_colorRight")?,
+        ];
         Ok(Settings {
             screen_zoom,
             vertical_offset,
