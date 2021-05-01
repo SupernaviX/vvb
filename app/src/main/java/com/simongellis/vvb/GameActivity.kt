@@ -4,11 +4,10 @@ import android.content.pm.ActivityInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
-import com.simongellis.vvb.databinding.ActivityGameBinding
 import com.simongellis.vvb.emulator.*
 
 class GameActivity : AppCompatActivity() {
-    private lateinit var _binding: ActivityGameBinding
+    private lateinit var _view: GameView
     private lateinit var _emulator: Emulator
     private lateinit var _audio: Audio
     private lateinit var _controller: Controller
@@ -16,7 +15,6 @@ class GameActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _binding = ActivityGameBinding.inflate(layoutInflater)
         _emulator = Emulator.getInstance()
         val settings = Settings(applicationContext)
 
@@ -25,7 +23,8 @@ class GameActivity : AppCompatActivity() {
         _inputBindingMapper = InputBindingMapper(applicationContext)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        setContentView(_binding.root)
+        _view = GameView(applicationContext)
+        setContentView(_view)
 
         _emulator.loadImage(applicationContext)
     }
@@ -45,14 +44,14 @@ class GameActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        _binding.gameView.onResume()
+        _view.onResume()
         _audio.play()
         _emulator.resume()
     }
 
     override fun onPause() {
         super.onPause()
-        _binding.gameView.onPause()
+        _view.onPause()
         _emulator.pause()
         _audio.pause()
     }

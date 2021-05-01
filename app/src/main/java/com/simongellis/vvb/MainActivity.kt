@@ -11,7 +11,7 @@ import androidx.preference.PreferenceFragmentCompat
 class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.main_activity)
 
         // Only run initialization once
         if (savedInstanceState == null) {

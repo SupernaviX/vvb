@@ -3,19 +3,18 @@ package com.simongellis.vvb
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.simongellis.vvb.databinding.ActivityGameBinding
 import com.simongellis.vvb.emulator.Emulator
 
 class VideoPreviewActivity: AppCompatActivity() {
-    private lateinit var _binding: ActivityGameBinding
+    private lateinit var _view: GameView
     private lateinit var _emulator: Emulator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _binding = ActivityGameBinding.inflate(layoutInflater)
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        setContentView(_binding.root)
+        _view = GameView(applicationContext)
+        setContentView(_view)
 
         _emulator = Emulator.getInstance()
         _emulator.loadImage(applicationContext)
@@ -23,12 +22,12 @@ class VideoPreviewActivity: AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        _binding.gameView.onPause()
+        _view.onPause()
     }
 
     override fun onResume() {
         super.onResume()
-        _binding.gameView.onResume()
+        _view.onResume()
         _emulator.loadImage(applicationContext)
     }
 }

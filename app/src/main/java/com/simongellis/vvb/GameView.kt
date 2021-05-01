@@ -6,11 +6,11 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
-import com.simongellis.vvb.databinding.ViewGameBinding
+import com.simongellis.vvb.databinding.GameViewBinding
 import com.simongellis.vvb.emulator.*
 
 class GameView : ConstraintLayout {
-    private val _binding: ViewGameBinding
+    private val _binding: GameViewBinding
     private val _mode: VideoMode
     private val _renderer: Renderer
 
@@ -21,10 +21,6 @@ class GameView : ConstraintLayout {
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     init {
-        val layoutInflater = LayoutInflater.from(context)
-        val child = layoutInflater.inflate(R.layout.view_game, this, true)
-        _binding = ViewGameBinding.bind(child)
-
         val emulator = Emulator.getInstance()
         val settings = Settings(context)
         _mode = settings.videoMode
@@ -32,10 +28,9 @@ class GameView : ConstraintLayout {
             VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, settings)
             VideoMode.CARDBOARD -> CardboardRenderer(emulator, settings)
         }
-    }
 
-    override fun onFinishInflate() {
-        super.onFinishInflate()
+        val layoutInflater = LayoutInflater.from(context)
+        _binding = GameViewBinding.inflate(layoutInflater, this, true)
         _binding.apply {
             surfaceView.setEGLContextClientVersion(2)
             surfaceView.setRenderer(_renderer)
