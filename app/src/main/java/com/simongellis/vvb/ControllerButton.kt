@@ -5,8 +5,10 @@ import android.graphics.*
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.VectorDrawable
 import android.util.AttributeSet
+import android.view.KeyEvent.ACTION_DOWN
 import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatImageButton
+import androidx.core.graphics.ColorUtils
 import kotlin.math.roundToInt
 
 class ControllerButton : AppCompatImageButton {
@@ -34,6 +36,14 @@ class ControllerButton : AppCompatImageButton {
             _parallax = a.getDimension(R.styleable.ControllerButton_parallax, 0f)
         } finally {
             a.recycle()
+        }
+
+        setOnTouchListener { _, event ->
+            isPressed = event.action == ACTION_DOWN
+            val bitmap = buildParallaxBitmap(measuredWidth, measuredHeight)
+            setImageBitmap(bitmap)
+            performClick()
+            true
         }
     }
 
@@ -65,6 +75,7 @@ class ControllerButton : AppCompatImageButton {
     }
 
     private fun buildParallaxBitmap(width: Int, height: Int): Bitmap {
+        val alpha = if (isPressed) { 0xff } else { 0x80 }
         val sourceBitmap = Bitmap.createBitmap(_regularWidth, height, Bitmap.Config.ARGB_8888)
         val sourceCanvas = Canvas(sourceBitmap)
         val targetBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -73,14 +84,16 @@ class ControllerButton : AppCompatImageButton {
 
         _rawDrawable.apply {
             setBounds(0, 0, _regularWidth, height)
-            colorFilter = PorterDuffColorFilter(_leftColor, PorterDuff.Mode.MULTIPLY)
+            val color = ColorUtils.setAlphaComponent(_leftColor, alpha)
+            colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY)
             draw(sourceCanvas)
         }
 
         targetCanvas.drawBitmap(sourceBitmap, 0f, 0f, paint)
 
         _rawDrawable.apply {
-            colorFilter = PorterDuffColorFilter(_rightColor, PorterDuff.Mode.MULTIPLY)
+            val color = ColorUtils.setAlphaComponent(_rightColor, alpha)
+            colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.MULTIPLY)
             draw(sourceCanvas)
         }
 
