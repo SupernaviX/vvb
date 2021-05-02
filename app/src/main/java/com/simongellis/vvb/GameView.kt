@@ -37,6 +37,9 @@ class GameView : ConstraintLayout {
             surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
             uiAlignmentMarker.isVisible = _mode === VideoMode.CARDBOARD
+
+            butan.setColors(settings.colorLeft, settings.colorRight)
+            butan.isVisible = _mode === VideoMode.ANAGLYPH
         }
     }
 

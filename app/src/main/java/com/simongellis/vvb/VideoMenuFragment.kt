@@ -2,6 +2,7 @@ package com.simongellis.vvb
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.preference.Preference
@@ -43,13 +44,13 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
 
         findPref(Prefs.COLOR_LEFT).setOnPreferenceChangeListener { _, newLeft ->
             val left = newLeft as Int
-            val right = _sharedPreferences.getInt(Prefs.COLOR_RIGHT.prefName, 0xff0000ff.toInt())
+            val right = _sharedPreferences.getInt(Prefs.COLOR_RIGHT.prefName, Color.BLUE)
             validateColors(left, right)
             true
         }
 
         findPref(Prefs.COLOR_RIGHT).setOnPreferenceChangeListener { _, newRight ->
-            val left = _sharedPreferences.getInt(Prefs.COLOR_LEFT.prefName, 0xffff0000.toInt())
+            val left = _sharedPreferences.getInt(Prefs.COLOR_LEFT.prefName, Color.RED)
             val right = newRight as Int
             validateColors(left, right)
             true

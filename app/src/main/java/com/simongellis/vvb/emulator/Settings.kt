@@ -1,6 +1,7 @@
 package com.simongellis.vvb.emulator
 
 import android.content.Context
+import android.graphics.Color
 import androidx.preference.PreferenceManager
 
 class Settings(context: Context) {
@@ -12,6 +13,9 @@ class Settings(context: Context) {
     // anaglyph video settings
     private val _colorLeft: Int
     private val _colorRight: Int
+
+    val colorLeft: Int get() = _colorLeft
+    val colorRight: Int get() = _colorRight
 
     // cardboard video settings
     private val _color: Int
@@ -25,9 +29,9 @@ class Settings(context: Context) {
         videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.ANAGLYPH.name)!!)
         _screenZoom = prefs.getInt("video_screen_zoom_percent", 65)
         _verticalOffset = prefs.getInt("video_vertical_offset", 0)
-        _colorLeft = prefs.getInt("video_color_left", 0xffff0000.toInt())
-        _colorRight = prefs.getInt("video_color_right", 0xff0000ff.toInt())
-        _color = prefs.getInt("video_color", 0xffff0000.toInt())
+        _colorLeft = prefs.getInt("video_color_left", Color.RED)
+        _colorRight = prefs.getInt("video_color_right", Color.BLUE)
+        _color = prefs.getInt("video_color", Color.RED)
         _volume = prefs.getInt("audio_volume", 100)
         _bufferSize = prefs.getInt("audio_buffer_size", 4)
     }
