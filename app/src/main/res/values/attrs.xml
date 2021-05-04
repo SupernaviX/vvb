@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="ControllerButton">
+    <declare-styleable name="Control">
         <attr name="parallax" format="dimension" />
     </declare-styleable>
 </resources>

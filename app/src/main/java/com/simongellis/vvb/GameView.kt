@@ -5,6 +5,7 @@ import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.simongellis.vvb.databinding.GameViewBinding
 import com.simongellis.vvb.emulator.*
@@ -37,9 +38,10 @@ class GameView : ConstraintLayout {
             surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
             uiAlignmentMarker.isVisible = _mode === VideoMode.CARDBOARD
-
-            butan.setColors(settings.colorLeft, settings.colorRight)
-            butan.isVisible = _mode === VideoMode.ANAGLYPH
+        }
+        for (control in children.filterIsInstance<Control>()) {
+            control.setColors(settings.colorLeft, settings.colorRight)
+            control.isVisible = _mode === VideoMode.ANAGLYPH
         }
     }
 

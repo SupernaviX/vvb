@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:screenOrientation="landscape"
+    android:clipChildren="false"
     android:configChanges="navigation|keyboard|keyboardHidden|orientation|screenSize"
     android:keepScreenOn="true">
 
@@ -21,23 +22,21 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
 
-    <com.simongellis.vvb.ControllerButton
-        android:id="@+id/butan"
+    <com.simongellis.vvb.ButtonControl
         android:layout_width="25dp"
         android:layout_height="25dp"
-        app:parallax="1.5dp"
         android:layout_marginStart="20dp"
         android:layout_marginBottom="50dp"
-        android:src="@drawable/ic_button"
-        android:contentDescription="@string/input_menu_button_a"
+        app:parallax="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.simongellis.vvb.ControllerDpad
+    <com.simongellis.vvb.DpadControl
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_marginStart="300dp"
         android:layout_marginBottom="80dp"
+        app:parallax="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
