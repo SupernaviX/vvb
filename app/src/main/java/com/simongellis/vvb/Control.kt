@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
+import androidx.core.graphics.withTranslation
 import kotlin.math.roundToInt
 
 abstract class Control: View {
@@ -65,9 +66,9 @@ abstract class Control: View {
     abstract fun drawGrayscale(canvas: Canvas)
 
     override fun onDraw(canvas: Canvas) {
-        _drawable?.apply {
-            setBounds((-_parallax / 2).roundToInt(), 0, width + (_parallax / 2).roundToInt(), height)
-            draw(canvas)
+        canvas.withTranslation(_parallax / 2) {
+            _drawable?.setBounds(0, 0, width + _parallax.roundToInt(), height)
+            _drawable?.draw(this)
         }
     }
 
