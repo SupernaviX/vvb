@@ -12,6 +12,7 @@ class VideoPreviewActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         _view = GameView(applicationContext)
         setContentView(_view)
 

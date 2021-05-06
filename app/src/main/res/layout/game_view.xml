@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     android:screenOrientation="landscape"
     android:clipChildren="false"
-    android:configChanges="navigation|keyboard|keyboardHidden|orientation|screenSize"
+    android:clipToPadding="false"
+    android:configChanges="navigation|keyboard|keyboardHidden|screenSize"
     android:keepScreenOn="true">
 
     <android.opengl.GLSurfaceView
@@ -22,22 +23,88 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
 
-    <com.simongellis.vvb.ButtonControl
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginBottom="50dp"
-        app:parallax="6dp"
+    <com.simongellis.vvb.DpadControl
+        android:id="@+id/dpad_left"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginStart="40dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.simongellis.vvb.DpadControl
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="300dp"
-        android:layout_marginBottom="80dp"
-        app:parallax="6dp"
+    <com.simongellis.vvb.ButtonControl
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="20dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dpad_left"
+        app:layout_constraintStart_toStartOf="@id/dpad_left"
+        app:layout_constraintEnd_toEndOf="@id/dpad_left" />
+
+    <com.simongellis.vvb.ButtonControl
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="40dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toBottomOf="@id/dpad_left"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="@id/dpad_left"
+        app:layout_constraintEnd_toEndOf="@id/dpad_left" />
+
+    <com.simongellis.vvb.ButtonControl
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginStart="40dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toBottomOf="@id/dpad_left"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dpad_left"
+        app:layout_constraintEnd_toEndOf="@id/dpad_left" />
+
+    <com.simongellis.vvb.DpadControl
+        android:id="@+id/dpad_right"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_marginEnd="40dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.simongellis.vvb.ButtonControl
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="20dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dpad_right"
+        app:layout_constraintStart_toStartOf="@id/dpad_right"
+        app:layout_constraintEnd_toEndOf="@id/dpad_right" />
+
+    <com.simongellis.vvb.ButtonControl
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginStart="40dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toBottomOf="@id/dpad_right"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dpad_right"
+        app:layout_constraintEnd_toEndOf="@id/dpad_right" />
+
+    <com.simongellis.vvb.ButtonControl
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="40dp"
+        app:parallax="8dp"
+        app:layout_constraintTop_toBottomOf="@id/dpad_right"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dpad_right"
+        app:layout_constraintEnd_toEndOf="@id/dpad_right" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
