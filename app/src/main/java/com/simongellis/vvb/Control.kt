@@ -8,6 +8,7 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.graphics.withTranslation
+import com.simongellis.vvb.emulator.Controller
 import kotlin.math.roundToInt
 
 abstract class Control: View {
@@ -15,6 +16,7 @@ abstract class Control: View {
     private var _leftColor: Int = Color.RED
     private var _rightColor: Int = Color.BLUE
     private var _drawable: Drawable? = null
+    var controller: Controller? = null
 
     constructor(context: Context) : super(context) {
         init(context)

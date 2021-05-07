@@ -24,6 +24,7 @@ class GameActivity : AppCompatActivity() {
 
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         _view = GameView(applicationContext)
+        _view.controller = _controller
         setContentView(_view)
 
         _emulator.loadImage(applicationContext)

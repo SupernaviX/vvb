@@ -15,6 +15,17 @@ class GameView : ConstraintLayout {
     private val _mode: VideoMode
     private val _renderer: Renderer
 
+    var controller: Controller? = null
+        set(value) {
+            field = value
+            for (control in controls) {
+                control.controller = value
+            }
+        }
+
+    private val controls
+        get() = _binding.root.children.filterIsInstance<Control>()
+
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -39,7 +50,7 @@ class GameView : ConstraintLayout {
 
             uiAlignmentMarker.isVisible = _mode === VideoMode.CARDBOARD
         }
-        for (control in children.filterIsInstance<Control>()) {
+        for (control in controls) {
             control.setColors(settings.colorLeft, settings.colorRight)
             control.isVisible = _mode === VideoMode.ANAGLYPH
         }

@@ -3,4 +3,13 @@
     <declare-styleable name="Control">
         <attr name="parallax" format="dimension" />
     </declare-styleable>
+    <declare-styleable name="ButtonControl">
+        <attr name="input" format="string" />
+    </declare-styleable>
+    <declare-styleable name="DpadControl">
+        <attr name="inputUp" format="string" />
+        <attr name="inputRight" format="string" />
+        <attr name="inputDown" format="string" />
+        <attr name="inputLeft" format="string" />
+    </declare-styleable>
 </resources>
