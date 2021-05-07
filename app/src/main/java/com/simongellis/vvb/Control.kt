@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
-import androidx.core.graphics.withTranslation
 import com.simongellis.vvb.emulator.Controller
 import kotlin.math.roundToInt
 
@@ -47,6 +46,11 @@ abstract class Control: View {
         _rightColor = right
     }
 
+    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+        setMeasuredDimension(measuredWidth + _parallax.roundToInt(), measuredHeight)
+    }
+
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         recomputeDrawable()
@@ -65,21 +69,21 @@ abstract class Control: View {
     /**
      * Draw a grayscale version of this control's graphic.
      */
-    abstract fun drawGrayscale(canvas: Canvas)
+    abstract fun drawGrayscale(canvas: Canvas, width: Int, height: Int)
 
     override fun onDraw(canvas: Canvas) {
-        canvas.withTranslation(_parallax / 2) {
-            _drawable?.setBounds(0, 0, width + _parallax.roundToInt(), height)
-            _drawable?.draw(this)
+        _drawable?.apply {
+            setBounds(0, 0, width, height)
+            draw(canvas)
         }
     }
 
     private fun recomputeDrawable() {
-        val source = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        drawGrayscale(Canvas(source))
+        val naturalWidth = width - _parallax.roundToInt()
+        val source = Bitmap.createBitmap(naturalWidth, height, Bitmap.Config.ARGB_8888)
+        drawGrayscale(Canvas(source), naturalWidth, height)
 
-        val fullWidth = width + _parallax.roundToInt()
-        val bitmap = Bitmap.createBitmap(fullWidth, height, Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
         val paint = Paint()

@@ -54,7 +54,7 @@ class ButtonControl: Control {
         }
     }
 
-    override fun drawGrayscale(canvas: Canvas) {
+    override fun drawGrayscale(canvas: Canvas, width: Int, height: Int) {
         _button.setBounds(0, 0, width, height)
         _button.alpha = if (_isPressed) { 0xff } else { 0x80 }
         _button.draw(canvas)

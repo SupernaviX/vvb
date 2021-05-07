@@ -4,13 +4,13 @@ import android.content.Context
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.widget.FrameLayout
 import androidx.core.view.children
 import androidx.core.view.isVisible
 import com.simongellis.vvb.databinding.GameViewBinding
 import com.simongellis.vvb.emulator.*
 
-class GameView : ConstraintLayout {
+class GameView : FrameLayout {
     private val _binding: GameViewBinding
     private val _mode: VideoMode
     private val _renderer: Renderer

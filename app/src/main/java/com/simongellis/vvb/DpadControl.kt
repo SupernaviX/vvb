@@ -63,7 +63,7 @@ class DpadControl: Control {
         }
     }
 
-    override fun drawGrayscale(canvas: Canvas) {
+    override fun drawGrayscale(canvas: Canvas, width: Int, height: Int) {
         val mask = _activeButtons
         val pivotX = width.toFloat() / 2
         val pivotY = height.toFloat() / 2
