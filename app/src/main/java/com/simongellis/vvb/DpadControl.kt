@@ -88,10 +88,10 @@ class DpadControl: Control {
         val yRegion = event.y / height
 
         var result = 0
-        if (xRegion < 0.35f) result += Arrow.LEFT.mask
-        if (xRegion > 0.65f) result += Arrow.RIGHT.mask
-        if (yRegion < 0.35f) result += Arrow.UP.mask
-        if (yRegion > 0.65f) result += Arrow.DOWN.mask
+        if (xRegion < 0.3f) result += Arrow.LEFT.mask
+        if (xRegion > 0.7f) result += Arrow.RIGHT.mask
+        if (yRegion < 0.3f) result += Arrow.UP.mask
+        if (yRegion > 0.7f) result += Arrow.DOWN.mask
         return result
     }
 
