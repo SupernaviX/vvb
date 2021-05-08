@@ -11,10 +11,10 @@ import com.simongellis.vvb.emulator.Controller
 import kotlin.math.roundToInt
 
 abstract class Control: View {
-    private var _parallax: Float = 0f
     private var _leftColor: Int = Color.RED
     private var _rightColor: Int = Color.BLUE
     private var _drawable: Drawable? = null
+    var parallax: Float = 0f
     var controller: Controller? = null
     var shouldDrawBounds = false
 
@@ -36,7 +36,7 @@ abstract class Control: View {
         val a = context.theme.obtainStyledAttributes(attrs, R.styleable.Control, defStyleAttr, defStyleRes)
 
         try {
-            _parallax = a.getDimension(R.styleable.Control_parallax, 0f)
+            parallax = a.getDimension(R.styleable.Control_parallax, 0f)
         } finally {
             a.recycle()
         }
@@ -49,7 +49,7 @@ abstract class Control: View {
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-        setMeasuredDimension(measuredWidth + _parallax.roundToInt(), measuredHeight)
+        setMeasuredDimension(measuredWidth + parallax.roundToInt(), measuredHeight)
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -80,7 +80,7 @@ abstract class Control: View {
     }
 
     private fun recomputeDrawable() {
-        val naturalWidth = width - _parallax.roundToInt()
+        val naturalWidth = width - parallax.roundToInt()
         val source = Bitmap.createBitmap(naturalWidth, height, Bitmap.Config.ARGB_8888)
         drawGrayscale(Canvas(source), naturalWidth, height)
 
@@ -93,7 +93,7 @@ abstract class Control: View {
 
         paint.colorFilter = PorterDuffColorFilter(_rightColor, PorterDuff.Mode.MULTIPLY)
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.LIGHTEN)
-        canvas.drawBitmap(source, _parallax, 0f, paint)
+        canvas.drawBitmap(source, parallax, 0f, paint)
 
         _drawable = BitmapDrawable(resources, bitmap)
         invalidate()

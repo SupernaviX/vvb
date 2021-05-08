@@ -1,9 +1,7 @@
 package com.simongellis.vvb
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.annotation.StyleableRes
@@ -18,6 +16,8 @@ class DpadControl: Control {
 
     private var _activeButtons = 0
     private lateinit var _inputs: Map<Arrow, Input>
+    private val _rawPaths: Map<Arrow, Path>
+    private var _paths: Map<Arrow, Path>
 
     constructor(context: Context) : super(context) {
         init(context, null)
@@ -35,6 +35,27 @@ class DpadControl: Control {
 
     init {
         _boundsPaint.color = ColorUtils.setAlphaComponent(Color.DKGRAY, 0x80)
+        _rawPaths = Arrow.values()
+            .mapIndexed { index, arrow -> arrow to computeArrowPath(index.toFloat() * 90f) }
+            .toMap()
+        _paths = _rawPaths
+    }
+
+    private fun computeArrowPath(rotation: Float): Path {
+        val diagonalSensitivity = 1f/6f // 0f is none, .5f is max
+        val deadZoneApothem = 1f/12f // half the width of the dead zone in the middle
+        return Path().apply {
+            moveTo(0f, diagonalSensitivity)
+            lineTo(.5f - deadZoneApothem, .5f - deadZoneApothem)
+            lineTo(.5f + deadZoneApothem, .5f - deadZoneApothem)
+            lineTo(1f, diagonalSensitivity)
+            lineTo(1f, 0f)
+            lineTo(0f, 0f)
+            close()
+            transform(Matrix().apply {
+                setRotate(rotation, .5f, .5f)
+            })
+        }
     }
 
     private fun init(context: Context, attrs: AttributeSet?) {
@@ -71,9 +92,19 @@ class DpadControl: Control {
         }
     }
 
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        val scaleMatrix = Matrix().apply {
+            setScale(h.toFloat(), h.toFloat())
+        }
+        _paths = _rawPaths.mapValues { Path(it.value).apply { transform(scaleMatrix) } }
+        super.onSizeChanged(w, h, oldw, oldh)
+    }
+
     override fun drawGrayscale(canvas: Canvas, width: Int, height: Int) {
         if (shouldDrawBounds) {
-            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), _boundsPaint)
+            for (path in _paths.values) {
+                canvas.drawPath(path, _boundsPaint)
+            }
         }
         val mask = _activeButtons
         val pivotX = width.toFloat() / 2
@@ -100,14 +131,21 @@ class DpadControl: Control {
         if (event.action == MotionEvent.ACTION_UP) {
             return 0
         }
-        val xRegion = event.x / width
-        val yRegion = event.y / height
+
+        val touch = Path().apply {
+            addRect(event.x - 1, event.y - 1, event.x + 1, event.y + 1, Path.Direction.CW)
+            transform(Matrix().apply {
+                // adjust the touch to compensate for parallax
+                setTranslate(-parallax / 2, 0f)
+            })
+        }
 
         var result = 0
-        if (xRegion < 0.3f) result += Arrow.LEFT.mask
-        if (xRegion > 0.7f) result += Arrow.RIGHT.mask
-        if (yRegion < 0.3f) result += Arrow.UP.mask
-        if (yRegion > 0.7f) result += Arrow.DOWN.mask
+        for ((arrow, path) in _paths) {
+            val collision = Path(touch).apply { op(path, Path.Op.INTERSECT) }
+            if (!collision.isEmpty) result += arrow.mask
+        }
+
         return result
     }
 
