@@ -3,6 +3,8 @@ package com.simongellis.vvb
 import android.content.Context
 import android.graphics.Canvas
 import android.util.AttributeSet
+import android.view.MotionEvent
+import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_UP
 import androidx.core.content.ContextCompat
 import com.simongellis.vvb.emulator.Input
@@ -10,7 +12,6 @@ import com.simongellis.vvb.emulator.Input
 class ButtonControl: Control {
     private val _button = ContextCompat.getDrawable(context, R.drawable.ic_button)!!
 
-    private var _isPressed = false
     private var _input: Input? = null
 
     constructor(context: Context) : super(context) {
@@ -29,34 +30,58 @@ class ButtonControl: Control {
 
     private fun init(context: Context, attrs: AttributeSet?) {
         val a = context.obtainStyledAttributes(attrs, R.styleable.ButtonControl)
+        val isToggle: Boolean
 
         try {
             val inputStr = a.getString(R.styleable.ButtonControl_input)
             _input = inputStr?.let { Input.valueOf(it) }
+            isToggle = a.getBoolean(R.styleable.ButtonControl_toggleable, false)
         } finally {
             a.recycle()
         }
 
+        val onTouch = if (isToggle) { handleToggle() } else { ::handleTouch }
+
         setOnTouchListener { v, event ->
-            val wasPressed = _isPressed
-            _isPressed = event.action != ACTION_UP
-
-            if (_isPressed && !wasPressed) {
-                _input?.also { controller?.press(it) }
-            }
-            if (wasPressed && !_isPressed) {
-                _input?.also { controller?.release(it) }
-            }
-            drawingState = if (_isPressed) { 1 } else { 0 }
-
+            onTouch(event)
             v.performClick()
             true
         }
     }
 
+    private fun handleTouch(event: MotionEvent) {
+        isPressed = event.action != ACTION_UP
+    }
+
+    private fun handleToggle(): (MotionEvent) -> Unit {
+        var isToggled = false
+        return { event ->
+            if (event.action == ACTION_DOWN) {
+                isPressed = true
+            }
+            if (event.action == ACTION_UP) {
+                if (isToggled) {
+                    isPressed = false
+                }
+                isToggled = !isToggled
+            }
+        }
+    }
+
+    override fun setPressed(pressed: Boolean) {
+        if (isPressed == pressed) return
+        super.setPressed(pressed)
+        if (pressed) {
+            _input?.also { controller?.press(it) }
+        } else {
+            _input?.also { controller?.release(it) }
+        }
+        drawingState = if (pressed) { 1 } else { 0 }
+    }
+
     override fun drawGrayscale(canvas: Canvas, width: Int, height: Int) {
         _button.setBounds(0, 0, width, height)
-        _button.alpha = if (_isPressed) { 0xff } else { 0x80 }
+        _button.alpha = if (isPressed) { 0xff } else { 0x80 }
         _button.draw(canvas)
     }
 

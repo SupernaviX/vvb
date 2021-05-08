@@ -5,6 +5,7 @@
     </declare-styleable>
     <declare-styleable name="ButtonControl">
         <attr name="input" format="string" />
+        <attr name="toggleable" format="boolean" />
     </declare-styleable>
     <declare-styleable name="DpadControl">
         <attr name="inputUp" format="string" />
