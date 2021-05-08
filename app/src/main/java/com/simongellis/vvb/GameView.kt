@@ -52,6 +52,7 @@ class GameView : FrameLayout {
         }
         for (control in controls) {
             control.setColors(settings.colorLeft, settings.colorRight)
+            // control.shouldDrawBounds = true
             control.isVisible = _mode === VideoMode.ANAGLYPH
         }
     }

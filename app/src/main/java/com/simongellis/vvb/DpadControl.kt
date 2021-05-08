@@ -2,15 +2,19 @@ package com.simongellis.vvb
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.annotation.StyleableRes
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import com.simongellis.vvb.emulator.Input
 
 class DpadControl: Control {
     private val _centerGraphic = ContextCompat.getDrawable(context, R.drawable.ic_dpad_center)!!
     private val _arrowGraphic = ContextCompat.getDrawable(context, R.drawable.ic_dpad_arrow)!!
+    private val _boundsPaint: Paint = Paint()
 
     private var _activeButtons = 0
     private lateinit var _inputs: Map<Arrow, Input>
@@ -27,6 +31,10 @@ class DpadControl: Control {
     @Suppress("unused")
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
         init(context, attrs)
+    }
+
+    init {
+        _boundsPaint.color = ColorUtils.setAlphaComponent(Color.DKGRAY, 0x80)
     }
 
     private fun init(context: Context, attrs: AttributeSet?) {
@@ -64,15 +72,23 @@ class DpadControl: Control {
     }
 
     override fun drawGrayscale(canvas: Canvas, width: Int, height: Int) {
+        if (shouldDrawBounds) {
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), _boundsPaint)
+        }
         val mask = _activeButtons
         val pivotX = width.toFloat() / 2
         val pivotY = height.toFloat() / 2
 
-        _centerGraphic.setBounds(0, 0, width, height)
+        val visualLeft = width / 8
+        val visualTop = height / 8
+        val visualRight = width - visualLeft
+        val visualBottom = height - visualTop
+
+        _centerGraphic.setBounds(visualLeft, visualTop, visualRight, visualBottom)
         _centerGraphic.alpha = if (mask != 0) { 0xff } else { 0x80 }
         _centerGraphic.draw(canvas)
 
-        _arrowGraphic.setBounds(0, 0, width, height)
+        _arrowGraphic.setBounds(visualLeft, visualTop, visualRight, visualBottom)
         for (arrow in Arrow.values()) {
             _arrowGraphic.alpha = if (arrow.isIn(mask)) { 0xff } else { 0x80 }
             _arrowGraphic.draw(canvas)

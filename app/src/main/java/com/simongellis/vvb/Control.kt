@@ -16,6 +16,7 @@ abstract class Control: View {
     private var _rightColor: Int = Color.BLUE
     private var _drawable: Drawable? = null
     var controller: Controller? = null
+    var shouldDrawBounds = false
 
     constructor(context: Context) : super(context) {
         init(context)

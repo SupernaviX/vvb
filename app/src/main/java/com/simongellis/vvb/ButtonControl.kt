@@ -2,15 +2,19 @@ package com.simongellis.vvb
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_UP
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.ColorUtils
 import com.simongellis.vvb.emulator.Input
 
 class ButtonControl: Control {
     private val _button = ContextCompat.getDrawable(context, R.drawable.ic_button)!!
+    private val _boundsPaint: Paint = Paint()
 
     private var _input: Input? = null
 
@@ -26,6 +30,10 @@ class ButtonControl: Control {
     @Suppress("unused")
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes) {
         init(context, attrs)
+    }
+
+    init {
+        _boundsPaint.color = ColorUtils.setAlphaComponent(Color.DKGRAY, 0x80)
     }
 
     private fun init(context: Context, attrs: AttributeSet?) {
@@ -80,6 +88,9 @@ class ButtonControl: Control {
     }
 
     override fun drawGrayscale(canvas: Canvas, width: Int, height: Int) {
+        if (shouldDrawBounds) {
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), _boundsPaint)
+        }
         _button.setBounds(0, 0, width, height)
         _button.alpha = if (isPressed) { 0xff } else { 0x80 }
         _button.draw(canvas)
