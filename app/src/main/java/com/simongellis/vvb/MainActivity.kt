@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
             pref.fragment
         )
         fragment.arguments = args
-        fragment.setTargetFragment(caller, 0)
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)

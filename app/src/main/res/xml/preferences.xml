@@ -9,10 +9,6 @@
     <Preference
         app:key="load_game"
         app:title="@string/main_menu_load_game">
-        <intent
-            android:action="android.intent.action.OPEN_DOCUMENT"
-            android:mimeType="*/*">
-        </intent>
     </Preference>
     <Preference
         app:key="input"
