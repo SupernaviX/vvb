@@ -3,10 +3,12 @@ package com.simongellis.vvb
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.simongellis.vvb.menu.MainMenuFragment
 
 class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,8 +46,8 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         val fragment = supportFragmentManager.fragments.firstOrNull()
-        if (fragment is InputMenuFragment) {
-            if (fragment.onKeyEvent(event)) {
+        if (fragment is View.OnKeyListener) {
+            if (fragment.onKey(fragment.view, event.keyCode, event)) {
                 return true
             }
         }

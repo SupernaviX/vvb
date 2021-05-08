@@ -1,17 +1,19 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.menu
 
 import android.content.SharedPreferences
 import android.hardware.input.InputManager
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.View
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.edit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 
-class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener {
+class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener, View.OnKeyListener {
     private var _control: String? = null
     private lateinit var _sharedPreferences: SharedPreferences
     private lateinit var _inputManager: InputManager
@@ -51,7 +53,7 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
         return true
     }
 
-    fun onKeyEvent(event: KeyEvent): Boolean {
+    override fun onKey(v: View?, keyCode: Int, event: KeyEvent): Boolean {
         if (_control == null || event.action != KeyEvent.ACTION_DOWN) {
             return false
         }
@@ -60,7 +62,6 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
         // so persist a mapping between the two
         findPreference<Preference>(_control!!)?.summary = "Mapped"
         val device = _inputManager.getInputDevice(event.deviceId)?.descriptor
-        val keyCode = event.keyCode
         val input = "$device::$keyCode"
         _sharedPreferences.edit {
             putString(_control, input)

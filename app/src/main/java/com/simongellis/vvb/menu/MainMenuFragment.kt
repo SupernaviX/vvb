@@ -1,11 +1,13 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.menu
 
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Emulator
+import com.simongellis.vvb.game.GameActivity
 
 class MainMenuFragment: PreferenceFragmentCompat() {
     private val GAME_CHOSEN = 2

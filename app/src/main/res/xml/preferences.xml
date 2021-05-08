@@ -17,16 +17,16 @@
     <Preference
         app:key="input"
         app:title="@string/main_menu_input_setup"
-        app:fragment="com.simongellis.vvb.InputMenuFragment"
-        tools:context=".InputMenuFragment"/>
+        app:fragment="com.simongellis.vvb.menu.InputMenuFragment"
+        tools:context=".menu.InputMenuFragment"/>
     <Preference
         app:key="video"
         app:title="@string/main_menu_video_setup"
-        app:fragment="com.simongellis.vvb.VideoMenuFragment"
-        tools:context=".VideoMenuFragment"/>
+        app:fragment="com.simongellis.vvb.menu.VideoMenuFragment"
+        tools:context=".menu.VideoMenuFragment"/>
     <Preference
         app:key="audio"
         app:title="@string/main_menu_audio_setup"
-        app:fragment="com.simongellis.vvb.AudioMenuFragment"
-        tools:context=".AudioMenuFragment"/>
+        app:fragment="com.simongellis.vvb.menu.AudioMenuFragment"
+        tools:context=".menu.AudioMenuFragment"/>
 </PreferenceScreen>

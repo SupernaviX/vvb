@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.menu
 
 import android.content.Intent
 import android.content.SharedPreferences
@@ -8,7 +8,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.simongellis.vvb.MainActivity
+import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.VideoMode
+import com.simongellis.vvb.game.VideoPreviewActivity
 
 class VideoMenuFragment: PreferenceFragmentCompat() {
     enum class Prefs(val prefName: String, val mode: VideoMode? = null) {

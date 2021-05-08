@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.game
 
 import android.content.Context
 import android.graphics.*
@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import androidx.annotation.StyleableRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 
 class DpadControl: Control {

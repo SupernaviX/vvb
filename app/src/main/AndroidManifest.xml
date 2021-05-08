@@ -18,8 +18,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".GameActivity" android:theme="@style/GameTheme" />
-        <activity android:name=".VideoPreviewActivity" android:theme="@style/GameTheme" />
+        <activity android:name=".game.GameActivity" android:theme="@style/GameTheme" />
+        <activity android:name=".game.VideoPreviewActivity" android:theme="@style/GameTheme" />
     </application>
 
 </manifest>

@@ -23,7 +23,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
 
-    <com.simongellis.vvb.DpadControl
+    <com.simongellis.vvb.game.DpadControl
         android:id="@+id/dpad_left"
         android:layout_width="@dimen/dpad_diameter"
         android:layout_height="@dimen/dpad_diameter"
@@ -36,7 +36,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.simongellis.vvb.ButtonControl
+    <com.simongellis.vvb.game.ButtonControl
         android:layout_width="@dimen/trigger_button_diameter"
         android:layout_height="@dimen/trigger_button_diameter"
         android:layout_marginEnd="20dp"
@@ -48,7 +48,7 @@
         app:layout_constraintStart_toStartOf="@id/dpad_left"
         app:layout_constraintEnd_toEndOf="@id/dpad_left" />
 
-    <com.simongellis.vvb.ButtonControl
+    <com.simongellis.vvb.game.ButtonControl
         android:layout_width="@dimen/button_diameter"
         android:layout_height="@dimen/button_diameter"
         android:layout_marginBottom="30dp"
@@ -60,7 +60,7 @@
         app:layout_constraintStart_toStartOf="@id/dpad_left"
         app:layout_constraintEnd_toEndOf="@id/dpad_left" />
 
-    <com.simongellis.vvb.ButtonControl
+    <com.simongellis.vvb.game.ButtonControl
         android:layout_width="@dimen/button_diameter"
         android:layout_height="@dimen/button_diameter"
         android:layout_marginTop="30dp"
@@ -72,7 +72,7 @@
         app:layout_constraintStart_toStartOf="@id/dpad_left"
         app:layout_constraintEnd_toEndOf="@id/dpad_left" />
 
-    <com.simongellis.vvb.DpadControl
+    <com.simongellis.vvb.game.DpadControl
         android:id="@+id/dpad_right"
         android:layout_width="@dimen/dpad_diameter"
         android:layout_height="@dimen/dpad_diameter"
@@ -85,7 +85,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <com.simongellis.vvb.ButtonControl
+    <com.simongellis.vvb.game.ButtonControl
         android:layout_width="@dimen/trigger_button_diameter"
         android:layout_height="@dimen/trigger_button_diameter"
         android:layout_marginStart="20dp"
@@ -97,7 +97,7 @@
         app:layout_constraintStart_toStartOf="@id/dpad_right"
         app:layout_constraintEnd_toEndOf="@id/dpad_right" />
 
-    <com.simongellis.vvb.ButtonControl
+    <com.simongellis.vvb.game.ButtonControl
         android:layout_width="@dimen/button_diameter"
         android:layout_height="@dimen/button_diameter"
         android:layout_marginBottom="30dp"
@@ -109,7 +109,7 @@
         app:layout_constraintStart_toStartOf="@id/dpad_right"
         app:layout_constraintEnd_toEndOf="@id/dpad_right" />
 
-    <com.simongellis.vvb.ButtonControl
+    <com.simongellis.vvb.game.ButtonControl
         android:layout_width="@dimen/button_diameter"
         android:layout_height="@dimen/button_diameter"
         android:layout_marginTop="30dp"

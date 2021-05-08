@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.game
 
 import android.content.Context
 import android.graphics.*
@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
+import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Controller
 import kotlin.math.roundToInt
 
@@ -33,7 +34,8 @@ abstract class Control: View {
     }
 
     private fun init(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0, defStyleRes: Int = 0) {
-        val a = context.theme.obtainStyledAttributes(attrs, R.styleable.Control, defStyleAttr, defStyleRes)
+        val a = context.theme.obtainStyledAttributes(attrs,
+            R.styleable.Control, defStyleAttr, defStyleRes)
 
         try {
             parallax = a.getDimension(R.styleable.Control_parallax, 0f)

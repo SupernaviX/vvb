@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.game
 
 import android.content.Context
 import android.hardware.input.InputManager

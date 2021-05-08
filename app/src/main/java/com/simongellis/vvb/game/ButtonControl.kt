@@ -1,4 +1,4 @@
-package com.simongellis.vvb
+package com.simongellis.vvb.game
 
 import android.content.Context
 import android.graphics.Canvas
@@ -10,6 +10,7 @@ import android.view.MotionEvent.ACTION_DOWN
 import android.view.MotionEvent.ACTION_UP
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
+import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 
 class ButtonControl: Control {
