@@ -29,21 +29,21 @@
         app:title="@string/video_menu_color"
         app:defaultValue="@color/red"
         app:colorShape="square"
-        app:colorChoices="@array/color_choices"
+        app:colorChoices="@array/cardboard_color_choices"
         app:numColumns="4"/>
     <com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
         app:key="video_color_left"
         app:title="@string/video_menu_color_left"
         app:defaultValue="@color/red"
         app:colorShape="square"
-        app:colorChoices="@array/color_choices"
+        app:colorChoices="@array/anaglyph_color_choices"
         app:numColumns="4"/>
     <com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
         app:key="video_color_right"
         app:title="@string/video_menu_color_right"
         app:defaultValue="@color/blue"
         app:colorShape="square"
-        app:colorChoices="@array/color_choices"
+        app:colorChoices="@array/anaglyph_color_choices"
         app:numColumns="4"/>
     <Preference
         app:key="video_switch_viewer"

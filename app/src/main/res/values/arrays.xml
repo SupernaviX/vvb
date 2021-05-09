@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <array name="color_choices">
+    <array name="anaglyph_color_choices">
+        <item>@color/red</item>
+        <item>@color/orange</item>
+        <item>@color/yellow</item>
+        <item>@color/green</item>
+        <item>@color/cyan</item>
+        <item>@color/blue</item>
+        <item>@color/violet</item>
+        <item>@color/black</item>
+    </array>
+    <array name="cardboard_color_choices">
         <item>@color/red</item>
         <item>@color/orange</item>
         <item>@color/yellow</item>

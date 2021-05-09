@@ -12,4 +12,5 @@
     <color name="blue">#0000ff</color>
     <color name="violet">#ff00ff</color>
     <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
 </resources>
