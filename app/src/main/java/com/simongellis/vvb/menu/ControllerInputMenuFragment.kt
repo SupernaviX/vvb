@@ -13,7 +13,7 @@ import androidx.preference.PreferenceManager
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 
-class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener, View.OnKeyListener {
+class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener, View.OnKeyListener {
     private var _control: String? = null
     private lateinit var _sharedPreferences: SharedPreferences
     private lateinit var _inputManager: InputManager
@@ -25,7 +25,7 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.preferences_input, rootKey)
+        setPreferencesFromResource(R.xml.preferences_controller_input, rootKey)
         Input.values().forEach { input ->
             input.prefName?.also { configureInputPreference(it) }
         }
@@ -43,7 +43,7 @@ class InputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClic
 
     override fun onResume() {
         super.onResume()
-        requireActivity().setTitle(R.string.main_menu_input_setup)
+        requireActivity().setTitle(R.string.main_menu_controller_input_setup)
     }
 
     override fun onPreferenceClick(preference: Preference): Boolean {

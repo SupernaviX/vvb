@@ -16,8 +16,10 @@ import com.simongellis.vvb.emulator.Input
 class ButtonControl: Control {
     private val _button = ContextCompat.getDrawable(context, R.drawable.ic_button)!!
     private val _boundsPaint: Paint = Paint()
+    private var _onTouch: (MotionEvent) -> Unit
 
     private var _input: Input? = null
+    private var _isToggleable = false
 
     constructor(context: Context) : super(context) {
         init(context, null)
@@ -35,26 +37,30 @@ class ButtonControl: Control {
 
     init {
         _boundsPaint.color = ColorUtils.setAlphaComponent(Color.DKGRAY, 0x80)
+        _onTouch = ::handleTouch
+        setOnTouchListener { v, event ->
+            _onTouch(event)
+            v.performClick()
+            true
+        }
     }
 
     private fun init(context: Context, attrs: AttributeSet?) {
         val a = context.obtainStyledAttributes(attrs, R.styleable.ButtonControl)
-        val isToggle: Boolean
 
         try {
             val inputStr = a.getString(R.styleable.ButtonControl_input)
             _input = inputStr?.let { Input.valueOf(it) }
-            isToggle = a.getBoolean(R.styleable.ButtonControl_toggleable, false)
+            _isToggleable = a.getBoolean(R.styleable.ButtonControl_toggleable, false)
         } finally {
             a.recycle()
         }
+    }
 
-        val onTouch = if (isToggle) { handleToggle() } else { ::handleTouch }
-
-        setOnTouchListener { v, event ->
-            onTouch(event)
-            v.performClick()
-            true
+    override fun setPreferences(preferences: GamePreferences) {
+        super.setPreferences(preferences)
+        if (_isToggleable && preferences.toggleMode) {
+            _onTouch = handleToggle()
         }
     }
 

@@ -34,11 +34,11 @@ class GameView : FrameLayout {
 
     init {
         val emulator = Emulator.getInstance()
-        val settings = Settings(context)
-        _mode = settings.videoMode
+        val preferences = GamePreferences(context)
+        _mode = preferences.videoMode
         _renderer = when(_mode) {
-            VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, settings)
-            VideoMode.CARDBOARD -> CardboardRenderer(emulator, settings)
+            VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, Settings(context))
+            VideoMode.CARDBOARD -> CardboardRenderer(emulator, Settings(context))
         }
 
         val layoutInflater = LayoutInflater.from(context)
@@ -51,9 +51,7 @@ class GameView : FrameLayout {
             uiAlignmentMarker.isVisible = _mode === VideoMode.CARDBOARD
         }
         for (control in controls) {
-            control.setColors(settings.colorLeft, settings.colorRight)
-            // control.shouldDrawBounds = true
-            control.isVisible = _mode === VideoMode.ANAGLYPH
+            control.setPreferences(preferences)
         }
     }
 

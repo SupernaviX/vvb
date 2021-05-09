@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat
+        app:key="onscreen_input_on"
+        app:title="@string/onscreen_input_menu_on"
+        app:defaultValue="true" />
+    <SwitchPreferenceCompat
+        app:key="onscreen_input_toggle_controls"
+        app:title="@string/onscreen_input_menu_toggle_controls"
+        app:defaultValue="false" />
+    <SeekBarPreference
+        app:key="onscreen_input_parallax"
+        app:title="@string/onscreen_input_menu_parallax"
+        app:min="0"
+        android:max="8"
+        app:showSeekBarValue="true"
+        app:seekBarIncrement="1"
+        app:defaultValue="8" />
+    <SwitchPreferenceCompat
+        app:key="onscreen_input_show_bounds"
+        app:title="@string/onscreen_input_menu_show_bounds"
+        app:defaultValue="false" />
+    <Preference
+        app:key="onscreen_input_preview"
+        app:title="@string/onscreen_input_menu_preview" />
+</PreferenceScreen>

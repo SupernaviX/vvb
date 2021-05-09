@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="Control">
-        <attr name="parallax" format="dimension" />
-    </declare-styleable>
     <declare-styleable name="ButtonControl">
         <attr name="input" format="string" />
         <attr name="toggleable" format="boolean" />

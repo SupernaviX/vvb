@@ -11,7 +11,7 @@ import androidx.preference.PreferenceManager
 import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.VideoMode
-import com.simongellis.vvb.game.VideoPreviewActivity
+import com.simongellis.vvb.game.PreviewActivity
 
 class VideoMenuFragment: PreferenceFragmentCompat() {
     enum class Prefs(val prefName: String, val mode: VideoMode? = null) {
@@ -105,7 +105,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
     }
 
     private fun preview() {
-        val intent = Intent(activity, VideoPreviewActivity::class.java)
+        val intent = Intent(activity, PreviewActivity::class.java)
         startActivity(intent)
     }
 }

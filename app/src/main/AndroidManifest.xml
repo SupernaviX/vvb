@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".game.GameActivity" android:theme="@style/GameTheme" />
-        <activity android:name=".game.VideoPreviewActivity" android:theme="@style/GameTheme" />
+        <activity android:name=".game.PreviewActivity" android:theme="@style/GameTheme" />
     </application>
 
 </manifest>

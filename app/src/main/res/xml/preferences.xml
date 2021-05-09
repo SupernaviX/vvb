@@ -11,10 +11,15 @@
         app:title="@string/main_menu_load_game">
     </Preference>
     <Preference
-        app:key="input"
-        app:title="@string/main_menu_input_setup"
-        app:fragment="com.simongellis.vvb.menu.InputMenuFragment"
-        tools:context=".menu.InputMenuFragment"/>
+        app:key="onscreen_input"
+        app:title="@string/main_menu_onscreen_input_setup"
+        app:fragment="com.simongellis.vvb.menu.OnscreenInputMenuFragment"
+        tools:context=".menu.OnscreenInputMenuFragment"/>
+    <Preference
+        app:key="controller_input"
+        app:title="@string/main_menu_controller_input_setup"
+        app:fragment="com.simongellis.vvb.menu.ControllerInputMenuFragment"
+        tools:context=".menu.ControllerInputMenuFragment"/>
     <Preference
         app:key="video"
         app:title="@string/main_menu_video_setup"

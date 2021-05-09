@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.simongellis.vvb.emulator.Emulator
 
-class VideoPreviewActivity: AppCompatActivity() {
+class PreviewActivity: AppCompatActivity() {
     private lateinit var _view: GameView
     private lateinit var _emulator: Emulator
 
