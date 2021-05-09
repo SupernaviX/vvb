@@ -9,6 +9,10 @@
         app:key="onscreen_input_toggle_controls"
         app:title="@string/onscreen_input_menu_toggle_controls"
         app:defaultValue="false" />
+    <SwitchPreferenceCompat
+        app:key="onscreen_input_haptic_feedback"
+        app:title="@string/onscreen_input_menu_haptic_feedback"
+        app:defaultValue="true" />
     <SeekBarPreference
         app:key="onscreen_input_parallax"
         app:title="@string/onscreen_input_menu_parallax"

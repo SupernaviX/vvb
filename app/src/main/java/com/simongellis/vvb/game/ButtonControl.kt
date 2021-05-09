@@ -88,8 +88,10 @@ class ButtonControl: Control {
         super.setPressed(pressed)
         if (pressed) {
             _input?.also { controller?.press(it) }
+            performHapticPress()
         } else {
             _input?.also { controller?.release(it) }
+            performHapticRelease()
         }
         drawingState = if (pressed) { 1 } else { 0 }
     }

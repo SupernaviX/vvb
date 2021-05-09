@@ -81,9 +81,11 @@ class DpadControl: Control {
             for (arrow in Arrow.values()) {
                 if (arrow.isIn(justPressed)) {
                     _inputs[arrow]?.also { controller?.press(it) }
+                    performHapticPress()
                 }
                 if (arrow.isIn(justReleased)) {
                     _inputs[arrow]?.also { controller?.release(it) }
+                    performHapticRelease()
                 }
             }
 

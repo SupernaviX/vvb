@@ -4,7 +4,9 @@ import android.content.Context
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.util.AttributeSet
+import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.core.view.isVisible
 import com.simongellis.vvb.emulator.Controller
@@ -30,6 +32,7 @@ abstract class Control: View {
         isVisible = preferences.showVirtualGamepad
         _leftColor = preferences.colorLeft
         _rightColor = preferences.colorRight
+        isHapticFeedbackEnabled = preferences.enableHapticFeedback
         parallax = preferences.controlParallax
         shouldDrawBounds = preferences.showControlBounds
     }
@@ -42,6 +45,16 @@ abstract class Control: View {
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         recomputeDrawable()
+    }
+
+    fun performHapticPress() {
+        performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+    }
+
+    fun performHapticRelease() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY_RELEASE)
+        }
     }
 
     /**

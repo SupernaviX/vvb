@@ -16,6 +16,7 @@ class GamePreferences(context: Context) {
     val showVirtualGamepad
         get() = videoMode == VideoMode.ANAGLYPH && _virtualGamepadOn
     val toggleMode: Boolean
+    val enableHapticFeedback: Boolean
     val controlParallax: Float
     val showControlBounds: Boolean
 
@@ -28,6 +29,7 @@ class GamePreferences(context: Context) {
 
         _virtualGamepadOn = prefs.getBoolean("onscreen_input_on", true)
         toggleMode = prefs.getBoolean("onscreen_input_toggle_controls", false)
+        enableHapticFeedback = prefs.getBoolean("onscreen_input_haptic_feedback", true)
         controlParallax = convertDpToPixels(context,
             prefs.getInt("onscreen_input_parallax", 8).toFloat())
         showControlBounds = prefs.getBoolean("onscreen_input_show_bounds", false)
