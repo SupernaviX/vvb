@@ -1,6 +1,5 @@
 package com.simongellis.vvb.game
 
-import android.content.pm.ActivityInfo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
@@ -22,8 +21,8 @@ class GameActivity : AppCompatActivity() {
         _controller = Controller(_emulator)
         _inputBindingMapper = InputBindingMapper(applicationContext)
 
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         _view = GameView(applicationContext)
+        requestedOrientation = _view.requestedOrientation
         _view.controller = _controller
         setContentView(_view)
 

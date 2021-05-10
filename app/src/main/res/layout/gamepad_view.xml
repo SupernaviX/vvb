@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.simongellis.vvb.game.DpadControl
+        android:id="@+id/dpad_left"
+        android:layout_width="@dimen/dpad_diameter"
+        android:layout_height="@dimen/dpad_diameter"
+        app:inputUp="LU"
+        app:inputRight="LR"
+        app:inputDown="LD"
+        app:inputLeft="LL"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.simongellis.vvb.game.ButtonControl
+        android:id="@+id/lt"
+        android:layout_width="@dimen/trigger_button_diameter"
+        android:layout_height="@dimen/trigger_button_diameter"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="30dp"
+        app:input="LT"
+        app:toggleable="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dpad_left"
+        app:layout_constraintStart_toStartOf="@id/dpad_left"
+        app:layout_constraintEnd_toEndOf="@id/dpad_left" />
+
+    <com.simongellis.vvb.game.ButtonControl
+        android:id="@+id/select"
+        android:layout_width="@dimen/button_diameter"
+        android:layout_height="@dimen/button_diameter"
+        android:layout_marginBottom="60dp"
+        android:layout_marginEnd="60dp"
+        app:input="SELECT"
+        app:layout_constraintTop_toBottomOf="@id/dpad_left"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dpad_left"
+        app:layout_constraintEnd_toEndOf="@id/dpad_left" />
+
+    <com.simongellis.vvb.game.ButtonControl
+        android:id="@+id/start"
+        android:layout_width="@dimen/button_diameter"
+        android:layout_height="@dimen/button_diameter"
+        android:layout_marginStart="60dp"
+        app:input="START"
+        app:layout_constraintTop_toBottomOf="@id/dpad_left"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dpad_left"
+        app:layout_constraintEnd_toEndOf="@id/dpad_left" />
+
+    <com.simongellis.vvb.game.DpadControl
+        android:id="@+id/dpad_right"
+        android:layout_width="@dimen/dpad_diameter"
+        android:layout_height="@dimen/dpad_diameter"
+        app:inputUp="RU"
+        app:inputRight="RR"
+        app:inputDown="RD"
+        app:inputLeft="RL"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <com.simongellis.vvb.game.ButtonControl
+        android:id="@+id/rt"
+        android:layout_width="@dimen/trigger_button_diameter"
+        android:layout_height="@dimen/trigger_button_diameter"
+        android:layout_marginTop="30dp"
+        android:layout_marginStart="30dp"
+        app:input="RT"
+        app:toggleable="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/dpad_right"
+        app:layout_constraintStart_toStartOf="@id/dpad_right"
+        app:layout_constraintEnd_toEndOf="@id/dpad_right" />
+
+    <com.simongellis.vvb.game.ButtonControl
+        android:id="@+id/a"
+        android:layout_width="@dimen/button_diameter"
+        android:layout_height="@dimen/button_diameter"
+        android:layout_marginBottom="60dp"
+        android:layout_marginStart="60dp"
+        app:input="A"
+        app:layout_constraintTop_toBottomOf="@id/dpad_right"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dpad_right"
+        app:layout_constraintEnd_toEndOf="@id/dpad_right" />
+
+    <com.simongellis.vvb.game.ButtonControl
+        android:id="@+id/b"
+        android:layout_width="@dimen/button_diameter"
+        android:layout_height="@dimen/button_diameter"
+        android:layout_marginEnd="60dp"
+        app:input="B"
+        app:layout_constraintTop_toBottomOf="@id/dpad_right"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/dpad_right"
+        app:layout_constraintEnd_toEndOf="@id/dpad_right" />
+
+</merge>

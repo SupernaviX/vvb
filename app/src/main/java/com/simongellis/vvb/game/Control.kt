@@ -8,7 +8,6 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.HapticFeedbackConstants
 import android.view.View
-import androidx.core.view.isVisible
 import com.simongellis.vvb.emulator.Controller
 import kotlin.math.roundToInt
 
@@ -29,7 +28,6 @@ abstract class Control: View {
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     open fun setPreferences(preferences: GamePreferences) {
-        isVisible = preferences.showVirtualGamepad
         _leftColor = preferences.colorLeft
         _rightColor = preferences.colorRight
         isHapticFeedbackEnabled = preferences.enableHapticFeedback
@@ -80,6 +78,9 @@ abstract class Control: View {
     }
 
     private fun recomputeDrawable() {
+        if (width <= 0 || height <= 0) {
+            return
+        }
         val naturalWidth = width - parallax.roundToInt()
         val source = Bitmap.createBitmap(naturalWidth, height, Bitmap.Config.ARGB_8888)
         drawGrayscale(Canvas(source), naturalWidth, height)

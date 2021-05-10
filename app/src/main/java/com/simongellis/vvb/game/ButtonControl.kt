@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.MotionEvent.ACTION_DOWN
@@ -17,6 +19,7 @@ class ButtonControl: Control {
     private val _button = ContextCompat.getDrawable(context, R.drawable.ic_button)!!
     private val _boundsPaint: Paint = Paint()
     private var _onTouch: (MotionEvent) -> Unit
+    private var _isToggled = false
 
     private var _input: Input? = null
     private var _isToggleable = false
@@ -60,7 +63,7 @@ class ButtonControl: Control {
     override fun setPreferences(preferences: GamePreferences) {
         super.setPreferences(preferences)
         if (_isToggleable && preferences.toggleMode) {
-            _onTouch = handleToggle()
+            _onTouch = ::handleToggle
         }
     }
 
@@ -68,18 +71,15 @@ class ButtonControl: Control {
         isPressed = event.action != ACTION_UP
     }
 
-    private fun handleToggle(): (MotionEvent) -> Unit {
-        var isToggled = false
-        return { event ->
-            if (event.action == ACTION_DOWN) {
-                isPressed = true
+    private fun handleToggle(event: MotionEvent) {
+        if (event.action == ACTION_DOWN) {
+            isPressed = true
+        }
+        if (event.action == ACTION_UP) {
+            if (_isToggled) {
+                isPressed = false
             }
-            if (event.action == ACTION_UP) {
-                if (isToggled) {
-                    isPressed = false
-                }
-                isToggled = !isToggled
-            }
+            _isToggled = !_isToggled
         }
     }
 
@@ -103,6 +103,26 @@ class ButtonControl: Control {
         _button.setBounds(0, 0, width, height)
         _button.alpha = if (isPressed) { 0xff } else { 0x80 }
         _button.draw(canvas)
+    }
+
+    override fun onSaveInstanceState(): Parcelable {
+        return Bundle().apply {
+            putParcelable("superState", super.onSaveInstanceState())
+            putBoolean("pressed", isPressed)
+            putBoolean("toggled", _isToggled)
+        }
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        val realState: Parcelable?
+        if (state is Bundle) {
+            _isToggled = state.getBoolean("toggled")
+            isPressed = state.getBoolean("pressed")
+            realState = state.getParcelable("superState")
+        } else {
+            realState = state
+        }
+        super.onRestoreInstanceState(realState)
     }
 
 }

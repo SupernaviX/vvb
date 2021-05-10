@@ -2,6 +2,8 @@ package com.simongellis.vvb.game
 
 import android.content.Context
 import android.graphics.*
+import android.os.Bundle
+import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import androidx.annotation.StyleableRes
@@ -150,6 +152,24 @@ class DpadControl: Control {
         }
 
         return result
+    }
+
+    override fun onSaveInstanceState(): Parcelable {
+        return Bundle().apply {
+            putParcelable("superState", super.onSaveInstanceState())
+            putInt("activeButtons", _activeButtons)
+        }
+    }
+
+    override fun onRestoreInstanceState(state: Parcelable?) {
+        val realState: Parcelable?
+        if (state is Bundle) {
+            _activeButtons = state.getInt("activeButtons")
+            realState = state.getParcelable("superState")
+        } else {
+            realState = state
+        }
+        super.onRestoreInstanceState(realState)
     }
 
     enum class Arrow(val mask: Int, @StyleableRes val id: Int) {

@@ -12,8 +12,8 @@ class PreviewActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         _view = GameView(applicationContext)
+        requestedOrientation = _view.requestedOrientation
         setContentView(_view)
 
         _emulator = Emulator.getInstance()

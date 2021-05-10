@@ -1,16 +1,17 @@
 package com.simongellis.vvb.game
 
 import android.content.Context
+import android.content.pm.ActivityInfo
+import android.graphics.Color
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.widget.FrameLayout
-import androidx.core.view.children
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import com.simongellis.vvb.databinding.GameViewBinding
 import com.simongellis.vvb.emulator.*
 
-class GameView : FrameLayout {
+class GameView : ConstraintLayout {
     private val _binding: GameViewBinding
     private val _mode: VideoMode
     private val _renderer: Renderer
@@ -18,13 +19,10 @@ class GameView : FrameLayout {
     var controller: Controller? = null
         set(value) {
             field = value
-            for (control in controls) {
-                control.controller = value
-            }
+            _binding.gamepadView.controller = controller
         }
 
-    private val controls
-        get() = _binding.root.children.filterIsInstance<Control>()
+    val requestedOrientation: Int
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -42,17 +40,23 @@ class GameView : FrameLayout {
         }
 
         val layoutInflater = LayoutInflater.from(context)
-        _binding = GameViewBinding.inflate(layoutInflater, this, true)
+        _binding = GameViewBinding.inflate(layoutInflater, this)
         _binding.apply {
             surfaceView.setEGLContextClientVersion(2)
             surfaceView.setRenderer(_renderer)
             surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
             uiAlignmentMarker.isVisible = _mode === VideoMode.CARDBOARD
+
+            gamepadView.setPreferences(preferences)
         }
-        for (control in controls) {
-            control.setPreferences(preferences)
+
+        requestedOrientation = when(_mode) {
+            VideoMode.ANAGLYPH -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            VideoMode.CARDBOARD -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }
+
+        setBackgroundColor(Color.BLACK)
     }
 
     fun onPause() {
