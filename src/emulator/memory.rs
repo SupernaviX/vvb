@@ -202,17 +202,15 @@ impl Memory {
     }
 
     pub fn read_region(&self, region: Region) -> Option<&[u8]> {
-        match self.get_region(region) {
-            Some(region) => Some(region.value.as_slice()),
-            None => None,
-        }
+        self.get_region(region)
+            .as_ref()
+            .map(|region| region.value.as_slice())
     }
 
     pub fn write_region(&mut self, region: Region) -> Option<&mut [u8]> {
-        match self.mut_region(region) {
-            Some(region) => Some(region.value.as_mut_slice()),
-            None => None,
-        }
+        self.mut_region(region)
+            .as_mut()
+            .map(|region| region.value.as_mut_slice())
     }
 
     fn get_region(&self, region: Region) -> &Option<MemoryRegion> {
