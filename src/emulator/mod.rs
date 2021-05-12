@@ -54,7 +54,7 @@ impl Emulator {
         self.video.borrow_mut().get_frame_channel()
     }
 
-    pub fn get_audio_player(&mut self, buffer_size: usize, volume: i16) -> AudioPlayer {
+    pub fn get_audio_player(&mut self, buffer_size: usize, volume: f32) -> AudioPlayer {
         self.audio.borrow_mut().get_player(volume, buffer_size)
     }
 

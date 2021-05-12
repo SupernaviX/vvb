@@ -25,13 +25,13 @@ pub fn init(sample_rate: i32, frames_per_burst: i32) {
 #[cfg(target_os = "android")]
 impl AudioOutputCallback for AudioPlayer {
     // Define type for frames which we would like to process
-    type FrameType = (i16, Stereo);
+    type FrameType = (f32, Stereo);
 
     // Implement sound data output callback
     fn on_audio_ready(
         &mut self,
         _stream: &mut dyn AudioOutputStreamSafe,
-        frames: &mut [(i16, i16)],
+        frames: &mut [(f32, f32)],
     ) -> DataCallbackResult {
         self.play(frames);
         DataCallbackResult::Continue
@@ -58,7 +58,7 @@ impl Audio {
             // select desired sharing mode
             .set_sharing_mode(SharingMode::Shared)
             // select sound sample format
-            .set_format::<i16>()
+            .set_format::<f32>()
             // select channels configuration
             .set_channel_count::<Stereo>()
             // virtual boy sample rate is mercifully low
@@ -97,7 +97,7 @@ impl Audio {
 
 #[derive(Debug)]
 pub struct Settings {
-    volume: i16,
+    volume: f32,
     buffer_size: usize,
 }
 
@@ -116,11 +116,11 @@ pub mod jni {
     }
 
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
-        let volume = env.get_int(this, "_volume")?;
+        let volume = env.get_percent(this, "_volume")?;
         let buffer_size = env.get_int(this, "_bufferSize")?;
 
         Ok(Settings {
-            volume: volume as i16,
+            volume,
             buffer_size: buffer_size as usize,
         })
     }

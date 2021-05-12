@@ -4,12 +4,17 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 const CPU_CYCLES_PER_FRAME: u64 = 480;
-const PCM_BASE_CYCLES_PER_FRAME: usize = 120;
-const NOISE_BASE_CYCLES_PER_FRAME: usize = 12;
-const FRAMES_PER_INTERVAL_CYCLE: usize = 160;
-const FRAMES_PER_ENVELOPE_CYCLE: usize = 640;
-const FREQ_MOD_BASE_CLOCK_0: usize = 40;
-const FREQ_MOD_BASE_CLOCK_1: usize = 320;
+const FRAMES_PER_SECOND: f32 = 20_000_000. / (CPU_CYCLES_PER_FRAME as f32);
+
+const PCM_BASE_CYCLES_PER_FRAME: usize = (5_000_000. / FRAMES_PER_SECOND) as usize;
+const NOISE_BASE_CYCLES_PER_FRAME: usize = (500_000. / FRAMES_PER_SECOND) as usize;
+const FRAMES_PER_INTERVAL_CYCLE: usize = (FRAMES_PER_SECOND / 260.4) as usize;
+const FRAMES_PER_ENVELOPE_CYCLE: usize = (FRAMES_PER_SECOND / 65.1) as usize;
+const FREQ_MOD_BASE_CLOCK_0: usize = (FRAMES_PER_SECOND / 1041.6) as usize;
+const FREQ_MOD_BASE_CLOCK_1: usize = (FRAMES_PER_SECOND / 130.2) as usize;
+
+const ANALOG_FILTER_RC_CONSTANT: f32 = 0.022;
+const ANALOG_FILTER_DECAY_RATE: f32 = ANALOG_FILTER_RC_CONSTANT / (ANALOG_FILTER_RC_CONSTANT + 1. / FRAMES_PER_SECOND);
 
 #[derive(Debug)]
 enum Direction {
@@ -163,8 +168,9 @@ impl Modification {
     fn apply_sweep(&mut self, value: usize) -> usize {
         let delta = value >> self.sweep_shift;
         match self.sweep_dir {
-            Direction::Grow => value + delta,
-            Direction::Decay => value - delta,
+            // Smaller numbers are higher pitches
+            Direction::Grow => value - delta,
+            Direction::Decay => value + delta,
         }
     }
 
@@ -394,7 +400,9 @@ impl Channel {
 pub struct AudioController {
     cycle: u64,
     memory: Rc<RefCell<Memory>>,
-    buffer: Option<Producer<(i16, i16)>>,
+    buffer: Option<Producer<(f32, f32)>>,
+    prev_input: (f32, f32),
+    prev_output: (f32, f32),
     waveforms: [[u16; 32]; 5],
     mod_data: [usize; 32],
     channels: [Channel; 6],
@@ -406,6 +414,8 @@ impl AudioController {
             cycle: 0,
             memory,
             buffer: None,
+            prev_input: (0., 0.),
+            prev_output: (0., 0.),
             waveforms: [[0; 32]; 5],
             mod_data: [0; 32],
             channels: Channel::default_set(),
@@ -415,12 +425,14 @@ impl AudioController {
     pub fn init(&mut self) {
         self.cycle = 0;
         self.buffer = None;
+        self.prev_input = (0., 0.);
+        self.prev_output = (0., 0.);
         self.waveforms = [[0; 32]; 5];
         self.mod_data = [0; 32];
         self.channels = Channel::default_set();
     }
 
-    pub fn get_player(&mut self, volume: i16, buffer_size: usize) -> AudioPlayer {
+    pub fn get_player(&mut self, volume: f32, buffer_size: usize) -> AudioPlayer {
         let capacity = buffer_size * 833;
         let buffer = RingBuffer::new(capacity);
         let (producer, consumer) = buffer.split();
@@ -568,7 +580,13 @@ impl AudioController {
                 .iter_mut()
                 .map(|c| c.next(waveforms, mod_data))
                 .fold((0, 0), |acc, val| (acc.0 + val.0, acc.1 + val.1));
-            values.push(self.to_output_frame(frame));
+
+            let input = self.normalize_frame(frame);
+            let output = self.apply_analog_filter(input);
+            values.push(output);
+            self.prev_input = input;
+            self.prev_output = output;
+
             self.cycle += CPU_CYCLES_PER_FRAME;
         }
         if let Some(buffer) = self.buffer.as_mut() {
@@ -576,29 +594,37 @@ impl AudioController {
         }
     }
 
-    fn to_output_frame(&self, frame: (u16, u16)) -> (i16, i16) {
-        ((frame.0 >> 6) as i16, (frame.1 >> 6) as i16)
+    fn normalize_frame(&self, frame: (u16, u16)) -> (f32, f32) {
+        fn to_float(input: u16) -> f32 {
+            (input >> 6) as f32 / 685.
+        }
+        (to_float(frame.0), to_float(frame.1))
+    }
+
+    fn apply_analog_filter(&self, input: (f32, f32)) -> (f32, f32) {
+        fn to_analog(input: f32, prev_input: f32, prev_output: f32) -> f32 {
+            return ANALOG_FILTER_DECAY_RATE * (prev_output + input - prev_input)
+        }
+        (to_analog(input.0, self.prev_input.0, self.prev_output.0), to_analog(input.1, self.prev_input.1, self.prev_output.1))
+
     }
 }
 
-const AUDIO_CONVERSION_FACTOR: i16 = i16::MAX / 685;
-
 pub struct AudioPlayer {
-    buffer: Consumer<(i16, i16)>,
-    volume: i16,
+    buffer: Consumer<(f32, f32)>,
+    volume: f32,
 }
 
 impl AudioPlayer {
-    pub fn play(&mut self, frames: &mut [(i16, i16)]) {
+    pub fn play(&mut self, frames: &mut [(f32, f32)]) {
         let count = self.buffer.pop_slice(frames);
-        let volume = AUDIO_CONVERSION_FACTOR * self.volume / 100;
         for frame in &mut frames[..count] {
-            frame.0 *= volume;
-            frame.1 *= volume;
+            frame.0 *= self.volume;
+            frame.1 *= self.volume;
         }
         // If we don't know what to play, play that last thing again
         let value = if count == 0 {
-            (0, 0)
+            (0., 0.)
         } else {
             frames[count - 1]
         };
