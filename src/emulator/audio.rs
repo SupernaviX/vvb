@@ -497,7 +497,7 @@ impl AudioController {
                     }
                     0x10 => {
                         // Channel envelope settings
-                        let value = (value >> 4) as u16;
+                        let env_value = (value >> 4) as u16;
                         let direction = if value & 0x08 != 0 {
                             Direction::Grow
                         } else {
@@ -506,7 +506,7 @@ impl AudioController {
                         let interval = value as usize & 0x07;
                         self.channels[channel]
                             .envelope
-                            .set(value, direction, interval);
+                            .set(env_value, direction, interval);
                     }
                     0x14 => {
                         // Channel envelope modification settings
