@@ -371,7 +371,7 @@ impl Channel {
 
     fn amplitude(&self, volume: u16) -> u16 {
         let amplitude = (self.envelope.value * volume) >> 3;
-        if amplitude != 0 {
+        if self.envelope.value != 0 && volume != 0 {
             amplitude + 1
         } else {
             0
@@ -596,14 +596,14 @@ impl AudioController {
 
     fn normalize_frame(&self, frame: (u16, u16)) -> (f32, f32) {
         fn to_float(input: u16) -> f32 {
-            (input >> 6) as f32 / 685.
+            (input >> 4) as f32 / 685.
         }
         (to_float(frame.0), to_float(frame.1))
     }
 
     fn apply_analog_filter(&self, input: (f32, f32)) -> (f32, f32) {
         fn to_analog(input: f32, prev_input: f32, prev_output: f32) -> f32 {
-            return ANALOG_FILTER_DECAY_RATE * (prev_output + input - prev_input)
+            ANALOG_FILTER_DECAY_RATE * (prev_output + input - prev_input)
         }
         (to_analog(input.0, self.prev_input.0, self.prev_output.0), to_analog(input.1, self.prev_input.1, self.prev_output.1))
 
