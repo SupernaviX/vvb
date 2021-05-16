@@ -25,6 +25,8 @@ class Audio(emulator: Emulator, settings: Settings) {
         nativePause()
     }
 
+    class Settings(val volume: Int, val bufferSize: Int)
+
     private external fun nativeConstructor(emulator: Emulator, settings: Settings)
     private external fun nativeDestructor()
     private external fun nativePlay()

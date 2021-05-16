@@ -137,11 +137,11 @@ pub mod jni {
     use jni::JNIEnv;
 
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
-        let screen_zoom = env.get_percent(this, "_screenZoom")?;
-        let vertical_offset = env.get_percent(this, "_verticalOffset")?;
+        let screen_zoom = env.get_percent(this, "screenZoom")?;
+        let vertical_offset = env.get_percent(this, "verticalOffset")?;
         let colors = [
-            env.get_color(this, "_colorLeft")?,
-            env.get_color(this, "_colorRight")?,
+            env.get_color(this, "colorLeft")?,
+            env.get_color(this, "colorRight")?,
         ];
         Ok(Settings {
             screen_zoom,

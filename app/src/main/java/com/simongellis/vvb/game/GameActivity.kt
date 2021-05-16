@@ -15,9 +15,9 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _emulator = Emulator.getInstance()
-        val settings = Settings(baseContext)
+        val preferences = GamePreferences(baseContext)
 
-        _audio = Audio(_emulator, settings)
+        _audio = Audio(_emulator, preferences.audioSettings)
         _controller = Controller(_emulator)
         _inputBindingMapper = InputBindingMapper(baseContext)
 

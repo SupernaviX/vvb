@@ -13,7 +13,6 @@ import com.simongellis.vvb.emulator.*
 
 class GameView : ConstraintLayout {
     private val _binding: GameViewBinding
-    private val _mode: VideoMode
     private val _renderer: Renderer
 
     var controller: Controller? = null
@@ -33,10 +32,9 @@ class GameView : ConstraintLayout {
     init {
         val emulator = Emulator.getInstance()
         val preferences = GamePreferences(context)
-        _mode = preferences.videoMode
-        _renderer = when(_mode) {
-            VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, Settings(context))
-            VideoMode.CARDBOARD -> CardboardRenderer(emulator, Settings(context))
+        _renderer = when(preferences.videoMode) {
+            VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, preferences.anaglyphSettings)
+            VideoMode.CARDBOARD -> CardboardRenderer(emulator, preferences.cardboardSettings)
         }
 
         val layoutInflater = LayoutInflater.from(context)
@@ -46,12 +44,12 @@ class GameView : ConstraintLayout {
             surfaceView.setRenderer(_renderer)
             surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
-            uiAlignmentMarker.isVisible = _mode === VideoMode.CARDBOARD
+            uiAlignmentMarker.isVisible = preferences.videoMode === VideoMode.CARDBOARD
 
             gamepadView.setPreferences(preferences)
         }
 
-        requestedOrientation = when(_mode) {
+        requestedOrientation = when(preferences.videoMode) {
             VideoMode.ANAGLYPH -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             VideoMode.CARDBOARD -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }

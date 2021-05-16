@@ -1,5 +1,6 @@
 package com.simongellis.vvb.emulator
 
+import androidx.annotation.ColorInt
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 
@@ -31,6 +32,12 @@ class AnaglyphRenderer(emulator: Emulator, settings: Settings) : Renderer {
     override fun onDrawFrame(gl: GL10?) {
         nativeOnDrawFrame()
     }
+
+    class Settings(
+        val screenZoom: Int,
+        val verticalOffset: Int,
+        @ColorInt val colorLeft: Int,
+        @ColorInt val colorRight: Int)
 
     private external fun nativeConstructor(emulator: Emulator, settings: Settings)
     private external fun nativeDestructor()

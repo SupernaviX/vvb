@@ -116,8 +116,8 @@ pub mod jni {
     }
 
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
-        let volume = env.get_percent(this, "_volume")?;
-        let buffer_size = env.get_int(this, "_bufferSize")?;
+        let volume = env.get_percent(this, "volume")?;
+        let buffer_size = env.get_int(this, "bufferSize")?;
 
         Ok(Settings {
             volume,
