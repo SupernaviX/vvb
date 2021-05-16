@@ -17,7 +17,7 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
 
         // Only run initialization once
         if (savedInstanceState == null) {
-            val audio = ContextCompat.getSystemService(applicationContext, AudioManager::class.java)!!
+            val audio = ContextCompat.getSystemService(baseContext, AudioManager::class.java)!!
             val sampleRate = audio.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE).toInt()
             val framesPerBurst = audio.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER).toInt()
             nativeInitialize(sampleRate, framesPerBurst)

@@ -15,18 +15,18 @@ class GameActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _emulator = Emulator.getInstance()
-        val settings = Settings(applicationContext)
+        val settings = Settings(baseContext)
 
         _audio = Audio(_emulator, settings)
         _controller = Controller(_emulator)
-        _inputBindingMapper = InputBindingMapper(applicationContext)
+        _inputBindingMapper = InputBindingMapper(baseContext)
 
-        _view = GameView(applicationContext)
+        _view = GameView(baseContext)
         requestedOrientation = _view.requestedOrientation
         _view.controller = _controller
         setContentView(_view)
 
-        _emulator.loadImage(applicationContext)
+        _emulator.loadImage(baseContext)
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

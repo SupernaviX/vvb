@@ -1,6 +1,5 @@
 package com.simongellis.vvb.game
 
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.simongellis.vvb.emulator.Emulator
@@ -12,12 +11,12 @@ class PreviewActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        _view = GameView(applicationContext)
+        _view = GameView(baseContext)
         requestedOrientation = _view.requestedOrientation
         setContentView(_view)
 
         _emulator = Emulator.getInstance()
-        _emulator.loadImage(applicationContext)
+        _emulator.loadImage(baseContext)
     }
 
     override fun onPause() {
@@ -28,6 +27,6 @@ class PreviewActivity: AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         _view.onResume()
-        _emulator.loadImage(applicationContext)
+        _emulator.loadImage(baseContext)
     }
 }
