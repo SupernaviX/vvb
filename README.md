@@ -2,7 +2,7 @@
 
 ## Description
 
-Virtual Virtual Boy is an emulator for the [Virtual Boy](https://en.wikipedia.org/wiki/Virtual_Boy) 3D console. You can use it with [Google Cardboard](https://arvr.google.com/cardboard/) to play Virtual Boy games on an Android phone.
+Virtual Virtual Boy is an emulator for the [Virtual Boy](https://en.wikipedia.org/wiki/Virtual_Boy) 3D console. You can use it with a pair of cheap [Anaglyph 3D glasses](https://en.wikipedia.org/wiki/Anaglyph_3D) or with [Google Cardboard](https://arvr.google.com/cardboard/) to play Virtual Boy games on an Android phone.
 
 ## Development
 Build the app:
@@ -15,7 +15,6 @@ cargo test
 ```
 
 ## Known Issues
-Games will occasionally start to lag. I haven't identified why yet.
 
 Several features are not implemented:
  - Software Game Pad reads (every game I tested against used hardware reads)
