@@ -14,13 +14,16 @@ const INTENB: usize = 0x0005f802;
 const INTCLR: usize = 0x0005f804;
 
 // flags for the interrupt registers
+const TIMEERR: u16 = 0x8000;
 const XPEND: u16 = 0x4000;
+const SBHIT: u16 = 0x2000;
+const XP_INTERRUPTS: u16 = TIMEERR | XPEND | SBHIT;
 const FRAMESTART: u16 = 0x0010;
 const GAMESTART: u16 = 0x0008;
 const RFBEND: u16 = 0x0004;
 const LFBEND: u16 = 0x0002;
-const DP_INTERRUPTS: u16 = FRAMESTART | GAMESTART | RFBEND | LFBEND;
-const XP_INTERRUPTS: u16 = XPEND;
+const SCANERR: u16 = 0x0001;
+const DP_INTERRUPTS: u16 = FRAMESTART | GAMESTART | RFBEND | LFBEND | SCANERR;
 
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
