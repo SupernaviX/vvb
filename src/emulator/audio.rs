@@ -14,7 +14,8 @@ const FREQ_MOD_BASE_CLOCK_0: usize = (FRAMES_PER_SECOND / 1041.6) as usize;
 const FREQ_MOD_BASE_CLOCK_1: usize = (FRAMES_PER_SECOND / 130.2) as usize;
 
 const ANALOG_FILTER_RC_CONSTANT: f32 = 0.022;
-const ANALOG_FILTER_DECAY_RATE: f32 = ANALOG_FILTER_RC_CONSTANT / (ANALOG_FILTER_RC_CONSTANT + 1. / FRAMES_PER_SECOND);
+const ANALOG_FILTER_DECAY_RATE: f32 =
+    ANALOG_FILTER_RC_CONSTANT / (ANALOG_FILTER_RC_CONSTANT + 1. / FRAMES_PER_SECOND);
 
 #[derive(Debug)]
 enum Direction {
@@ -605,8 +606,10 @@ impl AudioController {
         fn to_analog(input: f32, prev_input: f32, prev_output: f32) -> f32 {
             ANALOG_FILTER_DECAY_RATE * (prev_output + input - prev_input)
         }
-        (to_analog(input.0, self.prev_input.0, self.prev_output.0), to_analog(input.1, self.prev_input.1, self.prev_output.1))
-
+        (
+            to_analog(input.0, self.prev_input.0, self.prev_output.0),
+            to_analog(input.1, self.prev_input.1, self.prev_output.1),
+        )
     }
 }
 
