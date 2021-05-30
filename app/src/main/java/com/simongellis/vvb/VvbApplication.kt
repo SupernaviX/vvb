@@ -8,7 +8,7 @@ import java.util.*
 
 class VvbApplication: Application() {
     private val migrations = listOf(
-        ::updateControllerSchema
+        ::updateMappingSchema
     )
 
     override fun onCreate() {
@@ -33,20 +33,29 @@ class VvbApplication: Application() {
         }
     }
 
-    private fun updateControllerSchema(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
-        val boundInputs = Input.values()
+    // update the schema used to store input mapping in preferences
+    // to support multiple controllers and multiple kinds of mapping
+    private fun updateMappingSchema(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
+        val mappedInputs = Input.values()
             .map { it.prefName }
             .filter { it != null && prefs.contains(it) }
-        if (boundInputs.isEmpty()) {
+        if (mappedInputs.isEmpty()) {
             return
         }
+
+        // Define a new controller
         val controllerId = UUID.randomUUID().toString()
         val controllerName = "Controller 1"
         editor.putStringSet("controllers", setOf("$controllerId::$controllerName"))
-        for (input in boundInputs) {
-            val savedBinding = prefs.getString(input, null)!!
-            val (device, keyCode) = savedBinding.split("::")
-            editor.putString("controller_${controllerId}_$input", "button::${device}_$keyCode")
+
+        for (input in mappedInputs) {
+            // Add the mapping to the new controller in the new format
+            val savedMapping = prefs.getString(input, null)!!
+            val (device, keyCode) = savedMapping.split("::")
+            editor.putString("controller_${controllerId}_$input", "$device::button::$keyCode")
+
+            // and remove the old-format pref
+            editor.remove(input)
         }
     }
 }

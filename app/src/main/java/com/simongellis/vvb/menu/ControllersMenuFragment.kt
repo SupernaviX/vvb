@@ -7,6 +7,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
+import com.simongellis.vvb.emulator.Input
 import java.util.*
 import kotlin.collections.HashSet
 
@@ -138,6 +139,10 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
 
         preferenceManager.sharedPreferences.edit {
             putStringSet("controllers", HashSet(descriptors).apply { remove(controller.descriptor) })
+            Input.values().filter { it.prefName != null }.forEach {
+                val pref = "controller_${controller.id}_${it.prefName}"
+                remove(pref)
+            }
         }
     }
 

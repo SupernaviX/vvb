@@ -35,7 +35,7 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
     private fun configureInputPreference(input: String) {
         val pref = findPreference<Preference>(input)!!
         pref.onPreferenceClickListener = this
-        if (preferenceManager.sharedPreferences.contains(preferenceKey(input))) {
+        if (preferenceManager.sharedPreferences.contains(mappingKey(input))) {
             pref.setSummary(R.string.input_menu_mapped)
         } else {
             pref.setSummary(R.string.input_menu_unmapped)
@@ -64,15 +64,15 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
         // so persist a mapping between the two
         findPreference<Preference>(_control!!)?.setSummary(R.string.input_menu_mapped)
         val device = _inputManager.getInputDevice(event.deviceId)?.descriptor
-        val input = "button::${device}_$keyCode"
+        val mapping = "$device::button::$keyCode"
         preferenceManager.sharedPreferences.edit {
-            putString(preferenceKey(_control!!), input)
+            putString(mappingKey(_control!!), mapping)
         }
         _control = null
         return true
     }
 
-    private fun preferenceKey(input: String): String {
+    private fun mappingKey(input: String): String {
         return "controller_${_id}_$input"
     }
 }
