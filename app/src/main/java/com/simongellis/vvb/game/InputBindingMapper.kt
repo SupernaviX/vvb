@@ -4,45 +4,29 @@ import android.content.Context
 import android.hardware.input.InputManager
 import android.view.KeyEvent
 import androidx.core.content.ContextCompat.getSystemService
-import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
 import kotlin.collections.HashMap
 
 class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
     data class Binding(val deviceId: Int, val keyCode: Int)
 
-    private val _inputManager: InputManager
-    private val _deviceControls = HashMap<String, HashMap<Int, Input>>()
     private val _bindings = HashMap<Binding, Input>()
 
+    private val _controllerPrefs = ControllerPreferences(context)
+    private val _inputManager = getSystemService(context, InputManager::class.java)!!
+
     init {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        _inputManager = getSystemService(context, InputManager::class.java)!!
         _inputManager.registerInputDeviceListener(this, null)
 
         val devices = _inputManager.inputDeviceIds
             .map { _inputManager.getInputDevice(it).descriptor to it }
             .toMap()
 
-        val controllers = prefs.getStringSet("controllers", setOf())!!
-        val (controllerId) = (controllers.firstOrNull() ?: "::").split("::", limit = 2)
-
-        Input.values().filter { it.prefName != null }.forEach { input ->
-            val prefName = "controller_${controllerId}_${input.prefName}"
-            val savedBinding = prefs.getString(prefName, null)
-            if (savedBinding != null) {
-                val (_, data) = savedBinding.split("::")
-                val (device, keyCodeStr) = data.split("_")
-                val keyCode = keyCodeStr.toInt(10)
-
-                // Remember which device this mapping is bound to
-                _deviceControls.getOrPut(device) { HashMap() }[keyCode] = input
-
-                // Prepare the binding for this input
-                devices[device]?.also { deviceId ->
-                    val binding = Binding(deviceId, keyCode)
-                    _bindings[binding] = input
-                }
+        _controllerPrefs.mappings.forEach { mapping ->
+            // Prepare the binding for this input
+            devices[mapping.device]?.also { deviceId ->
+                val binding = Binding(deviceId, mapping.keyCode)
+                _bindings[binding] = mapping.input
             }
         }
     }
@@ -58,9 +42,9 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
     override fun onInputDeviceAdded(newDeviceId: Int) {
         // Prepare any bindings which should be attached to this device
         val device = _inputManager.getInputDevice(newDeviceId)
-        _deviceControls[device.descriptor]?.forEach { (keyCode, input) ->
-            val binding = Binding(newDeviceId, keyCode)
-            _bindings[binding] = input
+        _controllerPrefs.deviceMappings[device.descriptor]?.forEach { mapping ->
+            val binding = Binding(newDeviceId, mapping.keyCode)
+            _bindings[binding] = mapping.input
         }
     }
 
