@@ -24,10 +24,15 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
             .map { _inputManager.getInputDevice(it).descriptor to it }
             .toMap()
 
+        val controllers = prefs.getStringSet("controllers", setOf())!!
+        val (controllerId) = (controllers.firstOrNull() ?: "::").split("::", limit = 2)
+
         Input.values().filter { it.prefName != null }.forEach { input ->
-            val savedBinding = prefs.getString(input.prefName, null)
+            val prefName = "controller_${controllerId}_${input.prefName}"
+            val savedBinding = prefs.getString(prefName, null)
             if (savedBinding != null) {
-                val (device, keyCodeStr) = savedBinding.split("::")
+                val (_, data) = savedBinding.split("::")
+                val (device, keyCodeStr) = data.split("_")
                 val keyCode = keyCodeStr.toInt(10)
 
                 // Remember which device this mapping is bound to
