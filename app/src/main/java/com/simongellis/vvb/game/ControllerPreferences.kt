@@ -6,14 +6,21 @@ import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
 
 class ControllerPreferences(context: Context) {
-    data class Mapping(
+    interface Mapping { val device: String }
+    data class KeyMapping(
+        override val device: String,
+        val keyCode: Int,
         val input: Input,
-        val device: String,
-        val keyCode: Int)
+    ): Mapping
+    data class AxisMapping(
+        override val device: String,
+        val axis: Int,
+        val isNegative: Boolean,
+        val input: Input,
+    ): Mapping
 
     private val controllerIds: List<String>
 
-    val mappings: List<Mapping>
     val deviceMappings: Map<String, List<Mapping>>
 
     init {
@@ -21,7 +28,7 @@ class ControllerPreferences(context: Context) {
         val controllerDescriptors = prefs.getStringSet("controllers", setOf())!!
         controllerIds = controllerDescriptors.map { it.substringBefore("::") }
 
-        mappings = Input.values().flatMap { input -> getMappings(input, prefs) }
+        val mappings = Input.values().flatMap { input -> getMappings(input, prefs) }
         deviceMappings = mappings.groupBy { it.device }
     }
 
@@ -32,13 +39,19 @@ class ControllerPreferences(context: Context) {
         return controllerIds.mapNotNull { id ->
             val pref = "controller_${id}_${input.prefName}"
             val rawMapping = prefs.getString(pref, null)
-            rawMapping?.let {
-                val (device, type, data) = it.split("::")
-                when (type) {
-                    "button" -> Mapping(input, device, data.toInt(10))
-                    else -> null
-                }
+            rawMapping?.let { parseMapping(it, input) }
+        }
+    }
+
+    private fun parseMapping(rawMapping: String, input: Input): Mapping? {
+        val (device, type, data) = rawMapping.split("::")
+        return when (type) {
+            "key" -> KeyMapping(device, data.toInt(10), input)
+            "axis" -> {
+                val (axis, sign) = data.split("_")
+                AxisMapping(device, axis.toInt(10), sign == "-", input)
             }
+            else -> null
         }
     }
 }

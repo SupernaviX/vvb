@@ -66,7 +66,7 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
 
         // We have a control and an input event,
         // so persist a mapping between the two
-        val mapping = "${device.descriptor}::button::$keyCode"
+        val mapping = "${device.descriptor}::key::$keyCode"
         preferenceManager.sharedPreferences.edit {
             putString(mappingKey(_control!!), mapping)
         }
@@ -89,7 +89,7 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
         // We have a control and an active axis,
         // so persist a mapping between the two
         val sign = if (value < 0) { '-' } else { '+' }
-        val mapping = "${device.descriptor}::stick::${axis}_${sign}"
+        val mapping = "${device.descriptor}::axis::${axis}_${sign}"
         preferenceManager.sharedPreferences.edit {
             putString(mappingKey(_control!!), mapping)
         }

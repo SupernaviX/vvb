@@ -52,7 +52,7 @@ class VvbApplication: Application() {
             // Add the mapping to the new controller in the new format
             val savedMapping = prefs.getString(input, null)!!
             val (device, keyCode) = savedMapping.split("::")
-            editor.putString("controller_${controllerId}_$input", "$device::button::$keyCode")
+            editor.putString("controller_${controllerId}_$input", "$device::key::$keyCode")
 
             // and remove the old-format pref
             editor.remove(input)
