@@ -2,7 +2,9 @@ package com.simongellis.vvb.menu
 
 import android.hardware.input.InputManager
 import android.os.Bundle
+import android.view.InputDevice
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.edit
@@ -10,8 +12,9 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
+import kotlin.math.absoluteValue
 
-class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener, View.OnKeyListener {
+class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener, View.OnKeyListener, View.OnGenericMotionListener {
     private var _control: String? = null
     private lateinit var _inputManager: InputManager
     private lateinit var _id: String
@@ -51,7 +54,7 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
     override fun onPreferenceClick(preference: Preference): Boolean {
         // Start mapping a control
         _control = preference.key
-        preference.setSummary(R.string.input_menu_press_any_key)
+        preference.setSummary(R.string.input_menu_press_any_input)
         return true
     }
 
@@ -59,15 +62,38 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
         if (_control == null || event.action != KeyEvent.ACTION_DOWN) {
             return false
         }
+        val device = _inputManager.getInputDevice(event.deviceId)
 
         // We have a control and an input event,
         // so persist a mapping between the two
-        findPreference<Preference>(_control!!)?.setSummary(R.string.input_menu_mapped)
-        val device = _inputManager.getInputDevice(event.deviceId)?.descriptor
-        val mapping = "$device::button::$keyCode"
+        val mapping = "${device.descriptor}::button::$keyCode"
         preferenceManager.sharedPreferences.edit {
             putString(mappingKey(_control!!), mapping)
         }
+        findPreference<Preference>(_control!!)?.setSummary(R.string.input_menu_mapped)
+        _control = null
+        return true
+    }
+
+    override fun onGenericMotion(v: View?, event: MotionEvent): Boolean {
+        if (_control == null) {
+            return false
+        }
+        val device = _inputManager.getInputDevice(event.deviceId)
+        val (axis, value) = device.motionRanges
+            .filter { it.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK) }
+            .map { it.axis to event.getAxisValue(it.axis) }
+            .firstOrNull { (_, value) -> value.absoluteValue > 0.45 }
+            ?: return false
+
+        // We have a control and an active axis,
+        // so persist a mapping between the two
+        val sign = if (value < 0) { '-' } else { '+' }
+        val mapping = "${device.descriptor}::stick::${axis}_${sign}"
+        preferenceManager.sharedPreferences.edit {
+            putString(mappingKey(_control!!), mapping)
+        }
+        findPreference<Preference>(_control!!)?.setSummary(R.string.input_menu_mapped)
         _control = null
         return true
     }

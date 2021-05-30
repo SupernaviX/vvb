@@ -3,6 +3,7 @@ package com.simongellis.vvb
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -51,6 +52,16 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
             }
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        val fragment = supportFragmentManager.fragments.firstOrNull()
+        if (fragment is View.OnGenericMotionListener) {
+            if (fragment.onGenericMotion(fragment.view, event)) {
+                return true
+            }
+        }
+        return super.dispatchGenericMotionEvent(event)
     }
 
     fun changeDeviceParams() {

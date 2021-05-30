@@ -33,8 +33,11 @@ class ControllerPreferences(context: Context) {
             val pref = "controller_${id}_${input.prefName}"
             val rawMapping = prefs.getString(pref, null)
             rawMapping?.let {
-                val (device, _, keyCode) = it.split("::")
-                Mapping(input, device, keyCode.toInt(10))
+                val (device, type, data) = it.split("::")
+                when (type) {
+                    "button" -> Mapping(input, device, data.toInt(10))
+                    else -> null
+                }
             }
         }
     }
