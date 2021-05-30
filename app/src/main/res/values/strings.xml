@@ -3,7 +3,7 @@
     <string name="main_menu_resume_game">Resume Game</string>
     <string name="main_menu_load_game">Load Game</string>
     <string name="main_menu_onscreen_input_setup">On-Screen Input Setup</string>
-    <string name="main_menu_controller_input_setup">Controller Input Setup</string>
+    <string name="main_menu_controller_setup">Controller Setup</string>
     <string name="main_menu_video_setup">Video Setup</string>
     <string name="main_menu_audio_setup">Audio Setup</string>
     <string name="onscreen_input_menu_on">Use Virtual Gamepad</string>
@@ -12,6 +12,12 @@
     <string name="onscreen_input_menu_parallax">Parallax</string>
     <string name="onscreen_input_menu_show_bounds">Show Control Bounds</string>
     <string name="onscreen_input_menu_preview">Preview</string>
+    <string name="controller_menu_controllers">Controllers</string>
+    <string name="controller_menu_edit">Edit</string>
+    <string name="controller_menu_manage">Manage Controllers</string>
+    <string name="controller_menu_new">New</string>
+    <string name="controller_menu_choose_delete">Choose controller to delete…</string>
+    <string name="controller_menu_delete">Delete</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
     <string name="input_menu_button_left">Left</string>
@@ -24,6 +30,9 @@
     <string name="input_menu_button_rt">R Trigger</string>
     <string name="input_menu_button_start">Start</string>
     <string name="input_menu_button_select">Select</string>
+    <string name="input_menu_mapped">Mapped</string>
+    <string name="input_menu_unmapped">Unmapped</string>
+    <string name="input_menu_press_any_key">Press any key…</string>
     <string name="video_menu_screen_zoom_percent">Screen Zoom (percent)</string>
     <string name="video_menu_vertical_offset">Vertical Offset</string>
     <string name="video_menu_mode">Mode</string>

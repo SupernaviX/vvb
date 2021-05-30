@@ -1,6 +1,5 @@
 package com.simongellis.vvb.menu
 
-import android.content.SharedPreferences
 import android.hardware.input.InputManager
 import android.os.Bundle
 import android.view.KeyEvent
@@ -9,25 +8,19 @@ import androidx.core.content.ContextCompat.getSystemService
 import androidx.core.content.edit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
-import java.util.*
 
 class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener, View.OnKeyListener {
     private var _control: String? = null
-    private lateinit var _sharedPreferences: SharedPreferences
     private lateinit var _inputManager: InputManager
-    private lateinit var _controllerId: String
-    private lateinit var _controllerName: String
+    private lateinit var _id: String
+    private lateinit var _name: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         _inputManager = getSystemService(requireContext(), InputManager::class.java)!!
-
-        val (id, name) = getControllerDescriptor().split("::", limit = 2)
-        _controllerId = id
-        _controllerName = name
+        _id = requireArguments().getString("id")!!
+        _name = requireArguments().getString("name")!!
 
         super.onCreate(savedInstanceState)
     }
@@ -42,23 +35,23 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
     private fun configureInputPreference(input: String) {
         val pref = findPreference<Preference>(input)!!
         pref.onPreferenceClickListener = this
-        if (_sharedPreferences.contains(preferenceKey(input))) {
-            pref.summary = "Mapped"
+        if (preferenceManager.sharedPreferences.contains(preferenceKey(input))) {
+            pref.setSummary(R.string.input_menu_mapped)
         } else {
-            pref.summary = "Unmapped"
+            pref.setSummary(R.string.input_menu_unmapped)
         }
     }
 
     override fun onResume() {
         super.onResume()
-        val defaultTitle = getText(R.string.main_menu_controller_input_setup)
-        requireActivity().title = "$defaultTitle: $_controllerName"
+        val defaultTitle = getText(R.string.main_menu_controller_setup)
+        requireActivity().title = "$defaultTitle: $_name"
     }
 
     override fun onPreferenceClick(preference: Preference): Boolean {
         // Start mapping a control
         _control = preference.key
-        preference.summary = "Press any key..."
+        preference.setSummary(R.string.input_menu_press_any_key)
         return true
     }
 
@@ -69,27 +62,17 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
 
         // We have a control and an input event,
         // so persist a mapping between the two
-        findPreference<Preference>(_control!!)?.summary = "Mapped"
+        findPreference<Preference>(_control!!)?.setSummary(R.string.input_menu_mapped)
         val device = _inputManager.getInputDevice(event.deviceId)?.descriptor
         val input = "button::${device}_$keyCode"
-        _sharedPreferences.edit {
+        preferenceManager.sharedPreferences.edit {
             putString(preferenceKey(_control!!), input)
         }
         _control = null
         return true
     }
 
-    private fun getControllerDescriptor(): String {
-        val controllers = _sharedPreferences.getStringSet("controllers", setOf())!!
-        if (controllers.isNotEmpty()) {
-            return controllers.first()
-        }
-        val descriptor = "${UUID.randomUUID()}::Controller 1"
-        _sharedPreferences.edit().putStringSet("controllers", setOf(descriptor)).apply()
-        return descriptor
-    }
-
     private fun preferenceKey(input: String): String {
-        return "controller_${_controllerId}_$input"
+        return "controller_${_id}_$input"
     }
 }
