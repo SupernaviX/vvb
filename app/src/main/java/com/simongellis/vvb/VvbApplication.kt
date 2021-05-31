@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
-import java.util.*
+import com.simongellis.vvb.game.ControllerDao
 
 class VvbApplication: Application() {
     private val migrations = listOf(
@@ -37,25 +37,25 @@ class VvbApplication: Application() {
     // to support multiple controllers and multiple kinds of mapping
     private fun updateMappingSchema(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         val mappedInputs = Input.values()
-            .map { it.prefName }
-            .filter { it != null && prefs.contains(it) }
+            .filter { it.prefName != null && prefs.contains(it.prefName) }
         if (mappedInputs.isEmpty()) {
             return
         }
 
         // Define a new controller
-        val controllerId = UUID.randomUUID().toString()
-        val controllerName = "Controller 1"
-        editor.putStringSet("controllers", setOf("$controllerId::$controllerName"))
+        val controllerDao = ControllerDao(prefs)
+        val controller = controllerDao.addController()
 
         for (input in mappedInputs) {
             // Add the mapping to the new controller in the new format
-            val savedMapping = prefs.getString(input, null)!!
+            val savedMapping = prefs.getString(input.prefName, null)!!
             val (device, keyCode) = savedMapping.split("::")
-            editor.putString("controller_${controllerId}_$input", "$device::key::$keyCode")
+            val mapping = ControllerDao.KeyMapping(device, input, keyCode.toInt(10))
+
+            controllerDao.addMapping(controller.id, mapping)
 
             // and remove the old-format pref
-            editor.remove(input)
+            editor.remove(input.prefName)
         }
     }
 }

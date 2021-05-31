@@ -11,18 +11,21 @@ import kotlin.collections.HashMap
 class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
     data class AxisBinding(val axis: Int, val isNegative: Boolean, val input: Input)
 
-    class DeviceBindings(mappings: List<ControllerPreferences.Mapping>) {
+    class DeviceBindings(mappings: List<ControllerDao.Mapping>) {
         val keyBindings = mappings
-            .filterIsInstance<ControllerPreferences.KeyMapping>()
+            .filterIsInstance<ControllerDao.KeyMapping>()
             .map { it.keyCode to it.input }
             .toMap()
         val axisBindings = mappings
-            .filterIsInstance<ControllerPreferences.AxisMapping>()
+            .filterIsInstance<ControllerDao.AxisMapping>()
             .map { AxisBinding(it.axis, it.isNegative, it.input) }
     }
 
+    private val _deviceMappings = ControllerDao(context)
+        .getAllMappings()
+        .groupBy { it.device }
+
     private val _deviceBindings = HashMap<Int, DeviceBindings>()
-    private val _controllerPrefs = ControllerPreferences(context)
     private val _inputManager = getSystemService(context, InputManager::class.java)!!
 
     init {
@@ -66,8 +69,7 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
     override fun onInputDeviceAdded(newDeviceId: Int) {
         // Prepare any bindings which should be attached to this device
         val device = _inputManager.getInputDevice(newDeviceId)
-        val mappings = _controllerPrefs.deviceMappings[device.descriptor]
-            ?: return
+        val mappings = _deviceMappings[device.descriptor] ?: return
 
         _deviceBindings[newDeviceId] = DeviceBindings(mappings)
     }

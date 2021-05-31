@@ -2,28 +2,17 @@ package com.simongellis.vvb.menu
 
 import android.content.SharedPreferences
 import android.os.Bundle
-import androidx.core.content.edit
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
-import com.simongellis.vvb.emulator.Input
-import java.util.*
-import kotlin.collections.HashSet
+import com.simongellis.vvb.game.ControllerDao
 
 class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
-    data class Controller(val id: String, val name: String) {
-        val descriptor get() = "$id::$name"
-
-        companion object {
-            fun fromDescriptor(descriptor: String): Controller {
-                val (id, name) = descriptor.split("::", limit = 2)
-                return Controller(id, name)
-            }
-        }
-    }
-
     private var _isDeleting = false
+    private val _controllerDao by lazy {
+        ControllerDao(preferenceManager.sharedPreferences)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,9 +37,8 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
             setTitle(R.string.controller_menu_new)
             fragment = ControllerInputMenuFragment::class.qualifiedName
             setOnPreferenceClickListener {
-                val controller = addController()
+                val controller = _controllerDao.addController()
                 it.extras.putString("id", controller.id)
-                it.extras.putString("name", controller.name)
                 false // returning false triggers default behavior of "load fragment"
             }
         })
@@ -77,18 +65,17 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
     private fun updateControllerPreferences() {
         val controllerCategory = findPreference<PreferenceCategory>("controllers")!!
         controllerCategory.removeAll()
-        for (controller in getControllers().sortedBy { it.name }) {
+        for (controller in _controllerDao.getControllers().sortedBy { it.name }) {
             val controllerPref = Preference(context).apply {
                 key = controller.id
                 title = controller.name
                 fragment = ControllerInputMenuFragment::class.qualifiedName
                 extras.apply {
                     putString("id", controller.id)
-                    putString("name", controller.name)
                 }
                 setOnPreferenceClickListener {
                     if (_isDeleting) {
-                        deleteController(controller)
+                        _controllerDao.deleteController(controller)
                         setDeleting(false)
                         true
                     } else {
@@ -115,39 +102,4 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
             })
         }
     }
-
-    private fun getControllers(): List<Controller> {
-        return getDescriptors().map { Controller.fromDescriptor(it) }
-    }
-
-    private fun addController(): Controller {
-        val descriptors = getDescriptors()
-
-        val id = UUID.randomUUID().toString()
-        val name = "Controller ${descriptors.size + 1}"
-        val controller = Controller(id, name)
-
-        preferenceManager.sharedPreferences.edit {
-            putStringSet("controllers", HashSet(descriptors).apply { add(controller.descriptor) })
-        }
-
-        return Controller(id, name)
-    }
-
-    private fun deleteController(controller: Controller) {
-        val descriptors = getDescriptors()
-
-        preferenceManager.sharedPreferences.edit {
-            putStringSet("controllers", HashSet(descriptors).apply { remove(controller.descriptor) })
-            Input.values().filter { it.prefName != null }.forEach {
-                val pref = "controller_${controller.id}_${it.prefName}"
-                remove(pref)
-            }
-        }
-    }
-
-    private fun getDescriptors(): Set<String> {
-        return preferenceManager.sharedPreferences.getStringSet("controllers", setOf())!!
-    }
-
 }
