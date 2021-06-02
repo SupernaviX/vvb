@@ -19,6 +19,7 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
         val axisBindings = mappings
             .filterIsInstance<ControllerDao.AxisMapping>()
             .map { AxisBinding(it.axis, it.isNegative, it.input) }
+            .groupBy { it.input }
     }
 
     private val _deviceMappings = ControllerDao(context)
@@ -50,15 +51,16 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
         val pressed = mutableListOf<Input>()
         val released = mutableListOf<Input>()
 
-        _deviceBindings[event.deviceId]?.axisBindings?.also {
-            for (binding in it) {
-                val axisValue = event.getAxisValue(binding.axis)
-                if (binding.isNegative && axisValue < -0.45) {
-                    pressed.add(binding.input)
-                } else if (!binding.isNegative && axisValue > 0.45) {
-                    pressed.add(binding.input)
+        _deviceBindings[event.deviceId]?.axisBindings?.also { inputBindings ->
+            for ((input, bindings) in inputBindings) {
+                val active = bindings.any {
+                    val axisValue = event.getAxisValue(it.axis)
+                    if (it.isNegative) { axisValue < -0.45 } else { axisValue > 0.45 }
+                }
+                if (active) {
+                    pressed.add(input)
                 } else {
-                    released.add(binding.input)
+                    released.add(input)
                 }
             }
         }

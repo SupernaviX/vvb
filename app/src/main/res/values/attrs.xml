@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <attr name="input" format="string" />
+    <declare-styleable name="ControllerInputPreference">
+        <attr name="input" />
+    </declare-styleable>
     <declare-styleable name="ButtonControl">
-        <attr name="input" format="string" />
+        <attr name="input" />
         <attr name="toggleable" format="boolean" />
     </declare-styleable>
     <declare-styleable name="DpadControl">

@@ -7,15 +7,16 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat.getSystemService
-import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
 import kotlin.math.absoluteValue
 
-class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPreferenceClickListener, View.OnKeyListener, View.OnGenericMotionListener {
-    private var _control: String? = null
+class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListener, View.OnGenericMotionListener {
+    private var _input: Input? = null
+    private var _bindingMultiple = false
+
     private val _inputManager by lazy {
         getSystemService(requireContext(), InputManager::class.java)!!
     }
@@ -37,13 +38,20 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
     }
 
     private fun configureInputPreference(input: Input) {
-        val pref = input.prefName?.let { findPreference<Preference>(it) } ?: return
-        pref.onPreferenceClickListener = this
-        if (_controllerDao.hasMapping(_id, input)) {
-            pref.setSummary(R.string.input_menu_mapped)
-        } else {
-            pref.setSummary(R.string.input_menu_unmapped)
+        val pref = findPreference(input) ?: return
+        pref.setOnClickListener {
+            _input = input
+            pref.setIsBinding(false)
+            _bindingMultiple = false
+            true
         }
+        pref.setOnLongClickListener {
+            _input = input
+            pref.setIsBinding(true)
+            _bindingMultiple = true
+            true
+        }
+        pref.setMappings(_controllerDao.getMappings(_id, input))
     }
 
     override fun onResume() {
@@ -52,29 +60,20 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
         requireActivity().title = "$defaultTitle: $_name"
     }
 
-    override fun onPreferenceClick(preference: Preference): Boolean {
-        // Start mapping a control
-        _control = preference.key
-        preference.setSummary(R.string.input_menu_press_any_input)
-        return true
-    }
-
     override fun onKey(v: View?, keyCode: Int, event: KeyEvent): Boolean {
-        if (_control == null || event.action != KeyEvent.ACTION_DOWN) {
+        if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount > 0) {
             return false
         }
+        val input = _input ?: return false
         val device = _inputManager.getInputDevice(event.deviceId)
 
-        val input = Input.values().find { it.prefName == _control }!!
         val mapping = ControllerDao.KeyMapping(device.descriptor, input, keyCode)
         persistMapping(mapping)
         return true
     }
 
     override fun onGenericMotion(v: View?, event: MotionEvent): Boolean {
-        if (_control == null) {
-            return false
-        }
+        val input = _input ?: return false
         val device = _inputManager.getInputDevice(event.deviceId)
         val (axis, value) = device.motionRanges
             .filter { it.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK) }
@@ -82,15 +81,22 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), Preference.OnPref
             .firstOrNull { (_, value) -> value.absoluteValue > 0.45 }
             ?: return false
 
-        val input = Input.values().find { it.prefName == _control }!!
         val mapping = ControllerDao.AxisMapping(device.descriptor, input, axis, value < 0)
         persistMapping(mapping)
         return true
     }
 
     private fun persistMapping(mapping: ControllerDao.Mapping) {
-        _controllerDao.addMapping(_id, mapping)
-        findPreference<Preference>(_control!!)?.setSummary(R.string.input_menu_mapped)
-        _control = null
+        if (_bindingMultiple) {
+            _controllerDao.addMapping(_id, mapping)
+        } else {
+            _controllerDao.putMapping(_id, mapping)
+        }
+        findPreference(mapping.input)?.setMappings(_controllerDao.getMappings(_id, mapping.input))
+        _input = null
+    }
+
+    private fun findPreference(input: Input): ControllerInputPreference? {
+        return input.prefName?.let { findPreference(it) }
     }
 }

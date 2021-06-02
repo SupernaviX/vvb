@@ -2,6 +2,8 @@ package com.simongellis.vvb.game
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.view.KeyEvent
+import android.view.MotionEvent
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
@@ -26,6 +28,7 @@ class ControllerDao(private val preferences: SharedPreferences) {
     interface Mapping {
         val device: String
         val input: Input
+        val control: String
     }
     data class KeyMapping(
         override val device: String,
@@ -33,7 +36,15 @@ class ControllerDao(private val preferences: SharedPreferences) {
         val keyCode: Int,
     ): Mapping {
         override fun toString(): String {
-            return "$device::key::$keyCode"
+            return KeyEvent.keyCodeToString(keyCode).removePrefix("KEYCODE_")
+        }
+
+        override val control: String
+            get() = "$device::key::$keyCode"
+        companion object {
+            fun parse(device: String, input: Input, data: String): KeyMapping {
+                return KeyMapping(device, input, data.toInt(10))
+            }
         }
     }
     data class AxisMapping(
@@ -42,9 +53,19 @@ class ControllerDao(private val preferences: SharedPreferences) {
         val axis: Int,
         val isNegative: Boolean,
     ): Mapping {
+        private val sign = if (isNegative) { '-' } else { '+' }
+
         override fun toString(): String {
-            val sign = if (isNegative) { '-' } else { '+' }
-            return "$device::axis::${axis}_$sign"
+            return "${MotionEvent.axisToString(axis).removePrefix("AXIS_")} $sign"
+        }
+
+        override val control: String
+            get() = "$device::axis::${axis}_$sign"
+        companion object {
+            fun parse(device: String, input: Input, data: String): AxisMapping {
+                val (axis, sign) = data.split("_")
+                return AxisMapping(device, input, axis.toInt(10), sign == "-")
+            }
         }
     }
 
@@ -77,36 +98,36 @@ class ControllerDao(private val preferences: SharedPreferences) {
         }
     }
 
-    fun addMapping(controllerId: String, mapping: Mapping) {
+    fun putMapping(controllerId: String, mapping: Mapping) {
         val key = getMappingKey(controllerId, mapping.input)
         preferences.edit {
-            putString(key, mapping.toString())
+            putStringSet(key, setOf(mapping.control))
         }
     }
-
-    fun hasMapping(controllerId: String, input: Input): Boolean {
-        val key = getMappingKey(controllerId, input)
-        return preferences.contains(key)
+    fun addMapping(controllerId: String, mapping: Mapping) {
+        val key = getMappingKey(controllerId, mapping.input)
+        val controls = preferences.getStringSet(key, setOf())!!
+        preferences.edit {
+            putStringSet(key, HashSet(controls).apply { add(mapping.control) })
+        }
     }
 
     fun getAllMappings(): List<Mapping> {
         return getControllers().flatMap { getMappings(it.id) }
     }
     private fun getMappings(controllerId: String): List<Mapping> {
-        return getInputs().mapNotNull { getMapping(controllerId, it) }
+        return getInputs().flatMap { getMappings(controllerId, it) }
     }
-    private fun getMapping(controllerId: String, input: Input): Mapping? {
+    fun getMappings(controllerId: String, input: Input): List<Mapping> {
         val key = getMappingKey(controllerId, input)
-        val rawMapping = preferences.getString(key, null)
-            ?: return null
-        val (device, type, data) = rawMapping.split("::")
-        return when (type) {
-            "key" -> KeyMapping(device, input, data.toInt(10))
-            "axis" -> {
-                val (axis, sign) = data.split("_")
-                AxisMapping(device, input, axis.toInt(10), sign == "-")
+        val rawMappings = preferences.getStringSet(key, setOf())!!
+        return rawMappings.mapNotNull {
+            val (device, type, data) = it.split("::")
+            when (type) {
+                "key" -> KeyMapping.parse(device, input, data)
+                "axis" -> AxisMapping.parse(device, input, data)
+                else -> null
             }
-            else -> null
         }
     }
 
