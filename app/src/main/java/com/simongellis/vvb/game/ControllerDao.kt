@@ -77,14 +77,25 @@ class ControllerDao(private val preferences: SharedPreferences) {
         return getControllers().first { it.id == id }
     }
 
-    fun addController(): Controller {
+    fun addController(name: String): Controller {
         val controllers = readControllers()
-        val controller = Controller(UUID.randomUUID().toString(), "Controller ${controllers.size + 1}")
+        val controller = Controller(UUID.randomUUID().toString(), name)
         val newControllers = HashSet(controllers).apply { add(controller.toString()) }
         preferences.edit {
             putStringSet("controllers", newControllers)
         }
         return controller
+    }
+
+    fun putController(controller: Controller) {
+        val newControllers = getControllers()
+            .filter { it.id != controller.id }
+            .plus(controller)
+            .map { it.toString() }
+            .toSet()
+        preferences.edit {
+            putStringSet("controllers", newControllers)
+        }
     }
 
     fun deleteController(controller: Controller) {

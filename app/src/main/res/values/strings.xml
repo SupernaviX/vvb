@@ -16,8 +16,13 @@
     <string name="controller_menu_edit">Edit</string>
     <string name="controller_menu_manage">Manage Controllers</string>
     <string name="controller_menu_new">New</string>
-    <string name="controller_menu_choose_delete">Choose controller to delete…</string>
+    <string name="controller_menu_name">Controller Name?</string>
+    <string name="controller_menu_create">Create</string>
+    <string name="controller_menu_cancel">Cancel</string>
+    <string name="controller_menu_rename">Rename</string>
     <string name="controller_menu_delete">Delete</string>
+    <string name="controller_menu_choose_rename">Choose controller to rename…</string>
+    <string name="controller_menu_choose_delete">Choose controller to delete…</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
     <string name="input_menu_button_left">Left</string>

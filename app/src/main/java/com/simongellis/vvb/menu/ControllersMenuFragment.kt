@@ -2,6 +2,10 @@ package com.simongellis.vvb.menu
 
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.text.InputType
+import android.widget.EditText
+import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -9,7 +13,31 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.game.ControllerDao
 
 class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
-    private var _isDeleting = false
+    private enum class State { Normal, Renaming, Deleting }
+    private var _state = State.Normal
+        set(value) {
+            field = value
+            findPreference<Preference>("rename_controller")?.apply {
+                setTitle(
+                    if (value == State.Renaming) {
+                        R.string.controller_menu_choose_rename
+                    } else {
+                        R.string.controller_menu_rename
+                    }
+                )
+            }
+            findPreference<Preference>("delete_controller")?.apply {
+                setTitle(
+                    if (value == State.Deleting) {
+                        R.string.controller_menu_choose_delete
+                    } else {
+                        R.string.controller_menu_delete
+                    }
+                )
+            }
+        }
+
+    private var _dialog: AlertDialog? = null
     private val _controllerDao by lazy {
         ControllerDao(preferenceManager.sharedPreferences)
     }
@@ -17,6 +45,16 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preferenceManager.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        _dialog?.apply { dismiss() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        requireActivity().setTitle(R.string.main_menu_controller_setup)
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -35,18 +73,25 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         manageCategory.addPreference(Preference(context).apply {
             key = "add_controller"
             setTitle(R.string.controller_menu_new)
-            fragment = ControllerInputMenuFragment::class.qualifiedName
             setOnPreferenceClickListener {
-                val controller = _controllerDao.addController()
-                it.extras.putString("id", controller.id)
-                false // returning false triggers default behavior of "load fragment"
+                _state = State.Normal
+                addController()
+                true
+            }
+        })
+        manageCategory.addPreference(Preference(context).apply {
+            key = "rename_controller"
+            setTitle(R.string.controller_menu_rename)
+            setOnPreferenceClickListener {
+                toggleState(State.Renaming)
+                true
             }
         })
         manageCategory.addPreference(Preference(context).apply {
             key = "delete_controller"
             setTitle(R.string.controller_menu_delete)
             setOnPreferenceClickListener {
-                setDeleting(!_isDeleting)
+                toggleState(State.Deleting)
                 true
             }
         })
@@ -66,7 +111,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         val controllerCategory = findPreference<PreferenceCategory>("controllers")!!
         controllerCategory.removeAll()
         for (controller in _controllerDao.getControllers().sortedBy { it.name }) {
-            val controllerPref = Preference(context).apply {
+            val controllerPref = Preference(requireContext()).apply {
                 key = controller.id
                 title = controller.name
                 fragment = ControllerInputMenuFragment::class.qualifiedName
@@ -74,12 +119,18 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
                     putString("id", controller.id)
                 }
                 setOnPreferenceClickListener {
-                    if (_isDeleting) {
-                        _controllerDao.deleteController(controller)
-                        setDeleting(false)
-                        true
-                    } else {
-                        false
+                    when (_state) {
+                        State.Normal -> false
+                        State.Renaming -> {
+                            renameController(controller)
+                            _state = State.Normal
+                            true
+                        }
+                        State.Deleting -> {
+                            deleteController(controller)
+                            _state = State.Normal
+                            true
+                        }
                     }
                 }
             }
@@ -87,19 +138,59 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        requireActivity().setTitle(R.string.main_menu_controller_setup)
-    }
-
-    private fun setDeleting(value: Boolean) {
-        _isDeleting = value
-        findPreference<Preference>("delete_controller")?.apply {
-            setTitle(if (value) {
-                R.string.controller_menu_choose_delete
-            } else {
-                R.string.controller_menu_delete
-            })
+    private fun addController() {
+        val controllerCount = _controllerDao.getControllers().size
+        showControllerNameDialog(
+            R.string.controller_menu_create,
+            "Controller ${controllerCount + 1}"
+        ) { name ->
+            val controller = _controllerDao.addController(name)
+            updateControllerPreferences()
+            findPreference<Preference>(controller.id)?.also { onPreferenceTreeClick(it) }
         }
     }
+
+    private fun renameController(controller: ControllerDao.Controller) {
+        showControllerNameDialog(
+            R.string.controller_menu_rename,
+            controller.name
+        ) { name ->
+            val newController = ControllerDao.Controller(controller.id, name)
+            _controllerDao.putController(newController)
+        }
+    }
+
+    private fun deleteController(controller: ControllerDao.Controller) {
+        _controllerDao.deleteController(controller)
+    }
+
+    private fun showControllerNameDialog(@StringRes action: Int, initialValue: String, callback: (name: String) -> Unit) {
+        val input = EditText(requireContext()).apply {
+            inputType = InputType.TYPE_CLASS_TEXT
+            text.append(initialValue)
+            selectAll()
+        }
+        _dialog = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.controller_menu_name)
+            .setView(input)
+            .setPositiveButton(action) { _, _ ->
+                callback(input.text.toString())
+            }
+            .setNegativeButton(R.string.controller_menu_cancel) { dialog, _ ->
+                dialog.cancel()
+            }
+            .setOnDismissListener {
+                _dialog = null
+            }
+            .show()
+    }
+
+    private fun toggleState(state: State) {
+        if (_state == state) {
+            _state = State.Normal
+        } else {
+            _state = state
+        }
+    }
+
 }

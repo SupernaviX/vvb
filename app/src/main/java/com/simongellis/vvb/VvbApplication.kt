@@ -44,7 +44,7 @@ class VvbApplication: Application() {
 
         // Define a new controller
         val controllerDao = ControllerDao(prefs)
-        val controller = controllerDao.addController()
+        val controller = controllerDao.addController("Controller 1")
 
         for (input in mappedInputs) {
             // Add the mapping to the new controller in the new format
