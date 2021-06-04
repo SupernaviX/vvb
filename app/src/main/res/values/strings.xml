@@ -15,7 +15,12 @@
     <string name="controller_menu_controllers">Controllers</string>
     <string name="controller_menu_edit">Edit</string>
     <string name="controller_menu_manage">Manage Controllers</string>
-    <string name="controller_menu_new">New</string>
+    <string name="controller_menu_automap_new_controller">Auto-Map New Controller</string>
+    <string name="controller_menu_choose_controller">Choose Controller to Map</string>
+    <string name="controller_menu_no_controllers_detected">No controllers detected…</string>
+    <string name="controller_menu_new_controller">New Controller</string>
+    <string name="controller_menu_rename_controller">Rename Controller</string>
+    <string name="controller_menu_delete_controller">Delete Controller</string>
     <string name="controller_menu_name">Controller Name?</string>
     <string name="controller_menu_create">Create</string>
     <string name="controller_menu_cancel">Cancel</string>

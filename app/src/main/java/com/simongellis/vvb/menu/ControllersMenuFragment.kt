@@ -1,5 +1,6 @@
 package com.simongellis.vvb.menu
 
+import android.app.Dialog
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.text.InputType
@@ -22,7 +23,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
                     if (value == State.Renaming) {
                         R.string.controller_menu_choose_rename
                     } else {
-                        R.string.controller_menu_rename
+                        R.string.controller_menu_rename_controller
                     }
                 )
             }
@@ -31,16 +32,21 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
                     if (value == State.Deleting) {
                         R.string.controller_menu_choose_delete
                     } else {
-                        R.string.controller_menu_delete
+                        R.string.controller_menu_delete_controller
                     }
                 )
             }
         }
 
-    private var _dialog: AlertDialog? = null
+    private var _dialog: Dialog? = null
+        set(value) {
+            field = value
+            value?.setOnDismissListener { field = null }
+        }
     private val _controllerDao by lazy {
         ControllerDao(preferenceManager.sharedPreferences)
     }
+    private val _autoMapper = ControllerAutoMapper()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,8 +77,17 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         }
         prefScreen.addPreference(manageCategory)
         manageCategory.addPreference(Preference(context).apply {
-            key = "add_controller"
-            setTitle(R.string.controller_menu_new)
+            key = "automap_new_controller"
+            setTitle(R.string.controller_menu_automap_new_controller)
+            setOnPreferenceClickListener {
+                _state = State.Normal
+                autoMapController()
+                true
+            }
+        })
+        manageCategory.addPreference(Preference(context).apply {
+            key = "new_controller"
+            setTitle(R.string.controller_menu_new_controller)
             setOnPreferenceClickListener {
                 _state = State.Normal
                 addController()
@@ -81,7 +96,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         })
         manageCategory.addPreference(Preference(context).apply {
             key = "rename_controller"
-            setTitle(R.string.controller_menu_rename)
+            setTitle(R.string.controller_menu_rename_controller)
             setOnPreferenceClickListener {
                 toggleState(State.Renaming)
                 true
@@ -89,7 +104,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         })
         manageCategory.addPreference(Preference(context).apply {
             key = "delete_controller"
-            setTitle(R.string.controller_menu_delete)
+            setTitle(R.string.controller_menu_delete_controller)
             setOnPreferenceClickListener {
                 toggleState(State.Deleting)
                 true
@@ -164,6 +179,22 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         _controllerDao.deleteController(controller)
     }
 
+    private fun autoMapController() {
+        _dialog = DeviceListDialog(requireContext()).apply {
+            setDeviceFilter(_autoMapper::isMappable)
+            setOnDeviceChosen { device ->
+                val result = _autoMapper.computeMappings(device)
+                val controller = _controllerDao.addController(result.name)
+                for (mapping in result.mappings) {
+                    _controllerDao.addMapping(controller.id, mapping)
+                }
+                updateControllerPreferences()
+                findPreference<Preference>(controller.id)?.also { onPreferenceTreeClick(it) }
+            }
+            show()
+        }
+    }
+
     private fun showControllerNameDialog(@StringRes action: Int, initialValue: String, callback: (name: String) -> Unit) {
         val input = EditText(requireContext()).apply {
             inputType = InputType.TYPE_CLASS_TEXT
@@ -178,9 +209,6 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
             }
             .setNegativeButton(R.string.controller_menu_cancel) { dialog, _ ->
                 dialog.cancel()
-            }
-            .setOnDismissListener {
-                _dialog = null
             }
             .show()
     }
