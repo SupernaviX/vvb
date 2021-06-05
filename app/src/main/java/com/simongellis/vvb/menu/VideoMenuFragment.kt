@@ -18,6 +18,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
     enum class Prefs(val prefName: String, val mode: VideoMode? = null) {
         MODE("video_mode"),
         ZOOM("video_screen_zoom_percent"),
+        HORIZONTAL_OFFSET("video_horizontal_offset"),
         VERTICAL_OFFSET("video_vertical_offset"),
         COLOR("video_color", VideoMode.CARDBOARD),
         COLOR_LEFT("video_color_left", VideoMode.ANAGLYPH),

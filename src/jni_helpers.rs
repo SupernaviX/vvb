@@ -50,8 +50,8 @@ impl<'a> EnvExtensions for JNIEnv<'a> {
         Ok(res)
     }
     fn get_percent(&self, this: jobject, field: &str) -> Result<f32> {
-        let res = self.get_int(this, field)?;
-        Ok((res as f32) / 100.0)
+        let res = self.get_field(this, field, "F")?.f()?;
+        Ok(res)
     }
     fn get_color(&self, this: jobject, field: &str) -> Result<(u8, u8, u8)> {
         let color = self.get_int(this, field)?;

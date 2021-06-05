@@ -45,6 +45,7 @@
     <string name="input_menu_put_mapping">Press any control to map it to this input. Long click to map multiple controls.</string>
     <string name="input_menu_add_mapping">Press any control to add another mapping for this input.</string>
     <string name="video_menu_screen_zoom_percent">Screen Zoom (percent)</string>
+    <string name="video_menu_horizontal_offset">Horizontal Offset</string>
     <string name="video_menu_vertical_offset">Vertical Offset</string>
     <string name="video_menu_mode">Mode</string>
     <string name="video_menu_mode_anaglyph">Anaglyph (two-color)</string>

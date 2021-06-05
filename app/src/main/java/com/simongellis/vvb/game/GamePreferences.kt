@@ -1,6 +1,7 @@
 package com.simongellis.vvb.game
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.util.DisplayMetrics
@@ -19,12 +20,12 @@ class GamePreferences(context: Context) {
     private val isPortrait
         = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
-    private val _screenZoom: Int
-    private val screenZoom
-        get() = if (isPortrait && isAnaglyph) { 100 } else { _screenZoom }
-    private val _verticalOffset: Int
-    private val verticalOffset
-        get() = if (isPortrait && isAnaglyph) { 0 } else { _verticalOffset }
+    private val screenZoom: Float
+        get() = if (isPortrait && isAnaglyph) { 1.00f } else { field }
+    private val horizontalOffset: Float
+        get() = if (isPortrait && isAnaglyph) { 0f } else { field }
+    private val verticalOffset: Float
+        get() = if (isPortrait && isAnaglyph) { 0f } else { field }
 
     @ColorInt val colorLeft: Int
     @ColorInt val colorRight: Int
@@ -39,7 +40,7 @@ class GamePreferences(context: Context) {
     val controlParallax: Float
     val showControlBounds: Boolean
 
-    private val volume: Int
+    private val volume: Float
     private val bufferSize: Int
 
     val audioSettings
@@ -57,15 +58,16 @@ class GamePreferences(context: Context) {
 
         videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.ANAGLYPH.name)!!)
 
-        _screenZoom = prefs.getInt("video_screen_zoom_percent", 65)
-        _verticalOffset = prefs.getInt("video_vertical_offset", 0)
+        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 65)
+        horizontalOffset = prefs.getIntPercent("video_horizontal_offset", 0)
+        verticalOffset = prefs.getIntPercent("video_vertical_offset", 0)
 
         colorLeft = prefs.getInt("video_color_left", Color.RED)
         colorRight = prefs.getInt("video_color_right", Color.BLUE)
 
         color = prefs.getInt("video_color", Color.RED)
 
-        volume = prefs.getInt("audio_volume", 100)
+        volume = prefs.getIntPercent("audio_volume", 100)
         bufferSize = prefs.getInt("audio_buffer_size", 4)
 
         _virtualGamepadOn = prefs.getBoolean("onscreen_input_on", true)
@@ -78,5 +80,10 @@ class GamePreferences(context: Context) {
 
     private fun convertDpToPixels(context: Context, dp: Float): Float {
         return dp * context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
+    }
+
+    private fun SharedPreferences.getIntPercent(key: String, defValue: Int): Float {
+        val percent = getInt(key, defValue)
+        return percent.toFloat() / 100f
     }
 }

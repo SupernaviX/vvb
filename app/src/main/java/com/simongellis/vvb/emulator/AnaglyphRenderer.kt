@@ -34,8 +34,8 @@ class AnaglyphRenderer(emulator: Emulator, settings: Settings) : Renderer {
     }
 
     class Settings(
-        val screenZoom: Int,
-        val verticalOffset: Int,
+        val screenZoom: Float,
+        val verticalOffset: Float,
         @ColorInt val colorLeft: Int,
         @ColorInt val colorRight: Int)
 

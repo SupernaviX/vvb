@@ -38,8 +38,8 @@ class CardboardRenderer(emulator: Emulator, settings: Settings) : Renderer {
     }
 
     class Settings(
-        val screenZoom: Int,
-        val verticalOffset: Int,
+        val screenZoom: Float,
+        val verticalOffset: Float,
         @ColorInt val color: Int)
 
     private external fun nativeConstructor(emulator: Emulator, settings: Settings)
