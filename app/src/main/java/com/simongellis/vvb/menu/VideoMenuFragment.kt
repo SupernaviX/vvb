@@ -1,5 +1,6 @@
 package com.simongellis.vvb.menu
 
+import android.app.Dialog
 import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
@@ -26,10 +27,25 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
     }
 
     private lateinit var _sharedPreferences: SharedPreferences
+    private var _dialog: Dialog? = null
+        set(value) {
+            field = value
+            value?.setOnDismissListener { field = null }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
         super.onCreate(savedInstanceState)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        _dialog?.apply { dismiss() }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        requireActivity().setTitle(R.string.main_menu_video_setup)
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -73,7 +89,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
 
     private fun validateColors(left: Int, right: Int) {
         if (doColorsOverlap(left, right)) {
-            AlertDialog.Builder(requireContext())
+            _dialog = AlertDialog.Builder(requireContext())
                     .setTitle(R.string.video_menu_invalid_colors_title)
                     .setMessage(R.string.video_menu_invalid_colors_message)
                     .setPositiveButton(R.string.video_menu_invalid_colors_button, null)

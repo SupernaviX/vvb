@@ -17,6 +17,11 @@ class OnscreenInputMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        requireActivity().setTitle(R.string.main_menu_onscreen_input_setup)
+    }
+
     private fun preview() {
         val intent = Intent(activity, PreviewActivity::class.java)
         startActivity(intent)
