@@ -135,7 +135,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
                 }
                 setOnPreferenceClickListener {
                     when (_state) {
-                        State.Normal -> false
+                        State.Normal -> false // Causes it to open ControllerInputMenuFragment
                         State.Renaming -> {
                             renameController(controller)
                             _state = State.Normal
@@ -150,6 +150,24 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
                 }
             }
             controllerCategory.addPreference(controllerPref)
+        }
+    }
+
+    private fun autoMapController() {
+        _dialog = DeviceListDialog(requireContext()).apply {
+            setDeviceFilter(_autoMapper::isMappable)
+            setOnDeviceChosen { device ->
+                val result = _autoMapper.computeMappings(device)
+                val controller = _controllerDao.addController(result.name)
+                for (mapping in result.mappings) {
+                    _controllerDao.addMapping(controller.id, mapping)
+                }
+                updateControllerPreferences()
+                if (!result.fullyMapped) {
+                    findPreference<Preference>(controller.id)?.also { onPreferenceTreeClick(it) }
+                }
+            }
+            show()
         }
     }
 
@@ -179,24 +197,6 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         _controllerDao.deleteController(controller)
     }
 
-    private fun autoMapController() {
-        _dialog = DeviceListDialog(requireContext()).apply {
-            setDeviceFilter(_autoMapper::isMappable)
-            setOnDeviceChosen { device ->
-                val result = _autoMapper.computeMappings(device)
-                val controller = _controllerDao.addController(result.name)
-                for (mapping in result.mappings) {
-                    _controllerDao.addMapping(controller.id, mapping)
-                }
-                updateControllerPreferences()
-                if (!result.fullyMapped) {
-                    findPreference<Preference>(controller.id)?.also { onPreferenceTreeClick(it) }
-                }
-            }
-            show()
-        }
-    }
-
     private fun showControllerNameDialog(@StringRes action: Int, initialValue: String, callback: (name: String) -> Unit) {
         val input = EditText(requireContext()).apply {
             inputType = InputType.TYPE_CLASS_TEXT
@@ -222,5 +222,4 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
             state
         }
     }
-
 }

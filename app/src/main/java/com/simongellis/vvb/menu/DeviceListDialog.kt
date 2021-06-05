@@ -3,7 +3,6 @@ package com.simongellis.vvb.menu
 import android.content.Context
 import android.hardware.input.InputManager
 import android.os.Bundle
-import android.util.Log
 import android.view.InputDevice
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -111,9 +110,7 @@ class DeviceListDialog(context: Context) : AlertDialog(context), InputManager.In
         }
 
         fun removeDevice(deviceId: Int) {
-            Log.i("ugh", "removeDevice $deviceId")
             for (i in 0 until _deviceList.size()) {
-                Log.i("ugh", "removeDevice $deviceId $i")
                 if (_deviceList[i].id == deviceId) {
                     _deviceList.removeItemAt(i)
                     break
