@@ -103,7 +103,7 @@ class ControllerDao(private val preferences: SharedPreferences) {
         val newControllers = HashSet(controllers).apply { remove(controller.toString()) }
         preferences.edit {
             putStringSet("controllers", newControllers)
-            getInputs()
+            Input.values()
                 .map { getMappingKey(controller.id, it) }
                 .forEach { remove(it) }
         }
@@ -127,7 +127,7 @@ class ControllerDao(private val preferences: SharedPreferences) {
         return getControllers().flatMap { getMappings(it.id) }
     }
     private fun getMappings(controllerId: String): List<Mapping> {
-        return getInputs().flatMap { getMappings(controllerId, it) }
+        return Input.values().flatMap { getMappings(controllerId, it) }
     }
     fun getMappings(controllerId: String, input: Input): List<Mapping> {
         val key = getMappingKey(controllerId, input)
@@ -144,9 +144,6 @@ class ControllerDao(private val preferences: SharedPreferences) {
 
     private fun readControllers(): Set<String> {
         return preferences.getStringSet("controllers", setOf())!!
-    }
-    private fun getInputs(): List<Input> {
-        return Input.values().filter { it.prefName != null }
     }
     private fun getMappingKey(controllerId: String, input: Input): String {
         return "controller_${controllerId}_${input.prefName}"

@@ -2,7 +2,8 @@ package com.simongellis.vvb.emulator
 
 class Controller(emulator: Emulator) {
     private var _pointer = 0L
-    private var _activeInputs = Input.SIGNATURE.bitMask
+    // This "signature" bit is always set by the controller
+    private var _activeInputs = 0x0002
 
     init {
         nativeConstructor(emulator)

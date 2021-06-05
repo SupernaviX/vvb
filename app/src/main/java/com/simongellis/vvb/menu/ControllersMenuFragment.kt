@@ -77,7 +77,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
         }
         prefScreen.addPreference(manageCategory)
         manageCategory.addPreference(Preference(context).apply {
-            key = "automap_new_controller"
+            key = "auto_map_new_controller"
             setTitle(R.string.controller_menu_automap_new_controller)
             setOnPreferenceClickListener {
                 _state = State.Normal
@@ -189,7 +189,9 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
                     _controllerDao.addMapping(controller.id, mapping)
                 }
                 updateControllerPreferences()
-                findPreference<Preference>(controller.id)?.also { onPreferenceTreeClick(it) }
+                if (!result.fullyMapped) {
+                    findPreference<Preference>(controller.id)?.also { onPreferenceTreeClick(it) }
+                }
             }
             show()
         }
@@ -214,10 +216,10 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
     }
 
     private fun toggleState(state: State) {
-        if (_state == state) {
-            _state = State.Normal
+        _state = if (_state == state) {
+            State.Normal
         } else {
-            _state = state
+            state
         }
     }
 

@@ -37,7 +37,7 @@ class VvbApplication: Application() {
     // to support multiple controllers and multiple kinds of mapping
     private fun updateMappingSchema(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         val mappedInputs = Input.values()
-            .filter { it.prefName != null && prefs.contains(it.prefName) }
+            .filter { prefs.contains(it.prefName) }
         if (mappedInputs.isEmpty()) {
             return
         }

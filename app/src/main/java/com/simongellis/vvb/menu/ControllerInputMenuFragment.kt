@@ -97,6 +97,6 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListene
     }
 
     private fun findPreference(input: Input): ControllerInputPreference? {
-        return input.prefName?.let { findPreference(it) }
+        return findPreference(input.prefName)
     }
 }
