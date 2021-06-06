@@ -3,42 +3,36 @@ package com.simongellis.vvb.game
 import android.content.Context
 import android.hardware.input.InputManager
 import android.view.KeyEvent
+import android.view.MotionEvent
 import androidx.core.content.ContextCompat.getSystemService
-import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
 import kotlin.collections.HashMap
 
 class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
-    data class Binding(val deviceId: Int, val keyCode: Int)
+    data class AxisBinding(val axis: Int, val isNegative: Boolean, val input: Input)
 
-    private val _inputManager: InputManager
-    private val _deviceControls = HashMap<String, HashMap<Int, Input>>()
-    private val _bindings = HashMap<Binding, Input>()
+    class DeviceBindings(mappings: List<ControllerDao.Mapping>) {
+        val keyBindings = mappings
+            .filterIsInstance<ControllerDao.KeyMapping>()
+            .map { it.keyCode to it.input }
+            .toMap()
+        val axisBindings = mappings
+            .filterIsInstance<ControllerDao.AxisMapping>()
+            .map { AxisBinding(it.axis, it.isNegative, it.input) }
+            .groupBy { it.input }
+    }
+
+    private val _deviceMappings = ControllerDao(context)
+        .getAllMappings()
+        .groupBy { it.device }
+
+    private val _deviceBindings = HashMap<Int, DeviceBindings>()
+    private val _inputManager = getSystemService(context, InputManager::class.java)!!
 
     init {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        _inputManager = getSystemService(context, InputManager::class.java)!!
         _inputManager.registerInputDeviceListener(this, null)
-
-        val devices = _inputManager.inputDeviceIds
-            .map { _inputManager.getInputDevice(it).descriptor to it }
-            .toMap()
-
-        Input.values().filter { it.prefName != null }.forEach { input ->
-            val savedBinding = prefs.getString(input.prefName, null)
-            if (savedBinding != null) {
-                val (device, keyCodeStr) = savedBinding.split("::")
-                val keyCode = keyCodeStr.toInt(10)
-
-                // Remember which device this mapping is bound to
-                _deviceControls.getOrPut(device) { HashMap() }[keyCode] = input
-
-                // Prepare the binding for this input
-                devices[device]?.also { deviceId ->
-                    val binding = Binding(deviceId, keyCode)
-                    _bindings[binding] = input
-                }
-            }
+        _inputManager.inputDeviceIds.forEach {
+            onInputDeviceAdded(it)
         }
     }
 
@@ -47,23 +41,44 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
     }
 
     fun getBoundInput(event: KeyEvent): Input? {
-        return _bindings[Binding(event.deviceId, event.keyCode)]
+        val keyBindings = _deviceBindings[event.deviceId]?.keyBindings
+            ?: return null
+        return keyBindings[event.keyCode]
+    }
+
+    // returns one list of all "pressed" axis inputs, and one list of all released ones
+    fun getAxisInputs(event: MotionEvent): Pair<List<Input>, List<Input>> {
+        val pressed = mutableListOf<Input>()
+        val released = mutableListOf<Input>()
+
+        _deviceBindings[event.deviceId]?.axisBindings?.also { inputBindings ->
+            for ((input, bindings) in inputBindings) {
+                val active = bindings.any {
+                    val axisValue = event.getAxisValue(it.axis)
+                    if (it.isNegative) { axisValue < -0.45 } else { axisValue > 0.45 }
+                }
+                if (active) {
+                    pressed.add(input)
+                } else {
+                    released.add(input)
+                }
+            }
+        }
+
+        return pressed to released
     }
 
     override fun onInputDeviceAdded(newDeviceId: Int) {
         // Prepare any bindings which should be attached to this device
         val device = _inputManager.getInputDevice(newDeviceId)
-        _deviceControls[device.descriptor]?.forEach { (keyCode, input) ->
-            val binding = Binding(newDeviceId, keyCode)
-            _bindings[binding] = input
-        }
+        val mappings = _deviceMappings[device.descriptor] ?: return
+
+        _deviceBindings[newDeviceId] = DeviceBindings(mappings)
     }
 
     override fun onInputDeviceRemoved(oldDeviceId: Int) {
         // Remove any bindings which were attached to this device
-        _bindings.keys
-            .filter { (deviceId) -> deviceId == oldDeviceId }
-            .forEach { _bindings.remove(it) }
+        _deviceBindings.remove(oldDeviceId)
     }
 
     override fun onInputDeviceChanged(deviceId: Int) {

@@ -5,6 +5,7 @@
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
 
     <application
+        android:name=".VvbApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup"
         android:icon="@mipmap/ic_launcher"

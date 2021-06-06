@@ -2,7 +2,8 @@ package com.simongellis.vvb.emulator
 
 class Controller(emulator: Emulator) {
     private var _pointer = 0L
-    private var _activeInputs = Input.SIGNATURE.bitMask
+    // This "signature" bit is always set by the controller
+    private var _activeInputs = 0x0002
 
     init {
         nativeConstructor(emulator)
@@ -20,13 +21,31 @@ class Controller(emulator: Emulator) {
     }
 
     fun press(input: Input) {
-        _activeInputs = _activeInputs or input.bitMask
-        nativeUpdate(_activeInputs)
+        val state = _activeInputs or input.bitMask
+        update(state)
     }
 
     fun release(input: Input) {
-        _activeInputs = _activeInputs and input.bitMask.inv()
-        nativeUpdate(_activeInputs)
+        val state = _activeInputs and input.bitMask.inv()
+        update(state)
+    }
+
+    fun update(pressed: List<Input>, released: List<Input>) {
+        var state = _activeInputs
+        for (input in pressed) {
+            state = state or input.bitMask
+        }
+        for (input in released) {
+            state = state and input.bitMask.inv()
+        }
+        update(state)
+    }
+
+    private fun update(state: Int) {
+        if (state != _activeInputs) {
+            _activeInputs = state
+            nativeUpdate(_activeInputs)
+        }
     }
 
     private external fun nativeConstructor(emulator: Emulator)

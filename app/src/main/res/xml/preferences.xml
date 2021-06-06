@@ -17,9 +17,9 @@
         tools:context=".menu.OnscreenInputMenuFragment"/>
     <Preference
         app:key="controller_input"
-        app:title="@string/main_menu_controller_input_setup"
-        app:fragment="com.simongellis.vvb.menu.ControllerInputMenuFragment"
-        tools:context=".menu.ControllerInputMenuFragment"/>
+        app:title="@string/main_menu_controller_setup"
+        app:fragment="com.simongellis.vvb.menu.ControllersMenuFragment"
+        tools:context=".menu.ControllersMenuFragment"/>
     <Preference
         app:key="video"
         app:title="@string/main_menu_video_setup"

@@ -3,6 +3,7 @@ package com.simongellis.vvb.game
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.MotionEvent
 import com.simongellis.vvb.emulator.*
 
 class GameActivity : AppCompatActivity() {
@@ -40,6 +41,15 @@ class GameActivity : AppCompatActivity() {
             return true
         }
         return super.dispatchKeyEvent(event)
+    }
+
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        val (pressed, released) = _inputBindingMapper.getAxisInputs(event)
+        if (pressed.isNotEmpty() || released.isNotEmpty()) {
+            _controller.update(pressed, released)
+            return true
+        }
+        return super.dispatchGenericMotionEvent(event)
     }
 
     override fun onResume() {
