@@ -19,9 +19,11 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
 
         val chooseGame = registerForActivityResult(OpenDocument()) { uri ->
-            val emulator = Emulator.getInstance()
-            emulator.loadGamePak(requireContext(), uri)
-            playGame()
+            uri?.also {
+                val emulator = Emulator.getInstance()
+                emulator.loadGamePak(requireContext(), it)
+                playGame()
+            }
         }
         findPreference<Preference>("load_game")?.setOnPreferenceClickListener {
             chooseGame.launch(arrayOf("*/*"))
