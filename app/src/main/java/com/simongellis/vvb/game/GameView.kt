@@ -31,7 +31,7 @@ class GameView : ConstraintLayout {
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     init {
-        val emulator = Emulator.getInstance()
+        val emulator = Emulator.instance
         val preferences = GamePreferences(context)
         _renderer = when(preferences.videoMode) {
             VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, preferences.anaglyphSettings)

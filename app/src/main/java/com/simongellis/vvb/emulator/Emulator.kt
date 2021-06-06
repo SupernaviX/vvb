@@ -133,11 +133,6 @@ class Emulator {
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
 
     companion object {
-        @Volatile
-        private var INSTANCE: Emulator? = null
-
-        fun getInstance(): Emulator = INSTANCE ?: synchronized(this) {
-            INSTANCE ?: Emulator().also { INSTANCE = it }
-        }
+        val instance: Emulator by lazy { Emulator() }
     }
 }

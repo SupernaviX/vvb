@@ -15,7 +15,7 @@ class PreviewActivity: AppCompatActivity() {
         requestedOrientation = _view.requestedOrientation
         setContentView(_view)
 
-        _emulator = Emulator.getInstance()
+        _emulator = Emulator.instance
         _emulator.loadImage(baseContext)
     }
 

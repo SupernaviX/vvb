@@ -15,7 +15,7 @@ class GameActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _emulator = Emulator.getInstance()
+        _emulator = Emulator.instance
         val preferences = GamePreferences(baseContext)
 
         _audio = Audio(_emulator, preferences.audioSettings)

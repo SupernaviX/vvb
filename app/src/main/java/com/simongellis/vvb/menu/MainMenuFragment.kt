@@ -1,6 +1,7 @@
 package com.simongellis.vvb.menu
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.preference.Preference
@@ -19,11 +20,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
 
         val chooseGame = registerForActivityResult(OpenDocument()) { uri ->
-            uri?.also {
-                val emulator = Emulator.getInstance()
-                emulator.loadGamePak(requireContext(), it)
-                playGame()
-            }
+            uri?.also { loadGame(it) }
         }
         findPreference<Preference>("load_game")?.setOnPreferenceClickListener {
             chooseGame.launch(arrayOf("*/*"))
@@ -35,9 +32,16 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         super.onResume()
         requireActivity().setTitle(R.string.app_name)
         findPreference<Preference>("resume_game")?.apply {
-            val emulator = Emulator.getInstance()
+            val emulator = Emulator.instance
             isVisible = emulator.isGameLoaded()
         }
+    }
+
+    private fun loadGame(uri: Uri) {
+        val emulator = Emulator.instance
+        val context = context ?: return
+        emulator.loadGamePak(context, uri)
+        playGame()
     }
 
     private fun playGame() {
