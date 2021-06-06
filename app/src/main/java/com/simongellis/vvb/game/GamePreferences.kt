@@ -22,8 +22,12 @@ class GamePreferences(context: Context) {
 
     private val screenZoom: Float
         get() = if (isPortrait && isAnaglyph) { 1.00f } else { field }
-    private val horizontalOffset: Float
+
+    // Horizontal offset is handled by the GameView, so that everything on screen is shifted
+    val horizontalOffset: Float
         get() = if (isPortrait && isAnaglyph) { 0f } else { field }
+    // Vertical offset is handled by the Renderer implementations in Rust,
+    // because it specifically affects _the image rendered by_ Google Cardboard
     private val verticalOffset: Float
         get() = if (isPortrait && isAnaglyph) { 0f } else { field }
 

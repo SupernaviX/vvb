@@ -6,14 +6,27 @@
     android:configChanges="navigation|keyboard|keyboardHidden|screenSize"
     android:keepScreenOn="true">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/start_guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintGuide_percent="0.3"
+        android:orientation="vertical" />
+
     <android.opengl.GLSurfaceView
         android:id="@+id/surface_view"
-        android:layout_width="match_parent"
+        app:layout_constraintStart_toStartOf="@id/start_guideline"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent="1"
+        android:layout_width="0dp"
         android:layout_height="match_parent" />
 
     <com.simongellis.vvb.game.GamepadView
         android:id="@+id/gamepad_view"
-        android:layout_width="match_parent"
+        app:layout_constraintStart_toStartOf="@id/start_guideline"
+        app:layout_constraintWidth_default="percent"
+        app:layout_constraintWidth_percent="1"
+        android:layout_width="0dp"
         android:layout_height="match_parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -22,7 +35,6 @@
         android:layout_height="@dimen/alignment_marker_height"
         android:background="@color/alignment_marker_color"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
+        app:layout_constraintEnd_toEndOf="@id/surface_view"
+        app:layout_constraintStart_toStartOf="@id/surface_view" />
 </merge>
