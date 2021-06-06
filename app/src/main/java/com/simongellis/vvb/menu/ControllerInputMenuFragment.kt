@@ -17,9 +17,6 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListene
     private var _input: Input? = null
     private var _bindingMultiple = false
 
-    private val _inputManager by lazy {
-        getSystemService(requireContext(), InputManager::class.java)!!
-    }
     private val _controllerDao by lazy {
         ControllerDao(preferenceManager.sharedPreferences)
     }
@@ -65,7 +62,7 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListene
             return false
         }
         val input = _input ?: return false
-        val device = _inputManager.getInputDevice(event.deviceId)
+        val device = InputDevice.getDevice(event.deviceId)
 
         val mapping = ControllerDao.KeyMapping(device.descriptor, input, keyCode)
         persistMapping(mapping)
@@ -74,7 +71,7 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListene
 
     override fun onGenericMotion(v: View?, event: MotionEvent): Boolean {
         val input = _input ?: return false
-        val device = _inputManager.getInputDevice(event.deviceId)
+        val device = InputDevice.getDevice(event.deviceId)
         val (axis, value) = device.motionRanges
             .filter { it.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK) }
             .map { it.axis to event.getAxisValue(it.axis) }

@@ -123,10 +123,14 @@ class ControllersMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
     }
 
     private fun updateControllerPreferences() {
+        // This method is triggered on preference change, so it can run after the fragment dies.
+        // Bail early if this has happened to avoid calamity
+        val context = context ?: return
+
         val controllerCategory = findPreference<PreferenceCategory>("controllers")!!
         controllerCategory.removeAll()
         for (controller in _controllerDao.getControllers().sortedBy { it.name }) {
-            val controllerPref = Preference(requireContext()).apply {
+            val controllerPref = Preference(context).apply {
                 key = controller.id
                 title = controller.name
                 fragment = ControllerInputMenuFragment::class.qualifiedName
