@@ -6,7 +6,7 @@ use jni::sys::{jobject, JavaVM};
 use std::os::raw::*;
 
 mod sys {
-    use std::os::raw::{c_float, c_int};
+    use std::os::raw::{c_float, c_int, c_ulonglong};
 
     #[repr(C)]
     pub struct CardboardLensDistortion {
@@ -19,7 +19,7 @@ mod sys {
 
     #[repr(C)]
     pub struct CardboardEyeTextureDescription {
-        pub texture: u32, // assuming C's uint32_t will reliably be a u32
+        pub texture: c_ulonglong,
         pub left_u: c_float,
         pub right_u: c_float,
         pub top_v: c_float,
@@ -74,7 +74,7 @@ extern "C" {
     #[link_name = "CardboardDistortionRenderer_renderEyeToDisplay"]
     pub fn CardboardDistortionRenderer_renderEyeToDisplay(
         renderer: *mut sys::CardboardDistortionRenderer,
-        target_display: c_int,
+        target: c_ulonglong,
         x: c_int,
         y: c_int,
         width: c_int,
@@ -172,7 +172,7 @@ impl DistortionRenderer {
 
     pub fn render_eye_to_display(
         &self,
-        target_display: i32,
+        target: u64,
         position: (i32, i32),
         size: (i32, i32),
         left_eye: &TextureDescription,
@@ -181,14 +181,7 @@ impl DistortionRenderer {
         #[cfg(target_os = "android")]
         unsafe {
             CardboardDistortionRenderer_renderEyeToDisplay(
-                self.0,
-                target_display,
-                position.0,
-                position.1,
-                size.0,
-                size.1,
-                left_eye,
-                right_eye,
+                self.0, target, position.0, position.1, size.0, size.1, left_eye, right_eye,
             );
         }
     }

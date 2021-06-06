@@ -87,14 +87,14 @@ impl DistortionWrapper {
             framebuffer,
             screen_size,
             left_eye: TextureDescription {
-                texture,
+                texture: texture as u64,
                 left_u: 0.0,
                 right_u: 0.5,
                 top_v: 1.0,
                 bottom_v: 0.0,
             },
             right_eye: TextureDescription {
-                texture,
+                texture: texture as u64,
                 left_u: 0.5,
                 right_u: 1.0,
                 top_v: 1.0,
