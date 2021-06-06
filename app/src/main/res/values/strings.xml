@@ -13,7 +13,6 @@
     <string name="onscreen_input_menu_show_bounds">Show Control Bounds</string>
     <string name="onscreen_input_menu_preview">Preview</string>
     <string name="controller_menu_controllers">Controllers</string>
-    <string name="controller_menu_edit">Edit</string>
     <string name="controller_menu_manage">Manage Controllers</string>
     <string name="controller_menu_automap_new_controller">Auto-Map New Controller</string>
     <string name="controller_menu_choose_controller">Choose Controller to Map</string>
@@ -25,7 +24,6 @@
     <string name="controller_menu_create">Create</string>
     <string name="controller_menu_cancel">Cancel</string>
     <string name="controller_menu_rename">Rename</string>
-    <string name="controller_menu_delete">Delete</string>
     <string name="controller_menu_choose_rename">Choose controller to rename…</string>
     <string name="controller_menu_choose_delete">Choose controller to delete…</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
@@ -40,7 +38,6 @@
     <string name="input_menu_button_rt">R Trigger</string>
     <string name="input_menu_button_start">Start</string>
     <string name="input_menu_button_select">Select</string>
-    <string name="input_menu_mapped">Mapped</string>
     <string name="input_menu_unmapped">Unmapped</string>
     <string name="input_menu_put_mapping">Press any control to map it to this input. Long click to map multiple controls.</string>
     <string name="input_menu_add_mapping">Press any control to add another mapping for this input.</string>

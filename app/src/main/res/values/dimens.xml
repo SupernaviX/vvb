@@ -4,6 +4,5 @@
     <dimen name="alignment_marker_thickness">2dp</dimen>
     <dimen name="button_diameter">60dp</dimen>
     <dimen name="dpad_diameter">180dp</dimen>
-    <dimen name="parallax">8dp</dimen>
     <dimen name="trigger_button_diameter">80dp</dimen>
 </resources>
