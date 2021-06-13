@@ -23,7 +23,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             uri?.also { loadGame(it) }
         }
         findPreference<Preference>("load_game")?.setOnPreferenceClickListener {
-            chooseGame.launch(arrayOf("*/*"))
+            chooseGame.launch(arrayOf("application/octet-stream"))
             true
         }
     }
