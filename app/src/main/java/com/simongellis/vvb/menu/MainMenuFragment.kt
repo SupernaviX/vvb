@@ -11,6 +11,10 @@ import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GameActivity
 
 class MainMenuFragment: PreferenceFragmentCompat() {
+    private val _recentGamesDao by lazy {
+        RecentGamesDao(preferenceManager.sharedPreferences)
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
@@ -40,7 +44,11 @@ class MainMenuFragment: PreferenceFragmentCompat() {
     private fun loadGame(uri: Uri) {
         val emulator = Emulator.instance
         val context = context ?: return
+
+        context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+
         emulator.loadGamePak(context, uri)
+        _recentGamesDao.addRecentGame(uri)
         playGame()
     }
 
