@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.menu.MainMenuFragment
@@ -31,17 +32,24 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
     }
 
     override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
-        val args = pref.extras
+        displayFragment(pref.fragment, pref.extras)
+        return true
+    }
+
+    inline fun <reified T: Fragment> displayFragment(args: Bundle?) {
+        displayFragment(T::class.qualifiedName!!, args ?: Bundle())
+    }
+
+    fun displayFragment(fragmentName: String, args: Bundle) {
         val fragment = supportFragmentManager.fragmentFactory.instantiate(
             classLoader,
-            pref.fragment
+            fragmentName
         )
         fragment.arguments = args
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
             .commit()
-        return true
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

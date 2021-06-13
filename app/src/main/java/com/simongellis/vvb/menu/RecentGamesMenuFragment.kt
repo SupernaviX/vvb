@@ -1,7 +1,6 @@
 package com.simongellis.vvb.menu
 
 import android.content.Intent
-import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
@@ -11,14 +10,14 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GameActivity
 
-class RecentGamesMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
+class RecentGamesMenuFragment: PreferenceFragmentCompat() {
     private val _recentGamesDao by lazy {
         RecentGamesDao(preferenceManager.sharedPreferences)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        preferenceManager.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+        _recentGamesDao.recentGames.observe(this, this::updateRecentGames)
     }
 
     override fun onResume() {
@@ -28,22 +27,15 @@ class RecentGamesMenuFragment: PreferenceFragmentCompat(), SharedPreferences.OnS
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceScreen = preferenceManager.createPreferenceScreen(context)
-        updateRecentGames()
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
-        if (key == "recent_games") {
-            updateRecentGames()
-        }
-    }
-
-    private fun updateRecentGames() {
+    private fun updateRecentGames(recentGames: List<RecentGamesDao.RecentGame>) {
         // This method is triggered on preference change, so it can run after the fragment dies.
         // Bail early if this has happened to avoid calamity
         val context = context ?: return
 
         preferenceScreen.removeAll()
-        for (recentGame in _recentGamesDao.getRecentGames()) {
+        for (recentGame in recentGames) {
             val uri = recentGame.uri
             preferenceScreen.addPreference(Preference(context).apply {
                 key = uri.toString()

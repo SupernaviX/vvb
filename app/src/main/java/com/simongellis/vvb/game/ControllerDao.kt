@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
+import com.simongellis.vvb.utils.PreferenceLiveData
 import java.util.*
 import kotlin.collections.HashSet
 
@@ -69,7 +70,11 @@ class ControllerDao(private val preferences: SharedPreferences) {
         }
     }
 
-    fun getControllers(): List<Controller> {
+    val controllers by lazy {
+        PreferenceLiveData(preferences, "controllers", this::getControllers)
+    }
+
+    private fun getControllers(): List<Controller> {
         return readControllers().map { Controller.fromString(it) }
     }
 
