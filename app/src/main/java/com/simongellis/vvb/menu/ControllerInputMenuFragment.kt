@@ -1,12 +1,10 @@
 package com.simongellis.vvb.menu
 
-import android.hardware.input.InputManager
 import android.os.Bundle
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input

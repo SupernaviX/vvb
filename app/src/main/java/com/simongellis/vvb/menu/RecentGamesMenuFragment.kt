@@ -4,20 +4,19 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
-import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GameActivity
 
 class RecentGamesMenuFragment: PreferenceFragmentCompat() {
-    private val _recentGamesDao by lazy {
-        RecentGamesDao(preferenceManager.sharedPreferences)
-    }
+    private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _recentGamesDao.recentGames.observe(this, this::updateRecentGames)
+        viewModel.recentGames.observe(this, this::updateRecentGames)
     }
 
     override fun onResume() {
@@ -41,11 +40,8 @@ class RecentGamesMenuFragment: PreferenceFragmentCompat() {
                 key = uri.toString()
                 title = getFilename(uri)
                 setOnPreferenceClickListener {
-                    val emulator = Emulator.instance
-                    _recentGamesDao.addRecentGame(uri)
-                    emulator.loadGamePak(context, uri)
-                    val intent = Intent(activity, GameActivity::class.java)
-                    startActivity(intent)
+                    viewModel.loadGame(uri)
+                    playGame()
                     true
                 }
             })
@@ -61,5 +57,10 @@ class RecentGamesMenuFragment: PreferenceFragmentCompat() {
                     null
                 }
             } ?: uri.toString()
+    }
+
+    private fun playGame() {
+        val intent = Intent(activity, GameActivity::class.java)
+        startActivity(intent)
     }
 }
