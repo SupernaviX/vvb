@@ -1,6 +1,6 @@
 package com.simongellis.vvb.menu
 
-import android.content.Context
+import android.app.Dialog
 import android.hardware.input.InputManager
 import android.os.Bundle
 import android.view.InputDevice
@@ -9,34 +9,46 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.SortedList
 import androidx.recyclerview.widget.SortedListAdapterCallback
 import com.simongellis.vvb.R
 
-class DeviceListDialog(context: Context) : AlertDialog(context), InputManager.InputDeviceListener {
-    private val _inputManager = ContextCompat.getSystemService(context, InputManager::class.java)!!
-    private val _adapter = DeviceListAdapter(
-        context.getString(R.string.controller_menu_no_controllers_detected),
-        this::onDeviceChosen)
-    private var _deviceFilter: ((InputDevice) -> Boolean)? = null
-    private var _onDeviceChosen: ((InputDevice) -> Unit)? = null
-
-    init {
-        _inputManager.registerInputDeviceListener(this, null)
-        setView(RecyclerView(context).apply {
-            layoutManager = LinearLayoutManager(context)
-            adapter = _adapter
-        })
+class AutoMapDialog : DialogFragment(), InputManager.InputDeviceListener {
+    private val parentViewModel: ControllersViewModel by viewModels({ requireParentFragment() })
+    private val _inputManager by lazy {
+        ContextCompat.getSystemService(requireContext(), InputManager::class.java)!!
+    }
+    private val _adapter by lazy {
+        DeviceListAdapter(
+            requireContext().getString(R.string.controller_menu_no_controllers_detected),
+            this::onDeviceChosen
+        )
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        setTitle(R.string.controller_menu_choose_controller)
-        setButton(BUTTON_NEGATIVE, context.getText(R.string.controller_menu_cancel)) { _, _ ->
-            dismiss()
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        val context = requireContext()
+        return AlertDialog.Builder(context)
+            .setTitle(R.string.controller_menu_choose_controller)
+            .setView(RecyclerView(context).apply {
+                layoutManager = LinearLayoutManager(context)
+                adapter = _adapter
+            })
+            .setNegativeButton(R.string.controller_menu_cancel) { _, _ ->
+                dismiss()
+            }
+            .create()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        _inputManager.registerInputDeviceListener(this, null)
+        for (deviceId in _inputManager.inputDeviceIds) {
+            onInputDeviceChanged(deviceId)
         }
-        super.onCreate(savedInstanceState)
     }
 
     override fun onStop() {
@@ -44,26 +56,15 @@ class DeviceListDialog(context: Context) : AlertDialog(context), InputManager.In
         _inputManager.unregisterInputDeviceListener(this)
     }
 
-    fun setDeviceFilter(filter: (InputDevice) -> Boolean) {
-        _deviceFilter = filter
-        for (deviceId in _inputManager.inputDeviceIds) {
-            onInputDeviceChanged(deviceId)
-        }
-    }
-
-    fun setOnDeviceChosen(callback: (InputDevice) -> Unit) {
-        _onDeviceChosen = callback
-    }
-
     private fun onDeviceChosen(deviceId: Int) {
         val device = _inputManager.getInputDevice(deviceId)
-        _onDeviceChosen?.invoke(device)
+        parentViewModel.performAutoMap(device)
         dismiss()
     }
 
     override fun onInputDeviceAdded(deviceId: Int) {
         val device = _inputManager.getInputDevice(deviceId)
-        if (_deviceFilter?.invoke(device) != false) {
+        if (parentViewModel.isMappable(device)) {
             _adapter.addDevice(device)
         }
     }
@@ -74,7 +75,7 @@ class DeviceListDialog(context: Context) : AlertDialog(context), InputManager.In
 
     override fun onInputDeviceChanged(deviceId: Int) {
         val device = _inputManager.getInputDevice(deviceId)
-        if (_deviceFilter?.invoke(device) != false) {
+        if (parentViewModel.isMappable(device)) {
             _adapter.addDevice(device)
         } else {
             _adapter.removeDevice(deviceId)

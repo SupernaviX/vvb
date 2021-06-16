@@ -1,11 +1,8 @@
 package com.simongellis.vvb.menu
 
-import android.app.Dialog
 import android.os.Bundle
-import android.text.InputType
-import android.widget.EditText
-import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
+import androidx.core.os.bundleOf
+import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -14,48 +11,22 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.game.ControllerDao
 
 class ControllersMenuFragment: PreferenceFragmentCompat() {
-    private enum class State { Normal, Renaming, Deleting }
-    private var _state = State.Normal
-        set(value) {
-            field = value
-            findPreference<Preference>("rename_controller")?.apply {
-                setTitle(
-                    if (value == State.Renaming) {
-                        R.string.controller_menu_choose_rename
-                    } else {
-                        R.string.controller_menu_rename_controller
-                    }
-                )
-            }
-            findPreference<Preference>("delete_controller")?.apply {
-                setTitle(
-                    if (value == State.Deleting) {
-                        R.string.controller_menu_choose_delete
-                    } else {
-                        R.string.controller_menu_delete_controller
-                    }
-                )
-            }
-        }
-
-    private var _dialog: Dialog? = null
-        set(value) {
-            field = value
-            value?.setOnDismissListener { field = null }
-        }
-    private val _controllerDao by lazy {
-        ControllerDao(preferenceManager.sharedPreferences)
-    }
-    private val _autoMapper = ControllerAutoMapper()
+    private val viewModel: ControllersViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        _controllerDao.controllers.observe(this, this::updateControllerList)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        _dialog?.apply { dismiss() }
+        viewModel.controllers.observe(this, this::updateControllerList)
+        viewModel.editingController.observe(this, {
+            editControllerMappings(it.id)
+        })
+        viewModel.renameLabel.observe(this, {
+            findPreference<Preference>("rename_controller")?.setTitle(it)
+        })
+        viewModel.deleteLabel.observe(this, {
+            findPreference<Preference>("delete_controller")?.setTitle(it)
+        })
+        viewModel.showNameDialog.observe(this, this::showControllerNameDialog)
+        viewModel.showAutoMapDialog.observe(this) { showAutoMapDialog() }
     }
 
     override fun onResume() {
@@ -80,8 +51,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
             key = "auto_map_new_controller"
             setTitle(R.string.controller_menu_automap_new_controller)
             setOnPreferenceClickListener {
-                _state = State.Normal
-                autoMapController()
+                viewModel.promptAutoMap()
                 true
             }
         })
@@ -89,8 +59,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
             key = "new_controller"
             setTitle(R.string.controller_menu_new_controller)
             setOnPreferenceClickListener {
-                _state = State.Normal
-                addController()
+                viewModel.promptAddController()
                 true
             }
         })
@@ -98,7 +67,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
             key = "rename_controller"
             setTitle(R.string.controller_menu_rename_controller)
             setOnPreferenceClickListener {
-                toggleState(State.Renaming)
+                viewModel.toggleRenaming()
                 true
             }
         })
@@ -106,7 +75,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
             key = "delete_controller"
             setTitle(R.string.controller_menu_delete_controller)
             setOnPreferenceClickListener {
-                toggleState(State.Deleting)
+                viewModel.toggleDeleting()
                 true
             }
         })
@@ -126,19 +95,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
                 key = controller.id
                 title = controller.name
                 setOnPreferenceClickListener {
-                    when (_state) {
-                        State.Normal -> {
-                            editControllerMappings(controller.id)
-                        }
-                        State.Renaming -> {
-                            renameController(controller)
-                            _state = State.Normal
-                        }
-                        State.Deleting -> {
-                            deleteController(controller)
-                            _state = State.Normal
-                        }
-                    }
+                    viewModel.doAction(controller)
                     true
                 }
             }
@@ -146,78 +103,21 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
-    private fun autoMapController() {
-        _dialog = DeviceListDialog(requireContext()).apply {
-            setDeviceFilter(_autoMapper::isMappable)
-            setOnDeviceChosen { device ->
-                val result = _autoMapper.computeMappings(device)
-                val controller = _controllerDao.addController(result.name)
-                for (mapping in result.mappings) {
-                    _controllerDao.addMapping(controller.id, mapping)
-                }
-                if (!result.fullyMapped) {
-                    editControllerMappings(controller.id)
-                }
-            }
-            show()
-        }
-    }
-
-    private fun addController() {
-        val controllerCount = _controllerDao.controllers.value.size
-        showControllerNameDialog(
-            R.string.controller_menu_create,
-            "Controller ${controllerCount + 1}"
-        ) { name ->
-            val controller = _controllerDao.addController(name)
-            editControllerMappings(controller.id)
-        }
-    }
-
-    private fun renameController(controller: ControllerDao.Controller) {
-        showControllerNameDialog(
-            R.string.controller_menu_rename,
-            controller.name
-        ) { name ->
-            val newController = ControllerDao.Controller(controller.id, name)
-            _controllerDao.putController(newController)
-        }
-    }
-
-    private fun deleteController(controller: ControllerDao.Controller) {
-        _controllerDao.deleteController(controller)
-    }
-
     private fun editControllerMappings(id: String) {
         val starter = activity as MainActivity
-        starter.displayFragment<ControllerInputMenuFragment>(Bundle().apply {
-            putString("id", id)
-        })
+        starter.displayFragment<ControllerInputMenuFragment>(bundleOf("id" to id))
     }
 
-    private fun showControllerNameDialog(@StringRes action: Int, initialValue: String, callback: (name: String) -> Unit) {
-        val input = EditText(requireContext()).apply {
-            inputType = InputType.TYPE_CLASS_TEXT
-            text.append(initialValue)
-            selectAll()
-        }
-        _dialog = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.controller_menu_name)
-            .setView(input)
-            .setPositiveButton(action) { _, _ ->
-                callback(input.text.toString())
-            }
-            .setNegativeButton(R.string.controller_menu_cancel) { dialog, _ ->
-                dialog.cancel()
-            }
-            .show()
+    private fun showAutoMapDialog() {
+        val newDialog = AutoMapDialog()
+        newDialog.show(childFragmentManager, "auto_mapper")
     }
 
-    private fun toggleState(state: State) {
-        _state = if (_state == state) {
-            State.Normal
-        } else {
-            state
-        }
+    private fun showControllerNameDialog(nameDialog: ControllersViewModel.NameDialog) {
+        val newDialog = ControllerNameDialog.newInstance(
+            nameDialog.action,
+            nameDialog.initialValue
+        )
+        newDialog.show(childFragmentManager, "controller_name")
     }
 }
