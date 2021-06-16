@@ -5,19 +5,15 @@
         app:title="@string/input_menu_dpad_left">
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_ll"
-            app:input="LL"
             app:title="@string/input_menu_button_left"/>
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_lr"
-            app:input="LR"
             app:title="@string/input_menu_button_right"/>
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_lu"
-            app:input="LU"
             app:title="@string/input_menu_button_up"/>
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_ld"
-            app:input="LD"
             app:title="@string/input_menu_button_down"/>
     </PreferenceCategory>
     <PreferenceCategory
@@ -25,43 +21,33 @@
         app:title="@string/input_menu_dpad_right">
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_rl"
-            app:input="RL"
             app:title="@string/input_menu_button_left"/>
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_rr"
-            app:input="RR"
             app:title="@string/input_menu_button_right"/>
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_ru"
-            app:input="RU"
             app:title="@string/input_menu_button_up"/>
         <com.simongellis.vvb.menu.ControllerInputPreference
             app:key="input_rd"
-            app:input="RD"
             app:title="@string/input_menu_button_down"/>
     </PreferenceCategory>
     <com.simongellis.vvb.menu.ControllerInputPreference
         app:key="input_a"
-        app:input="A"
         app:title="@string/input_menu_button_a"/>
     <com.simongellis.vvb.menu.ControllerInputPreference
         app:key="input_b"
-        app:input="B"
         app:title="@string/input_menu_button_b"/>
     <com.simongellis.vvb.menu.ControllerInputPreference
         app:key="input_lt"
-        app:input="LT"
         app:title="@string/input_menu_button_lt"/>
     <com.simongellis.vvb.menu.ControllerInputPreference
         app:key="input_rt"
-        app:input="RT"
         app:title="@string/input_menu_button_rt"/>
     <com.simongellis.vvb.menu.ControllerInputPreference
         app:key="input_start"
-        app:input="START"
         app:title="@string/input_menu_button_start"/>
     <com.simongellis.vvb.menu.ControllerInputPreference
         app:key="input_select"
-        app:input="SELECT"
         app:title="@string/input_menu_button_select"/>
 </PreferenceScreen>

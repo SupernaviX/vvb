@@ -3,9 +3,11 @@ package com.simongellis.vvb.menu
 import android.content.SharedPreferences
 import android.net.Uri
 import androidx.core.content.edit
-import com.simongellis.vvb.utils.PreferenceLiveData
+import com.simongellis.vvb.utils.PreferenceLiveDataSource
 
 class RecentGamesDao(private val preferences: SharedPreferences) {
+    private val _dataSource = PreferenceLiveDataSource(preferences)
+
     data class RecentGame(val lastPlayed: Long, val uri: Uri) {
         override fun toString(): String {
             return "$lastPlayed::$uri"
@@ -19,7 +21,7 @@ class RecentGamesDao(private val preferences: SharedPreferences) {
     }
 
     val recentGames by lazy {
-        PreferenceLiveData(preferences, "recent_games", this::getRecentGames)
+        _dataSource.get("recent_games", this::getRecentGames)
     }
 
     private fun getRecentGames(): List<RecentGame> {
