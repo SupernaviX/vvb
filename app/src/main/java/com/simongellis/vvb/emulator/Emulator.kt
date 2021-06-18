@@ -33,8 +33,17 @@ class Emulator {
         }
     }
 
-    fun loadGamePak(context: Context, romUri: Uri) {
+    fun tryLoadGamePak(context: Context, romUri: Uri) {
         pause()
+
+        val size = getFileSize(context, romUri)
+        if (size.countOneBits() != 1) {
+            throw RuntimeException(context.getString(R.string.error_not_power_of_two))
+        }
+        if (size > 0x01000000) {
+            throw RuntimeException(context.getString(R.string.error_too_large))
+        }
+
         val rom = loadFile(context, romUri)
 
         val sram = File(context.filesDir, getSRAMFilename(romUri))
@@ -95,6 +104,12 @@ class Emulator {
             val duration = kotlin.math.min((now - then).toInt(), 1_000_000_000)
             nativeTick(duration)
             then = now
+        }
+    }
+
+    private fun getFileSize(context: Context, file: Uri): Long {
+        context.contentResolver.openAssetFileDescriptor(file, "r")!!.use {
+            return it.length
         }
     }
 

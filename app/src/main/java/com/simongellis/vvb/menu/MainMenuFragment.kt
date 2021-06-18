@@ -23,8 +23,9 @@ class MainMenuFragment: PreferenceFragmentCompat() {
 
         val chooseGame = registerForActivityResult(OpenDocument()) { uri ->
             uri?.also {
-                viewModel.loadGame(it)
-                playGame()
+                if (viewModel.loadGame(it)) {
+                    playGame()
+                }
             }
         }
         findPreference<Preference>("load_game")?.setOnPreferenceClickListener {

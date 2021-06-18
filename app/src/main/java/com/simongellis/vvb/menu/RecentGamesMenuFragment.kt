@@ -40,8 +40,9 @@ class RecentGamesMenuFragment: PreferenceFragmentCompat() {
                 key = uri.toString()
                 title = getFilename(uri)
                 setOnPreferenceClickListener {
-                    viewModel.loadGame(uri)
-                    playGame()
+                    if (viewModel.loadGame(uri)) {
+                        playGame()
+                    }
                     true
                 }
             })
