@@ -7,11 +7,13 @@ import android.view.MotionEvent
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
+import com.simongellis.vvb.utils.PreferenceLiveDataSource
 import java.util.*
 import kotlin.collections.HashSet
 
 class ControllerDao(private val preferences: SharedPreferences) {
     constructor(context: Context): this(PreferenceManager.getDefaultSharedPreferences(context))
+    private val _dataSource = PreferenceLiveDataSource(preferences)
 
     data class Controller(val id: String, val name: String) {
         override fun toString(): String {
@@ -69,7 +71,11 @@ class ControllerDao(private val preferences: SharedPreferences) {
         }
     }
 
-    fun getControllers(): List<Controller> {
+    val controllers by lazy {
+        _dataSource.get("controllers", this::getControllers)
+    }
+
+    private fun getControllers(): List<Controller> {
         return readControllers().map { Controller.fromString(it) }
     }
 
@@ -122,6 +128,14 @@ class ControllerDao(private val preferences: SharedPreferences) {
             putStringSet(key, HashSet(controls).apply { add(mapping.control) })
         }
     }
+
+    fun getLiveMappings(controllerId: String, input: Input) =
+        _dataSource.get(getMappingKey(controllerId, input)) {
+            getMappings(
+                controllerId,
+                input
+            )
+        }
 
     fun getAllMappings(): List<Mapping> {
         return getControllers().flatMap { getMappings(it.id) }
