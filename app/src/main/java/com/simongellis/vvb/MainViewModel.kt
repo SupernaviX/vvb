@@ -9,7 +9,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.menu.RecentGamesDao
-import java.lang.RuntimeException
+import org.acra.ACRA
+import java.lang.Exception
 
 class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _preferences = PreferenceManager.getDefaultSharedPreferences(application)
@@ -24,10 +25,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             Emulator.instance.tryLoadGamePak(_application, uri)
             _recentGamesDao.addRecentGame(uri)
             true
-        } catch (ex: Exception) {
+        } catch (ex: IllegalArgumentException) {
             Toast.makeText(_application, ex.localizedMessage, Toast.LENGTH_LONG).show()
-            // TODO: real instrumentation
-            Log.e("MainViewModel", "An error occurred whilst loading a game", ex)
+            false
+        } catch (ex: Exception) {
+            if (ACRA.isInitialised) {
+                ACRA.errorReporter.handleException(ex)
+            } else {
+                Toast.makeText(_application, ex.localizedMessage, Toast.LENGTH_LONG).show()
+                Log.e("MainViewModel", ex.localizedMessage, ex)
+            }
             false
         }
     }

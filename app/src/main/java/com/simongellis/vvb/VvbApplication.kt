@@ -1,18 +1,49 @@
 package com.simongellis.vvb
 
+import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
+import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
+import org.acra.ACRA
+import org.acra.config.httpSender
+import org.acra.config.toast
+import org.acra.data.StringFormat
+import org.acra.ktx.initAcra
 
 class VvbApplication: Application() {
+    override fun attachBaseContext(base: Context?) {
+        super.attachBaseContext(base)
+
+        if (BuildConfig.ACRA_ENABLED) initAcra {
+            buildConfigClass = BuildConfig::class.java
+            reportFormat = StringFormat.JSON
+            httpSender {
+                uri = BuildConfig.ACRA_URI
+                basicAuthLogin = BuildConfig.ACRA_BASIC_AUTH_LOGIN
+                basicAuthPassword = BuildConfig.ACRA_BASIC_AUTH_PASSWORD
+            }
+            toast {
+                text = getString(R.string.application_crashed)
+                @SuppressLint("Range")
+                length = Toast.LENGTH_LONG
+            }
+        }
+    }
+
     private val migrations = listOf(
         ::updateMappingSchema
     )
 
     override fun onCreate() {
         super.onCreate()
+
+        if (ACRA.isACRASenderServiceProcess()) {
+            return
+        }
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(baseContext)
 

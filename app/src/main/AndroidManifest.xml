@@ -3,6 +3,7 @@
     package="com.simongellis.vvb">
 
     <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".VvbApplication"

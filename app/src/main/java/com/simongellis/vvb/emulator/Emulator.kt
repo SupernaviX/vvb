@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.SystemClock
 import com.simongellis.vvb.R
 import java.io.File
+import java.lang.IllegalArgumentException
 import java.nio.ByteBuffer
 import java.util.*
 import kotlin.concurrent.thread
@@ -38,10 +39,10 @@ class Emulator {
 
         val size = getFileSize(context, romUri)
         if (size.countOneBits() != 1) {
-            throw RuntimeException(context.getString(R.string.error_not_power_of_two))
+            throw IllegalArgumentException(context.getString(R.string.error_not_power_of_two))
         }
         if (size > 0x01000000) {
-            throw RuntimeException(context.getString(R.string.error_too_large))
+            throw IllegalArgumentException(context.getString(R.string.error_too_large))
         }
 
         val rom = loadFile(context, romUri)

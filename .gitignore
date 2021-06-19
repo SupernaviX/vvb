@@ -28,3 +28,4 @@ flamegraph.svg
 perf.data
 perf.data.old
 app/release
+release.env

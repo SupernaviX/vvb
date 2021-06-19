@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.menu.MainMenuFragment
+import org.acra.collector.LogCatCollector
+import org.acra.sender.HttpSender
+import org.acra.sender.HttpSenderFactory
 
 class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
