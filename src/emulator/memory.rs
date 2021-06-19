@@ -1,5 +1,6 @@
 use crate::emulator::cpu::Event;
 use anyhow::Result;
+use log::info;
 use std::convert::TryInto;
 
 pub enum Region {
@@ -144,8 +145,11 @@ impl Memory {
         } else {
             *self.mut_region(Region::Sram) = Some(MemoryRegion::from(Region::Sram, sram));
         }
+        info!("Loaded SRAM");
         *self.mut_region(Region::Rom) = Some(MemoryRegion::from(Region::Rom, rom));
+        info!("Loaded ROM");
         self.init();
+        info!("Initialized all memory");
         Ok(())
     }
 

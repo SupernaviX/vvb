@@ -10,7 +10,7 @@ pub mod video;
 use video::{Eye, FrameChannel, Video};
 
 use anyhow::Result;
-use log::debug;
+use log::{debug, info};
 use std::cell::RefCell;
 use std::cmp;
 use std::rc::Rc;
@@ -65,6 +65,7 @@ impl Emulator {
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {
         self.memory.borrow_mut().load_game_pak(rom, sram)?;
         self.reset();
+        info!("Game pak successfully loaded!");
         Ok(())
     }
 
@@ -78,9 +79,13 @@ impl Emulator {
     pub fn reset(&mut self) {
         self.cycle = 0;
         self.tick_calls = 0;
+        info!("Resetting CPU module...");
         self.cpu.init();
+        info!("Resetting audio module...");
         self.audio.borrow_mut().init();
+        info!("Resetting video module...");
         self.video.borrow_mut().init();
+        info!("Resetting hardware module...");
         self.hardware.borrow_mut().init();
         let memory = self.memory.borrow();
         log::debug!(
@@ -193,6 +198,7 @@ pub mod jni {
     use jni::objects::JByteBuffer;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
+    use log::info;
 
     fn get_emulator<'a>(
         env: &'a JNIEnv,
@@ -218,9 +224,13 @@ pub mod jni {
         rom: JByteBuffer,
         sram: JByteBuffer,
     ) -> Result<()> {
+        info!("Loading game pak");
         let rom = env.get_direct_buffer_address(rom)?;
+        info!("ROM length: {} byte(s)", rom.len());
         let sram = env.get_direct_buffer_address(sram)?;
+        info!("SRAM length: {} byte(s)", sram.len());
         let mut this = get_emulator(env, this)?;
+        info!("Beginning game pak load...");
         this.load_game_pak(rom, sram)
     }
 
