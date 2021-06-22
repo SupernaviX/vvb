@@ -1,5 +1,6 @@
 package com.simongellis.vvb.menu
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
@@ -13,6 +14,14 @@ import com.simongellis.vvb.game.GameActivity
 class MainMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: MainViewModel by viewModels()
 
+    companion object OpenPersistentDocument : OpenDocument() {
+        override fun createIntent(context: Context, input: Array<out String>): Intent {
+            return super.createIntent(context, input)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        }
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
@@ -21,7 +30,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             true
         }
 
-        val chooseGame = registerForActivityResult(OpenDocument()) { uri ->
+        val chooseGame = registerForActivityResult(OpenPersistentDocument) { uri ->
             uri?.also {
                 if (viewModel.loadGame(it)) {
                     playGame()
