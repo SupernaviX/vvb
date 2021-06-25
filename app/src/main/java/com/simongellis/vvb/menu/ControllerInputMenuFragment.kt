@@ -9,7 +9,6 @@ import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
-import com.simongellis.vvb.game.ControllerDao
 import kotlin.math.absoluteValue
 
 class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListener, View.OnGenericMotionListener {
@@ -57,13 +56,13 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListene
         if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount > 0) {
             return false
         }
-        val device = InputDevice.getDevice(event.deviceId)
+        val device = InputDevice.getDevice(event.deviceId) ?: return false
 
         return viewModel.persistKeyMapping(device, keyCode)
     }
 
     override fun onGenericMotion(v: View?, event: MotionEvent): Boolean {
-        val device = InputDevice.getDevice(event.deviceId)
+        val device = InputDevice.getDevice(event.deviceId) ?: return false
         val (axis, value) = device.motionRanges
             .filter { it.isFromSource(InputDevice.SOURCE_CLASS_JOYSTICK) }
             .map { it.axis to event.getAxisValue(it.axis) }
