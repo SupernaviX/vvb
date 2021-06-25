@@ -6,9 +6,11 @@ import android.net.Uri
 import android.os.SystemClock
 import com.simongellis.vvb.R
 import java.io.File
-import java.lang.IllegalArgumentException
+import java.io.InputStream
 import java.nio.ByteBuffer
 import java.util.*
+import java.util.zip.ZipInputStream
+import kotlin.IllegalArgumentException
 import kotlin.concurrent.thread
 
 class Emulator {
@@ -37,17 +39,14 @@ class Emulator {
     fun tryLoadGamePak(context: Context, romUri: Uri) {
         pause()
 
-        val size = getFileSize(context, romUri)
-        if (size.countOneBits() != 1) {
-            throw IllegalArgumentException(context.getString(R.string.error_not_power_of_two))
-        }
-        if (size > 0x01000000) {
-            throw IllegalArgumentException(context.getString(R.string.error_too_large))
+        val (name, ext) = getNameAndExt(romUri)
+        val rom = when(ext) {
+            "vb" -> loadVbFile(context, romUri)
+            "zip" -> loadZipFile(context, romUri)
+            else -> throw IllegalArgumentException(context.getString(R.string.error_unrecognized_extension))
         }
 
-        val rom = loadFile(context, romUri)
-
-        val sram = File(context.filesDir, getSRAMFilename(romUri))
+        val sram = File(context.filesDir, "${name}.srm")
         _sram = sram
 
         if (sram.exists()) {
@@ -61,11 +60,6 @@ class Emulator {
         nativeLoadGamePak(rom, _sramBuffer)
 
         _gameLoaded = true
-    }
-
-    private fun getSRAMFilename(romUri: Uri): String {
-        val pathEnd = romUri.lastPathSegment!!
-        return pathEnd.substringAfterLast('/').replace(Regex("\\.[^.]+$"), ".srm")
     }
 
     fun loadImage(context: Context) {
@@ -108,19 +102,54 @@ class Emulator {
         }
     }
 
-    private fun getFileSize(context: Context, file: Uri): Long {
-        context.contentResolver.openAssetFileDescriptor(file, "r")!!.use {
-            return it.length
+    private fun getNameAndExt(uri: Uri): Pair<String, String> {
+        val path = uri.lastPathSegment!!
+        return getNameAndExt(path)
+    }
+
+    private fun getNameAndExt(path: String): Pair<String, String> {
+        val filename = path.substringAfterLast('/')
+        val sep = filename.lastIndexOf('.')
+        return filename.substring(0, sep) to filename.substring(sep + 1)
+    }
+
+
+    private fun loadVbFile(context: Context, uri: Uri): ByteBuffer {
+        val size = context.contentResolver.openAssetFileDescriptor(uri, "r")!!.use {
+            it.length
+        }
+        if (size.countOneBits() != 1) {
+            throw IllegalArgumentException(context.getString(R.string.error_not_power_of_two))
+        }
+        if (size > 0x01000000) {
+            throw IllegalArgumentException(context.getString(R.string.error_too_large))
+        }
+
+        context.contentResolver.openInputStream(uri)!!.use { inputStream ->
+            return inputStream.toByteBuffer()
         }
     }
 
-    private fun loadFile(context: Context, file: Uri): ByteBuffer {
-        context.contentResolver.openInputStream(file)!!.use { inputStream ->
-            val bytes = inputStream.readBytes()
-            val rom = ByteBuffer.allocateDirect(bytes.size).put(bytes)
-            rom.rewind()
-            return rom
+    private fun loadZipFile(context: Context, uri: Uri): ByteBuffer {
+        val inputStream = context.contentResolver.openInputStream(uri)
+        ZipInputStream(inputStream).use { zip ->
+            for (entry in generateSequence { zip.nextEntry }) {
+                val (_, ext) = getNameAndExt(entry.name)
+                val size = entry.size
+                if (ext == "vb" && size.countOneBits() == 1 && size <= 0x01000000) {
+                    return zip.toByteBuffer()
+                }
+            }
         }
+        throw IllegalArgumentException(context.getString(R.string.error_zip))
+    }
+
+    private fun InputStream.toByteBuffer(): ByteBuffer {
+        val bytes = readBytes()
+        val buffer = ByteBuffer.allocateDirect(bytes.size)
+        buffer.put(bytes)
+        buffer.rewind()
+        return buffer
     }
 
     private fun saveSRAM() {

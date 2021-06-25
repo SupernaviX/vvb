@@ -59,6 +59,8 @@
     <string name="audio_menu_volume">Volume</string>
     <string name="audio_menu_buffer_size">Buffer Size (in frames)</string>
     <string name="application_crashed">Sorry, the application crashed. A report will be sent to the developer.</string>
+    <string name="error_unrecognized_extension">This emulator can only play .vb or .zip files.</string>
     <string name="error_not_power_of_two">That\'s not a Virtual Boy game! The file size should be a power of two.</string>
     <string name="error_too_large">That\'s not a Virtual Boy game! They can only be up to 16Mb.</string>
+    <string name="error_zip">Nothing in that ZIP file looked like a Virtual Boy game…</string>
 </resources>
