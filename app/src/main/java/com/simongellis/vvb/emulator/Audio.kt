@@ -17,18 +17,18 @@ class Audio(emulator: Emulator, settings: Settings) {
         }
     }
 
-    fun play() {
-        nativePlay()
+    fun start() {
+        nativeStart()
     }
 
-    fun pause() {
-        nativePause()
+    fun stop() {
+        nativeStop()
     }
 
     class Settings(val volume: Float, val bufferSize: Int)
 
     private external fun nativeConstructor(emulator: Emulator, settings: Settings)
     private external fun nativeDestructor()
-    private external fun nativePlay()
-    private external fun nativePause()
+    private external fun nativeStart()
+    private external fun nativeStop()
 }

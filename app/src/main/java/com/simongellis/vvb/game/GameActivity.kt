@@ -55,7 +55,7 @@ class GameActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         _view.onResume()
-        _audio.play()
+        _audio.start()
         _emulator.resume()
     }
 
@@ -63,7 +63,7 @@ class GameActivity : AppCompatActivity() {
         super.onPause()
         _view.onPause()
         _emulator.pause()
-        _audio.pause()
+        _audio.stop()
     }
 
     override fun onDestroy() {

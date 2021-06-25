@@ -3,9 +3,8 @@ use crate::emulator::audio::AudioPlayer;
 use anyhow::Result;
 #[cfg(target_os = "android")]
 use oboe::{
-    AudioOutputCallback, AudioOutputStream, AudioOutputStreamSafe, AudioStream, AudioStreamAsync,
-    AudioStreamBuilder, DataCallbackResult, Output, PerformanceMode, SampleRateConversionQuality,
-    SharingMode, Stereo,
+    AudioOutputCallback, AudioOutputStreamSafe, AudioStream, AudioStreamAsync, AudioStreamBuilder,
+    DataCallbackResult, Output, PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo,
 };
 
 pub fn init(sample_rate: i32, frames_per_burst: i32) {
@@ -71,13 +70,13 @@ impl Audio {
         Ok(Audio(stream))
     }
 
-    fn play(&mut self) -> Result<()> {
-        self.0.start()?;
+    fn start(&mut self) -> Result<()> {
+        self.0.request_start()?;
         Ok(())
     }
 
-    fn pause(&mut self) -> Result<()> {
-        self.0.pause()?;
+    fn stop(&mut self) -> Result<()> {
+        self.0.request_stop()?;
         Ok(())
     }
 }
@@ -87,10 +86,10 @@ impl Audio {
     fn new(_player: AudioPlayer) -> Result<Audio> {
         Ok(Audio)
     }
-    fn play(&mut self) -> Result<()> {
+    fn start(&mut self) -> Result<()> {
         Ok(())
     }
-    fn pause(&mut self) -> Result<()> {
+    fn stop(&mut self) -> Result<()> {
         Ok(())
     }
 }
@@ -143,15 +142,15 @@ pub mod jni {
         jni_helpers::java_take::<Audio>(env, this)
     }
 
-    emulator_func!(Audio_nativePlay, play);
-    fn play(env: &JNIEnv, this: jobject) -> Result<()> {
+    emulator_func!(Audio_nativeStart, start);
+    fn start(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_audio(env, this)?;
-        this.play()
+        this.start()
     }
 
-    emulator_func!(Audio_nativePause, pause);
-    fn pause(env: &JNIEnv, this: jobject) -> Result<()> {
+    emulator_func!(Audio_nativeStop, stop);
+    fn stop(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_audio(env, this)?;
-        this.pause()
+        this.stop()
     }
 }
