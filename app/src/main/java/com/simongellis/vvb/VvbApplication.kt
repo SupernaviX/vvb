@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.widget.Toast
 import androidx.preference.PreferenceManager
+import com.getkeepsafe.relinker.ReLinker
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
 import org.acra.ACRA
@@ -40,6 +41,7 @@ class VvbApplication: Application() {
 
     override fun onCreate() {
         super.onCreate()
+        ReLinker.loadLibrary(this, "vvb")
 
         if (ACRA.isACRASenderServiceProcess()) {
             return
@@ -90,9 +92,4 @@ class VvbApplication: Application() {
         }
     }
 
-    companion object {
-        init {
-            System.loadLibrary("vvb")
-        }
-    }
 }

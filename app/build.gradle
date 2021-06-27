@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
-def generatedString(value) {
+static def generatedString(value) {
     if (value == null) {
         return "null"
     }
@@ -12,7 +12,7 @@ def tryReadConfig(filename) {
     def config = [:]
     def file = new File(project.rootDir, filename)
     if (!file.exists()) {
-        return config;
+        return config
     }
     file.readLines().each {
         if (!it.isEmpty() && !it.startsWith('#')) {
@@ -20,7 +20,7 @@ def tryReadConfig(filename) {
             config[key] = value
         }
     }
-    return config;
+    return config
 }
 
 android {
@@ -134,8 +134,10 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
+    // relinker
+    implementation "com.getkeepsafe.relinker:relinker:1.4.3"
+
     // cardboard dependencies
-    // Android Mobile Vision
     implementation 'com.google.android.gms:play-services-vision:20.1.3'
     implementation 'com.google.protobuf:protobuf-javalite:3.8.0'
 
