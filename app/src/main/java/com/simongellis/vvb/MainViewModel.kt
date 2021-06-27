@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Emulator
+import com.simongellis.vvb.game.GamePakLoader
 import com.simongellis.vvb.menu.RecentGamesDao
 import org.acra.ACRA
 import java.lang.Exception
@@ -16,13 +17,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _preferences = PreferenceManager.getDefaultSharedPreferences(application)
     private val _recentGamesDao = RecentGamesDao(_preferences)
     private val _application = getApplication<VvbApplication>()
+    private val _emulator = Emulator.instance
+    private val _gamePakLoader = GamePakLoader(application)
 
-    val isGameLoaded get() = Emulator.instance.isGameLoaded()
+    val isGameLoaded get() = _emulator.isGameLoaded()
     fun loadGame(uri: Uri): Boolean {
         _application.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
         return try {
-            Emulator.instance.tryLoadGamePak(_application, uri)
+            val gamePak = _gamePakLoader.tryLoad(uri)
+            _emulator.loadGamePak(gamePak)
             _recentGamesDao.addRecentGame(uri)
             true
         } catch (ex: IllegalArgumentException) {

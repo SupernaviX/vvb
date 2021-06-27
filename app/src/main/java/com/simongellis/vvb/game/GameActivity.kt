@@ -4,11 +4,13 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
+import androidx.activity.viewModels
 import com.simongellis.vvb.emulator.*
 
 class GameActivity : AppCompatActivity() {
+    private val viewModel: GameViewModel by viewModels()
+
     private lateinit var _view: GameView
-    private lateinit var _emulator: Emulator
     private lateinit var _audio: Audio
     private lateinit var _controller: Controller
     private lateinit var _inputBindingMapper: InputBindingMapper
@@ -17,11 +19,11 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         VvbLibrary.instance.initialize(this)
 
-        _emulator = Emulator.instance
+        val emulator = Emulator.instance
         val preferences = GamePreferences(baseContext)
 
-        _audio = Audio(_emulator, preferences.audioSettings)
-        _controller = Controller(_emulator)
+        _audio = Audio(emulator, preferences.audioSettings)
+        _controller = Controller(emulator)
         _inputBindingMapper = InputBindingMapper(baseContext)
 
         _view = GameView(baseContext)
@@ -29,7 +31,7 @@ class GameActivity : AppCompatActivity() {
         _view.controller = _controller
         setContentView(_view)
 
-        _emulator.loadImage(baseContext)
+        viewModel.loadPreviewImage()
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -58,14 +60,14 @@ class GameActivity : AppCompatActivity() {
         super.onResume()
         _view.onResume()
         _audio.start()
-        _emulator.resume()
+        viewModel.resumeGame()
     }
 
     override fun onPause() {
         super.onPause()
-        _view.onPause()
-        _emulator.pause()
+        viewModel.pauseGame()
         _audio.stop()
+        _view.onPause()
     }
 
     override fun onDestroy() {

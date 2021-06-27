@@ -1,13 +1,15 @@
 package com.simongellis.vvb.game
 
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.emulator.VvbLibrary
 
 class PreviewActivity: AppCompatActivity() {
+    private val viewModel: GameViewModel by viewModels()
+
     private lateinit var _view: GameView
-    private lateinit var _emulator: Emulator
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -17,8 +19,7 @@ class PreviewActivity: AppCompatActivity() {
         requestedOrientation = _view.requestedOrientation
         setContentView(_view)
 
-        _emulator = Emulator.instance
-        _emulator.loadImage(baseContext)
+        viewModel.loadPreviewImage()
     }
 
     override fun onPause() {
@@ -29,6 +30,6 @@ class PreviewActivity: AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         _view.onResume()
-        _emulator.loadImage(baseContext)
+        viewModel.loadPreviewImage()
     }
 }

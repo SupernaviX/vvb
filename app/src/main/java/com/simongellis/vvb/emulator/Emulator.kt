@@ -1,26 +1,17 @@
 package com.simongellis.vvb.emulator
 
-import android.content.Context
-import android.graphics.BitmapFactory
-import android.net.Uri
+import android.graphics.Bitmap
 import android.os.SystemClock
-import com.simongellis.vvb.R
-import java.io.File
-import java.io.InputStream
 import java.nio.ByteBuffer
-import java.util.*
-import java.util.zip.ZipInputStream
-import kotlin.IllegalArgumentException
 import kotlin.concurrent.thread
 
 class Emulator {
     private var _pointer = 0L
     private var _thread: Thread? = null
     private var _running = false
-    private var _gameLoaded = false
+    private var _gamePak: GamePak? = null
 
-    private var _sram: File? = null
-    private var _sramBuffer = ByteBuffer.allocateDirect(8 * 1024)
+    private val _sramBuffer = ByteBuffer.allocateDirect(GamePak.sramSize)
 
     init {
         nativeConstructor()
@@ -30,51 +21,38 @@ class Emulator {
         destroy()
     }
 
-    fun destroy() {
+    private fun destroy() {
         if (_pointer != 0L) {
             nativeDestructor()
         }
     }
 
-    fun tryLoadGamePak(context: Context, romUri: Uri) {
+    fun loadGamePak(gamePak: GamePak) {
         pause()
 
-        val (name, ext) = getNameAndExt(romUri)
-        val rom = when(ext) {
-            "vb" -> loadVbFile(context, romUri)
-            "zip" -> loadZipFile(context, romUri)
-            else -> throw IllegalArgumentException(context.getString(R.string.error_unrecognized_extension))
-        }
-
-        val sram = File(context.filesDir, "${name}.srm")
-        _sram = sram
-
-        if (sram.exists()) {
-            _sramBuffer.rewind()
-            _sramBuffer.put(sram.readBytes())
-        } else {
-            Arrays.fill(_sramBuffer.array(), 0)
-        }
+        val rom = ByteBuffer.allocateDirect(gamePak.rom.size)
+        rom.put(gamePak.rom)
+        rom.rewind()
 
         _sramBuffer.rewind()
+        gamePak.loadSram(_sramBuffer)
+        _sramBuffer.rewind()
+
         nativeLoadGamePak(rom, _sramBuffer)
 
-        _gameLoaded = true
+        _gamePak = gamePak
     }
 
-    fun loadImage(context: Context) {
-        nativeLoadImage(
-            loadResource(context, R.drawable.vbtitlescreen_left),
-            loadResource(context, R.drawable.vbtitlescreen_right)
-        )
+    fun loadImage(leftEye: Bitmap, rightEye: Bitmap) {
+        nativeLoadImage(leftEye.toByteBuffer(), rightEye.toByteBuffer())
     }
 
     fun isGameLoaded(): Boolean {
-        return _gameLoaded
+        return _gamePak != null
     }
 
     fun resume() {
-        if (!_gameLoaded) {
+        if (_gamePak == null) {
             return
         }
         _running = true
@@ -102,70 +80,17 @@ class Emulator {
         }
     }
 
-    private fun getNameAndExt(uri: Uri): Pair<String, String> {
-        val path = uri.lastPathSegment!!
-        return getNameAndExt(path)
-    }
-
-    private fun getNameAndExt(path: String): Pair<String, String> {
-        val filename = path.substringAfterLast('/')
-        val sep = filename.lastIndexOf('.')
-        return filename.substring(0, sep) to filename.substring(sep + 1)
-    }
-
-
-    private fun loadVbFile(context: Context, uri: Uri): ByteBuffer {
-        val size = context.contentResolver.openAssetFileDescriptor(uri, "r")!!.use {
-            it.length
-        }
-        if (size.countOneBits() != 1) {
-            throw IllegalArgumentException(context.getString(R.string.error_not_power_of_two))
-        }
-        if (size > 0x01000000) {
-            throw IllegalArgumentException(context.getString(R.string.error_too_large))
-        }
-
-        context.contentResolver.openInputStream(uri)!!.use { inputStream ->
-            return inputStream.toByteBuffer()
-        }
-    }
-
-    private fun loadZipFile(context: Context, uri: Uri): ByteBuffer {
-        val inputStream = context.contentResolver.openInputStream(uri)
-        ZipInputStream(inputStream).use { zip ->
-            for (entry in generateSequence { zip.nextEntry }) {
-                val (_, ext) = getNameAndExt(entry.name)
-                val size = entry.size
-                if (ext == "vb" && size.countOneBits() == 1 && size <= 0x01000000) {
-                    return zip.toByteBuffer()
-                }
-            }
-        }
-        throw IllegalArgumentException(context.getString(R.string.error_zip))
-    }
-
-    private fun InputStream.toByteBuffer(): ByteBuffer {
-        val bytes = readBytes()
-        val buffer = ByteBuffer.allocateDirect(bytes.size)
-        buffer.put(bytes)
-        buffer.rewind()
-        return buffer
-    }
-
     private fun saveSRAM() {
-        val sram = _sram ?: return
+        val gamePak = _gamePak ?: return
         _sramBuffer.rewind()
         nativeReadSRAM(_sramBuffer)
         _sramBuffer.rewind()
-        sram.outputStream().channel.use { it.write(_sramBuffer) }
+        gamePak.saveSram(_sramBuffer)
     }
 
-    private fun loadResource(context: Context, id: Int): ByteBuffer {
-        val options = BitmapFactory.Options()
-        options.inScaled = false
-        val bmp = BitmapFactory.decodeResource(context.resources, id, options)
-        val buffer = ByteBuffer.allocateDirect(bmp.byteCount)
-        bmp.copyPixelsToBuffer(buffer)
+    private fun Bitmap.toByteBuffer(): ByteBuffer {
+        val buffer = ByteBuffer.allocateDirect(byteCount)
+        copyPixelsToBuffer(buffer)
         buffer.rewind()
         return buffer
     }
