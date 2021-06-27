@@ -9,9 +9,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
-import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.VideoMode
+import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.game.PreviewActivity
 
 class VideoMenuFragment: PreferenceFragmentCompat() {
@@ -77,8 +77,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         }
 
         findPref(Prefs.SWITCH_VIEWER).setOnPreferenceClickListener {
-            val activity = activity as MainActivity
-            activity.changeDeviceParams()
+            VvbLibrary.instance.changeDeviceParams()
             true
         }
 

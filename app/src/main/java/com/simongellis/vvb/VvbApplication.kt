@@ -89,4 +89,10 @@ class VvbApplication: Application() {
             editor.remove(input.prefName)
         }
     }
+
+    companion object {
+        init {
+            System.loadLibrary("vvb")
+        }
+    }
 }

@@ -126,12 +126,12 @@ pub struct Settings {
     colors: [(u8, u8, u8); 2],
 }
 
-#[rustfmt::skip::macros(emulator_func)]
+#[rustfmt::skip::macros(jni_func)]
 pub mod jni {
     use super::{AnaglyphRenderer, Settings};
     use crate::emulator::Emulator;
     use crate::jni_helpers::EnvExtensions;
-    use crate::{emulator_func, jni_helpers};
+    use crate::{jni_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
@@ -157,7 +157,7 @@ pub mod jni {
         jni_helpers::java_get(env, this)
     }
 
-    emulator_func!(AnaglyphRenderer_nativeConstructor, constructor, jobject, jobject);
+    jni_func!(AnaglyphRenderer_nativeConstructor, constructor, jobject, jobject);
     fn constructor(
         env: &JNIEnv,
         this: jobject,
@@ -170,24 +170,24 @@ pub mod jni {
         jni_helpers::java_init(env, this, renderer)
     }
 
-    emulator_func!(AnaglyphRenderer_nativeDestructor, destructor);
+    jni_func!(AnaglyphRenderer_nativeDestructor, destructor);
     fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<AnaglyphRenderer>(env, this)
     }
 
-    emulator_func!(AnaglyphRenderer_nativeOnSurfaceCreated, on_surface_created);
+    jni_func!(AnaglyphRenderer_nativeOnSurfaceCreated, on_surface_created);
     fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
-    emulator_func!(AnaglyphRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
+    jni_func!(AnaglyphRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
     fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height)
     }
 
-    emulator_func!(AnaglyphRenderer_nativeOnDrawFrame, on_draw_frame);
+    jni_func!(AnaglyphRenderer_nativeOnDrawFrame, on_draw_frame);
     fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()

@@ -19,20 +19,26 @@ pub use controller::jni::*;
 pub use emulator::jni::*;
 pub use video::jni::*;
 
-java_func!(MainActivity_nativeInitialize, init, jint, jint);
-fn init(env: &JNIEnv, this: jobject, sample_rate: jint, frames_per_burst: jint) -> Result<()> {
+jni_func!(VvbLibrary_nativeInitialize, init, jobject, jint, jint);
+fn init(
+    env: &JNIEnv,
+    _this: jobject,
+    context: jobject,
+    sample_rate: jint,
+    frames_per_burst: jint,
+) -> Result<()> {
     android_logger::init_once(Config::default().with_min_level(Level::Info));
     info!("Hello from vvb");
 
     let vm = env.get_java_vm()?;
-    Cardboard::initialize(vm.get_java_vm_pointer(), this);
+    Cardboard::initialize(vm.get_java_vm_pointer(), context);
 
     audio::init(sample_rate, frames_per_burst);
 
     Ok(())
 }
 
-java_func!(MainActivity_nativeChangeDeviceParams, change_device_params);
+jni_func!(VvbLibrary_nativeChangeDeviceParams, change_device_params);
 fn change_device_params(_env: &JNIEnv, _this: jobject) -> Result<()> {
     QrCode::scan_qr_code_and_save_device_params();
     Ok(())

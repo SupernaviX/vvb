@@ -14,11 +14,11 @@ impl Controller {
     }
 }
 
-#[rustfmt::skip::macros(emulator_func)]
+#[rustfmt::skip::macros(jni_func)]
 pub mod jni {
     use super::Controller;
     use crate::emulator::Emulator;
-    use crate::{emulator_func, jni_helpers};
+    use crate::{jni_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
@@ -30,19 +30,19 @@ pub mod jni {
         jni_helpers::java_get(env, this)
     }
 
-    emulator_func!(Controller_nativeConstructor, constructor, jobject);
+    jni_func!(Controller_nativeConstructor, constructor, jobject);
     fn constructor(env: &JNIEnv, this: jobject, emulator: jobject) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
         let controller = Controller::new(emulator.get_controller_state());
         jni_helpers::java_init(env, this, controller)
     }
 
-    emulator_func!(Controller_nativeDestructor, destructor);
+    jni_func!(Controller_nativeDestructor, destructor);
     fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<Controller>(env, this)
     }
 
-    emulator_func!(Controller_nativeUpdate, update, jint);
+    jni_func!(Controller_nativeUpdate, update, jint);
     fn update(env: &JNIEnv, this: jobject, state: jint) -> Result<()> {
         let mut this = get_controller(env, this)?;
         this.update(state as u16);

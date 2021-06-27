@@ -1,35 +1,29 @@
 package com.simongellis.vvb
 
-import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.menu.MainMenuFragment
-import org.acra.collector.LogCatCollector
-import org.acra.sender.HttpSender
-import org.acra.sender.HttpSenderFactory
 
-class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+class MainActivity : AppCompatActivity(R.layout.main_activity), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.main_activity)
 
         // Only run initialization once
         if (savedInstanceState == null) {
-            val audio = ContextCompat.getSystemService(baseContext, AudioManager::class.java)!!
-            val sampleRate = audio.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE).toInt()
-            val framesPerBurst = audio.getProperty(AudioManager.PROPERTY_OUTPUT_FRAMES_PER_BUFFER).toInt()
-            nativeInitialize(sampleRate, framesPerBurst)
+            VvbLibrary.instance.initialize(this)
 
             supportFragmentManager
                 .beginTransaction()
                 .replace(R.id.fragment_container, MainMenuFragment())
+                .setReorderingAllowed(true)
                 .commit()
         }
     }
@@ -52,6 +46,7 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, fragment)
             .addToBackStack(null)
+            .setReorderingAllowed(true)
             .commit()
     }
 
@@ -74,17 +69,4 @@ class MainActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceS
         }
         return super.dispatchGenericMotionEvent(event)
     }
-
-    fun changeDeviceParams() {
-        nativeChangeDeviceParams()
-    }
-
-    companion object {
-        init {
-            System.loadLibrary("vvb")
-        }
-    }
-
-    private external fun nativeInitialize(sampleRate: Int, framesPerBurst: Int)
-    private external fun nativeChangeDeviceParams()
 }

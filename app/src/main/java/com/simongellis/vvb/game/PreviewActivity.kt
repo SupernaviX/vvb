@@ -3,6 +3,7 @@ package com.simongellis.vvb.game
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.simongellis.vvb.emulator.Emulator
+import com.simongellis.vvb.emulator.VvbLibrary
 
 class PreviewActivity: AppCompatActivity() {
     private lateinit var _view: GameView
@@ -10,6 +11,7 @@ class PreviewActivity: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        VvbLibrary.instance.initialize(this)
 
         _view = GameView(baseContext)
         requestedOrientation = _view.requestedOrientation

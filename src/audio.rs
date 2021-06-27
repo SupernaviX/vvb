@@ -100,12 +100,12 @@ pub struct Settings {
     buffer_size: usize,
 }
 
-#[rustfmt::skip::macros(emulator_func)]
+#[rustfmt::skip::macros(jni_func)]
 pub mod jni {
     use super::{Audio, Settings};
     use crate::emulator::Emulator;
     use crate::jni_helpers::EnvExtensions;
-    use crate::{emulator_func, jni_helpers};
+    use crate::{jni_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::jobject;
     use jni::JNIEnv;
@@ -124,7 +124,7 @@ pub mod jni {
         })
     }
 
-    emulator_func!(Audio_nativeConstructor, constructor, jobject, jobject);
+    jni_func!(Audio_nativeConstructor, constructor, jobject, jobject);
     fn constructor(
         env: &JNIEnv,
         this: jobject,
@@ -137,18 +137,18 @@ pub mod jni {
         jni_helpers::java_init(env, this, audio)
     }
 
-    emulator_func!(Audio_nativeDestructor, destructor);
+    jni_func!(Audio_nativeDestructor, destructor);
     fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
         jni_helpers::java_take::<Audio>(env, this)
     }
 
-    emulator_func!(Audio_nativeStart, start);
+    jni_func!(Audio_nativeStart, start);
     fn start(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_audio(env, this)?;
         this.start()
     }
 
-    emulator_func!(Audio_nativeStop, stop);
+    jni_func!(Audio_nativeStop, stop);
     fn stop(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_audio(env, this)?;
         this.stop()

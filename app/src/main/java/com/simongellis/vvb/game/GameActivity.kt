@@ -15,6 +15,8 @@ class GameActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        VvbLibrary.instance.initialize(this)
+
         _emulator = Emulator.instance
         val preferences = GamePreferences(baseContext)
 
