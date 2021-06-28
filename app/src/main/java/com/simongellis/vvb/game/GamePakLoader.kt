@@ -2,18 +2,24 @@ package com.simongellis.vvb.game
 
 import android.content.Context
 import android.net.Uri
+import androidx.annotation.StringRes
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.GamePak
 import java.io.File
+import java.io.FileNotFoundException
 import java.util.zip.ZipInputStream
 
 class GamePakLoader(private val context: Context) {
     fun tryLoad(uri: Uri): GamePak {
         val (name, ext) = getNameAndExt(uri)
-        val rom = when(ext) {
-            "vb" -> loadVbFile(uri)
-            "zip" -> loadZipFile(uri)
-            else -> throw IllegalArgumentException(context.getString(R.string.error_unrecognized_extension))
+        val rom = try {
+            when(ext) {
+                "vb" -> loadVbFile(uri)
+                "zip" -> loadZipFile(uri)
+                else -> throw error(R.string.error_unrecognized_extension)
+            }
+        } catch (ex: FileNotFoundException) {
+            throw error(R.string.error_file_not_found)
         }
         val sram = File(context.filesDir, "${name}.srm")
         return GamePak(name, rom, sram)
@@ -24,10 +30,10 @@ class GamePakLoader(private val context: Context) {
             it.length
         }
         if (size.countOneBits() != 1) {
-            throw IllegalArgumentException(context.getString(R.string.error_not_power_of_two))
+            throw error(R.string.error_not_power_of_two)
         }
         if (size > 0x01000000) {
-            throw IllegalArgumentException(context.getString(R.string.error_too_large))
+            throw error(R.string.error_too_large)
         }
 
         context.contentResolver.openInputStream(uri)!!.use { inputStream ->
@@ -49,15 +55,25 @@ class GamePakLoader(private val context: Context) {
         throw IllegalArgumentException(context.getString(R.string.error_zip))
     }
 
-    private fun getNameAndExt(uri: Uri): Pair<String, String> {
-        val path = uri.lastPathSegment!!
-        return getNameAndExt(path)
+    private fun error(@StringRes message: Int): IllegalArgumentException {
+        return IllegalArgumentException(context.getString(message))
     }
 
-    private fun getNameAndExt(path: String): Pair<String, String> {
-        val filename = path.substringAfterLast('/')
-        val sep = filename.lastIndexOf('.')
-        return filename.substring(0, sep) to filename.substring(sep + 1)
-    }
+    companion object {
+        fun getName(uri: Uri): String {
+            val (name) = getNameAndExt(uri)
+            return name
+        }
 
+        private fun getNameAndExt(uri: Uri): Pair<String, String> {
+            val path = uri.lastPathSegment!!
+            return getNameAndExt(path)
+        }
+
+        private fun getNameAndExt(path: String): Pair<String, String> {
+            val filename = path.substringAfterLast('/')
+            val sep = filename.lastIndexOf('.')
+            return filename.substring(0, sep) to filename.substring(sep + 1)
+        }
+    }
 }

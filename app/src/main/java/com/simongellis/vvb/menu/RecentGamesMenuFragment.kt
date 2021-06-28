@@ -35,29 +35,17 @@ class RecentGamesMenuFragment: PreferenceFragmentCompat() {
 
         preferenceScreen.removeAll()
         for (recentGame in recentGames) {
-            val uri = recentGame.uri
             preferenceScreen.addPreference(Preference(context).apply {
-                key = uri.toString()
-                title = getFilename(uri)
+                key = recentGame.uri.toString()
+                title = recentGame.name
                 setOnPreferenceClickListener {
-                    if (viewModel.loadGame(uri)) {
+                    if (viewModel.loadGame(recentGame.uri)) {
                         playGame()
                     }
                     true
                 }
             })
         }
-    }
-
-    private fun getFilename(uri: Uri): String {
-        return requireContext().contentResolver.query(uri, null, null, null, null)
-            ?.use {
-                if (it.moveToFirst()) {
-                    it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
-                } else {
-                    null
-                }
-            } ?: uri.toString()
     }
 
     private fun playGame() {

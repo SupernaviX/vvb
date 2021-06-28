@@ -3,12 +3,15 @@ package com.simongellis.vvb.menu
 import android.content.SharedPreferences
 import android.net.Uri
 import androidx.core.content.edit
+import com.simongellis.vvb.game.GamePakLoader
 import com.simongellis.vvb.utils.PreferenceLiveDataSource
 
 class RecentGamesDao(private val preferences: SharedPreferences) {
     private val _dataSource = PreferenceLiveDataSource(preferences)
 
     data class RecentGame(val lastPlayed: Long, val uri: Uri) {
+        val name = GamePakLoader.getName(uri)
+
         override fun toString(): String {
             return "$lastPlayed::$uri"
         }
