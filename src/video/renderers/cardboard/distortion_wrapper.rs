@@ -103,7 +103,7 @@ impl DistortionWrapper {
         }))
     }
 
-    pub fn render<F: FnOnce() -> Result<()>>(&self, render_contents: F) -> Result<()> {
+    pub fn draw<F: FnOnce() -> Result<()>>(&self, render_contents: F) -> Result<()> {
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, self.framebuffer);
         }

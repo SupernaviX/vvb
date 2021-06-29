@@ -23,9 +23,11 @@
     <array name="video_mode_names">
         <item>@string/video_menu_mode_anaglyph</item>
         <item>@string/video_menu_mode_cardboard</item>
+        <item>@string/video_menu_mode_stereo</item>
     </array>
     <array name="video_modes">
         <item>ANAGLYPH</item>
         <item>CARDBOARD</item>
+        <item>STEREO</item>
     </array>
 </resources>

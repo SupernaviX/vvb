@@ -36,6 +36,7 @@ class GameView : ConstraintLayout {
         _renderer = when(preferences.videoMode) {
             VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, preferences.anaglyphSettings)
             VideoMode.CARDBOARD -> CardboardRenderer(emulator, preferences.cardboardSettings)
+            VideoMode.STEREO -> StereoRenderer(emulator, preferences.stereoSettings)
         }
 
         val layoutInflater = LayoutInflater.from(context)
@@ -57,6 +58,7 @@ class GameView : ConstraintLayout {
         requestedOrientation = when(preferences.videoMode) {
             VideoMode.ANAGLYPH -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             VideoMode.CARDBOARD -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            VideoMode.STEREO -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }
 
         setBackgroundColor(Color.BLACK)

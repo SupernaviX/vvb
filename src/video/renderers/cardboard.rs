@@ -1,48 +1,29 @@
-use crate::emulator::video::FrameChannel;
+use crate::emulator::video::{Eye, EyeBuffer};
 use crate::video::cardboard::QrCode;
 
-mod display;
-use display::{Settings, StereoDisplay};
+use super::common::RenderLogic;
+use super::stereo::{Settings, StereoRenderLogic};
 
 mod distortion_wrapper;
 use distortion_wrapper::DistortionWrapper;
 
 use anyhow::Result;
 use log::debug;
-use std::sync::mpsc::TryRecvError;
 
-pub struct CardboardRenderer {
+pub struct CardboardRenderLogic {
     screen_size: (i32, i32),
-    display: StereoDisplay,
+    base: StereoRenderLogic,
     distortion: Option<DistortionWrapper>,
     cardboard_stale: bool,
-    frame_channel: FrameChannel,
 }
-impl CardboardRenderer {
-    pub fn new(frame_channel: FrameChannel, settings: &Settings) -> Self {
+impl CardboardRenderLogic {
+    pub fn new(settings: &Settings) -> Self {
         Self {
             screen_size: (0, 0),
-            display: StereoDisplay::new(&settings),
+            base: StereoRenderLogic::new(&settings),
             distortion: None,
             cardboard_stale: true,
-            frame_channel,
         }
-    }
-
-    pub fn on_surface_created(&mut self) -> Result<()> {
-        // If cardboard is already initialized, drop it.
-        // This method is called when the GLSurfaceView is first initialized,
-        // so if it already has values then those values reference already-freed resources,
-        // and freeing it AFTER creating a new one will drop resources the new one is using.
-        self.distortion.take();
-
-        self.display.init()?;
-        self.cardboard_stale = true;
-
-        let device_params = QrCode::get_saved_device_params();
-        debug!("Device params: {:?}", device_params);
-
-        Ok(())
     }
 
     pub fn ensure_device_params(&mut self) {
@@ -52,61 +33,82 @@ impl CardboardRenderer {
         }
     }
 
-    pub fn on_surface_changed(&mut self, screen_width: i32, screen_height: i32) -> Result<()> {
-        self.screen_size = (screen_width, screen_height);
-        self.display.resize((screen_width, screen_height))?;
-        self.cardboard_stale = true;
-        Ok(())
+    fn has_device_params(&self) -> bool {
+        return !self.cardboard_stale && self.distortion.is_some();
     }
 
-    pub fn on_draw_frame(&mut self) -> Result<()> {
-        self.update_screen()?;
-        if !self.update_device_params()? {
-            return Ok(());
-        }
-        self.distortion
-            .as_ref()
-            .unwrap()
-            .render(|| self.display.render())?;
-        Ok(())
-    }
-
-    fn update_screen(&mut self) -> Result<()> {
-        match self.frame_channel.try_recv() {
-            Ok(frame) => self.display.update(frame),
-            Err(TryRecvError::Empty) => Ok(()),
-            Err(TryRecvError::Disconnected) => Err(anyhow::anyhow!("Emulator has shut down")),
-        }
-    }
-
-    fn update_device_params(&mut self) -> Result<bool> {
+    fn update_device_params(&mut self) -> Result<()> {
         if !self.cardboard_stale {
-            return Ok(true);
+            return Ok(());
         }
         match DistortionWrapper::new(self.screen_size) {
             Ok(Some(distortion)) => {
                 self.distortion = Some(distortion);
                 self.cardboard_stale = false;
-                Ok(true)
+                Ok(())
             }
             Ok(None) => {
                 self.distortion = None;
-                Ok(false)
+                Ok(())
             }
             Err(err) => Err(err),
         }
     }
 }
 
+impl RenderLogic for CardboardRenderLogic {
+    fn init(&mut self) -> Result<()> {
+        // If cardboard is already initialized, drop it.
+        // This method is called when the GLSurfaceView is first initialized,
+        // so if it already has values then those values reference already-freed resources,
+        // and freeing it AFTER creating a new one will drop resources the new one is using.
+        self.distortion.take();
+
+        self.base.init()?;
+        self.cardboard_stale = true;
+
+        let device_params = QrCode::get_saved_device_params();
+        debug!("Device params: {:?}", device_params);
+
+        Ok(())
+    }
+
+    fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
+        self.screen_size = screen_size;
+        self.base.resize(screen_size)?;
+        self.cardboard_stale = true;
+        Ok(())
+    }
+
+    fn update(&mut self, eye: Eye, buffer: &EyeBuffer) -> Result<()> {
+        self.base.update(eye, &buffer)?;
+        self.update_device_params()
+    }
+
+    fn draw(&self) -> Result<()> {
+        if !self.has_device_params() {
+            return Ok(());
+        }
+        self.distortion
+            .as_ref()
+            .unwrap()
+            .draw(|| self.base.draw())?;
+        Ok(())
+    }
+}
+
 #[rustfmt::skip::macros(jni_func)]
 pub mod jni {
-    use super::{CardboardRenderer, Settings};
+    use super::{CardboardRenderLogic, Settings};
     use crate::emulator::Emulator;
     use crate::jni_helpers::EnvExtensions;
+    use crate::video::renderers::common::Renderer;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
+
+    type CardboardRenderer = Renderer<CardboardRenderLogic>;
 
     pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
@@ -136,7 +138,10 @@ pub mod jni {
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
         let settings = get_settings(&env, settings)?;
-        let renderer = CardboardRenderer::new(emulator.get_frame_channel(), &settings);
+        let renderer = Renderer::new(
+            emulator.get_frame_channel(),
+            CardboardRenderLogic::new(&settings),
+        );
         jni_helpers::java_init(env, this, renderer)
     }
 
@@ -166,7 +171,7 @@ pub mod jni {
     jni_func!(CardboardRenderer_nativeEnsureDeviceParams, ensure_device_params);
     fn ensure_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
-        this.ensure_device_params();
+        this.logic.ensure_device_params();
         Ok(())
     }
 }

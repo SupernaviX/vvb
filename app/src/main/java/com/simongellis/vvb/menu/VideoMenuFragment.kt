@@ -15,12 +15,12 @@ import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.game.PreviewActivity
 
 class VideoMenuFragment: PreferenceFragmentCompat() {
-    enum class Prefs(val prefName: String, val mode: VideoMode? = null) {
+    enum class Prefs(val prefName: String, vararg val modes: VideoMode = VideoMode.values()) {
         MODE("video_mode"),
         ZOOM("video_screen_zoom_percent"),
         HORIZONTAL_OFFSET("video_horizontal_offset"),
         VERTICAL_OFFSET("video_vertical_offset"),
-        COLOR("video_color", VideoMode.CARDBOARD),
+        COLOR("video_color", VideoMode.CARDBOARD, VideoMode.STEREO),
         COLOR_LEFT("video_color_left", VideoMode.ANAGLYPH),
         COLOR_RIGHT("video_color_right", VideoMode.ANAGLYPH),
         SWITCH_VIEWER("video_switch_viewer", VideoMode.CARDBOARD),
@@ -110,9 +110,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
 
     private fun hidePreferencesByMode(mode: VideoMode) {
         Prefs.values().forEach { pref ->
-            if (pref.mode != null) {
-                findPref(pref).isVisible = pref.mode === mode
-            }
+            findPref(pref).isVisible = pref.modes.contains(mode)
         }
     }
 

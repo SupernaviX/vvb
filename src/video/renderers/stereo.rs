@@ -1,11 +1,13 @@
-use crate::emulator::video::{Eye, EyeBuffer};
-
 use super::common::RenderLogic;
-use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
-use super::gl::{utils, Program, Textures};
+use super::gl::{
+    utils::{self, VB_HEIGHT, VB_WIDTH},
+    Program, Textures,
+};
+use crate::emulator::video::{Eye, EyeBuffer};
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
+
 use anyhow::Result;
-use cgmath::{vec3, Matrix4};
+use cgmath::{self, vec3, Matrix4};
 
 const VERTEX_SHADER: &str = "\
 attribute vec4 a_Pos;
@@ -21,29 +23,28 @@ void main() {
 const FRAGMENT_SHADER: &str = "\
 precision mediump float;
 varying vec2 v_TexCoord;
-uniform sampler2D u_Textures[2];
-uniform vec4 u_Colors[2];
+uniform sampler2D u_Texture;
+uniform vec4 u_Color;
 void main() {
-    vec4 left = u_Colors[0] * texture2D(u_Textures[0], v_TexCoord).r;
-    vec4 right = u_Colors[1] * texture2D(u_Textures[1], v_TexCoord).r;
-    gl_FragColor = left + right;
+    gl_FragColor = u_Color * texture2D(u_Texture, v_TexCoord).r;
 }
 ";
 
-pub struct AnaglyphRenderLogic {
+pub struct StereoRenderLogic {
     program: Program,
     textures: Textures,
 
     position_location: GLuint,
     tex_coord_location: GLuint,
     modelview_location: GLint,
-    textures_location: GLint,
-    colors_location: GLint,
+    texture_location: GLint,
+    color_location: GLint,
 
-    texture_colors: [[GLfloat; 4]; 2],
-    transform: Matrix4<GLfloat>,
+    texture_color: [GLfloat; 4],
+    transforms: [Matrix4<GLfloat>; 2],
+    model_views: [[GLfloat; 16]; 2],
 }
-impl AnaglyphRenderLogic {
+impl StereoRenderLogic {
     pub fn new(settings: &Settings) -> Self {
         let scale = settings.screen_zoom;
         let offset = -settings.vertical_offset;
@@ -54,19 +55,20 @@ impl AnaglyphRenderLogic {
             position_location: 0,
             tex_coord_location: 0,
             modelview_location: -1,
-            textures_location: -1,
-            colors_location: -1,
+            texture_location: -1,
+            color_location: -1,
 
-            texture_colors: [
-                utils::color_as_vector(settings.colors[0]),
-                utils::color_as_vector(settings.colors[1]),
+            texture_color: utils::color_as_vector(settings.color),
+            transforms: [
+                Matrix4::from_translation(vec3(-0.5, offset, 0.0)) * Matrix4::from_scale(scale),
+                Matrix4::from_translation(vec3(0.5, offset, 0.0)) * Matrix4::from_scale(scale),
             ],
-            transform: Matrix4::from_translation(vec3(0.0, offset, 0.0))
-                * Matrix4::from_scale(scale),
+            model_views: [utils::identity_matrix(), utils::identity_matrix()],
         }
     }
 }
-impl RenderLogic for AnaglyphRenderLogic {
+
+impl RenderLogic for StereoRenderLogic {
     fn init(&mut self) -> Result<()> {
         self.program.init()?;
         self.textures.init()?;
@@ -74,14 +76,12 @@ impl RenderLogic for AnaglyphRenderLogic {
         self.position_location = self.program.get_attribute_location("a_Pos");
         self.tex_coord_location = self.program.get_attribute_location("a_TexCoord");
         self.modelview_location = self.program.get_uniform_location("u_MV");
-        self.textures_location = self.program.get_uniform_location("u_Textures");
-        self.colors_location = self.program.get_uniform_location("u_Colors");
+        self.texture_location = self.program.get_uniform_location("u_Texture");
+        self.color_location = self.program.get_uniform_location("u_Color");
 
-        // textures and colors don't change, set them here
+        // Set color here, because it's the same for the entire life of the program
         self.program
-            .set_uniform_texture_array(self.textures_location, &self.textures.ids);
-        self.program
-            .set_uniform_vector_array(self.colors_location, &self.texture_colors);
+            .set_uniform_vector(self.color_location, &self.texture_color);
 
         Ok(())
     }
@@ -89,35 +89,47 @@ impl RenderLogic for AnaglyphRenderLogic {
     fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
         self.program.set_viewport(screen_size)?;
 
-        let base_mv = utils::base_model_view(screen_size, (VB_WIDTH, VB_HEIGHT));
-        let model_view = utils::to_matrix(base_mv * self.transform);
-
-        // model view only changes when the surface is resized, set it here
-        self.program
-            .set_uniform_matrix(self.modelview_location, &model_view);
+        let base_mv = utils::base_model_view(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
+        self.model_views = [
+            utils::to_matrix(base_mv * self.transforms[0]),
+            utils::to_matrix(base_mv * self.transforms[1]),
+        ];
 
         Ok(())
     }
 
     fn update(&mut self, eye: Eye, buffer: &EyeBuffer) -> Result<()> {
-        self.textures.update(eye as usize, buffer)
+        self.textures.update(eye as usize, &buffer)
     }
+
     fn draw(&self) -> Result<()> {
         self.program.start_render()?;
-        self.program
-            .draw_square(self.position_location, self.tex_coord_location)
+        for i in 0..self.textures.ids.len() {
+            let texture_id = self.textures.ids[i];
+            let model_view = &self.model_views[i];
+
+            self.program
+                .set_uniform_texture(self.texture_location, texture_id);
+            self.program
+                .set_uniform_matrix(self.modelview_location, model_view);
+
+            self.program
+                .draw_square(self.position_location, self.tex_coord_location)?;
+        }
+        Ok(())
     }
 }
 
+#[derive(Debug)]
 pub struct Settings {
-    screen_zoom: f32,
-    vertical_offset: f32,
-    colors: [(u8, u8, u8); 2],
+    pub screen_zoom: f32,
+    pub vertical_offset: f32,
+    pub color: (u8, u8, u8),
 }
 
 #[rustfmt::skip::macros(jni_func)]
 pub mod jni {
-    use super::{AnaglyphRenderLogic, Settings};
+    use super::{Settings, StereoRenderLogic};
     use crate::emulator::Emulator;
     use crate::jni_helpers::EnvExtensions;
     use crate::video::renderers::common::Renderer;
@@ -126,30 +138,28 @@ pub mod jni {
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
 
-    type AnaglyphRenderer = Renderer<AnaglyphRenderLogic>;
+    type StereoRenderer = Renderer<StereoRenderLogic>;
 
-    fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+    pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
-        let colors = [
-            env.get_color(this, "colorLeft")?,
-            env.get_color(this, "colorRight")?,
-        ];
+        let color = env.get_color(this, "color")?;
+
         Ok(Settings {
             screen_zoom,
             vertical_offset,
-            colors,
+            color,
         })
     }
 
     fn get_renderer<'a>(
         env: &'a JNIEnv,
         this: jobject,
-    ) -> jni_helpers::JavaGetResult<'a, AnaglyphRenderer> {
+    ) -> jni_helpers::JavaGetResult<'a, StereoRenderer> {
         jni_helpers::java_get(env, this)
     }
 
-    jni_func!(AnaglyphRenderer_nativeConstructor, constructor, jobject, jobject);
+    jni_func!(StereoRenderer_nativeConstructor, constructor, jobject, jobject);
     fn constructor(
         env: &JNIEnv,
         this: jobject,
@@ -160,29 +170,29 @@ pub mod jni {
         let settings = get_settings(&env, settings)?;
         let renderer = Renderer::new(
             emulator.get_frame_channel(),
-            AnaglyphRenderLogic::new(&settings),
+            StereoRenderLogic::new(&settings),
         );
         jni_helpers::java_init(env, this, renderer)
     }
 
-    jni_func!(AnaglyphRenderer_nativeDestructor, destructor);
+    jni_func!(StereoRenderer_nativeDestructor, destructor);
     fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
-        jni_helpers::java_take::<AnaglyphRenderer>(env, this)
+        jni_helpers::java_take::<StereoRenderer>(env, this)
     }
 
-    jni_func!(AnaglyphRenderer_nativeOnSurfaceCreated, on_surface_created);
+    jni_func!(StereoRenderer_nativeOnSurfaceCreated, on_surface_created);
     fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
-    jni_func!(AnaglyphRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
+    jni_func!(StereoRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
     fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height)
     }
 
-    jni_func!(AnaglyphRenderer_nativeOnDrawFrame, on_draw_frame);
+    jni_func!(StereoRenderer_nativeOnDrawFrame, on_draw_frame);
     fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()

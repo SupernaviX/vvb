@@ -48,6 +48,7 @@
     <string name="video_menu_mode">Mode</string>
     <string name="video_menu_mode_anaglyph">Anaglyph (two-color)</string>
     <string name="video_menu_mode_cardboard">Cardboard</string>
+    <string name="video_menu_mode_stereo">Side-by-side</string>
     <string name="video_menu_color">Color</string>
     <string name="video_menu_color_left">Left Eye Color</string>
     <string name="video_menu_color_right">Right Eye Color</string>

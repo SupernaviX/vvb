@@ -7,10 +7,7 @@ import android.graphics.Color
 import android.util.DisplayMetrics
 import androidx.annotation.ColorInt
 import androidx.preference.PreferenceManager
-import com.simongellis.vvb.emulator.AnaglyphRenderer
-import com.simongellis.vvb.emulator.Audio
-import com.simongellis.vvb.emulator.CardboardRenderer
-import com.simongellis.vvb.emulator.VideoMode
+import com.simongellis.vvb.emulator.*
 
 class GamePreferences(context: Context) {
     val videoMode: VideoMode
@@ -55,6 +52,9 @@ class GamePreferences(context: Context) {
 
     val cardboardSettings
         get() = CardboardRenderer.Settings(screenZoom, verticalOffset, color)
+
+    val stereoSettings
+        get() = StereoRenderer.Settings(screenZoom, verticalOffset, color)
 
     init {
 
