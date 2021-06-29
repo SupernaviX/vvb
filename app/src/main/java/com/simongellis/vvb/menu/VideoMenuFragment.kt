@@ -20,7 +20,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         ZOOM("video_screen_zoom_percent"),
         HORIZONTAL_OFFSET("video_horizontal_offset"),
         VERTICAL_OFFSET("video_vertical_offset"),
-        COLOR("video_color", VideoMode.CARDBOARD, VideoMode.STEREO),
+        COLOR("video_color", VideoMode.CARDBOARD, VideoMode.MONO_LEFT, VideoMode.MONO_RIGHT, VideoMode.STEREO),
         COLOR_LEFT("video_color_left", VideoMode.ANAGLYPH),
         COLOR_RIGHT("video_color_right", VideoMode.ANAGLYPH),
         SWITCH_VIEWER("video_switch_viewer", VideoMode.CARDBOARD),

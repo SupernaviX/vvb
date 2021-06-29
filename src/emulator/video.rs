@@ -1,6 +1,11 @@
+use crate::emulator::cpu::Exception;
 use crate::emulator::memory::Memory;
+use crate::emulator::video::drawing::DrawingProcess;
 use anyhow::Result;
 use log::error;
+use std::cell::{Ref, RefCell};
+use std::convert::TryFrom;
+use std::rc::Rc;
 use std::sync::{mpsc, Arc, Mutex};
 
 pub mod drawing;
@@ -75,17 +80,23 @@ impl Buffer {
 }
 use Buffer::{Buffer0, Buffer1};
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Eye {
     Left,
     Right,
 }
-use crate::emulator::cpu::Exception;
-use crate::emulator::video::drawing::DrawingProcess;
-use std::cell::{Ref, RefCell};
-use std::rc::Rc;
 use Eye::{Left, Right};
+impl TryFrom<i32> for Eye {
+    type Error = anyhow::Error;
 
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(Left),
+            1 => Ok(Right),
+            _ => Err(anyhow::anyhow!("Invalid eye {}", value)),
+        }
+    }
+}
 pub type EyeBuffer = Vec<u8>;
 
 pub struct Frame {

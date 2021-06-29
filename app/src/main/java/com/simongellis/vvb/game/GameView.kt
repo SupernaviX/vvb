@@ -36,6 +36,8 @@ class GameView : ConstraintLayout {
         _renderer = when(preferences.videoMode) {
             VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, preferences.anaglyphSettings)
             VideoMode.CARDBOARD -> CardboardRenderer(emulator, preferences.cardboardSettings)
+            VideoMode.MONO_LEFT -> MonoRenderer(emulator, preferences.monoSettings(Eye.LEFT))
+            VideoMode.MONO_RIGHT -> MonoRenderer(emulator, preferences.monoSettings(Eye.RIGHT))
             VideoMode.STEREO -> StereoRenderer(emulator, preferences.stereoSettings)
         }
 
@@ -55,10 +57,9 @@ class GameView : ConstraintLayout {
             uiAlignmentMarker?.isVisible = preferences.videoMode === VideoMode.CARDBOARD
         }
 
-        requestedOrientation = when(preferences.videoMode) {
-            VideoMode.ANAGLYPH -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-            VideoMode.CARDBOARD -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            VideoMode.STEREO -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        requestedOrientation = when(preferences.videoMode.supportsPortait) {
+            true -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+            false -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }
 
         setBackgroundColor(Color.BLACK)

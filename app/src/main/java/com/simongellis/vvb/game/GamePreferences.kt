@@ -14,31 +14,36 @@ class GamePreferences(context: Context) {
     private val isAnaglyph
         get() = videoMode == VideoMode.ANAGLYPH
 
+    private val supportsPortrait
+        get() = videoMode.supportsPortait
     private val isPortrait
         = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
     private val screenZoom: Float
-        get() = if (isPortrait && isAnaglyph) { 1.00f } else { field }
+        get() = if (isPortrait && supportsPortrait) { 1.00f } else { field }
 
     // Horizontal offset is handled by the GameView, so that everything on screen is shifted
     val horizontalOffset: Float
-        get() = if (isPortrait && isAnaglyph) { 0f } else { field }
+        get() = if (isPortrait && supportsPortrait) { 0f } else { field }
     // Vertical offset is handled by the Renderer implementations in Rust,
     // because it specifically affects _the image rendered by_ Google Cardboard
     private val verticalOffset: Float
-        get() = if (isPortrait && isAnaglyph) { 0f } else { field }
-
-    @ColorInt val colorLeft: Int
-    @ColorInt val colorRight: Int
+        get() = if (isPortrait && supportsPortrait) { 0f } else { field }
 
     @ColorInt val color: Int
 
+    @ColorInt val colorLeft: Int
+        get() = if (isAnaglyph) { field } else { color }
+    @ColorInt val colorRight: Int
+        get() = if (isAnaglyph) { field } else { color }
+
     private val _virtualGamepadOn: Boolean
     val showVirtualGamepad
-        get() = isAnaglyph && _virtualGamepadOn
+        get() = supportsPortrait && _virtualGamepadOn
     val toggleMode: Boolean
     val enableHapticFeedback: Boolean
     val controlParallax: Float
+        get() = if (isAnaglyph) { field } else { 0f }
     val showControlBounds: Boolean
 
     private val volume: Float
@@ -52,6 +57,9 @@ class GamePreferences(context: Context) {
 
     val cardboardSettings
         get() = CardboardRenderer.Settings(screenZoom, verticalOffset, color)
+
+    fun monoSettings(eye: Eye)
+        = MonoRenderer.Settings(eye.ordinal, screenZoom, verticalOffset, color)
 
     val stereoSettings
         get() = StereoRenderer.Settings(screenZoom, verticalOffset, color)
