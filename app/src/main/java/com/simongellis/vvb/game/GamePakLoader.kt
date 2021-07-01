@@ -13,10 +13,11 @@ class GamePakLoader(private val context: Context) {
     fun tryLoad(uri: Uri): GamePak {
         val (name, ext) = getNameAndExt(uri)
         val rom = try {
-            when(ext) {
-                "vb" -> loadVbFile(uri)
-                "zip" -> loadZipFile(uri)
-                else -> throw error(R.string.error_unrecognized_extension)
+            when {
+                ext == "zip" -> loadZipFile(uri)
+                ext == "vb" -> loadVbFile(uri)
+                hasZipHeader(uri) -> loadZipFile(uri)
+                else -> loadVbFile(uri)
             }
         } catch (ex: FileNotFoundException) {
             throw error(R.string.error_file_not_found)
@@ -55,6 +56,21 @@ class GamePakLoader(private val context: Context) {
         throw IllegalArgumentException(context.getString(R.string.error_zip))
     }
 
+    private fun hasZipHeader(uri: Uri): Boolean {
+        val header = context.contentResolver.openInputStream(uri)!!.use {
+            val buffer = ByteArray(4)
+            var bytesCopied = 0
+            var bytes = it.read(buffer)
+            while (bytes >= 0 && bytesCopied < buffer.size) {
+                bytesCopied += bytes
+                bytes = it.read(buffer, bytesCopied, buffer.size - bytesCopied)
+            }
+            buffer
+        }
+        val zipHeader = byteArrayOf(0x50, 0x4b, 0x03, 0x04)
+        return zipHeader.zip(header).all { it.first == it.second }
+    }
+
     private fun error(@StringRes message: Int): IllegalArgumentException {
         return IllegalArgumentException(context.getString(message))
     }
@@ -65,14 +81,17 @@ class GamePakLoader(private val context: Context) {
             return name
         }
 
-        private fun getNameAndExt(uri: Uri): Pair<String, String> {
+        private fun getNameAndExt(uri: Uri): Pair<String, String?> {
             val path = uri.lastPathSegment!!
             return getNameAndExt(path)
         }
 
-        private fun getNameAndExt(path: String): Pair<String, String> {
+        private fun getNameAndExt(path: String): Pair<String, String?> {
             val filename = path.substringAfterLast('/')
             val sep = filename.lastIndexOf('.')
+            if (sep == -1) {
+                return filename to null
+            }
             return filename.substring(0, sep) to filename.substring(sep + 1)
         }
     }
