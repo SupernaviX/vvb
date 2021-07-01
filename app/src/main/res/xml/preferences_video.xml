@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <DropDownPreference
+    <com.simongellis.vvb.menu.VideoModeDialogPreference
         app:key="video_mode"
         app:title="@string/video_menu_mode"
-        android:entries="@array/video_mode_names"
-        app:useSimpleSummaryProvider="true"
-        android:entryValues="@array/video_modes"
         app:defaultValue="ANAGLYPH"/>
     <SeekBarPreference
         app:key="video_screen_zoom_percent"

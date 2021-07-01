@@ -10,9 +10,9 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.R
-import com.simongellis.vvb.emulator.VideoMode
 import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.game.PreviewActivity
+import com.simongellis.vvb.game.VideoMode
 
 class VideoMenuFragment: PreferenceFragmentCompat() {
     enum class Prefs(val prefName: String, vararg val modes: VideoMode = VideoMode.values()) {
@@ -84,6 +84,17 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         findPref(Prefs.PREVIEW).setOnPreferenceClickListener {
             preview()
             true
+        }
+    }
+
+    override fun onDisplayPreferenceDialog(preference: Preference) {
+        if (preference is VideoModeDialogPreference) {
+            val dialogFragment = VideoModePreferenceDialogFragment.newInstance(preference.key)
+            @Suppress("DEPRECATION")
+            dialogFragment.setTargetFragment(this, 0)
+            dialogFragment.show(parentFragmentManager, "androidx.preference.PreferenceFragment.DIALOG")
+        } else {
+            super.onDisplayPreferenceDialog(preference)
         }
     }
 

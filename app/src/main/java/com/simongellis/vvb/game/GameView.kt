@@ -57,7 +57,7 @@ class GameView : ConstraintLayout {
             uiAlignmentMarker?.isVisible = preferences.videoMode === VideoMode.CARDBOARD
         }
 
-        requestedOrientation = when(preferences.videoMode.supportsPortait) {
+        requestedOrientation = when(preferences.videoMode.supportsPortrait) {
             true -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             false -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }

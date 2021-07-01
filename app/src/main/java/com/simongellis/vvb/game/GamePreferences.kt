@@ -15,7 +15,7 @@ class GamePreferences(context: Context) {
         get() = videoMode == VideoMode.ANAGLYPH
 
     private val supportsPortrait
-        get() = videoMode.supportsPortait
+        get() = videoMode.supportsPortrait
     private val isPortrait
         = context.resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
