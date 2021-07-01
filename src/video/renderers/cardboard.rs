@@ -1,4 +1,4 @@
-use crate::emulator::video::{Eye, EyeBuffer};
+use crate::emulator::video::Eye;
 use crate::video::cardboard::QrCode;
 
 use super::common::RenderLogic;
@@ -34,7 +34,7 @@ impl CardboardRenderLogic {
     }
 
     fn has_device_params(&self) -> bool {
-        return !self.cardboard_stale && self.distortion.is_some();
+        !self.cardboard_stale && self.distortion.is_some()
     }
 
     fn update_device_params(&mut self) -> Result<()> {
@@ -80,7 +80,7 @@ impl RenderLogic for CardboardRenderLogic {
         Ok(())
     }
 
-    fn update(&mut self, eye: Eye, buffer: &EyeBuffer) -> Result<()> {
+    fn update(&mut self, eye: Eye, buffer: &[u8]) -> Result<()> {
         self.base.update(eye, &buffer)?;
         self.update_device_params()
     }

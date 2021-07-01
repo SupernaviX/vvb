@@ -1,11 +1,11 @@
-use crate::emulator::video::{Eye, EyeBuffer, FrameChannel};
+use crate::emulator::video::{Eye, FrameChannel};
 use anyhow::Result;
 use std::sync::mpsc::TryRecvError;
 
 pub trait RenderLogic {
     fn init(&mut self) -> Result<()>;
     fn resize(&mut self, screen_size: (i32, i32)) -> Result<()>;
-    fn update(&mut self, eye: Eye, buffer: &EyeBuffer) -> Result<()>;
+    fn update(&mut self, eye: Eye, buffer: &[u8]) -> Result<()>;
     fn draw(&self) -> Result<()>;
 }
 

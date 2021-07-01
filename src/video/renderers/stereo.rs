@@ -3,7 +3,7 @@ use super::gl::{
     utils::{self, VB_HEIGHT, VB_WIDTH},
     Program, Textures,
 };
-use crate::emulator::video::{Eye, EyeBuffer};
+use crate::emulator::video::Eye;
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
 
 use anyhow::Result;
@@ -98,7 +98,7 @@ impl RenderLogic for StereoRenderLogic {
         Ok(())
     }
 
-    fn update(&mut self, eye: Eye, buffer: &EyeBuffer) -> Result<()> {
+    fn update(&mut self, eye: Eye, buffer: &[u8]) -> Result<()> {
         self.textures.update(eye as usize, &buffer)
     }
 

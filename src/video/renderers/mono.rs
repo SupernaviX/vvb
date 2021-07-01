@@ -1,7 +1,7 @@
 use super::common::RenderLogic;
 use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
 use super::gl::{utils, Program, Textures};
-use crate::emulator::video::{Eye, EyeBuffer};
+use crate::emulator::video::Eye;
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
 use anyhow::Result;
 use cgmath::{vec3, Matrix4};
@@ -95,7 +95,7 @@ impl RenderLogic for MonoRenderLogic {
         Ok(())
     }
 
-    fn update(&mut self, eye: Eye, buffer: &EyeBuffer) -> Result<()> {
+    fn update(&mut self, eye: Eye, buffer: &[u8]) -> Result<()> {
         if eye == self.eye {
             self.textures.update(0, buffer)
         } else {

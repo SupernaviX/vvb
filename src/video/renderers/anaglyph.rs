@@ -1,4 +1,4 @@
-use crate::emulator::video::{Eye, EyeBuffer};
+use crate::emulator::video::Eye;
 
 use super::common::RenderLogic;
 use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
@@ -99,7 +99,7 @@ impl RenderLogic for AnaglyphRenderLogic {
         Ok(())
     }
 
-    fn update(&mut self, eye: Eye, buffer: &EyeBuffer) -> Result<()> {
+    fn update(&mut self, eye: Eye, buffer: &[u8]) -> Result<()> {
         self.textures.update(eye as usize, buffer)
     }
     fn draw(&self) -> Result<()> {
