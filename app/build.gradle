@@ -144,6 +144,9 @@ dependencies {
     // color picker
     implementation 'com.github.kizitonwose.colorpreference:support:1.1.0'
 
+    // file picker
+    implementation 'com.nononsenseapps:filepicker:4.2.1'
+
     // error instrumentation
     def acraVersion = '5.8.3'
     implementation("ch.acra:acra-http:$acraVersion")

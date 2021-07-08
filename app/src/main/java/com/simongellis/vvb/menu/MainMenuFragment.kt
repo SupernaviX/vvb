@@ -1,12 +1,17 @@
 package com.simongellis.vvb.menu
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts.OpenDocument
 import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.nononsenseapps.filepicker.FilePickerActivity
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.GameActivity
@@ -22,6 +27,21 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
+    class OpenFilePicker : ActivityResultContract<Unit, Uri?>() {
+        override fun createIntent(context: Context, input: Unit?): Intent {
+            return Intent(context, FilePickerActivity::class.java)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        }
+
+        override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+            if (resultCode != Activity.RESULT_OK) {
+                return null
+            }
+            return intent?.data
+        }
+    }
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
@@ -30,15 +50,19 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             true
         }
 
-        val chooseGame = registerForActivityResult(OpenPersistentDocument) { uri ->
+        val chooseGameFilePicker = registerForActivityResult(OpenFilePicker(), this::loadGame)
+        val chooseGameStorageFramework = registerForActivityResult(OpenPersistentDocument) { uri ->
             uri?.also {
-                if (viewModel.loadGame(it)) {
-                    playGame()
-                }
+                requireContext().contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
+            loadGame(uri)
         }
         findPreference<Preference>("load_game")?.setOnPreferenceClickListener {
-            chooseGame.launch(arrayOf("*/*"))
+            if (isFilePickerSupported()) {
+                chooseGameFilePicker.launch(Unit)
+            } else {
+                chooseGameStorageFramework.launch(arrayOf("*/*"))
+            }
             true
         }
     }
@@ -51,8 +75,25 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
+    private fun loadGame(uri: Uri?) {
+        uri?.also {
+            if (viewModel.loadGame(it)) {
+                playGame()
+            }
+        }
+    }
+
     private fun playGame() {
         val intent = Intent(activity, GameActivity::class.java)
         startActivity(intent)
+    }
+
+    private fun isFilePickerSupported(): Boolean {
+        return try {
+            @Suppress("DEPRECATION")
+            Environment.getExternalStorageDirectory().listFiles() != null
+        } catch (_: Exception) {
+            false
+        }
     }
 }

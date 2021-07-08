@@ -1,7 +1,6 @@
 package com.simongellis.vvb
 
 import android.app.Application
-import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import android.widget.Toast
@@ -22,8 +21,6 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     val isGameLoaded get() = _emulator.isGameLoaded()
     fun loadGame(uri: Uri): Boolean {
-        _application.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
         return try {
             val gamePak = _gamePakLoader.tryLoad(uri)
             _emulator.loadGamePak(gamePak)
