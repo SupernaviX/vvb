@@ -4,6 +4,7 @@ use oboe::{AudioStreamBuilder, DataCallbackResult, Error, IsFrameType, Output, U
 use oboe_sys as ffi;
 use std::ffi::c_void;
 use std::mem::MaybeUninit;
+use std::pin::Pin;
 use std::slice::from_raw_parts_mut;
 use std::sync::{Arc, Mutex};
 
@@ -28,7 +29,7 @@ pub struct StreamManager<T: StreamConfiguration> {
     // individual streams "own" it, but this lives longer than any stream
     // so we want to trigger cleanup when THIS is dropped
     #[allow(dead_code)]
-    context: Box<StreamContext<T>>,
+    context: Pin<Box<StreamContext<T>>>,
     stream: Arc<Mutex<*mut ffi::oboe_AudioStream>>,
 }
 // Mark StreamManager as Send because it is:
@@ -37,9 +38,8 @@ pub struct StreamManager<T: StreamConfiguration> {
 unsafe impl<T: StreamConfiguration> Send for StreamManager<T> {}
 impl<T: StreamConfiguration> StreamManager<T> {
     pub fn new(config: T) -> Result<Self> {
-        let mut context = Box::new(StreamContext::new(config));
-        context.init()?;
-        let stream = context.get_stream();
+        let context = StreamContext::new(config)?;
+        let stream = Pin::as_ref(&context).get_stream();
         Ok(Self { context, stream })
     }
     pub fn start(&mut self) -> Result<()> {
@@ -73,17 +73,21 @@ struct StreamContext<T: StreamConfiguration> {
     stream: Arc<Mutex<*mut ffi::oboe_AudioStream>>,
 }
 impl<T: StreamConfiguration> StreamContext<T> {
-    pub fn new(config: T) -> Self {
-        Self {
+    pub fn new(config: T) -> Result<Pin<Box<Self>>> {
+        let res = Self {
             config,
             callback: None,
             stream: Arc::new(Mutex::new(std::ptr::null_mut())),
+        };
+        let mut boxed = Box::pin(res);
+        unsafe {
+            let mut_ref = Pin::as_mut(&mut boxed);
+            let res = Pin::get_unchecked_mut(mut_ref);
+            let callback = StreamManagerCallbackWrapperHandle::new(res);
+            res.callback = Some(callback);
+            res.build_stream(false)?;
         }
-    }
-    pub fn init(&mut self) -> Result<()> {
-        self.callback = Some(StreamManagerCallbackWrapperHandle::new(self));
-        self.build_stream(false)?;
-        Ok(())
+        Ok(boxed)
     }
     pub fn get_stream(&self) -> Arc<Mutex<*mut ffi::oboe_AudioStream>> {
         Arc::clone(&self.stream)
