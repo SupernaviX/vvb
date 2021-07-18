@@ -1,9 +1,12 @@
 mod manager;
-use manager::{AudioOutputStreamFactory, AudioStreamManager};
+use manager::{AudioStreamManager, ManagedAudioOutputCallback};
 
 use crate::emulator::audio::AudioPlayer;
 use anyhow::Result;
-use oboe::{AudioStream, AudioStreamBuilder, DataCallbackResult, Output, PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo, AudioOutputStreamSafe, Error};
+use oboe::{
+    AudioOutputStreamSafe, AudioStream, AudioStreamBuilder, DataCallbackResult, Error, Output,
+    PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo,
+};
 
 pub fn init(sample_rate: i32, frames_per_burst: i32) {
     oboe::DefaultStreamValues::set_sample_rate(sample_rate);
@@ -13,7 +16,7 @@ pub fn init(sample_rate: i32, frames_per_burst: i32) {
 struct OboeStreamConfiguration {
     player: AudioPlayer,
 }
-impl AudioOutputStreamFactory for OboeStreamConfiguration {
+impl ManagedAudioOutputCallback for OboeStreamConfiguration {
     type Format = f32;
     type ChannelCount = Stereo;
     fn build_stream(&self) -> AudioStreamBuilder<Output, Stereo, f32> {
@@ -27,11 +30,19 @@ impl AudioOutputStreamFactory for OboeStreamConfiguration {
             .set_sample_rate_conversion_quality(SampleRateConversionQuality::Fastest)
     }
 
-    fn on_error_before_close(&mut self, _audio_stream: &mut dyn AudioOutputStreamSafe, error: Error) {
+    fn on_error_before_close(
+        &mut self,
+        _audio_stream: &mut dyn AudioOutputStreamSafe,
+        error: Error,
+    ) {
         log::warn!("Audio stream error: {}", error);
     }
 
-    fn on_audio_ready(&mut self, _audio_stream: &mut dyn AudioOutputStreamSafe, data: &mut [(f32, f32)]) -> DataCallbackResult {
+    fn on_audio_ready(
+        &mut self,
+        _audio_stream: &mut dyn AudioOutputStreamSafe,
+        data: &mut [(f32, f32)],
+    ) -> DataCallbackResult {
         self.player.play(data);
         DataCallbackResult::Continue
     }
@@ -40,7 +51,6 @@ impl AudioOutputStreamFactory for OboeStreamConfiguration {
 pub struct OboeAudio {
     manager: AudioStreamManager<OboeStreamConfiguration>,
 }
-unsafe impl Send for OboeAudio {}
 impl OboeAudio {
     pub fn new(player: AudioPlayer) -> Result<Self> {
         let config = OboeStreamConfiguration { player };
@@ -51,13 +61,15 @@ impl OboeAudio {
 
     pub fn start(&mut self) -> Result<()> {
         log::info!("audio start");
-        self.manager.with_stream_do(|stream| stream.request_start())?;
+        self.manager
+            .with_stream_do(|stream| stream.request_start())?;
         Ok(())
     }
 
     pub fn stop(&mut self) -> Result<()> {
         log::info!("audio stop");
-        self.manager.with_stream_do(|stream| stream.request_stop())?;
+        self.manager
+            .with_stream_do(|stream| stream.request_stop())?;
         Ok(())
     }
 }
