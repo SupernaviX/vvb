@@ -143,6 +143,15 @@ where
         }
     }
 }
+impl<Callback: ManagedAudioOutputCallback> Drop for AudioStreamManager<Callback>
+where
+    (Callback::Format, Callback::ChannelCount): IsFrameType,
+{
+    fn drop(&mut self) {
+        // Make sure we drop the current stream when we drop this
+        self.current.lock().unwrap().take();
+    }
+}
 // safety: AudioOutputStream isn't Send because it uses pointers internally,
 // but we're using it with mutexes so everything should turn out OK
 unsafe impl<Callback: ManagedAudioOutputCallback> Send for AudioStreamManager<Callback> where
