@@ -70,7 +70,7 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
 
     override fun onInputDeviceAdded(newDeviceId: Int) {
         // Prepare any bindings which should be attached to this device
-        val device = _inputManager.getInputDevice(newDeviceId)
+        val device = _inputManager.getInputDevice(newDeviceId) ?: return
         val mappings = _deviceMappings[device.descriptor] ?: return
 
         _deviceBindings[newDeviceId] = DeviceBindings(mappings)
