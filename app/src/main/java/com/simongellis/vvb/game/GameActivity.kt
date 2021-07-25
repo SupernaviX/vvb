@@ -73,6 +73,7 @@ class GameActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         _inputBindingMapper.destroy()
+        _view.controller = null
         _controller.destroy()
         _audio.destroy()
     }
