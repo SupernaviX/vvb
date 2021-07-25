@@ -154,12 +154,11 @@ impl Hardware {
 
                     // Reset the timer
                     self.write_timer(self.reload_value);
-                    self.compute_next_tick();
                 } else {
                     // Keep on ticking
                     self.write_timer(new_timer_value);
-                    self.compute_next_tick();
                 }
+                self.compute_next_tick();
             }
         }
         self.correct_tcr();
