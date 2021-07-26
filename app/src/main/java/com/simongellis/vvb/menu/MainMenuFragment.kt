@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import androidx.activity.result.contract.ActivityResultContract
@@ -89,7 +90,13 @@ class MainMenuFragment: PreferenceFragmentCompat() {
     }
 
     private fun isFilePickerSupported(): Boolean {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            // Android 11 and above can't access external storage files directly,
+            // and they fail in ways that the below test can't easily detect
+            return false
+        }
         return try {
+            // If we can read the filesystem at all, this device supports filepickers
             @Suppress("DEPRECATION")
             Environment.getExternalStorageDirectory().listFiles() != null
         } catch (_: Exception) {
