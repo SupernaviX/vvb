@@ -92,7 +92,7 @@ class GamePakLoader(private val context: Context) {
             if (sep == -1) {
                 return filename to null
             }
-            return filename.substring(0, sep) to filename.substring(sep + 1)
+            return filename.substring(0, sep) to filename.substring(sep + 1).lowercase()
         }
     }
 }
