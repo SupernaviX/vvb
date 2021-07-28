@@ -20,11 +20,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _gamePakLoader = GamePakLoader(application)
 
     val isGameLoaded get() = _emulator.isGameLoaded()
+    var wasGameJustLoaded = false
     fun loadGame(uri: Uri): Boolean {
         return try {
             val gamePak = _gamePakLoader.tryLoad(uri)
             _emulator.loadGamePak(gamePak)
             _recentGamesDao.addRecentGame(uri)
+            wasGameJustLoaded = true
             true
         } catch (ex: IllegalArgumentException) {
             Toast.makeText(_application, ex.localizedMessage, Toast.LENGTH_LONG).show()

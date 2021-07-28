@@ -1,9 +1,7 @@
 package com.simongellis.vvb.menu
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -12,7 +10,7 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.game.GameActivity
 
 class RecentGamesMenuFragment: PreferenceFragmentCompat() {
-    private val viewModel: MainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels({ requireActivity() })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -18,7 +18,7 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.game.GameActivity
 
 class MainMenuFragment: PreferenceFragmentCompat() {
-    private val viewModel: MainViewModel by viewModels()
+    private val viewModel: MainViewModel by viewModels({ requireActivity() })
 
     companion object OpenPersistentDocument : OpenDocument() {
         override fun createIntent(context: Context, input: Array<out String>): Intent {
