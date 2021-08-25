@@ -14,6 +14,9 @@ class GamePreferences(context: Context) {
     private val isAnaglyph
         get() = videoMode == VideoMode.ANAGLYPH
 
+    val isLeia
+        get() = videoMode == VideoMode.LEIA
+
     private val supportsPortrait
         get() = videoMode.supportsPortrait
     private val isPortrait
@@ -63,6 +66,9 @@ class GamePreferences(context: Context) {
 
     val stereoSettings
         get() = StereoRenderer.Settings(screenZoom, verticalOffset, color)
+
+    val leiaSettings
+        get() = LeiaRenderer.Settings(screenZoom, verticalOffset, colorLeft, colorRight)
 
     init {
 

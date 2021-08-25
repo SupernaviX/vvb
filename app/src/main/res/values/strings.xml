@@ -55,6 +55,8 @@
     <string name="video_mode_mono_description">No equipment needed, but no 3D effects</string>
     <string name="video_mode_stereo_summary">Side-by-side</string>
     <string name="video_mode_stereo_description">Works with 3D TVs</string>
+    <string name="video_mode_leia_summary">LitByLeia</string>
+    <string name="video_mode_leia_description">Works with Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_color">Color</string>
     <string name="video_menu_color_left">Left Eye Color</string>
     <string name="video_menu_color_right">Right Eye Color</string>

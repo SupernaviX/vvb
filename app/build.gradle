@@ -23,6 +23,12 @@ def tryReadConfig(filename) {
     return config
 }
 
+repositories {
+    maven {
+        url 'https://leiainc.jfrog.io/leiainc/gradle-release'
+    }
+}
+
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.3"
@@ -36,6 +42,14 @@ android {
     }
     buildFeatures {
         viewBinding true
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['./../distribution/leia_sdk/lib']
+        }
+    }
+    packagingOptions {
+        pickFirst "**/lib/**"
     }
 
     defaultConfig {
@@ -151,4 +165,6 @@ dependencies {
     def acraVersion = '5.8.3'
     implementation("ch.acra:acra-http:$acraVersion")
     implementation("ch.acra:acra-toast:$acraVersion")
+
+    implementation 'com.leia:leiasdk:4.5.3'
 }
