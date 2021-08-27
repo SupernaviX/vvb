@@ -13,6 +13,9 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.game.PreviewActivity
 import com.simongellis.vvb.game.VideoMode
+import yuku.ambilwarna.AmbilWarnaDialog
+import yuku.ambilwarna.AmbilWarnaDialog.OnAmbilWarnaListener
+
 
 class VideoMenuFragment: PreferenceFragmentCompat() {
     enum class Prefs(val prefName: String, vararg val modes: VideoMode = VideoMode.values()) {
@@ -34,6 +37,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
             field = value
             value?.setOnDismissListener { field = null }
         }
+    private lateinit var _customColorPicker: AmbilWarnaDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -74,6 +78,51 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
             val left = _sharedPreferences.getInt(Prefs.COLOR_LEFT.prefName, Color.RED)
             val right = newRight as Int
             validateColors(left, right)
+            true
+        }
+
+        findPref(Prefs.COLOR).setOnPreferenceChangeListener { _, newColor ->
+            val newColor = newColor as Int
+            val oldColor = _sharedPreferences.getInt(Prefs.COLOR.prefName, Color.RED)
+            if(newColor === 0){
+                _customColorPicker = AmbilWarnaDialog(
+                    requireContext(),
+                    oldColor,
+                    object: OnAmbilWarnaListener {
+                        override fun onCancel(dialog: AmbilWarnaDialog) {
+
+                        }
+                        override fun onOk(dialog: AmbilWarnaDialog, color: Int) {
+                            val editor = _sharedPreferences.edit()
+                            editor.putInt(Prefs.COLOR.prefName, color)
+                            editor.commit()
+                        }
+                    }
+                )
+                _customColorPicker.show();
+            }
+            true
+        }
+        findPref(Prefs.COLOR_BG).setOnPreferenceChangeListener { _, newColor ->
+            val newColor = newColor as Int
+            val oldColor = _sharedPreferences.getInt(Prefs.COLOR_BG.prefName, Color.BLACK)
+            if(newColor === 0){
+                _customColorPicker = AmbilWarnaDialog(
+                    requireContext(),
+                    oldColor,
+                    object: OnAmbilWarnaListener {
+                        override fun onCancel(dialog: AmbilWarnaDialog) {
+
+                        }
+                        override fun onOk(dialog: AmbilWarnaDialog, color: Int) {
+                            val editor = _sharedPreferences.edit()
+                            editor.putInt(Prefs.COLOR_BG.prefName, color)
+                            editor.commit()
+                        }
+                    }
+                )
+                _customColorPicker.show();
+            }
             true
         }
 

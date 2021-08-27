@@ -22,10 +22,7 @@ const FRAGMENT_SHADER: &str = "\
 precision mediump float;
 uniform vec4 u_Colors[2];
 uniform sampler2D u_Textures[2];
-// uniform float alignment_offset;
-// uniform float debug;
 varying vec2 v_TexCoord;
-// out vec4 color;
 
 void main()
 {
@@ -35,6 +32,7 @@ void main()
     else if (view_id < 1.5) { gl_FragColor = u_Colors[0] * texture2D(u_Textures[0], v_TexCoord); }
     else if (view_id < 2.5) { gl_FragColor = u_Colors[0] * texture2D(u_Textures[1], v_TexCoord); }
     else { gl_FragColor = u_Colors[0] * texture2D(u_Textures[1], v_TexCoord); }
+    gl_FragColor = mix(u_Colors[1], u_Colors[0], gl_FragColor.g);
 }
 ";
 
@@ -140,8 +138,8 @@ pub mod jni {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
         let colors = [
-            env.get_color(this, "colorLeft")?,
-            env.get_color(this, "colorRight")?,
+            env.get_color(this, "color")?,
+            env.get_color(this, "colorBG")?,
         ];
         Ok(Settings {
             screen_zoom,
