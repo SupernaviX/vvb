@@ -46,6 +46,7 @@ impl<TLogic: RenderLogic> Renderer<TLogic> {
                 let eye = frame.eye;
                 let buffer = frame.buffer.lock().expect("Buffer lock was poisoned!");
                 self.logic.update(eye, &buffer)?;
+                drop(buffer);
                 self.logic.draw()
             }
             Err(TryRecvError::Empty) => self.logic.draw(),
