@@ -36,8 +36,8 @@ class LeiaRenderer(emulator: Emulator, settings: Settings) : Renderer {
     class Settings(
         val screenZoom: Float,
         val verticalOffset: Float,
-        @ColorInt val colorLeft: Int,
-        @ColorInt val colorRight: Int)
+        @ColorInt val color: Int,
+        @ColorInt val colorBG: Int)
 
     private external fun nativeConstructor(emulator: Emulator, settings: Settings)
     private external fun nativeDestructor()

@@ -19,5 +19,12 @@
         <item>@color/blue</item>
         <item>@color/violet</item>
         <item>@color/white</item>
+        <item>#682E00</item>
+        <item>#4A4A4A</item>
+        <item>#005A00</item>
+        <item>#006969</item>
+        <item>#000083</item>
+        <item>#5E275E</item>
+        <item>@color/black</item>
     </array>
 </resources>

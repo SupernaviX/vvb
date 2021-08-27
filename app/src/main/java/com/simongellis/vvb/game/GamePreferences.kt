@@ -35,6 +35,8 @@ class GamePreferences(context: Context) {
 
     @ColorInt val color: Int
 
+    @ColorInt val colorBG: Int
+
     @ColorInt val colorLeft: Int
         get() = if (isAnaglyph) { field } else { color }
     @ColorInt val colorRight: Int
@@ -68,13 +70,13 @@ class GamePreferences(context: Context) {
         get() = StereoRenderer.Settings(screenZoom, verticalOffset, color)
 
     val leiaSettings
-        get() = LeiaRenderer.Settings(screenZoom, verticalOffset, colorLeft, colorRight)
+        get() = LeiaRenderer.Settings(screenZoom, verticalOffset, color, colorBG)
 
     init {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-        videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.ANAGLYPH.name)!!)
+        videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.LEIA.name)!!)
 
         screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 65)
         horizontalOffset = prefs.getIntPercent("video_horizontal_offset", 0)
@@ -82,6 +84,8 @@ class GamePreferences(context: Context) {
 
         colorLeft = prefs.getInt("video_color_left", Color.RED)
         colorRight = prefs.getInt("video_color_right", Color.BLUE)
+
+        colorBG = prefs.getInt("video_color_bg", Color.BLACK)
 
         color = prefs.getInt("video_color", Color.RED)
 

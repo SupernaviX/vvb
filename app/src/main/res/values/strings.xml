@@ -60,6 +60,8 @@
     <string name="video_menu_color">Color</string>
     <string name="video_menu_color_left">Left Eye Color</string>
     <string name="video_menu_color_right">Right Eye Color</string>
+    <string name="video_menu_color_fg">Foreground Color</string>
+    <string name="video_menu_color_bg">Background Color</string>
     <string name="video_menu_invalid_colors_title">Invalid Colors</string>
     <string name="video_menu_invalid_colors_message">The left and right eye colors "overlap" on at least one color channel. The 3D effect may not work properly.</string>
     <string name="video_menu_invalid_colors_button">OK</string>

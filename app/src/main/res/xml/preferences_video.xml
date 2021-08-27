@@ -50,6 +50,20 @@
         app:colorShape="square"
         app:colorChoices="@array/anaglyph_color_choices"
         app:numColumns="4"/>
+    <com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
+        app:key="video_color"
+        app:title="@string/video_menu_color_fg"
+        app:defaultValue="@color/red"
+        app:colorShape="square"
+        app:colorChoices="@array/cardboard_color_choices"
+        app:numColumns="7"/>
+    <com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
+        app:key="video_color_bg"
+        app:title="@string/video_menu_color_bg"
+        app:defaultValue="@color/black"
+        app:colorShape="square"
+        app:colorChoices="@array/cardboard_color_choices"
+        app:numColumns="7"/>
     <Preference
         app:key="video_switch_viewer"
         app:title="@string/video_menu_switch_viewer"
