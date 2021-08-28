@@ -20,7 +20,7 @@ impl CardboardRenderLogic {
     pub fn new(settings: &Settings) -> Self {
         Self {
             screen_size: (0, 0),
-            base: StereoRenderLogic::new(&settings),
+            base: StereoRenderLogic::new(settings),
             distortion: None,
             cardboard_stale: true,
         }
@@ -81,7 +81,7 @@ impl RenderLogic for CardboardRenderLogic {
     }
 
     fn update(&mut self, eye: Eye, buffer: &[u8]) -> Result<()> {
-        self.base.update(eye, &buffer)?;
+        self.base.update(eye, buffer)?;
         self.update_device_params()
     }
 
@@ -136,8 +136,8 @@ pub mod jni {
         emulator: jobject,
         settings: jobject,
     ) -> Result<()> {
-        let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
-        let settings = get_settings(&env, settings)?;
+        let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+        let settings = get_settings(env, settings)?;
         let renderer = Renderer::new(
             emulator.get_frame_channel(),
             CardboardRenderLogic::new(&settings),

@@ -156,8 +156,8 @@ pub mod jni {
         emulator: jobject,
         settings: jobject,
     ) -> Result<()> {
-        let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
-        let settings = get_settings(&env, settings)?;
+        let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+        let settings = get_settings(env, settings)?;
         let renderer = Renderer::new(
             emulator.get_frame_channel(),
             AnaglyphRenderLogic::new(&settings),
