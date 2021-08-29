@@ -8,6 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import com.simongellis.vvb.data.GameRepository
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GamePakLoader
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.acra.ACRA
 import java.lang.Exception
 
@@ -17,15 +19,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _emulator = Emulator.instance
     private val _gamePakLoader = GamePakLoader(application)
 
-    val isGameLoaded get() = _emulator.isGameLoaded()
-    var wasGameJustLoaded = false
+    private val _loadedGame = MutableStateFlow<String?>(null)
+    val loadedGame = _loadedGame.asStateFlow()
+
+    var wasGameJustOpened = false
     fun loadGame(uri: Uri): Boolean {
         return try {
             val game = _gameRepo.getGame(uri)
             val gamePak = _gamePakLoader.tryLoad(game.id, uri)
             _emulator.loadGamePak(gamePak)
             _gameRepo.markAsPlayed(game.id, uri)
-            wasGameJustLoaded = true
+            _loadedGame.value = game.name
+            wasGameJustOpened = true
             true
         } catch (ex: IllegalArgumentException) {
             Toast.makeText(_application, ex.localizedMessage, Toast.LENGTH_LONG).show()
@@ -39,6 +44,17 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             }
             false
         }
+    }
+    fun closeGame() {
+        _emulator.unloadGamePak()
+        _loadedGame.value = null
+    }
+    fun resetGame() {
+        _emulator.reset()
+        wasGameJustOpened = true
+    }
+    fun openGame() {
+        wasGameJustOpened = true
     }
 
     val recentGames by _gameRepo::recentGames

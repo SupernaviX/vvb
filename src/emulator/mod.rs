@@ -69,11 +69,9 @@ impl Emulator {
         Ok(())
     }
 
-    pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
-        if let Some(sram) = self.memory.borrow().read_region(Region::Sram) {
-            buffer.copy_from_slice(sram);
-        }
-        Ok(())
+    pub fn unload_game_pak(&mut self) {
+        self.memory.borrow_mut().unload_game_pak();
+        self.reset();
     }
 
     pub fn reset(&mut self) {
@@ -99,6 +97,13 @@ impl Emulator {
             memory.read_halfword(0xfffffffc),
             memory.read_halfword(0xfffffffe),
         );
+    }
+
+    pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
+        if let Some(sram) = self.memory.borrow().read_region(Region::Sram) {
+            buffer.copy_from_slice(sram);
+        }
+        Ok(())
     }
 
     pub fn tick(&mut self, nanoseconds: u64) -> Result<()> {
@@ -232,6 +237,22 @@ pub mod jni {
         let mut this = get_emulator(env, this)?;
         info!("Beginning game pak load...");
         this.load_game_pak(rom, sram)
+    }
+
+    jni_func!(Emulator_nativeUnloadGamePak, unload_game_pak);
+    fn unload_game_pak(env: &JNIEnv, this: jobject) -> Result<()> {
+        info!("Unloading game pak");
+        let mut this = get_emulator(env, this)?;
+        this.unload_game_pak();
+        Ok(())
+    }
+
+    jni_func!(Emulator_nativeReset, reset);
+    fn reset(env: &JNIEnv, this: jobject) -> Result<()> {
+        info!("Resetting game");
+        let mut this = get_emulator(env, this)?;
+        this.reset();
+        Ok(())
     }
 
     jni_func!(Emulator_nativeTick, tick, jint);

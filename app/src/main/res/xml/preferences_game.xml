@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        app:key="resume_game"
+        app:title="@string/game_menu_resume_game"/>
+    <Preference
+        app:key="reset_game"
+        app:title="@string/game_menu_reset_game" />
+    <Preference
+        app:key="close_game"
+        app:title="@string/game_menu_close_game" />
+</PreferenceScreen>

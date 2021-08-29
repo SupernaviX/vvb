@@ -151,6 +151,11 @@ impl Memory {
         Ok(())
     }
 
+    pub fn unload_game_pak(&mut self) {
+        *self.mut_region(Region::Sram) = None;
+        *self.mut_region(Region::Rom) = None;
+    }
+
     fn init(&mut self) {
         if let Some(region) = self.mut_region(Region::Vram) {
             region.clear();

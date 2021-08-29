@@ -16,6 +16,7 @@ import com.nononsenseapps.filepicker.FilePickerActivity
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.GameActivity
+import com.simongellis.vvb.utils.observeNow
 
 class MainMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: MainViewModel by viewModels({ requireActivity() })
@@ -46,11 +47,6 @@ class MainMenuFragment: PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences, rootKey)
 
-        findPreference<Preference>("resume_game")?.setOnPreferenceClickListener {
-            playGame()
-            true
-        }
-
         val chooseGameFilePicker = registerForActivityResult(OpenFilePicker(), this::loadGame)
         val chooseGameStorageFramework = registerForActivityResult(OpenPersistentDocument) { uri ->
             uri?.also {
@@ -68,14 +64,21 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             }
             true
         }
+
+        observeNow(viewModel.loadedGame) { game ->
+            findPreference<Preference>("game_actions")?.apply {
+                isVisible = game != null
+                if (game != null) {
+                    val nowPlaying = context.resources.getString(R.string.main_menu_now_playing)
+                    summary = "$nowPlaying: $game"
+                }
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
         requireActivity().setTitle(R.string.app_name)
-        findPreference<Preference>("resume_game")?.apply {
-            isVisible = viewModel.isGameLoaded
-        }
     }
 
     private fun loadGame(uri: Uri?) {

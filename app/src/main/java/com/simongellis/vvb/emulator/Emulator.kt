@@ -43,12 +43,19 @@ class Emulator {
         _gamePak = gamePak
     }
 
-    fun loadImage(leftEye: Bitmap, rightEye: Bitmap) {
-        nativeLoadImage(leftEye.toByteBuffer(), rightEye.toByteBuffer())
+    fun unloadGamePak() {
+        pause()
+        nativeUnloadGamePak()
+        _gamePak = null
     }
 
-    fun isGameLoaded(): Boolean {
-        return _gamePak != null
+    fun reset() {
+        pause()
+        nativeReset()
+    }
+
+    fun loadImage(leftEye: Bitmap, rightEye: Bitmap) {
+        nativeLoadImage(leftEye.toByteBuffer(), rightEye.toByteBuffer())
     }
 
     fun resume() {
@@ -98,6 +105,8 @@ class Emulator {
     private external fun nativeConstructor()
     private external fun nativeDestructor()
     private external fun nativeLoadGamePak(rom: ByteBuffer, sram: ByteBuffer)
+    private external fun nativeUnloadGamePak()
+    private external fun nativeReset()
     private external fun nativeTick(nanoseconds: Int)
     private external fun nativeReadSRAM(buffer: ByteBuffer)
     private external fun nativeLoadImage(leftEye: ByteBuffer, rightEye: ByteBuffer)
