@@ -28,6 +28,15 @@ class GameMenuFragment: PreferenceFragmentCompat() {
             playGame()
             true
         }
+        findPreference<Preference>("save_state")?.setOnPreferenceClickListener {
+            viewModel.saveState()
+            true
+        }
+        findPreference<Preference>("load_state")?.setOnPreferenceClickListener {
+            viewModel.loadState()
+            playGame()
+            true
+        }
         findPreference<Preference>("close_game")?.setOnPreferenceClickListener {
             viewModel.closeGame()
             closeGameMenu()
@@ -36,12 +45,14 @@ class GameMenuFragment: PreferenceFragmentCompat() {
 
         val nowPlaying = requireContext().resources.getString(R.string.main_menu_now_playing)
         title = nowPlaying
+
         observeNow(viewModel.loadedGame) { game ->
-            title = if (game != null) {
-                "$nowPlaying: $game"
-            } else {
-                nowPlaying
-            }
+            if (game == null) return@observeNow
+
+            title = "$nowPlaying: ${game.name}"
+
+            val hasSaveState = game.currentState.exists()
+            findPreference<Preference>("load_state")?.isEnabled = hasSaveState
         }
     }
 

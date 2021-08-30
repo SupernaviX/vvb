@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
+import com.simongellis.vvb.data.Game
 import com.simongellis.vvb.data.GameRepository
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GamePakLoader
@@ -19,7 +20,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _emulator = Emulator.instance
     private val _gamePakLoader = GamePakLoader(application)
 
-    private val _loadedGame = MutableStateFlow<String?>(null)
+    private val _loadedGame = MutableStateFlow<Game?>(null)
     val loadedGame = _loadedGame.asStateFlow()
 
     var wasGameJustOpened = false
@@ -29,7 +30,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val gamePak = _gamePakLoader.tryLoad(game.id, uri)
             _emulator.loadGamePak(gamePak)
             _gameRepo.markAsPlayed(game.id, uri)
-            _loadedGame.value = game.name
+            _loadedGame.value = game
             wasGameJustOpened = true
             true
         } catch (ex: IllegalArgumentException) {
@@ -45,16 +46,31 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             false
         }
     }
+
     fun closeGame() {
         _emulator.unloadGamePak()
         _loadedGame.value = null
     }
+
     fun resetGame() {
         _emulator.reset()
         wasGameJustOpened = true
     }
+
     fun openGame() {
         wasGameJustOpened = true
+    }
+
+    fun saveState() {
+        loadedGame.value?.also {
+            _emulator.saveState(it.currentState)
+        }
+    }
+
+    fun loadState() {
+        loadedGame.value?.also {
+            _emulator.loadState(it.currentState)
+        }
     }
 
     val recentGames by _gameRepo::recentGames

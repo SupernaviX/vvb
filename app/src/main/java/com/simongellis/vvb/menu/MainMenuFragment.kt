@@ -70,7 +70,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
                 isVisible = game != null
                 if (game != null) {
                     val nowPlaying = context.resources.getString(R.string.main_menu_now_playing)
-                    summary = "$nowPlaying: $game"
+                    summary = "$nowPlaying: ${game.name}"
                 }
             }
         }

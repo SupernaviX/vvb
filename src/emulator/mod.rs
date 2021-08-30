@@ -200,10 +200,12 @@ pub mod jni {
     use super::Emulator;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
-    use jni::objects::JByteBuffer;
+    use jni::objects::{JByteBuffer, JString};
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
     use log::info;
+    use std::convert::TryInto;
+    use std::fs;
 
     fn get_emulator<'a>(
         env: &'a JNIEnv,
@@ -266,6 +268,24 @@ pub mod jni {
         let this = get_emulator(env, this)?;
         let buffer = env.get_direct_buffer_address(buffer)?;
         this.read_sram(buffer)
+    }
+
+    jni_func!(Emulator_nativeSaveState, save_state, JString);
+    fn save_state(env: &JNIEnv, _this: jobject, filename: JString) -> Result<()> {
+        info!("Saving...");
+        let filename: String = env.get_string(filename)?.try_into()?;
+        fs::write(filename, &[0xca, 0xfe, 0xba, 0xbe])?;
+        info!("Saved!");
+        Ok(())
+    }
+
+    jni_func!(Emulator_nativeLoadState, load_state, JString);
+    fn load_state(env: &JNIEnv, _this: jobject, filename: JString) -> Result<()> {
+        info!("Loading...");
+        let filename: String = env.get_string(filename)?.try_into()?;
+        let contents = fs::read(filename)?;
+        info!("Loaded! {:?}", contents);
+        Ok(())
     }
 
     jni_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);

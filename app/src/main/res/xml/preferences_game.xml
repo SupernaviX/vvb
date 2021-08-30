@@ -7,6 +7,12 @@
         app:key="reset_game"
         app:title="@string/game_menu_reset_game" />
     <Preference
+        app:key="save_state"
+        app:title="@string/game_menu_save_state" />
+    <Preference
+        app:key="load_state"
+        app:title="@string/game_menu_load_state" />
+    <Preference
         app:key="close_game"
         app:title="@string/game_menu_close_game" />
 </PreferenceScreen>

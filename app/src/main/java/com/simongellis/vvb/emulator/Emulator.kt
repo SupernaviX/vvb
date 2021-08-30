@@ -2,6 +2,7 @@ package com.simongellis.vvb.emulator
 
 import android.graphics.Bitmap
 import android.os.SystemClock
+import java.io.File
 import java.nio.ByteBuffer
 import kotlin.concurrent.thread
 
@@ -47,6 +48,14 @@ class Emulator {
         pause()
         nativeUnloadGamePak()
         _gamePak = null
+    }
+
+    fun saveState(state: File) {
+        nativeSaveState(state.canonicalPath)
+    }
+
+    fun loadState(state: File) {
+        nativeLoadState(state.canonicalPath)
     }
 
     fun reset() {
@@ -106,6 +115,8 @@ class Emulator {
     private external fun nativeDestructor()
     private external fun nativeLoadGamePak(rom: ByteBuffer, sram: ByteBuffer)
     private external fun nativeUnloadGamePak()
+    private external fun nativeSaveState(path: String)
+    private external fun nativeLoadState(path: String)
     private external fun nativeReset()
     private external fun nativeTick(nanoseconds: Int)
     private external fun nativeReadSRAM(buffer: ByteBuffer)
