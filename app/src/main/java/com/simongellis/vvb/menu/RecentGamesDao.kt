@@ -2,12 +2,13 @@ package com.simongellis.vvb.menu
 
 import android.content.SharedPreferences
 import android.net.Uri
-import androidx.core.content.edit
+import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.simongellis.vvb.game.GamePakLoader
-import com.simongellis.vvb.utils.PreferenceLiveDataSource
+import kotlinx.coroutines.flow.map
 
-class RecentGamesDao(private val preferences: SharedPreferences) {
-    private val _dataSource = PreferenceLiveDataSource(preferences)
+class RecentGamesDao(preferences: SharedPreferences) {
+    private val _preferences = FlowSharedPreferences(preferences)
+    private val _rawRecentGames = _preferences.getStringSet("recent_games", setOf())
 
     data class RecentGame(val lastPlayed: Long, val uri: Uri) {
         val name = GamePakLoader.getName(uri)
@@ -24,21 +25,19 @@ class RecentGamesDao(private val preferences: SharedPreferences) {
     }
 
     val recentGames by lazy {
-        _dataSource.get("recent_games", this::getRecentGames)
+        _rawRecentGames.asFlow().map { parseRecentGames(it) }
     }
 
-    private fun getRecentGames(): List<RecentGame> {
-        return preferences.getStringSet("recent_games", setOf())!!
+    private fun parseRecentGames(raw: Set<String>): List<RecentGame> {
+        return raw
             .map { RecentGame.fromString(it) }
             .sortedByDescending { it.lastPlayed }
     }
 
     fun addRecentGame(uri: Uri) {
         val game = RecentGame(System.currentTimeMillis(), uri)
-        val otherGames = getRecentGames().filter { it.uri != uri }
+        val otherGames = parseRecentGames(_rawRecentGames.get()).filter { it.uri != uri }
         val recentGames = listOf(game).plus(otherGames).take(10)
-        preferences.edit {
-            putStringSet("recent_games", recentGames.map { it.toString() }.toSet())
-        }
+        _rawRecentGames.set(recentGames.map { it.toString() }.toSet())
     }
 }

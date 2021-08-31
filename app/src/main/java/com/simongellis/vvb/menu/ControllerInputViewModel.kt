@@ -19,9 +19,8 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
     data class BindingInfo(val input: Input, val multiple: Boolean)
     private val _binding = MutableLiveData<BindingInfo?>(null)
 
-    val controller = Transformations.map(_controllerDao.controllers) { controllers ->
-        controllers.first { it.id == _id }
-    }!!
+    val controller = _controllerDao.getLiveController(_id).asLiveData()
+
     val inputSummaries = Input.values()
         .map { it to getInputSummary(it) }
         .toMap()
@@ -52,11 +51,11 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
     }
 
     private fun getInputSummary(input: Input): LiveData<InputDisplay> {
-        val mappings = _controllerDao.getLiveMappings(_id, input)
+        val mappings = _controllerDao.getLiveMappings(_id, input).asLiveData()
 
         fun getMessage(): InputDisplay {
             val currBinding = _binding.value
-            val currMappings = mappings.value
+            val currMappings = mappings.value!!
             if (currBinding?.input == input) {
                 if (currBinding.multiple) {
                     return InputDisplay.Resource(R.string.input_menu_add_mapping)

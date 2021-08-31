@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.asLiveData
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GamePakLoader
@@ -42,5 +43,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    val recentGames by _recentGamesDao::recentGames
+    val recentGames by lazy {
+        _recentGamesDao.recentGames.asLiveData()
+    }
 }
