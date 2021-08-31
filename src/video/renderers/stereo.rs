@@ -99,7 +99,7 @@ impl RenderLogic for StereoRenderLogic {
     }
 
     fn update(&mut self, eye: Eye, buffer: &[u8]) -> Result<()> {
-        self.textures.update(eye as usize, &buffer)
+        self.textures.update(eye as usize, buffer)
     }
 
     fn draw(&self) -> Result<()> {
@@ -166,8 +166,8 @@ pub mod jni {
         emulator: jobject,
         settings: jobject,
     ) -> Result<()> {
-        let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
-        let settings = get_settings(&env, settings)?;
+        let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+        let settings = get_settings(env, settings)?;
         let renderer = Renderer::new(
             emulator.get_frame_channel(),
             StereoRenderLogic::new(&settings),

@@ -56,7 +56,7 @@ pub mod jni {
         settings: jobject,
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
-        let settings = get_settings(&env, settings)?;
+        let settings = get_settings(env, settings)?;
         let audio = Audio::new(emulator.get_audio_player(settings.buffer_size, settings.volume))?;
         jni_helpers::java_init(env, this, audio)
     }
