@@ -4,9 +4,10 @@ import android.content.SharedPreferences
 import android.net.Uri
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.simongellis.vvb.game.GamePakLoader
-import kotlinx.coroutines.flow.map
+import com.simongellis.vvb.utils.asStateFlow
+import kotlinx.coroutines.CoroutineScope
 
-class RecentGamesDao(preferences: SharedPreferences) {
+class RecentGamesDao(scope: CoroutineScope, preferences: SharedPreferences) {
     private val _preferences = FlowSharedPreferences(preferences)
     private val _rawRecentGames = _preferences.getStringSet("recent_games", setOf())
 
@@ -25,7 +26,7 @@ class RecentGamesDao(preferences: SharedPreferences) {
     }
 
     val recentGames by lazy {
-        _rawRecentGames.asFlow().map { parseRecentGames(it) }
+        _rawRecentGames.asStateFlow(scope) { parseRecentGames(it) }
     }
 
     private fun parseRecentGames(raw: Set<String>): List<RecentGame> {

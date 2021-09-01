@@ -5,7 +5,7 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GamePakLoader
@@ -15,7 +15,7 @@ import java.lang.Exception
 
 class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _preferences = PreferenceManager.getDefaultSharedPreferences(application)
-    private val _recentGamesDao = RecentGamesDao(_preferences)
+    private val _recentGamesDao = RecentGamesDao(viewModelScope, _preferences)
     private val _application = getApplication<VvbApplication>()
     private val _emulator = Emulator.instance
     private val _gamePakLoader = GamePakLoader(application)
@@ -43,7 +43,5 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    val recentGames by lazy {
-        _recentGamesDao.recentGames.asLiveData()
-    }
+    val recentGames by _recentGamesDao::recentGames
 }
