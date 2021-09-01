@@ -7,27 +7,29 @@ import androidx.lifecycle.*
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.ControllerDao
 import com.simongellis.vvb.utils.LiveEvent
+import com.simongellis.vvb.utils.mapAsState
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class ControllersViewModel(application: Application): AndroidViewModel(application) {
     private val _controllerDao = ControllerDao(viewModelScope, application)
     private val _autoMapper = ControllerAutoMapper()
 
     private enum class State { Normal, Renaming, Deleting }
-    private val _state = MutableLiveData(State.Normal)
+    private val _state = MutableStateFlow(State.Normal)
 
     private var _renamingController: ControllerDao.Controller? = null
 
     val controllers by _controllerDao::controllers
     val editingController = LiveEvent<ControllerDao.Controller>()
 
-    val renameLabel = Transformations.map(_state) {
+    val renameLabel = _state.mapAsState(viewModelScope) {
         if (it == State.Renaming) {
             R.string.controller_menu_choose_rename
         } else {
             R.string.controller_menu_rename_controller
         }
     }
-    val deleteLabel = Transformations.map(_state) {
+    val deleteLabel = _state.mapAsState(viewModelScope) {
         if (it == State.Deleting) {
             R.string.controller_menu_choose_delete
         } else {

@@ -20,12 +20,12 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
         viewModel.editingController.observe(this, {
             editControllerMappings(it.id)
         })
-        viewModel.renameLabel.observe(this, {
+        observe(viewModel.renameLabel) {
             findPreference<Preference>("rename_controller")?.setTitle(it)
-        })
-        viewModel.deleteLabel.observe(this, {
+        }
+        observe(viewModel.deleteLabel) {
             findPreference<Preference>("delete_controller")?.setTitle(it)
-        })
+        }
         viewModel.showNameDialog.observe(this, this::showControllerNameDialog)
         viewModel.showAutoMapDialog.observe(this) { showAutoMapDialog() }
     }
