@@ -3,9 +3,11 @@ package com.simongellis.vvb.utils
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.flowWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.fredporciuncula.flow.preferences.Preference
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
 /**
  * Turn Preference data into a StateFlow, which always has a defined value
@@ -16,7 +18,18 @@ fun <TRaw, TParsed> Preference<TRaw>.asStateFlow(
 ): StateFlow<TParsed> {
     return asFlow()
         .map { deserializer(it) }
-        .stateIn(scope, SharingStarted.WhileSubscribed(), deserializer(get()))
+        .asStateFlow(scope, deserializer(get()))
+}
+
+fun <TIn, TOut> StateFlow<TIn>.mapAsState(
+    scope: CoroutineScope,
+    transform: (TIn) -> TOut
+): StateFlow<TOut> {
+    return map { transform(it) }.asStateFlow(scope, transform(value))
+}
+
+fun <T> Flow<T>.asStateFlow(scope: CoroutineScope, value: T): StateFlow<T> {
+    return stateIn(scope, SharingStarted.WhileSubscribed(), value)
 }
 
 /**
@@ -25,9 +38,11 @@ fun <TRaw, TParsed> Preference<TRaw>.asStateFlow(
  * 2. Start listening for changes when this component is Started
  * 3. Stop listening for changes when this component is Stopped
  */
-suspend fun <T> LifecycleOwner.observe(flow: StateFlow<T>, observer: (T) -> Unit) {
-    observer(flow.value)
-    flow
-        .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-        .collect { observer(it) }
+fun <T> LifecycleOwner.observe(flow: StateFlow<T>, observer: (T) -> Unit) {
+    lifecycleScope.launch {
+        observer(flow.value)
+        flow
+            .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+            .collect { observer(it) }
+    }
 }

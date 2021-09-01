@@ -9,6 +9,7 @@ import androidx.fragment.app.viewModels
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
+import com.simongellis.vvb.utils.observe
 import kotlin.math.absoluteValue
 
 class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListener, View.OnGenericMotionListener {
@@ -17,12 +18,12 @@ class ControllerInputMenuFragment: PreferenceFragmentCompat(), View.OnKeyListene
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        viewModel.controller.observe(this, {
+        observe(viewModel.controller) {
             val defaultTitle = getText(R.string.main_menu_controller_setup)
             requireActivity().title = "$defaultTitle: ${it.name}"
-        })
+        }
         viewModel.inputSummaries.forEach { (input, summary) ->
-            summary.observe(this) {
+            observe(summary) {
                 when (it) {
                     is ControllerInputViewModel.InputDisplay.Resource -> {
                         findPreference(input)?.setSummary(it.id)

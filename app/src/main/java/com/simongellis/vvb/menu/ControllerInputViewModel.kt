@@ -7,6 +7,7 @@ import androidx.lifecycle.*
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
+import com.simongellis.vvb.utils.asStateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -22,7 +23,7 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
     data class BindingInfo(val input: Input, val multiple: Boolean)
     private val _binding = MutableStateFlow<BindingInfo?>(null)
 
-    val controller = _controllerDao.getLiveController(_id).asLiveData()
+    val controller = _controllerDao.getLiveController(_id)
 
     val inputSummaries = Input.values()
         .map { it to getInputSummary(it) }
@@ -53,7 +54,7 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
         _binding.value = null
     }
 
-    private fun getInputSummary(input: Input): LiveData<InputDisplay> {
+    private fun getInputSummary(input: Input): StateFlow<InputDisplay> {
         val mappings = _controllerDao.getLiveMappings(_id, input)
 
         fun getMessage(currBinding: BindingInfo?, currMappings: List<ControllerDao.Mapping>): InputDisplay {
@@ -69,7 +70,7 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
             return InputDisplay.Text(currMappings.joinToString(", "))
         }
 
-        val summarizer = _binding.combine(mappings) { b, m -> getMessage(b, m) }
-        return summarizer.asLiveData()
+        return _binding.combine(mappings) { b, m -> getMessage(b, m) }
+            .asStateFlow(viewModelScope, getMessage(_binding.value, mappings.value))
     }
 }

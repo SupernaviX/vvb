@@ -3,7 +3,6 @@ package com.simongellis.vvb.menu
 import android.os.Bundle
 import androidx.core.os.bundleOf
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -11,16 +10,13 @@ import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.ControllerDao
 import com.simongellis.vvb.utils.observe
-import kotlinx.coroutines.launch
 
 class ControllersMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: ControllersViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            observe(viewModel.controllers) { updateControllerList(it) }
-        }
+        observe(viewModel.controllers) { updateControllerList(it) }
         viewModel.editingController.observe(this, {
             editControllerMappings(it.id)
         })

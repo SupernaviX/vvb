@@ -9,12 +9,12 @@ import androidx.preference.PreferenceManager
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.utils.asStateFlow
+import com.simongellis.vvb.utils.mapAsState
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.map
 import java.util.*
 import kotlin.collections.HashSet
 
-class ControllerDao(scope: CoroutineScope, preferences: SharedPreferences) {
+class ControllerDao(private val scope: CoroutineScope, preferences: SharedPreferences) {
     constructor(scope: CoroutineScope, context: Context): this(scope, PreferenceManager.getDefaultSharedPreferences(context))
     private val _preferences = FlowSharedPreferences(preferences)
     private val _rawControllers = _preferences.getStringSet("controllers", setOf())
@@ -80,7 +80,7 @@ class ControllerDao(scope: CoroutineScope, preferences: SharedPreferences) {
     }
 
     fun getLiveController(id: String)
-        = controllers.map { c -> c.first { it.id == id } }
+        = controllers.mapAsState(scope) { c -> c.first { it.id == id } }
 
     fun addController(name: String): Controller {
         val controllers = _rawControllers.get()
@@ -122,8 +122,7 @@ class ControllerDao(scope: CoroutineScope, preferences: SharedPreferences) {
     }
 
     fun getLiveMappings(controllerId: String, input: Input) =
-        getRawMapping(controllerId, input).asFlow()
-            .map { parseMappings(input, it) }
+        getRawMapping(controllerId, input).asStateFlow(scope) { parseMappings(input, it) }
 
     fun getAllMappings(): List<Mapping> {
         return getControllers().flatMap { getMappings(it.id) }

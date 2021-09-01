@@ -3,23 +3,19 @@ package com.simongellis.vvb.menu
 import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.GameActivity
 import com.simongellis.vvb.utils.observe
-import kotlinx.coroutines.launch
 
 class RecentGamesMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: MainViewModel by viewModels({ requireActivity() })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            observe(viewModel.recentGames) { updateRecentGames(it) }
-        }
+        observe(viewModel.recentGames) { updateRecentGames(it) }
     }
 
     override fun onResume() {
