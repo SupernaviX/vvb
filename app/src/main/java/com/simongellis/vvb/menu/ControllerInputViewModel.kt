@@ -7,13 +7,12 @@ import androidx.lifecycle.*
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
-import com.simongellis.vvb.utils.asStateFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 
 class ControllerInputViewModel(application: Application, savedStateHandle: SavedStateHandle): AndroidViewModel(application) {
-    private val _controllerDao = ControllerDao(viewModelScope, application)
+    private val _controllerDao = ControllerDao(application)
     private val _id: String = savedStateHandle["id"]!!
 
     sealed class InputDisplay {
@@ -54,23 +53,20 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
         _binding.value = null
     }
 
-    private fun getInputSummary(input: Input): StateFlow<InputDisplay> {
+    private fun getInputSummary(input: Input): Flow<InputDisplay> {
         val mappings = _controllerDao.getLiveMappings(_id, input)
-
-        fun getMessage(currBinding: BindingInfo?, currMappings: List<ControllerDao.Mapping>): InputDisplay {
+        return _binding.combine(mappings) { currBinding, currMappings ->
             if (currBinding?.input == input) {
                 if (currBinding.multiple) {
-                    return InputDisplay.Resource(R.string.input_menu_add_mapping)
+                    InputDisplay.Resource(R.string.input_menu_add_mapping)
+                } else {
+                    InputDisplay.Resource(R.string.input_menu_put_mapping)
                 }
-                return InputDisplay.Resource(R.string.input_menu_put_mapping)
+            } else  if (currMappings.isEmpty()) {
+                InputDisplay.Resource(R.string.input_menu_unmapped)
+            } else {
+                InputDisplay.Text(currMappings.joinToString(", "))
             }
-            if (currMappings.isEmpty()) {
-                return InputDisplay.Resource(R.string.input_menu_unmapped)
-            }
-            return InputDisplay.Text(currMappings.joinToString(", "))
         }
-
-        return _binding.combine(mappings) { b, m -> getMessage(b, m) }
-            .asStateFlow(viewModelScope, getMessage(_binding.value, mappings.value))
     }
 }

@@ -26,7 +26,7 @@ class InputBindingMapper(scope: CoroutineScope, context: Context): InputManager.
             .groupBy { it.input }
     }
 
-    private val _deviceMappings = ControllerDao(scope, context)
+    private val _deviceMappings = ControllerDao(context)
         .getAllMappings()
         .groupBy { it.device }
 

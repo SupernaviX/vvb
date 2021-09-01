@@ -3,17 +3,15 @@ package com.simongellis.vvb.menu
 import android.app.Application
 import android.view.InputDevice
 import androidx.annotation.StringRes
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.ControllerDao
-import com.simongellis.vvb.utils.mapAsState
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class ControllersViewModel(application: Application): AndroidViewModel(application) {
-    private val _controllerDao = ControllerDao(viewModelScope, application)
+    private val _controllerDao = ControllerDao(application)
     private val _autoMapper = ControllerAutoMapper()
 
     private enum class State { Normal, Renaming, Deleting }
@@ -25,14 +23,18 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
     private val _editingController = MutableSharedFlow<ControllerDao.Controller>()
     val editingController = _editingController.asSharedFlow()
 
-    val renameLabel = _state.mapAsState(viewModelScope) {
+    private val _newControllerName = controllers
+        .map { "Controller ${it.size + 1}" }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "Controller 1")
+
+    val renameLabel = _state.map {
         if (it == State.Renaming) {
             R.string.controller_menu_choose_rename
         } else {
             R.string.controller_menu_rename_controller
         }
     }
-    val deleteLabel = _state.mapAsState(viewModelScope) {
+    val deleteLabel = _state.map {
         if (it == State.Deleting) {
             R.string.controller_menu_choose_delete
         } else {
@@ -58,7 +60,7 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
         _state.value = State.Normal
         promptForName(
             R.string.controller_menu_create,
-            "Controller ${controllers.value.size + 1}"
+            _newControllerName.value
         )
     }
 

@@ -10,20 +10,21 @@ import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.ControllerDao
 import com.simongellis.vvb.utils.observe
+import com.simongellis.vvb.utils.observeEager
 
 class ControllersMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: ControllersViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        observe(viewModel.controllers) { updateControllerList(it) }
+        observeEager(viewModel.controllers) { updateControllerList(it) }
         observe(viewModel.editingController) {
             editControllerMappings(it.id)
         }
-        observe(viewModel.renameLabel) {
+        observeEager(viewModel.renameLabel) {
             findPreference<Preference>("rename_controller")?.setTitle(it)
         }
-        observe(viewModel.deleteLabel) {
+        observeEager(viewModel.deleteLabel) {
             findPreference<Preference>("delete_controller")?.setTitle(it)
         }
         observe(viewModel.showNameDialog) { showControllerNameDialog(it) }
