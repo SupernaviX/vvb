@@ -6,9 +6,11 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.*
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.ControllerDao
-import com.simongellis.vvb.utils.LiveEvent
 import com.simongellis.vvb.utils.mapAsState
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 
 class ControllersViewModel(application: Application): AndroidViewModel(application) {
     private val _controllerDao = ControllerDao(viewModelScope, application)
@@ -20,7 +22,8 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
     private var _renamingController: ControllerDao.Controller? = null
 
     val controllers by _controllerDao::controllers
-    val editingController = LiveEvent<ControllerDao.Controller>()
+    private val _editingController = MutableSharedFlow<ControllerDao.Controller>()
+    val editingController = _editingController.asSharedFlow()
 
     val renameLabel = _state.mapAsState(viewModelScope) {
         if (it == State.Renaming) {
@@ -38,12 +41,16 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
     }
 
     class NameDialog(@StringRes val action: Int, val initialValue: String)
-    val showNameDialog = LiveEvent<NameDialog>()
-    val showAutoMapDialog = LiveEvent<Unit>()
+    private val _showNameDialog = MutableSharedFlow<NameDialog>()
+    val showNameDialog = _showNameDialog.asSharedFlow()
+    private val _showAutoMapDialog = MutableSharedFlow<Unit>()
+    val showAutoMapDialog = _showAutoMapDialog.asSharedFlow()
 
     fun promptAutoMap() {
-        _state.value = State.Normal
-        showAutoMapDialog.emit(Unit)
+        viewModelScope.launch {
+            _showAutoMapDialog.emit(Unit)
+            _state.value = State.Normal
+        }
     }
     fun isMappable(device: InputDevice): Boolean = _autoMapper.isMappable(device)
 
@@ -92,7 +99,9 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
     }
 
     private fun editControllerMappings(controller: ControllerDao.Controller) {
-        editingController.emit(controller)
+        viewModelScope.launch {
+            _editingController.emit(controller)
+        }
     }
 
     private fun promptRenameController(controller: ControllerDao.Controller) {
@@ -105,7 +114,9 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
     }
 
     private fun promptForName(@StringRes action: Int, value: String) {
-        showNameDialog.emit(NameDialog(action, value))
+        viewModelScope.launch {
+            _showNameDialog.emit(NameDialog(action, value))
+        }
     }
 
     private fun deleteController(controller: ControllerDao.Controller) {

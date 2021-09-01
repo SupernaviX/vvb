@@ -17,17 +17,17 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         observe(viewModel.controllers) { updateControllerList(it) }
-        viewModel.editingController.observe(this, {
+        observe(viewModel.editingController) {
             editControllerMappings(it.id)
-        })
+        }
         observe(viewModel.renameLabel) {
             findPreference<Preference>("rename_controller")?.setTitle(it)
         }
         observe(viewModel.deleteLabel) {
             findPreference<Preference>("delete_controller")?.setTitle(it)
         }
-        viewModel.showNameDialog.observe(this, this::showControllerNameDialog)
-        viewModel.showAutoMapDialog.observe(this) { showAutoMapDialog() }
+        observe(viewModel.showNameDialog) { showControllerNameDialog(it) }
+        observe(viewModel.showAutoMapDialog) { showAutoMapDialog() }
     }
 
     override fun onResume() {
