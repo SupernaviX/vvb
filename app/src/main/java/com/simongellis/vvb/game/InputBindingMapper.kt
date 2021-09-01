@@ -6,9 +6,13 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.core.content.ContextCompat.getSystemService
 import com.simongellis.vvb.emulator.Input
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.collections.HashMap
 
-class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
+class InputBindingMapper(scope: CoroutineScope, context: Context): InputManager.InputDeviceListener {
+
     data class AxisBinding(val axis: Int, val isNegative: Boolean, val input: Input)
 
     class DeviceBindings(mappings: List<ControllerDao.Mapping>) {
@@ -22,7 +26,7 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
             .groupBy { it.input }
     }
 
-    private val _deviceMappings = ControllerDao(context)
+    private val _deviceMappings = ControllerDao(scope, context)
         .getAllMappings()
         .groupBy { it.device }
 
@@ -30,14 +34,18 @@ class InputBindingMapper(context: Context): InputManager.InputDeviceListener {
     private val _inputManager = getSystemService(context, InputManager::class.java)!!
 
     init {
-        _inputManager.registerInputDeviceListener(this, null)
-        _inputManager.inputDeviceIds.forEach {
-            onInputDeviceAdded(it)
+        val listener = this
+        scope.launch {
+            _inputManager.registerInputDeviceListener(listener, null)
+            _inputManager.inputDeviceIds.forEach {
+                onInputDeviceAdded(it)
+            }
+            suspendCancellableCoroutine {
+                it.invokeOnCancellation {
+                    _inputManager.unregisterInputDeviceListener(listener)
+                }
+            }
         }
-    }
-
-    fun destroy() {
-        _inputManager.unregisterInputDeviceListener(this)
     }
 
     fun getBoundInput(event: KeyEvent): Input? {

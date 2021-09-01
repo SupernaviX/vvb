@@ -9,11 +9,14 @@ import androidx.preference.PreferenceManager
 import com.getkeepsafe.relinker.ReLinker
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.acra.ACRA
 import org.acra.config.httpSender
 import org.acra.config.toast
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
+import kotlin.coroutines.EmptyCoroutineContext
 
 class VvbApplication: Application() {
     override fun attachBaseContext(base: Context?) {
@@ -69,6 +72,7 @@ class VvbApplication: Application() {
     // update the schema used to store input mapping in preferences
     // to support multiple controllers and multiple kinds of mapping
     private fun updateMappingSchema(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
+        val scope = CoroutineScope(EmptyCoroutineContext)
         val mappedInputs = Input.values()
             .filter { prefs.contains(it.prefName) }
         if (mappedInputs.isEmpty()) {
@@ -76,7 +80,7 @@ class VvbApplication: Application() {
         }
 
         // Define a new controller
-        val controllerDao = ControllerDao(prefs)
+        val controllerDao = ControllerDao(scope, prefs)
         val controller = controllerDao.addController("Controller 1")
 
         for (input in mappedInputs) {
@@ -90,6 +94,7 @@ class VvbApplication: Application() {
             // and remove the old-format pref
             editor.remove(input.prefName)
         }
+        scope.cancel()
     }
 
 }

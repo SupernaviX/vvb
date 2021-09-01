@@ -8,12 +8,14 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.simongellis.vvb.emulator.Input
+import com.simongellis.vvb.utils.asStateFlow
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
 import java.util.*
 import kotlin.collections.HashSet
 
-class ControllerDao(preferences: SharedPreferences) {
-    constructor(context: Context): this(PreferenceManager.getDefaultSharedPreferences(context))
+class ControllerDao(scope: CoroutineScope, preferences: SharedPreferences) {
+    constructor(scope: CoroutineScope, context: Context): this(scope, PreferenceManager.getDefaultSharedPreferences(context))
     private val _preferences = FlowSharedPreferences(preferences)
     private val _rawControllers = _preferences.getStringSet("controllers", setOf())
 
@@ -74,7 +76,7 @@ class ControllerDao(preferences: SharedPreferences) {
     }
 
     val controllers by lazy {
-        _rawControllers.asFlow().map { parseControllers(it) }
+        _rawControllers.asStateFlow(scope) { parseControllers(it) }
     }
 
     fun getLiveController(id: String)

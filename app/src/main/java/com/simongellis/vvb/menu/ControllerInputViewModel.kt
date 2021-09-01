@@ -7,9 +7,12 @@ import androidx.lifecycle.*
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 
 class ControllerInputViewModel(application: Application, savedStateHandle: SavedStateHandle): AndroidViewModel(application) {
-    private val _controllerDao = ControllerDao(application)
+    private val _controllerDao = ControllerDao(viewModelScope, application)
     private val _id: String = savedStateHandle["id"]!!
 
     sealed class InputDisplay {
@@ -17,7 +20,7 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
         data class Text(val value: String): InputDisplay()
     }
     data class BindingInfo(val input: Input, val multiple: Boolean)
-    private val _binding = MutableLiveData<BindingInfo?>(null)
+    private val _binding = MutableStateFlow<BindingInfo?>(null)
 
     val controller = _controllerDao.getLiveController(_id).asLiveData()
 
@@ -51,11 +54,9 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
     }
 
     private fun getInputSummary(input: Input): LiveData<InputDisplay> {
-        val mappings = _controllerDao.getLiveMappings(_id, input).asLiveData()
+        val mappings = _controllerDao.getLiveMappings(_id, input)
 
-        fun getMessage(): InputDisplay {
-            val currBinding = _binding.value
-            val currMappings = mappings.value!!
+        fun getMessage(currBinding: BindingInfo?, currMappings: List<ControllerDao.Mapping>): InputDisplay {
             if (currBinding?.input == input) {
                 if (currBinding.multiple) {
                     return InputDisplay.Resource(R.string.input_menu_add_mapping)
@@ -68,14 +69,7 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
             return InputDisplay.Text(currMappings.joinToString(", "))
         }
 
-        val summarizer = MediatorLiveData<InputDisplay>()
-        summarizer.value = getMessage()
-        summarizer.addSource(_binding) {
-            summarizer.value = getMessage()
-        }
-        summarizer.addSource(mappings) {
-            summarizer.value = getMessage()
-        }
-        return summarizer
+        val summarizer = _binding.combine(mappings) { b, m -> getMessage(b, m) }
+        return summarizer.asLiveData()
     }
 }

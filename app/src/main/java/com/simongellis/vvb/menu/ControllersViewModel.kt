@@ -9,7 +9,7 @@ import com.simongellis.vvb.game.ControllerDao
 import com.simongellis.vvb.utils.LiveEvent
 
 class ControllersViewModel(application: Application): AndroidViewModel(application) {
-    private val _controllerDao = ControllerDao(application)
+    private val _controllerDao = ControllerDao(viewModelScope, application)
     private val _autoMapper = ControllerAutoMapper()
 
     private enum class State { Normal, Renaming, Deleting }
@@ -26,14 +26,14 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
         } else {
             R.string.controller_menu_rename_controller
         }
-    }!!
+    }
     val deleteLabel = Transformations.map(_state) {
         if (it == State.Deleting) {
             R.string.controller_menu_choose_delete
         } else {
             R.string.controller_menu_delete_controller
         }
-    }!!
+    }
 
     class NameDialog(@StringRes val action: Int, val initialValue: String)
     val showNameDialog = LiveEvent<NameDialog>()
