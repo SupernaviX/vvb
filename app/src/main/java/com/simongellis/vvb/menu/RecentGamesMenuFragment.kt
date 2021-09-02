@@ -8,14 +8,14 @@ import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.GameActivity
-import com.simongellis.vvb.utils.observeEager
+import com.simongellis.vvb.utils.observeNow
 
 class RecentGamesMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: MainViewModel by viewModels({ requireActivity() })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        observeEager(viewModel.recentGames) { updateRecentGames(it) }
+        observeNow(viewModel.recentGames) { updateRecentGames(it) }
     }
 
     override fun onResume() {

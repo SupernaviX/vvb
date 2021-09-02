@@ -10,12 +10,12 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 
 /**
- * Run a function with the value of a StateFlow, in harmony with this component's lifecycle
+ * Run a function with the value of a flow, in harmony with this component's lifecycle
  * 1. Run it once with the initial value synchronously
  * 2. Start listening for changes when this component is Started
  * 3. Stop listening for changes when this component is Stopped
  */
-fun <T> LifecycleOwner.observeEager(flow: Flow<T>, observer: (T) -> Unit) {
+fun <T> LifecycleOwner.observeNow(flow: Flow<T>, observer: (T) -> Unit) {
     lifecycleScope.launch {
         // Grab the first value out of this flow immediately
         var done = false
@@ -30,7 +30,7 @@ fun <T> LifecycleOwner.observeEager(flow: Flow<T>, observer: (T) -> Unit) {
 }
 
 /**
- * Run a function with the value of a SharedFlow, in harmony with this component's lifecycle
+ * Run a function with the value of a flow, in harmony with this component's lifecycle
  * 1. Start listening for events when this component is Started
  * 2. Stop listening for events when this component is Stopped
  */
