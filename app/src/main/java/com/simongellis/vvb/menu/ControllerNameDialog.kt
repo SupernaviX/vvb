@@ -11,6 +11,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.viewModels
 import com.simongellis.vvb.R
 import com.simongellis.vvb.databinding.TextBoxBinding
+import com.simongellis.vvb.utils.observeNow
 
 class ControllerNameDialog: DialogFragment() {
     private val viewModel: ControllerNameViewModel by viewModels()
@@ -28,7 +29,7 @@ class ControllerNameDialog: DialogFragment() {
                 viewModel.name.value = text.toString()
             }
         }
-        viewModel.name.observe(this) {
+        observeNow(viewModel.name) {
             if (input.text.toString() != it) {
                 input.setText(it)
                 input.selectAll()

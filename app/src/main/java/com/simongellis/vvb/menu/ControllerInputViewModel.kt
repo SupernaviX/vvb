@@ -7,6 +7,9 @@ import androidx.lifecycle.*
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.Input
 import com.simongellis.vvb.game.ControllerDao
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 
 class ControllerInputViewModel(application: Application, savedStateHandle: SavedStateHandle): AndroidViewModel(application) {
     private val _controllerDao = ControllerDao(application)
@@ -17,11 +20,10 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
         data class Text(val value: String): InputDisplay()
     }
     data class BindingInfo(val input: Input, val multiple: Boolean)
-    private val _binding = MutableLiveData<BindingInfo?>(null)
+    private val _binding = MutableStateFlow<BindingInfo?>(null)
 
-    val controller = Transformations.map(_controllerDao.controllers) { controllers ->
-        controllers.first { it.id == _id }
-    }!!
+    val controller = _controllerDao.getLiveController(_id)
+
     val inputSummaries = Input.values()
         .map { it to getInputSummary(it) }
         .toMap()
@@ -51,32 +53,20 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
         _binding.value = null
     }
 
-    private fun getInputSummary(input: Input): LiveData<InputDisplay> {
+    private fun getInputSummary(input: Input): Flow<InputDisplay> {
         val mappings = _controllerDao.getLiveMappings(_id, input)
-
-        fun getMessage(): InputDisplay {
-            val currBinding = _binding.value
-            val currMappings = mappings.value
+        return _binding.combine(mappings) { currBinding, currMappings ->
             if (currBinding?.input == input) {
                 if (currBinding.multiple) {
-                    return InputDisplay.Resource(R.string.input_menu_add_mapping)
+                    InputDisplay.Resource(R.string.input_menu_add_mapping)
+                } else {
+                    InputDisplay.Resource(R.string.input_menu_put_mapping)
                 }
-                return InputDisplay.Resource(R.string.input_menu_put_mapping)
+            } else  if (currMappings.isEmpty()) {
+                InputDisplay.Resource(R.string.input_menu_unmapped)
+            } else {
+                InputDisplay.Text(currMappings.joinToString(", "))
             }
-            if (currMappings.isEmpty()) {
-                return InputDisplay.Resource(R.string.input_menu_unmapped)
-            }
-            return InputDisplay.Text(currMappings.joinToString(", "))
         }
-
-        val summarizer = MediatorLiveData<InputDisplay>()
-        summarizer.value = getMessage()
-        summarizer.addSource(_binding) {
-            summarizer.value = getMessage()
-        }
-        summarizer.addSource(mappings) {
-            summarizer.value = getMessage()
-        }
-        return summarizer
     }
 }
