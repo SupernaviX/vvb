@@ -1,5 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
+}
 
 static def generatedString(value) {
     if (value == null) {
@@ -145,6 +148,9 @@ dependencies {
 
     // relinker
     implementation "com.getkeepsafe.relinker:relinker:1.4.3"
+
+    // serializer
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2"
 
     // cardboard dependencies
     implementation 'com.google.android.gms:play-services-vision:20.1.3'

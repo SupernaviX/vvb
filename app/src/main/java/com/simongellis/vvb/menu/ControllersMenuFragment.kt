@@ -8,7 +8,7 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.R
-import com.simongellis.vvb.game.ControllerDao
+import com.simongellis.vvb.data.Controller
 import com.simongellis.vvb.utils.observe
 import com.simongellis.vvb.utils.observeNow
 
@@ -85,7 +85,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
         preferenceScreen = prefScreen
     }
 
-    private fun updateControllerList(controllers: List<ControllerDao.Controller>) {
+    private fun updateControllerList(controllers: List<Controller>) {
         // This method is triggered on preference change, so it can run after the fragment dies.
         // Bail early if this has happened to avoid calamity
         val context = context ?: return

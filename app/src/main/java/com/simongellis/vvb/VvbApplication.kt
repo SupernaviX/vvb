@@ -8,12 +8,12 @@ import android.widget.Toast
 import androidx.preference.PreferenceManager
 import com.getkeepsafe.relinker.ReLinker
 import com.simongellis.vvb.emulator.Input
-import com.simongellis.vvb.game.ControllerDao
 import org.acra.ACRA
 import org.acra.config.httpSender
 import org.acra.config.toast
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
+import java.util.*
 
 class VvbApplication: Application() {
     override fun attachBaseContext(base: Context?) {
@@ -76,16 +76,16 @@ class VvbApplication: Application() {
         }
 
         // Define a new controller
-        val controllerDao = ControllerDao(prefs)
-        val controller = controllerDao.addController("Controller 1")
+        val controllerId = UUID.randomUUID().toString()
+        editor.putStringSet("controllers", setOf("$controllerId::Controller 1"))
 
         for (input in mappedInputs) {
             // Add the mapping to the new controller in the new format
             val savedMapping = prefs.getString(input.prefName, null)!!
             val (device, keyCode) = savedMapping.split("::")
-            val mapping = ControllerDao.KeyMapping(device, input, keyCode.toInt(10))
-
-            controllerDao.addMapping(controller.id, mapping)
+            val mappingKey = "controller_${controllerId}_${input.prefName}"
+            val mappingValue = "$device::key::$keyCode"
+            editor.putStringSet(mappingKey, setOf(mappingValue))
 
             // and remove the old-format pref
             editor.remove(input.prefName)
