@@ -34,12 +34,12 @@ class RecentGamesMenuFragment: PreferenceFragmentCompat() {
         val context = context ?: return
 
         preferenceScreen.removeAll()
-        for (recentGame in recentGames) {
+        for (game in recentGames) {
             preferenceScreen.addPreference(Preference(context).apply {
-                key = recentGame.uri.toString()
-                title = recentGame.name
+                key = game.id
+                title = game.name
                 setOnPreferenceClickListener {
-                    if (viewModel.loadGame(recentGame.uri)) {
+                    if (viewModel.loadGame(game.uri)) {
                         playGame()
                     }
                     true

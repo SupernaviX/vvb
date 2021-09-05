@@ -102,7 +102,7 @@ class VvbApplication: Application() {
             return
         }
         val rawControllers = prefs.getStringSet("controllers", setOf())!!
-        val dao = PreferencesDao.forClass(Controller.serializer(), applicationContext)
+        val dao = PreferencesDao.forClass(ControllerData.serializer(), applicationContext)
         rawControllers.forEach { raw ->
             val (id, name) = raw.split("::", limit = 2)
             val keyMappings = ArrayList<KeyMapping>()
@@ -125,7 +125,7 @@ class VvbApplication: Application() {
                 }
                 editor.remove(mappingKey)
             }
-            val controller = Controller(id, name, keyMappings, axisMappings)
+            val controller = ControllerData(id, name, keyMappings, axisMappings)
             dao.put(controller)
         }
         editor.remove("controllers")
@@ -136,12 +136,12 @@ class VvbApplication: Application() {
             return
         }
         val rawRecentGames = prefs.getStringSet("recent_games", setOf())!!
-        val dao = PreferencesDao.forClass(Game.serializer(), applicationContext)
+        val dao = PreferencesDao.forClass(GameData.serializer(), applicationContext)
         rawRecentGames.forEach {
             val (rawLastPlayed, rawUri) = it.split("::")
             val uri = Uri.parse(rawUri)
             val lastPlayed = Date(rawLastPlayed.toLong())
-            val game = Game(uri, lastPlayed)
+            val game = GameData(uri, lastPlayed)
             dao.put(game)
         }
         editor.remove("recent_games")

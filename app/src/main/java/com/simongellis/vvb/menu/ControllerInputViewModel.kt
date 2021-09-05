@@ -24,7 +24,7 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
     private val _binding = MutableStateFlow<BindingInfo?>(null)
 
     val controller = _controllerRepo.getLiveController(_id)
-    private val _controllerMappings = controller.map { it.keyMappings + it.axisMappings }
+    private val _controllerMappings = controller.map { it.mappings }
 
     val inputSummaries = Input.values()
         .map { it to getInputSummary(it) }

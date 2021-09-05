@@ -1,7 +1,6 @@
 package com.simongellis.vvb.data
 
 import android.content.Context
-import android.util.Log
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.fredporciuncula.flow.preferences.Preference
 import kotlinx.coroutines.flow.*

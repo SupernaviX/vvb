@@ -21,9 +21,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     var wasGameJustLoaded = false
     fun loadGame(uri: Uri): Boolean {
         return try {
-            val gamePak = _gamePakLoader.tryLoad(uri)
+            val game = _gameRepo.getGame(uri)
+            val gamePak = _gamePakLoader.tryLoad(game.id, uri)
             _emulator.loadGamePak(gamePak)
-            _gameRepo.addGame(uri)
+            _gameRepo.markAsPlayed(game)
             wasGameJustLoaded = true
             true
         } catch (ex: IllegalArgumentException) {
