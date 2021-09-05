@@ -11,5 +11,7 @@ data class GameData(
     @Serializable(with = DateSerializer::class)
     val lastPlayed: Date
 ): Entity {
-    override val id = uri.lastPathSegment!!.substringAfterLast('/')
+    override val id = uri.lastPathSegment!!
+        .substringAfterLast('/')
+        .substringBeforeLast('.')
 }
