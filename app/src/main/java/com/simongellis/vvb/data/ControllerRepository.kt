@@ -5,13 +5,13 @@ import kotlinx.coroutines.flow.map
 import java.util.*
 
 class ControllerRepository(context: Context) {
-    private val dao = PreferencesDao.forClass(ControllerData.serializer(), context)
+    private val _dao = PreferencesDao.forClass(ControllerData.serializer(), context)
 
     val controllers by lazy {
-        dao.watchAll().map { it.map(::fromData) }
+        _dao.watchAll().map { it.map(::fromData) }
     }
 
-    fun getLiveController(id: String) = dao.watch(id).map { fromData(it) }
+    fun getLiveController(id: String) = _dao.watch(id).map { fromData(it) }
 
     fun addController(name: String): Controller {
         val controller = Controller(
@@ -19,36 +19,36 @@ class ControllerRepository(context: Context) {
             name,
             listOf(),
         )
-        dao.put(toData(controller))
+        _dao.put(toData(controller))
         return controller
     }
 
     fun putController(controller: Controller) {
-        dao.put(toData(controller))
+        _dao.put(toData(controller))
     }
 
     fun deleteController(controller: Controller) {
-        dao.delete(controller.id)
+        _dao.delete(controller.id)
     }
 
     fun putMapping(controllerId: String, mapping: Mapping) {
-        val controller = fromData(dao.get(controllerId) ?: return)
+        val controller = fromData(_dao.get(controllerId) ?: return)
         val newController = controller.copy(
             mappings = controller.mappings.filter { it.input != mapping.input } + mapping
         )
-        dao.put(toData(newController))
+        _dao.put(toData(newController))
     }
 
     fun addMapping(controllerId: String, mapping: Mapping) {
-        val controller = fromData(dao.get(controllerId) ?: return)
+        val controller = fromData(_dao.get(controllerId) ?: return)
         val newController = controller.copy(
             mappings = controller.mappings.filter { it != mapping } + mapping
         )
-        dao.put(toData(newController))
+        _dao.put(toData(newController))
     }
 
     fun getAllMappings(): List<Mapping> {
-        return dao.getAll()
+        return _dao.getAll()
             .flatMap { it.keyMappings + it.axisMappings }
     }
 

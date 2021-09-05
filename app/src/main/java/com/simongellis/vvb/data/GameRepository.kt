@@ -5,12 +5,14 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import kotlinx.coroutines.flow.map
 import java.util.*
+import kotlin.collections.HashMap
 
 class GameRepository(val context: Context) {
-    private val dao = PreferencesDao.forClass(GameData.serializer(), context)
+    private val _dao = PreferencesDao.forClass(GameData.serializer(), context)
+    private val _filenames = HashMap<Uri, String>()
 
     val recentGames by lazy {
-        dao.watchAll().map { games ->
+        _dao.watchAll().map { games ->
             games
                 .sortedByDescending { it.lastPlayed }
                 .take(10)
@@ -24,9 +26,9 @@ class GameRepository(val context: Context) {
     }
 
     fun markAsPlayed(game: Game) {
-        val data = dao.get(game.id) ?: toData(game)
+        val data = _dao.get(game.id) ?: toData(game)
         val newData = data.copy(lastPlayed = Date())
-        dao.put(newData)
+        _dao.put(newData)
     }
 
     private fun fromData(data: GameData): Game {
@@ -39,14 +41,10 @@ class GameRepository(val context: Context) {
 
     private fun getName(uri: Uri): String {
         val filename = getFilename(uri)
-        val sep = filename.lastIndexOf('.')
-        if (sep == -1) {
-            return filename
-        }
-        return filename.substring(0, sep)
+        return filename.substringBeforeLast('.')
     }
 
-    private fun getFilename(uri: Uri): String {
+    private fun getFilename(uri: Uri) = _filenames.getOrPut(uri) {
         val cursor = context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
         cursor?.use {
             if (it.moveToFirst()) {
