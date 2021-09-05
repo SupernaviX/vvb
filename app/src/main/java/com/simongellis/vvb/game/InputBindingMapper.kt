@@ -5,6 +5,10 @@ import android.hardware.input.InputManager
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.core.content.ContextCompat.getSystemService
+import com.simongellis.vvb.data.AxisMapping
+import com.simongellis.vvb.data.ControllerRepository
+import com.simongellis.vvb.data.KeyMapping
+import com.simongellis.vvb.data.Mapping
 import com.simongellis.vvb.emulator.Input
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -15,18 +19,18 @@ class InputBindingMapper(scope: CoroutineScope, context: Context): InputManager.
 
     data class AxisBinding(val axis: Int, val isNegative: Boolean, val input: Input)
 
-    class DeviceBindings(mappings: List<ControllerDao.Mapping>) {
+    class DeviceBindings(mappings: List<Mapping>) {
         val keyBindings = mappings
-            .filterIsInstance<ControllerDao.KeyMapping>()
+            .filterIsInstance<KeyMapping>()
             .map { it.keyCode to it.input }
             .toMap()
         val axisBindings = mappings
-            .filterIsInstance<ControllerDao.AxisMapping>()
+            .filterIsInstance<AxisMapping>()
             .map { AxisBinding(it.axis, it.isNegative, it.input) }
             .groupBy { it.input }
     }
 
-    private val _deviceMappings = ControllerDao(context)
+    private val _deviceMappings = ControllerRepository(context)
         .getAllMappings()
         .groupBy { it.device }
 

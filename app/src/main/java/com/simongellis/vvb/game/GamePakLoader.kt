@@ -10,8 +10,8 @@ import java.io.FileNotFoundException
 import java.util.zip.ZipInputStream
 
 class GamePakLoader(private val context: Context) {
-    fun tryLoad(uri: Uri): GamePak {
-        val (name, ext) = getNameAndExt(uri)
+    fun tryLoad(id: String, uri: Uri): GamePak {
+        val ext = tryGetExtension(uri)
         val rom = try {
             when {
                 ext == "zip" -> loadZipFile(uri)
@@ -22,8 +22,8 @@ class GamePakLoader(private val context: Context) {
         } catch (ex: FileNotFoundException) {
             throw error(R.string.error_file_not_found)
         }
-        val sram = File(context.filesDir, "${name}.srm")
-        return GamePak(name, rom, sram)
+        val sram = File(context.filesDir, "${id}.srm")
+        return GamePak(rom, sram)
     }
 
     private fun loadVbFile(uri: Uri): ByteArray {
@@ -46,14 +46,14 @@ class GamePakLoader(private val context: Context) {
         val inputStream = context.contentResolver.openInputStream(uri)
         ZipInputStream(inputStream).use { zip ->
             for (entry in generateSequence { zip.nextEntry }) {
-                val (_, ext) = getNameAndExt(entry.name)
+                val ext = tryGetExtension(entry.name)
                 val size = entry.size
                 if (ext == "vb" && size.countOneBits() == 1 && size <= 0x01000000) {
                     return zip.readBytes()
                 }
             }
         }
-        throw IllegalArgumentException(context.getString(R.string.error_zip))
+        throw error(R.string.error_zip)
     }
 
     private fun hasZipHeader(uri: Uri): Boolean {
@@ -75,24 +75,12 @@ class GamePakLoader(private val context: Context) {
         return IllegalArgumentException(context.getString(message))
     }
 
-    companion object {
-        fun getName(uri: Uri): String {
-            val (name) = getNameAndExt(uri)
-            return name
-        }
+    private fun tryGetExtension(uri: Uri): String? {
+        return tryGetExtension(uri.path!!)
+    }
 
-        private fun getNameAndExt(uri: Uri): Pair<String, String?> {
-            val path = uri.lastPathSegment!!
-            return getNameAndExt(path)
-        }
-
-        private fun getNameAndExt(path: String): Pair<String, String?> {
-            val filename = path.substringAfterLast('/')
-            val sep = filename.lastIndexOf('.')
-            if (sep == -1) {
-                return filename to null
-            }
-            return filename.substring(0, sep) to filename.substring(sep + 1).lowercase()
-        }
+    private fun tryGetExtension(path: String): String? {
+        val sep = path.lastIndexOf('.')
+        return if (sep == -1) { null } else { path.substring(sep + 1).lowercase() }
     }
 }

@@ -6,21 +6,22 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.simongellis.vvb.R
-import com.simongellis.vvb.game.ControllerDao
+import com.simongellis.vvb.data.Controller
+import com.simongellis.vvb.data.ControllerRepository
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class ControllersViewModel(application: Application): AndroidViewModel(application) {
-    private val _controllerDao = ControllerDao(application)
+    private val _controllerRepo = ControllerRepository(application)
     private val _autoMapper = ControllerAutoMapper()
 
     private enum class State { Normal, Renaming, Deleting }
     private val _state = MutableStateFlow(State.Normal)
 
-    private var _renamingController: ControllerDao.Controller? = null
+    private var _renamingController: Controller? = null
 
-    val controllers by _controllerDao::controllers
-    private val _editingController = MutableSharedFlow<ControllerDao.Controller>()
+    val controllers by _controllerRepo::controllers
+    private val _editingController = MutableSharedFlow<Controller>()
     val editingController = _editingController.asSharedFlow()
 
     private val _newControllerName = controllers
@@ -68,7 +69,7 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
 
     fun toggleDeleting() = toggleState(State.Deleting)
 
-    fun doAction(controller: ControllerDao.Controller) {
+    fun doAction(controller: Controller) {
         when (_state.value) {
             State.Normal -> editControllerMappings(controller)
             State.Renaming -> promptRenameController(controller)
@@ -81,32 +82,32 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
         _renamingController = null
 
         if (renamingController == null) {
-            val controller = _controllerDao.addController(name)
+            val controller = _controllerRepo.addController(name)
             editControllerMappings(controller)
         } else {
             val controller = renamingController.copy(name = name)
-            _controllerDao.putController(controller)
+            _controllerRepo.putController(controller)
         }
     }
 
     fun performAutoMap(device: InputDevice) {
         val result = _autoMapper.computeMappings(device)
-        val controller = _controllerDao.addController(result.name)
+        val controller = _controllerRepo.addController(result.name)
         for (mapping in result.mappings) {
-            _controllerDao.addMapping(controller.id, mapping)
+            _controllerRepo.addMapping(controller.id, mapping)
         }
         if (!result.fullyMapped) {
             editControllerMappings(controller)
         }
     }
 
-    private fun editControllerMappings(controller: ControllerDao.Controller) {
+    private fun editControllerMappings(controller: Controller) {
         viewModelScope.launch {
             _editingController.emit(controller)
         }
     }
 
-    private fun promptRenameController(controller: ControllerDao.Controller) {
+    private fun promptRenameController(controller: Controller) {
         _state.value = State.Normal
         _renamingController = controller
         promptForName(
@@ -121,9 +122,9 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
         }
     }
 
-    private fun deleteController(controller: ControllerDao.Controller) {
+    private fun deleteController(controller: Controller) {
         _state.value = State.Normal
-        _controllerDao.deleteController(controller)
+        _controllerRepo.deleteController(controller)
     }
 
     private fun toggleState(newState: State) {

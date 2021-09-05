@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
 
-class GamePak(val name: String, val rom: ByteArray, private val sram: File) {
+class GamePak(val rom: ByteArray, private val sram: File) {
     fun loadSram(target: ByteBuffer) {
         when {
             sram.exists() -> target.put(sram.readBytes())

@@ -3,13 +3,15 @@ package com.simongellis.vvb.menu
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
+import com.simongellis.vvb.data.AxisMapping
+import com.simongellis.vvb.data.KeyMapping
+import com.simongellis.vvb.data.Mapping
 import com.simongellis.vvb.emulator.Input
-import com.simongellis.vvb.game.ControllerDao
 
 class ControllerAutoMapper {
     data class AutoMapResult(
         val name: String,
-        val mappings: List<ControllerDao.Mapping>,
+        val mappings: List<Mapping>,
         val fullyMapped: Boolean,
     )
 
@@ -26,13 +28,13 @@ class ControllerAutoMapper {
     }
 
     fun computeMappings(device: InputDevice): AutoMapResult {
-        val mappings = mutableListOf<ControllerDao.Mapping>()
+        val mappings = mutableListOf<Mapping>()
         fun tryMapKeys(vararg inputToKeyCode: Pair<Int, Input>) {
             val supportedKeys = device.hasKeys(*inputToKeyCode.map { it.first }.toIntArray())
             inputToKeyCode
                 .filterIndexed { index, _ -> supportedKeys[index] }
                 .map { (keyCode, input) ->
-                    ControllerDao.KeyMapping(
+                    KeyMapping(
                         device.descriptor,
                         input,
                         keyCode
@@ -48,10 +50,10 @@ class ControllerAutoMapper {
                 .forEach { (axis, inputs) ->
                     val (neg, pos) = inputs
                     neg?.also {
-                        mappings.add(ControllerDao.AxisMapping(device.descriptor, it, axis, true))
+                        mappings.add(AxisMapping(device.descriptor, it, axis, true))
                     }
                     pos?.also {
-                        mappings.add(ControllerDao.AxisMapping(device.descriptor, it, axis, false))
+                        mappings.add(AxisMapping(device.descriptor, it, axis, false))
                     }
                 }
         }
