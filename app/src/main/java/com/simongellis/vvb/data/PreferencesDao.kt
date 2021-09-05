@@ -10,20 +10,20 @@ import kotlinx.serialization.json.Json
 class PreferencesDao<T: Entity>(clazz: Class<T>, private val serializer: KSerializer<T>, context: Context) {
     private val _preferences =
         FlowSharedPreferences(context.getSharedPreferences(clazz.simpleName, 0))
-    private val _keys = _preferences.getStringSet("%%keys%%")
+    private val _ids = _preferences.getStringSet("ids")
     private val _prefs = HashMap<String, Preference<String?>>()
     private val _valueFlows = HashMap<String, Flow<String?>>()
 
     fun getAll(): List<T> {
-        return _keys.get()
+        return _ids.get()
             .mapNotNull(this::getRaw)
             .map(this::deserialize)
     }
 
     fun watchAll(): Flow<List<T>> {
-        return _keys.asFlow()
-            .flatMapLatest { keys ->
-                combine(keys.map(this::getRawFlow)) {
+        return _ids.asFlow()
+            .flatMapLatest { ids ->
+                combine(ids.map(this::getRawFlow)) {
                     it.filterNotNull().map(this::deserialize)
                 }
             }
@@ -39,12 +39,12 @@ class PreferencesDao<T: Entity>(clazz: Class<T>, private val serializer: KSerial
 
     fun put(value: T) {
         getPreference(value.id).set(serialize(value))
-        _keys.set(_keys.get() + value.id)
+        _ids.set(_ids.get() + value.id)
     }
 
     fun delete(id: String) {
         getPreference(id).delete()
-        _keys.set(_keys.get() - id)
+        _ids.set(_ids.get() - id)
         _valueFlows.remove(id)
         _prefs.remove(id)
     }
@@ -61,7 +61,8 @@ class PreferencesDao<T: Entity>(clazz: Class<T>, private val serializer: KSerial
         }
     }
 
-    private fun getPreference(key: String): Preference<String?> {
+    private fun getPreference(id: String): Preference<String?> {
+        val key = "entity_$id"
         return _prefs.getOrPut(key) {
             _preferences.getNullableString(key, null)
         }
