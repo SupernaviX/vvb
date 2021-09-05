@@ -25,18 +25,14 @@ class GameRepository(val context: Context) {
         return fromData(data)
     }
 
-    fun markAsPlayed(game: Game) {
-        val data = _dao.get(game.id) ?: toData(game)
-        val newData = data.copy(lastPlayed = Date())
+    fun markAsPlayed(id: String, uri: Uri) {
+        val data = _dao.get(id) ?: GameData(uri, Date())
+        val newData = data.copy(uri = uri, lastPlayed = Date())
         _dao.put(newData)
     }
 
     private fun fromData(data: GameData): Game {
         return Game(data.id, getName(data.uri), data.uri, data.lastPlayed)
-    }
-
-    private fun toData(game: Game): GameData {
-        return GameData(game.uri, game.lastPlayed)
     }
 
     private fun getName(uri: Uri): String {

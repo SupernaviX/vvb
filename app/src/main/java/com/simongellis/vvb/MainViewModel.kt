@@ -24,7 +24,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val game = _gameRepo.getGame(uri)
             val gamePak = _gamePakLoader.tryLoad(game.id, uri)
             _emulator.loadGamePak(gamePak)
-            _gameRepo.markAsPlayed(game)
+            _gameRepo.markAsPlayed(game.id, uri)
             wasGameJustLoaded = true
             true
         } catch (ex: IllegalArgumentException) {
