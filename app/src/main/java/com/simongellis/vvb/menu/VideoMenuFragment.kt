@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -17,6 +18,7 @@ import com.simongellis.vvb.game.VideoMode
 class VideoMenuFragment: PreferenceFragmentCompat() {
     enum class Prefs(val prefName: String, vararg val modes: VideoMode = VideoMode.values()) {
         MODE("video_mode"),
+        SCALE_MODE("video_scale_mode"),
         ZOOM("video_screen_zoom_percent"),
         HORIZONTAL_OFFSET("video_horizontal_offset"),
         VERTICAL_OFFSET("video_vertical_offset"),
@@ -60,6 +62,13 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
             val mode = VideoMode.valueOf(newValue as String)
             hidePreferencesByMode(mode)
             true
+        }
+
+        findPref(Prefs.SCALE_MODE).setSummaryProvider {
+            val pref = it as ListPreference
+            val value = pref.value ?: pref.entryValues.first()
+            val index = pref.entryValues.indexOf(value)
+            pref.entries[index]
         }
 
         findPref(Prefs.COLOR_LEFT).setOnPreferenceChangeListener { _, newLeft ->

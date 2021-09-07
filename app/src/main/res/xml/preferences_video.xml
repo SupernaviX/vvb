@@ -5,6 +5,12 @@
         app:key="video_mode"
         app:title="@string/video_menu_mode"
         app:defaultValue="ANAGLYPH"/>
+    <ListPreference
+        app:key="video_scale_mode"
+        app:title="@string/video_menu_scale_mode"
+        app:entries="@array/scale_modes"
+        app:entryValues="@array/scale_mode_values"
+        app:defaultValue="PRESERVE"/>
     <SeekBarPreference
         app:key="video_screen_zoom_percent"
         app:title="@string/video_menu_screen_zoom_percent"

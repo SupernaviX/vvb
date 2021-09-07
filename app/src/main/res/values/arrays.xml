@@ -20,4 +20,12 @@
         <item>@color/violet</item>
         <item>@color/white</item>
     </array>
+    <string-array name="scale_mode_values">
+        <item>PRESERVE</item>
+        <item>STRETCH</item>
+    </string-array>
+    <string-array name="scale_modes">
+        <item>@string/video_scale_mode_preserve</item>
+        <item>@string/video_scale_mode_stretch</item>
+    </string-array>
 </resources>
