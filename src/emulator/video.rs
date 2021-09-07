@@ -2,6 +2,7 @@ use crate::emulator::cpu::Exception;
 use crate::emulator::memory::Memory;
 use crate::emulator::video::drawing::DrawingProcess;
 use anyhow::Result;
+use array_init::array_init;
 use log::error;
 use std::cell::{Ref, RefCell};
 use std::convert::TryFrom;
@@ -119,7 +120,8 @@ pub struct Video {
     enabled_interrupts: u16,
     display_buffer: Buffer,
     frame_channel: Option<mpsc::Sender<Frame>>,
-    buffers: [Arc<Mutex<EyeBuffer>>; 2],
+    buffers: [Arc<Mutex<EyeBuffer>>; 4],
+    buffer_index: usize,
 }
 impl Video {
     pub fn new(memory: Rc<RefCell<Memory>>) -> Video {
@@ -136,10 +138,8 @@ impl Video {
             enabled_interrupts: 0,
             display_buffer: Buffer0,
             frame_channel: None,
-            buffers: [
-                Arc::new(Mutex::new(vec![0; FRAME_SIZE])),
-                Arc::new(Mutex::new(vec![0; FRAME_SIZE])),
-            ],
+            buffers: array_init(|_| Arc::new(Mutex::new(vec![0; FRAME_SIZE]))),
+            buffer_index: 0,
         }
     }
 
@@ -389,8 +389,8 @@ impl Video {
         rx
     }
 
-    pub fn load_frame(&self, eye: Eye, image: &[u8]) {
-        let mut buffer = self.buffers[eye as usize]
+    pub fn load_frame(&self, image: &[u8]) {
+        let mut buffer = self.buffers[self.buffer_index]
             .lock()
             .expect("Buffer lock was poisoned!");
         // Input data is RGBA, only copy the R
@@ -399,9 +399,11 @@ impl Video {
         }
     }
 
-    pub fn send_frame(&self, eye: Eye) -> Result<()> {
+    pub fn send_frame(&mut self, eye: Eye) -> Result<()> {
         if let Some(channel) = self.frame_channel.as_ref() {
-            let buffer = &self.buffers[eye as usize];
+            let buffer = &self.buffers[self.buffer_index];
+            self.buffer_index += 1;
+            self.buffer_index %= self.buffers.len();
             let frame = Frame {
                 eye,
                 buffer: Arc::clone(buffer),
@@ -413,7 +415,7 @@ impl Video {
 
     fn build_frame(&self, eye: Eye) {
         let buf_address = self.get_buffer_address(eye, self.display_buffer);
-        let eye_buffer = &mut self.buffers[eye as usize]
+        let eye_buffer = &mut self.buffers[self.buffer_index]
             .lock()
             .expect("Buffer lock was poisoned!");
 

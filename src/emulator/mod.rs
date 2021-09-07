@@ -150,10 +150,10 @@ impl Emulator {
     }
 
     pub fn load_image(&self, left_eye: &[u8], right_eye: &[u8]) -> Result<()> {
-        let video = self.video.borrow();
-        video.load_frame(Eye::Left, left_eye);
+        let mut video = self.video.borrow_mut();
+        video.load_frame(left_eye);
         video.send_frame(Eye::Left)?;
-        video.load_frame(Eye::Right, right_eye);
+        video.load_frame(right_eye);
         video.send_frame(Eye::Right)?;
         Ok(())
     }

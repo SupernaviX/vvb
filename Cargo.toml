@@ -8,6 +8,7 @@ build = "build.rs"
 [dependencies]
 android_logger = "0.10.1"
 anyhow = "1.0.43"
+array-init = "2.0.0"
 cgmath = "0.18.0"
 jni = "0.19.0"
 log = "0.4.14"
