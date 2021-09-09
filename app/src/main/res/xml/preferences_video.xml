@@ -6,11 +6,11 @@
         app:title="@string/video_menu_mode"
         app:defaultValue="ANAGLYPH"/>
     <ListPreference
-        app:key="video_scale_mode"
-        app:title="@string/video_menu_scale_mode"
-        app:entries="@array/scale_modes"
-        app:entryValues="@array/scale_mode_values"
-        app:defaultValue="PRESERVE"/>
+        app:key="video_aspect_ratio"
+        app:title="@string/video_menu_aspect_ratio"
+        app:entries="@array/aspect_ratio_names"
+        app:entryValues="@array/aspect_ratio_values"
+        app:defaultValue="AUTO"/>
     <SeekBarPreference
         app:key="video_screen_zoom_percent"
         app:title="@string/video_menu_screen_zoom_percent"
