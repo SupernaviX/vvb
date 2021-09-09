@@ -54,7 +54,9 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         val chooseGameFilePicker = registerForActivityResult(OpenFilePicker(), this::loadGame)
         val chooseGameStorageFramework = registerForActivityResult(OpenPersistentDocument) { uri ->
             uri?.also {
-                requireContext().contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                if (it.scheme == "content") {
+                    requireContext().contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
             }
             loadGame(uri)
         }
