@@ -72,7 +72,7 @@ class GamePreferences(context: Context) {
 
         videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.ANAGLYPH.name)!!)
 
-        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 65)
+        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 100)
         aspectRatio = AspectRatio.valueOf(prefs.getString("video_aspect_ratio", "AUTO")!!)
         horizontalOffset = prefs.getIntPercent("video_horizontal_offset", 0)
         verticalOffset = prefs.getIntPercent("video_vertical_offset", 0)
