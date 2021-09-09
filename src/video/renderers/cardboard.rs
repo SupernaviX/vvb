@@ -107,16 +107,19 @@ pub mod jni {
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
+    use std::convert::TryInto;
 
     type CardboardRenderer = Renderer<CardboardRenderLogic>;
 
     pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
+        let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
         let color = env.get_color(this, "color")?;
 
         Ok(Settings {
             screen_zoom,
+            aspect_ratio,
             vertical_offset,
             color,
         })

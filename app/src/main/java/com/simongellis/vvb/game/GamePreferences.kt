@@ -21,6 +21,8 @@ class GamePreferences(context: Context) {
 
     private val screenZoom: Float
         get() = if (isPortrait && supportsPortrait) { 1.00f } else { field }
+    private val aspectRatio: AspectRatio
+        get() = if (isPortrait && supportsPortrait) { AspectRatio.AUTO } else { field }
 
     // Horizontal offset is handled by the GameView, so that everything on screen is shifted
     val horizontalOffset: Float
@@ -53,16 +55,16 @@ class GamePreferences(context: Context) {
         get() = Audio.Settings(volume, bufferSize)
 
     val anaglyphSettings
-        get() = AnaglyphRenderer.Settings(screenZoom, verticalOffset, colorLeft, colorRight)
+        get() = AnaglyphRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, colorLeft, colorRight)
 
     val cardboardSettings
-        get() = CardboardRenderer.Settings(screenZoom, verticalOffset, color)
+        get() = CardboardRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color)
 
     fun monoSettings(eye: Eye)
-        = MonoRenderer.Settings(eye.ordinal, screenZoom, verticalOffset, color)
+        = MonoRenderer.Settings(eye.ordinal, screenZoom, aspectRatio.ordinal, verticalOffset, color)
 
     val stereoSettings
-        get() = StereoRenderer.Settings(screenZoom, verticalOffset, color)
+        get() = StereoRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color)
 
     init {
 
@@ -70,7 +72,8 @@ class GamePreferences(context: Context) {
 
         videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.ANAGLYPH.name)!!)
 
-        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 65)
+        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 100)
+        aspectRatio = AspectRatio.valueOf(prefs.getString("video_aspect_ratio", "AUTO")!!)
         horizontalOffset = prefs.getIntPercent("video_horizontal_offset", 0)
         verticalOffset = prefs.getIntPercent("video_vertical_offset", 0)
 

@@ -5,6 +5,12 @@
         app:key="video_mode"
         app:title="@string/video_menu_mode"
         app:defaultValue="ANAGLYPH"/>
+    <ListPreference
+        app:key="video_aspect_ratio"
+        app:title="@string/video_menu_aspect_ratio"
+        app:entries="@array/aspect_ratio_names"
+        app:entryValues="@array/aspect_ratio_values"
+        app:defaultValue="AUTO"/>
     <SeekBarPreference
         app:key="video_screen_zoom_percent"
         app:title="@string/video_menu_screen_zoom_percent"
@@ -12,7 +18,7 @@
         android:max="100"
         app:showSeekBarValue="true"
         app:seekBarIncrement="5"
-        app:defaultValue="65"/>
+        app:defaultValue="100"/>
     <SeekBarPreference
         app:key="video_horizontal_offset"
         app:title="@string/video_menu_horizontal_offset"

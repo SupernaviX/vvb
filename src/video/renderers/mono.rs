@@ -1,6 +1,6 @@
 use super::common::RenderLogic;
 use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
-use super::gl::{utils, Program, Textures};
+use super::gl::{utils, AspectRatio, Program, Textures};
 use crate::emulator::video::Eye;
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
 use anyhow::Result;
@@ -39,11 +39,12 @@ pub struct MonoRenderLogic {
 
     eye: Eye,
     texture_color: [GLfloat; 4],
+    aspect_ratio: AspectRatio,
     transform: Matrix4<GLfloat>,
 }
 impl MonoRenderLogic {
     pub fn new(settings: &Settings) -> Self {
-        let scale = settings.screen_zoom;
+        let zoom = settings.screen_zoom;
         let offset = -settings.vertical_offset;
         Self {
             program: Program::new(VERTEX_SHADER, FRAGMENT_SHADER),
@@ -57,8 +58,9 @@ impl MonoRenderLogic {
 
             eye: settings.eye,
             texture_color: utils::color_as_vector(settings.color),
+            aspect_ratio: settings.aspect_ratio,
             transform: Matrix4::from_translation(vec3(0.0, offset, 0.0))
-                * Matrix4::from_scale(scale),
+                * Matrix4::from_scale(zoom),
         }
     }
 }
@@ -85,7 +87,9 @@ impl RenderLogic for MonoRenderLogic {
     fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
         self.program.set_viewport(screen_size)?;
 
-        let base_mv = utils::base_model_view(screen_size, (VB_WIDTH, VB_HEIGHT));
+        let base_mv = self
+            .aspect_ratio
+            .compute_mvp_matrix(screen_size, (VB_WIDTH, VB_HEIGHT));
         let model_view = utils::to_matrix(base_mv * self.transform);
 
         // model view only changes when the surface is resized, set it here
@@ -112,6 +116,7 @@ impl RenderLogic for MonoRenderLogic {
 pub struct Settings {
     eye: Eye,
     screen_zoom: f32,
+    aspect_ratio: AspectRatio,
     vertical_offset: f32,
     color: (u8, u8, u8),
 }
@@ -133,10 +138,12 @@ pub mod jni {
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let eye = env.get_int(this, "eye")?.try_into()?;
         let screen_zoom = env.get_percent(this, "screenZoom")?;
+        let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
         let color = env.get_color(this, "color")?;
         Ok(Settings {
             eye,
+            aspect_ratio,
             screen_zoom,
             vertical_offset,
             color,

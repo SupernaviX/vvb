@@ -1,7 +1,7 @@
 use super::common::RenderLogic;
 use super::gl::{
     utils::{self, VB_HEIGHT, VB_WIDTH},
-    Program, Textures,
+    AspectRatio, Program, Textures,
 };
 use crate::emulator::video::Eye;
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
@@ -41,12 +41,13 @@ pub struct StereoRenderLogic {
     color_location: GLint,
 
     texture_color: [GLfloat; 4],
+    aspect_ratio: AspectRatio,
     transforms: [Matrix4<GLfloat>; 2],
     model_views: [[GLfloat; 16]; 2],
 }
 impl StereoRenderLogic {
     pub fn new(settings: &Settings) -> Self {
-        let scale = settings.screen_zoom;
+        let zoom = settings.screen_zoom;
         let offset = -settings.vertical_offset;
         Self {
             program: Program::new(VERTEX_SHADER, FRAGMENT_SHADER),
@@ -59,9 +60,10 @@ impl StereoRenderLogic {
             color_location: -1,
 
             texture_color: utils::color_as_vector(settings.color),
+            aspect_ratio: settings.aspect_ratio,
             transforms: [
-                Matrix4::from_translation(vec3(-0.5, offset, 0.0)) * Matrix4::from_scale(scale),
-                Matrix4::from_translation(vec3(0.5, offset, 0.0)) * Matrix4::from_scale(scale),
+                Matrix4::from_translation(vec3(-0.5, offset, 0.0)) * Matrix4::from_scale(zoom),
+                Matrix4::from_translation(vec3(0.5, offset, 0.0)) * Matrix4::from_scale(zoom),
             ],
             model_views: [utils::identity_matrix(), utils::identity_matrix()],
         }
@@ -89,7 +91,9 @@ impl RenderLogic for StereoRenderLogic {
     fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
         self.program.set_viewport(screen_size)?;
 
-        let base_mv = utils::base_model_view(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
+        let base_mv = self
+            .aspect_ratio
+            .compute_mvp_matrix(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
         self.model_views = [
             utils::to_matrix(base_mv * self.transforms[0]),
             utils::to_matrix(base_mv * self.transforms[1]),
@@ -123,6 +127,7 @@ impl RenderLogic for StereoRenderLogic {
 #[derive(Debug)]
 pub struct Settings {
     pub screen_zoom: f32,
+    pub aspect_ratio: AspectRatio,
     pub vertical_offset: f32,
     pub color: (u8, u8, u8),
 }
@@ -137,16 +142,19 @@ pub mod jni {
     use anyhow::Result;
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
+    use std::convert::TryInto;
 
     type StereoRenderer = Renderer<StereoRenderLogic>;
 
     pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
+        let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
         let color = env.get_color(this, "color")?;
 
         Ok(Settings {
             screen_zoom,
+            aspect_ratio,
             vertical_offset,
             color,
         })
