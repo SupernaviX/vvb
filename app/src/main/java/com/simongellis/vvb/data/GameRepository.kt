@@ -8,7 +8,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 class GameRepository(val context: Context) {
-    private val _dao = PreferencesDao.forClass(GameData.serializer(), context)
+    private val _dao = PreferencesDao.forClass<GameData>(context)
     private val _fileDao = FileDao(context)
     private val _filenames = HashMap<Uri, String>()
 
@@ -22,7 +22,8 @@ class GameRepository(val context: Context) {
     }
 
     fun getGame(uri: Uri): Game {
-        val data = GameData(uri, Date())
+        val id = GameData.getId(uri)
+        val data = _dao.get(id) ?: GameData(uri, Date(), "0")
         return fromData(data, getState(data))
     }
 
@@ -33,7 +34,7 @@ class GameRepository(val context: Context) {
     }
 
     fun markAsPlayed(id: String, uri: Uri) {
-        val data = _dao.get(id) ?: GameData(uri, Date())
+        val data = _dao.get(id) ?: GameData(uri, Date(), "0")
         val newData = data.copy(uri = uri, lastPlayed = Date())
         _dao.put(newData)
     }
@@ -68,5 +69,5 @@ class GameRepository(val context: Context) {
     private fun watchState(data: GameData)
         = _fileDao.watch(getStatePath(data)).map{ SaveState(it) }
     private fun getStatePath(data: GameData)
-        = "${data.id}/save_states/0.sav"
+        = "${data.id}/save_states/${data.stateSlot}.sav"
 }

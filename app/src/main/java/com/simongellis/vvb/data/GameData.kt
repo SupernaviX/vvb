@@ -9,9 +9,14 @@ data class GameData(
     @Serializable(with = UriSerializer::class)
     val uri: Uri,
     @Serializable(with = DateSerializer::class)
-    val lastPlayed: Date
+    val lastPlayed: Date,
+    val stateSlot: String,
 ): Entity {
-    override val id = uri.lastPathSegment!!
-        .substringAfterLast('/')
-        .substringBeforeLast('.')
+    override val id = getId(uri)
+
+    companion object {
+        fun getId(uri: Uri) = uri.lastPathSegment!!
+            .substringBeforeLast('/')
+            .substringAfterLast('.')
+    }
 }
