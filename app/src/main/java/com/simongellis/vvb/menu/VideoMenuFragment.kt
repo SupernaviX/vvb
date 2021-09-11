@@ -58,6 +58,13 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         val initialMode = VideoMode.valueOf(initialModeName)
         hidePreferencesByMode(initialMode)
 
+        val videoModePref = findPreference<DetailedListPreference>(Prefs.MODE.prefName)
+        videoModePref?.detailedEntries = VideoMode.values().map {
+            val summary = getString(it.summary)
+            val description = getString(it.description)
+            DetailedListPreference.Entry(it.name, summary, description)
+        }
+
         findPref(Prefs.MODE).setOnPreferenceChangeListener { _, newValue ->
             val mode = VideoMode.valueOf(newValue as String)
             hidePreferencesByMode(mode)
@@ -93,17 +100,6 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         findPref(Prefs.PREVIEW).setOnPreferenceClickListener {
             preview()
             true
-        }
-    }
-
-    override fun onDisplayPreferenceDialog(preference: Preference) {
-        if (preference is VideoModeDialogPreference) {
-            val dialogFragment = VideoModePreferenceDialogFragment.newInstance(preference.key)
-            @Suppress("DEPRECATION")
-            dialogFragment.setTargetFragment(this, 0)
-            dialogFragment.show(parentFragmentManager, "androidx.preference.PreferenceFragment.DIALOG")
-        } else {
-            super.onDisplayPreferenceDialog(preference)
         }
     }
 

@@ -10,10 +10,14 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.emulator.VvbLibrary
+import com.simongellis.vvb.menu.DetailedListPreference
+import com.simongellis.vvb.menu.DetailedListPreferenceDialogFragment
 import com.simongellis.vvb.menu.MainMenuFragment
 import com.simongellis.vvb.menu.GameMenuFragment
 
-class MainActivity : AppCompatActivity(R.layout.main_activity), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+class MainActivity : AppCompatActivity(R.layout.main_activity),
+    PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
+    PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback {
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,12 +45,33 @@ class MainActivity : AppCompatActivity(R.layout.main_activity), PreferenceFragme
         }
     }
 
-    override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
+    override fun onPreferenceStartFragment(
+        caller: PreferenceFragmentCompat,
+        pref: Preference
+    ): Boolean {
         displayFragment(pref.fragment, pref.extras)
         return true
     }
 
-    inline fun <reified T: Fragment> displayFragment(args: Bundle?) {
+    override fun onPreferenceDisplayDialog(
+        caller: PreferenceFragmentCompat,
+        preference: Preference
+    ): Boolean {
+        return if (preference is DetailedListPreference) {
+            val dialogFragment = DetailedListPreferenceDialogFragment.newInstance(preference.key)
+            @Suppress("DEPRECATION")
+            dialogFragment.setTargetFragment(caller, 0)
+            dialogFragment.show(
+                caller.parentFragmentManager,
+                "androidx.preference.PreferenceFragment.DIALOG"
+            )
+            true
+        } else {
+            false
+        }
+    }
+
+    inline fun <reified T : Fragment> displayFragment(args: Bundle?) {
         displayFragment(T::class.qualifiedName!!, args ?: Bundle())
     }
 
