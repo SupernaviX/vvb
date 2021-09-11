@@ -5,12 +5,11 @@ import android.net.Uri
 import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
-import com.simongellis.vvb.data.Game
+import androidx.lifecycle.viewModelScope
 import com.simongellis.vvb.data.GameRepository
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GamePakLoader
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import org.acra.ACRA
 import java.lang.Exception
 
@@ -20,8 +19,10 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _emulator = Emulator.instance
     private val _gamePakLoader = GamePakLoader(application)
 
-    private val _loadedGame = MutableStateFlow<Game?>(null)
-    val loadedGame = _loadedGame.asStateFlow()
+    private val _loadedGameId = MutableStateFlow<String?>(null)
+    val loadedGame = _loadedGameId.flatMapLatest { id ->
+        id?.let { _gameRepo.watchGame(it) } ?: emptyFlow()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     var wasGameJustOpened = false
     fun loadGame(uri: Uri): Boolean {
@@ -30,7 +31,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val gamePak = _gamePakLoader.tryLoad(game.id, uri)
             _emulator.loadGamePak(gamePak)
             _gameRepo.markAsPlayed(game.id, uri)
-            _loadedGame.value = game
+            _loadedGameId.value = game.id
             wasGameJustOpened = true
             true
         } catch (ex: IllegalArgumentException) {
@@ -49,7 +50,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun closeGame() {
         _emulator.unloadGamePak()
-        _loadedGame.value = null
+        _loadedGameId.value = null
     }
 
     fun resetGame() {
@@ -63,13 +64,13 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun saveState() {
         loadedGame.value?.also {
-            _emulator.saveState(it.currentState)
+            _emulator.saveState(it.currentState.file)
         }
     }
 
     fun loadState() {
         loadedGame.value?.also {
-            _emulator.loadState(it.currentState)
+            _emulator.loadState(it.currentState.file)
         }
     }
 

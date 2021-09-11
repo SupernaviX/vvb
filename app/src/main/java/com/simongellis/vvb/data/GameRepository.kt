@@ -3,28 +3,33 @@ package com.simongellis.vvb.data
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import kotlinx.coroutines.flow.map
-import java.io.File
+import kotlinx.coroutines.flow.*
 import java.util.*
 import kotlin.collections.HashMap
 
 class GameRepository(val context: Context) {
     private val _dao = PreferencesDao.forClass(GameData.serializer(), context)
+    private val _fileDao = FileDao(context)
     private val _filenames = HashMap<Uri, String>()
-    private val _saveStates = HashMap<String, File>()
 
     val recentGames by lazy {
         _dao.watchAll().map { games ->
             games
                 .sortedByDescending { it.lastPlayed }
                 .take(10)
-                .map(::fromData)
+                .map { fromData(it, getState(it)) }
         }
     }
 
     fun getGame(uri: Uri): Game {
         val data = GameData(uri, Date())
-        return fromData(data)
+        return fromData(data, getState(data))
+    }
+
+    fun watchGame(id: String): Flow<Game> {
+        val dataFlow = _dao.watch(id)
+        val stateFlow = dataFlow.flatMapLatest { watchState(it) }
+        return dataFlow.combine(stateFlow, ::fromData)
     }
 
     fun markAsPlayed(id: String, uri: Uri) {
@@ -33,8 +38,8 @@ class GameRepository(val context: Context) {
         _dao.put(newData)
     }
 
-    private fun fromData(data: GameData): Game {
-        return Game(data.id, getName(data.uri), data.uri, data.lastPlayed, getSaveState(data.id))
+    private fun fromData(data: GameData, currentState: SaveState): Game {
+        return Game(data.id, getName(data.uri), data.uri, data.lastPlayed, currentState)
     }
 
     private fun getName(uri: Uri): String {
@@ -58,9 +63,10 @@ class GameRepository(val context: Context) {
         return uri.lastPathSegment!!.substringAfterLast('/')
     }
 
-    private fun getSaveState(id: String) = _saveStates.getOrPut(id) {
-        val saveStateDir = File(context.filesDir, id)
-        saveStateDir.mkdir()
-        File(saveStateDir, "0.sav")
-    }
+    private fun getState(data: GameData)
+        = SaveState(_fileDao.get(getStatePath(data)))
+    private fun watchState(data: GameData)
+        = _fileDao.watch(getStatePath(data)).map{ SaveState(it) }
+    private fun getStatePath(data: GameData)
+        = "${data.id}/save_states/0.sav"
 }

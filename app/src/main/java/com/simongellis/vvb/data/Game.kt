@@ -9,5 +9,5 @@ data class Game(
     val name: String,
     val uri: Uri,
     val lastPlayed: Date,
-    val currentState: File
+    val currentState: SaveState
 )

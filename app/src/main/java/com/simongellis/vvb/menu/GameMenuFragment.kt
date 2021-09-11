@@ -51,7 +51,7 @@ class GameMenuFragment: PreferenceFragmentCompat() {
 
             title = "$nowPlaying: ${game.name}"
 
-            val hasSaveState = game.currentState.exists()
+            val hasSaveState = game.currentState.exists
             findPreference<Preference>("load_state")?.isEnabled = hasSaveState
         }
     }
