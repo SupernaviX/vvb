@@ -3,13 +3,14 @@ package com.simongellis.vvb.data
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import java.util.*
 import kotlin.collections.HashMap
 
-class GameRepository(val context: Context) {
+class GameRepository(scope: CoroutineScope, val context: Context) {
     private val _dao = PreferencesDao.forClass<GameData>(context)
-    private val _fileDao = FileDao(context)
+    private val _fileDao = FileDao(scope, context)
     private val _filenames = HashMap<Uri, String>()
 
     val recentGames by lazy {

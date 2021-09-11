@@ -24,7 +24,7 @@ open class DetailedListPreference(context: Context, attrs: AttributeSet): ListPr
         return if (selectedIndex >= 0 && selectedIndex < detailedEntries.size) {
             detailedEntries[selectedIndex].summary
         } else {
-            super.getSummary()
+            ""
         }
     }
 

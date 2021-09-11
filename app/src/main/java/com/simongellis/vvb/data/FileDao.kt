@@ -2,12 +2,14 @@ package com.simongellis.vvb.data
 
 import android.content.Context
 import android.os.FileObserver
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
 import java.io.File
 
-class FileDao(context: Context) {
+class FileDao(private val scope: CoroutineScope, context: Context) {
     private val _filesDir = context.filesDir
-    private val _observers = HashMap<String, FlowFileObserver>()
+    private val _observers = HashMap<String, DirectoryObserver>()
 
     fun get(filename: String): File {
         val file = File(_filesDir, filename)
@@ -15,26 +17,36 @@ class FileDao(context: Context) {
         return file
     }
 
-    fun watch(filename: String) = _observers.getOrPut(filename) {
-        val observer = FlowFileObserver(get(filename))
-        observer.startWatching()
-        observer
-    }.flow
+    fun watch(filename: String): Flow<File> {
+        val file = File(_filesDir, filename)
+        val name = file.name
+        return getDirectory(file).updateFlow
+            .filter { it == name }
+            .map { file }
+            .onStart { emit(file) }
+    }
 
-    @Suppress("DEPRECATION")
-    class FlowFileObserver(file: File): FileObserver(file.parent, CLOSE_WRITE) {
-        private val _path = file.name
-        private val _eventFlow = MutableSharedFlow<Unit>(replay = 1)
-        val flow = _eventFlow.map { file }
+    private fun getDirectory(file: File) = _observers.getOrPut(file.parent!!) {
+        DirectoryObserver(scope, file.parentFile!!)
+    }
+
+    class DirectoryObserver(scope: CoroutineScope, directory: File) {
+        val updateFlow = getUpdateFlow(directory)
+            .shareIn(scope, SharingStarted.WhileSubscribed())
 
         init {
-            _eventFlow.tryEmit(Unit)
+            directory.mkdirs()
         }
 
-        override fun onEvent(event: Int, path: String?) {
-            if (_path == path) {
-                _eventFlow.tryEmit(Unit)
+        private fun getUpdateFlow(directory: File) = callbackFlow {
+            @Suppress("DEPRECATION")
+            val observer = object : FileObserver(directory.path, CLOSE_WRITE) {
+                override fun onEvent(event: Int, path: String?) {
+                    path?.also(::trySend)
+                }
             }
+            observer.startWatching()
+            awaitClose { observer.stopWatching() }
         }
     }
 }

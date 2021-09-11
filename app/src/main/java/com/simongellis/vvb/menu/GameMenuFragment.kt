@@ -58,6 +58,7 @@ class GameMenuFragment : PreferenceFragmentCompat() {
             if (game == null) return@observeNow
 
             title = "$nowPlaying: ${game.name}"
+            findPreference<DetailedListPreference>("state_slot")?.value = game.stateSlot.toString()
         }
         observeNow(viewModel.stateSlots) { states ->
             val pref = findPreference<DetailedListPreference>("state_slot")

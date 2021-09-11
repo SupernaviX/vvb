@@ -14,7 +14,7 @@ import org.acra.ACRA
 import java.lang.Exception
 
 class MainViewModel(application: Application): AndroidViewModel(application) {
-    private val _gameRepo = GameRepository(application)
+    private val _gameRepo = GameRepository(viewModelScope, application)
     private val _application = getApplication<VvbApplication>()
     private val _emulator = Emulator.instance
     private val _gamePakLoader = GamePakLoader(application)
