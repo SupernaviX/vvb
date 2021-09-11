@@ -20,9 +20,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _gamePakLoader = GamePakLoader(application)
 
     private val _loadedGameId = MutableStateFlow<String?>(null)
-    val loadedGame = _loadedGameId.flatMapLatest { id ->
-        id?.let { _gameRepo.watchGame(it) } ?: emptyFlow()
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    val loadedGame = forCurrentGame { _gameRepo.watchGame(it) }
+    val stateSlots = forCurrentGame { _gameRepo.watchStateSlots(it) }
+    val currentStateSlot = loadedGame.combine(stateSlots) { game, states ->
+        game?.let { states?.get(it.stateSlot) }
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     var wasGameJustOpened = false
     fun loadGame(uri: Uri): Boolean {
@@ -63,16 +65,27 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun saveState() {
-        loadedGame.value?.also {
-            _emulator.saveState(it.currentState.file)
+        currentStateSlot.value?.also {
+            _emulator.saveState(it.file)
         }
     }
 
     fun loadState() {
-        loadedGame.value?.also {
-            _emulator.loadState(it.currentState.file)
+        currentStateSlot.value?.also {
+            _emulator.loadState(it.file)
+        }
+    }
+
+    fun selectStateSlot(slot: Int) {
+        _loadedGameId.value?.also {
+            _gameRepo.selectStateSlot(it, slot)
         }
     }
 
     val recentGames by _gameRepo::recentGames
+
+    private fun <T> forCurrentGame(getter: (String) -> Flow<T>): Flow<T?> {
+        return _loadedGameId
+            .flatMapLatest { id -> id?.let(getter) ?: emptyFlow() }
+    }
 }

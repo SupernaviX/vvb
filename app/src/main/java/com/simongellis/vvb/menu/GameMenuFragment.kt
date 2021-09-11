@@ -2,16 +2,19 @@ package com.simongellis.vvb.menu
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.format.DateFormat
 import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
+import com.simongellis.vvb.data.StateSlot
 import com.simongellis.vvb.game.GameActivity
 import com.simongellis.vvb.utils.observeNow
+import java.util.*
 
-class GameMenuFragment: PreferenceFragmentCompat() {
+class GameMenuFragment : PreferenceFragmentCompat() {
     private val viewModel: MainViewModel by viewModels({ requireActivity() })
     private var title: String = ""
 
@@ -37,6 +40,11 @@ class GameMenuFragment: PreferenceFragmentCompat() {
             playGame()
             true
         }
+        findPreference<Preference>("state_slot")?.setOnPreferenceChangeListener { _, newValue ->
+            val slot = newValue.toString().toInt()
+            viewModel.selectStateSlot(slot)
+            true
+        }
         findPreference<Preference>("close_game")?.setOnPreferenceClickListener {
             viewModel.closeGame()
             closeGameMenu()
@@ -50,8 +58,20 @@ class GameMenuFragment: PreferenceFragmentCompat() {
             if (game == null) return@observeNow
 
             title = "$nowPlaying: ${game.name}"
-
-            val hasSaveState = game.currentState.exists
+        }
+        observeNow(viewModel.stateSlots) { states ->
+            val pref = findPreference<DetailedListPreference>("state_slot")
+            val allStates = states ?: listOf()
+            pref?.detailedEntries = allStates.mapIndexed { slot, state ->
+                DetailedListPreference.Entry(
+                    slot.toString(),
+                    state.name,
+                    getDescription(state)
+                )
+            }
+        }
+        observeNow(viewModel.currentStateSlot) {
+            val hasSaveState = it?.exists ?: false
             findPreference<Preference>("load_state")?.isEnabled = hasSaveState
         }
     }
@@ -69,5 +89,16 @@ class GameMenuFragment: PreferenceFragmentCompat() {
     private fun closeGameMenu() {
         val main = activity as MainActivity
         main.closeAllSubMenus()
+    }
+
+    private fun getDescription(state: StateSlot): String {
+        val context = requireContext()
+        if (!state.exists) {
+            return context.getString(R.string.game_menu_state_slot_empty)
+        }
+        val lastSaved = Date(state.lastModified)
+        val dateStr = DateFormat.getMediumDateFormat(context).format(lastSaved)
+        val timeStr = DateFormat.getTimeFormat(context).format(lastSaved)
+        return "${context.getString(R.string.game_menu_state_slot_last_saved)}: $dateStr $timeStr"
     }
 }

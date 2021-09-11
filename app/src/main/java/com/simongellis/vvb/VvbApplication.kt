@@ -142,7 +142,7 @@ class VvbApplication: Application() {
             val (rawLastPlayed, rawUri) = it.split("::")
             val uri = Uri.parse(rawUri)
             val lastPlayed = Date(rawLastPlayed.toLong())
-            val game = GameData(uri, lastPlayed, "0")
+            val game = GameData(uri, lastPlayed, 0)
             dao.put(game)
         }
         editor.remove("recent_games")
@@ -152,7 +152,7 @@ class VvbApplication: Application() {
     private fun addStateFieldsToGames(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         val dao = PreferencesDao.forClass<GameData>(applicationContext)
         dao.migrate {
-            it.put("currentStateSlot", "0")
+            it.put("stateSlot", 0)
         }
     }
 }

@@ -17,30 +17,38 @@ class GameRepository(val context: Context) {
             games
                 .sortedByDescending { it.lastPlayed }
                 .take(10)
-                .map { fromData(it, getState(it)) }
+                .map(::fromData)
         }
     }
 
     fun getGame(uri: Uri): Game {
         val id = GameData.getId(uri)
-        val data = _dao.get(id) ?: GameData(uri, Date(), "0")
-        return fromData(data, getState(data))
+        val data = _dao.get(id) ?: GameData(uri, Date(), 0)
+        return fromData(data)
     }
 
-    fun watchGame(id: String): Flow<Game> {
-        val dataFlow = _dao.watch(id)
-        val stateFlow = dataFlow.flatMapLatest { watchState(it) }
-        return dataFlow.combine(stateFlow, ::fromData)
+    fun watchGame(id: String)
+         = _dao.watch(id).map { fromData(it) }
+
+    fun watchStateSlots(id: String): Flow<List<StateSlot>> {
+        val flows = (0..9).map { slot -> watchStateSlot(id, slot) }
+        return combine(flows) { it.toList() }
     }
 
     fun markAsPlayed(id: String, uri: Uri) {
-        val data = _dao.get(id) ?: GameData(uri, Date(), "0")
+        val data = _dao.get(id) ?: GameData(uri, Date(), 0)
         val newData = data.copy(uri = uri, lastPlayed = Date())
         _dao.put(newData)
     }
 
-    private fun fromData(data: GameData, currentState: SaveState): Game {
-        return Game(data.id, getName(data.uri), data.uri, data.lastPlayed, currentState)
+    fun selectStateSlot(id: String, slot: Int) {
+        val data = _dao.get(id) ?: return
+        val newData = data.copy(stateSlot = slot)
+        _dao.put(newData)
+    }
+
+    private fun fromData(data: GameData): Game {
+        return Game(data.id, getName(data.uri), data.uri, data.lastPlayed, data.stateSlot)
     }
 
     private fun getName(uri: Uri): String {
@@ -64,10 +72,8 @@ class GameRepository(val context: Context) {
         return uri.lastPathSegment!!.substringAfterLast('/')
     }
 
-    private fun getState(data: GameData)
-        = SaveState(_fileDao.get(getStatePath(data)))
-    private fun watchState(data: GameData)
-        = _fileDao.watch(getStatePath(data)).map{ SaveState(it) }
-    private fun getStatePath(data: GameData)
-        = "${data.id}/save_states/${data.stateSlot}.sav"
+    private fun watchStateSlot(id: String, slot: Int)
+        = _fileDao.watch(getStatePath(id, slot)).map { StateSlot(it) }
+    private fun getStatePath(id: String, slot: Int)
+        = "$id/save_states/${slot}.sav"
 }
