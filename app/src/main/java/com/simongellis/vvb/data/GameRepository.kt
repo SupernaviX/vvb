@@ -74,7 +74,7 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
     }
 
     private fun watchStateSlot(id: String, slot: Int)
-        = _fileDao.watch(getStatePath(id, slot)).map { StateSlot(it) }
+        = _fileDao.watch(getStatePath(id, slot)).map { StateSlot(it, slot) }
     private fun getStatePath(id: String, slot: Int)
         = "$id/save_states/${slot}.sav"
 }

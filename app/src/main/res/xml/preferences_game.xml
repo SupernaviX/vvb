@@ -16,6 +16,7 @@
         app:key="state_slot"
         app:title="@string/game_menu_state_slot"
         app:persistent="false"
+        app:summaryFormat="%1$s (%2$s)"
         app:defaultValue="0" />
     <Preference
         app:key="close_game"

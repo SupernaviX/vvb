@@ -13,8 +13,9 @@
     <string name="game_menu_save_state">Save State</string>
     <string name="game_menu_load_state">Load State</string>
     <string name="game_menu_state_slot">Current State Slot</string>
+    <string name="game_menu_state_slot_name">Slot %1$d</string>
     <string name="game_menu_state_slot_empty">Empty</string>
-    <string name="game_menu_state_slot_last_saved">Last saved</string>
+    <string name="game_menu_state_slot_saved">Saved: %1$s</string>
     <string name="game_menu_close_game">Close Game</string>
     <string name="onscreen_input_menu_on">Use Virtual Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Put Trigger Buttons in Toggle Mode</string>

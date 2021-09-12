@@ -63,11 +63,11 @@ class GameMenuFragment : PreferenceFragmentCompat() {
         observeNow(viewModel.stateSlots) { states ->
             val pref = findPreference<DetailedListPreference>("state_slot")
             val allStates = states ?: listOf()
-            pref?.detailedEntries = allStates.mapIndexed { slot, state ->
+            pref?.detailedEntries = allStates.map { slot ->
                 DetailedListPreference.Entry(
-                    slot.toString(),
-                    state.name,
-                    getDescription(state)
+                    slot.index.toString(),
+                    getSlotName(slot),
+                    getSlotDescription(slot)
                 )
             }
         }
@@ -92,14 +92,20 @@ class GameMenuFragment : PreferenceFragmentCompat() {
         main.closeAllSubMenus()
     }
 
-    private fun getDescription(state: StateSlot): String {
+    private fun getSlotName(slot: StateSlot): String {
         val context = requireContext()
-        if (!state.exists) {
+        return context.getString(R.string.game_menu_state_slot_name, slot.index)
+    }
+
+    private fun getSlotDescription(slot: StateSlot): String {
+        val context = requireContext()
+        if (!slot.exists) {
             return context.getString(R.string.game_menu_state_slot_empty)
         }
-        val lastSaved = Date(state.lastModified)
+        val lastSaved = Date(slot.lastModified)
         val dateStr = DateFormat.getMediumDateFormat(context).format(lastSaved)
         val timeStr = DateFormat.getTimeFormat(context).format(lastSaved)
-        return "${context.getString(R.string.game_menu_state_slot_last_saved)}: $dateStr $timeStr"
+        val dateTimeStr = "$dateStr $timeStr"
+        return context.getString(R.string.game_menu_state_slot_saved, dateTimeStr)
     }
 }

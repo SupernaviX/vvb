@@ -58,7 +58,7 @@ class DetailedListPreferenceDialogFragment: PreferenceDialogFragmentCompat() {
 
             val entry = entries[position]
             val line1 = view.findViewById<TextView>(android.R.id.text1)
-            line1.text = entry.summary
+            line1.text = entry.name
             val line2 = view.findViewById<TextView>(android.R.id.text2)
             line2.text = entry.description
             return view
