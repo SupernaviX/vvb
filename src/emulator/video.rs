@@ -139,16 +139,16 @@ impl Default for VideoState {
 
 pub struct Video {
     cycle: u64,
-    memory: Rc<RefCell<Memory>>,
     displaying: bool,
     drawing: bool,
     game_frame_counter: u8,
-    xp_module: DrawingProcess,
     dpctrl_flags: u16,
     xpctrl_flags: u16,
     pending_interrupts: u16,
     enabled_interrupts: u16,
     display_buffer: Buffer,
+    memory: Rc<RefCell<Memory>>,
+    xp_module: DrawingProcess,
     frame_channel: Option<mpsc::Sender<Frame>>,
     buffers: [Arc<Mutex<EyeBuffer>>; 4],
     buffer_index: usize,

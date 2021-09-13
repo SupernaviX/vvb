@@ -7,7 +7,7 @@ use hardware::Hardware;
 pub mod memory;
 use memory::{Memory, Region};
 mod state;
-use state::SaveStateData;
+use state::{GlobalState, SaveStateData};
 pub mod video;
 use video::{Eye, FrameChannel, Video};
 
@@ -120,13 +120,18 @@ impl Emulator {
         let memory = self.memory.borrow();
         let video = self.video.borrow();
         let hardware = self.hardware.borrow();
+        let audio = self.audio.borrow();
 
-        let mut data = vec![];
+        let mut data = vec![SaveStateData::Global(GlobalState {
+            cycle: self.cycle,
+            tick_calls: self.tick_calls,
+        })];
         let memory_state = REGIONS.iter().copied().map(|region| {
             SaveStateData::Memory(region, memory.read_region(region).unwrap().to_vec())
         });
         data.extend(memory_state);
         data.push(SaveStateData::Cpu(Box::new(self.cpu.save_state())));
+        data.push(SaveStateData::Audio(Box::new(audio.save_state())));
         data.push(SaveStateData::Video(video.save_state()));
         data.push(SaveStateData::Hardware(hardware.save_state()));
 
@@ -137,13 +142,19 @@ impl Emulator {
         let mut memory = self.memory.borrow_mut();
         let mut video = self.video.borrow_mut();
         let mut hardware = self.hardware.borrow_mut();
+        let mut audio = self.audio.borrow_mut();
         let data = state::load_state(filename)?;
         for datum in data {
             match datum {
+                SaveStateData::Global(state) => {
+                    self.cycle = state.cycle;
+                    self.tick_calls = state.tick_calls;
+                }
                 SaveStateData::Memory(region, data) => {
                     memory.write_region(region).unwrap().copy_from_slice(&data)
                 }
                 SaveStateData::Cpu(state) => self.cpu.load_state(&state),
+                SaveStateData::Audio(state) => audio.load_state(&state),
                 SaveStateData::Video(state) => video.load_state(&state),
                 SaveStateData::Hardware(state) => hardware.load_state(&state),
             }

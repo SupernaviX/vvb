@@ -3,6 +3,7 @@ use ciborium::{de, ser};
 use serde_derive::{Deserialize, Serialize};
 use std::fs::File;
 
+use super::audio::AudioState;
 use super::cpu::CpuState;
 use super::hardware::HardwareState;
 use super::memory::Region;
@@ -10,12 +11,20 @@ use super::video::VideoState;
 
 const VERSION: u8 = 1;
 
+#[derive(Copy, Clone, Serialize, Deserialize, Default)]
+pub struct GlobalState {
+    pub cycle: u64,
+    pub tick_calls: u64,
+}
+
 #[derive(Serialize, Deserialize)]
 pub enum SaveStateData {
+    Global(GlobalState),
     Memory(Region, #[serde(with = "serde_bytes")] Vec<u8>),
     Cpu(Box<CpuState>),
     Video(VideoState),
     Hardware(HardwareState),
+    Audio(Box<AudioState>),
 }
 
 pub fn save_state(filename: &str, data: &[SaveStateData]) -> Result<()> {
