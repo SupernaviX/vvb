@@ -118,6 +118,7 @@ impl Emulator {
         ];
 
         let memory = self.memory.borrow();
+        let video = self.video.borrow();
         let hardware = self.hardware.borrow();
 
         let mut data = vec![];
@@ -126,6 +127,7 @@ impl Emulator {
         });
         data.extend(memory_state);
         data.push(SaveStateData::Cpu(Box::new(self.cpu.save_state())));
+        data.push(SaveStateData::Video(video.save_state()));
         data.push(SaveStateData::Hardware(hardware.save_state()));
 
         state::save_state(filename, &data)
@@ -133,6 +135,7 @@ impl Emulator {
 
     pub fn load_state(&mut self, filename: &str) -> Result<()> {
         let mut memory = self.memory.borrow_mut();
+        let mut video = self.video.borrow_mut();
         let mut hardware = self.hardware.borrow_mut();
         let data = state::load_state(filename)?;
         for datum in data {
@@ -141,6 +144,7 @@ impl Emulator {
                     memory.write_region(region).unwrap().copy_from_slice(&data)
                 }
                 SaveStateData::Cpu(state) => self.cpu.load_state(&state),
+                SaveStateData::Video(state) => video.load_state(&state),
                 SaveStateData::Hardware(state) => hardware.load_state(&state),
             }
         }

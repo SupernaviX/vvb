@@ -6,6 +6,7 @@ use std::fs::File;
 use super::cpu::CpuState;
 use super::hardware::HardwareState;
 use super::memory::Region;
+use super::video::VideoState;
 
 const VERSION: u8 = 1;
 
@@ -13,6 +14,7 @@ const VERSION: u8 = 1;
 pub enum SaveStateData {
     Memory(Region, #[serde(with = "serde_bytes")] Vec<u8>),
     Cpu(Box<CpuState>),
+    Video(VideoState),
     Hardware(HardwareState),
 }
 
