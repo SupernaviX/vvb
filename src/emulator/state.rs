@@ -4,6 +4,7 @@ use serde_derive::{Deserialize, Serialize};
 use std::fs::File;
 
 use super::cpu::CpuState;
+use super::hardware::HardwareState;
 use super::memory::Region;
 
 const VERSION: u8 = 1;
@@ -12,6 +13,7 @@ const VERSION: u8 = 1;
 pub enum SaveStateData {
     Memory(Region, #[serde(with = "serde_bytes")] Vec<u8>),
     Cpu(Box<CpuState>),
+    Hardware(HardwareState),
 }
 
 pub fn save_state(filename: &str, data: &[SaveStateData]) -> Result<()> {

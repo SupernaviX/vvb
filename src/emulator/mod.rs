@@ -116,7 +116,9 @@ impl Emulator {
             Region::Dram,
             Region::Sram,
         ];
+
         let memory = self.memory.borrow();
+        let hardware = self.hardware.borrow();
 
         let mut data = vec![];
         let memory_state = REGIONS.iter().copied().map(|region| {
@@ -124,12 +126,14 @@ impl Emulator {
         });
         data.extend(memory_state);
         data.push(SaveStateData::Cpu(Box::new(self.cpu.save_state())));
+        data.push(SaveStateData::Hardware(hardware.save_state()));
 
         state::save_state(filename, &data)
     }
 
     pub fn load_state(&mut self, filename: &str) -> Result<()> {
         let mut memory = self.memory.borrow_mut();
+        let mut hardware = self.hardware.borrow_mut();
         let data = state::load_state(filename)?;
         for datum in data {
             match datum {
@@ -137,6 +141,7 @@ impl Emulator {
                     memory.write_region(region).unwrap().copy_from_slice(&data)
                 }
                 SaveStateData::Cpu(state) => self.cpu.load_state(&state),
+                SaveStateData::Hardware(state) => hardware.load_state(&state),
             }
         }
         Ok(())
