@@ -6,6 +6,8 @@ mod hardware;
 use hardware::Hardware;
 pub mod memory;
 use memory::{Memory, Region};
+mod state;
+use state::SaveStateData;
 pub mod video;
 use video::{Eye, FrameChannel, Video};
 
@@ -102,6 +104,40 @@ impl Emulator {
     pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
         if let Some(sram) = self.memory.borrow().read_region(Region::Sram) {
             buffer.copy_from_slice(sram);
+        }
+        Ok(())
+    }
+
+    pub fn save_state(&self, filename: &str) -> Result<()> {
+        const REGIONS: [Region; 5] = [
+            Region::Vram,
+            Region::Audio,
+            Region::Hardware,
+            Region::Dram,
+            Region::Sram,
+        ];
+        let memory = self.memory.borrow();
+
+        let mut data = vec![];
+        let memory_state = REGIONS.iter().copied().map(|region| {
+            SaveStateData::Memory(region, memory.read_region(region).unwrap().to_vec())
+        });
+        data.extend(memory_state);
+        data.push(SaveStateData::Cpu(Box::new(self.cpu.save_state())));
+
+        state::save_state(filename, &data)
+    }
+
+    pub fn load_state(&mut self, filename: &str) -> Result<()> {
+        let mut memory = self.memory.borrow_mut();
+        let data = state::load_state(filename)?;
+        for datum in data {
+            match datum {
+                SaveStateData::Memory(region, data) => {
+                    memory.write_region(region).unwrap().copy_from_slice(&data)
+                }
+                SaveStateData::Cpu(state) => self.cpu.load_state(&state),
+            }
         }
         Ok(())
     }
@@ -205,7 +241,6 @@ pub mod jni {
     use jni::JNIEnv;
     use log::info;
     use std::convert::TryInto;
-    use std::fs;
 
     fn get_emulator<'a>(
         env: &'a JNIEnv,
@@ -271,20 +306,22 @@ pub mod jni {
     }
 
     jni_func!(Emulator_nativeSaveState, save_state, JString);
-    fn save_state(env: &JNIEnv, _this: jobject, filename: JString) -> Result<()> {
+    fn save_state(env: &JNIEnv, this: jobject, filename: JString) -> Result<()> {
         info!("Saving...");
         let filename: String = env.get_string(filename)?.try_into()?;
-        fs::write(filename, &[0xca, 0xfe, 0xba, 0xbe])?;
+        let this = get_emulator(env, this)?;
+        this.save_state(&filename)?;
         info!("Saved!");
         Ok(())
     }
 
     jni_func!(Emulator_nativeLoadState, load_state, JString);
-    fn load_state(env: &JNIEnv, _this: jobject, filename: JString) -> Result<()> {
+    fn load_state(env: &JNIEnv, this: jobject, filename: JString) -> Result<()> {
         info!("Loading...");
         let filename: String = env.get_string(filename)?.try_into()?;
-        let contents = fs::read(filename)?;
-        info!("Loaded! {:?}", contents);
+        let mut this = get_emulator(env, this)?;
+        this.load_state(&filename)?;
+        info!("Loaded!");
         Ok(())
     }
 

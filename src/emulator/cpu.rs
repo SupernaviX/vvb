@@ -1,5 +1,6 @@
 use super::memory::Memory;
 use anyhow::Result;
+use serde_derive::{Deserialize, Serialize};
 use std::cell::{RefCell, RefMut};
 use std::num::FpCategory;
 use std::rc::Rc;
@@ -51,40 +52,27 @@ fn bit_range_mask(start: u32, length: u32) -> u32 {
     ((i32::MIN >> (length - 1)) as u32) >> (32 - length - start)
 }
 
-pub struct Cpu<THandler: EventHandler> {
+#[derive(Serialize, Deserialize)]
+pub struct CpuState {
     cycle: u64,
-    memory: Rc<RefCell<Memory>>,
-    handler: THandler,
     bitstring_cycle: u64,
     halted: bool,
-    pub pc: usize,
-    pub registers: [u32; 32],
-    pub sys_registers: [u32; 32],
+    pc: usize,
+    registers: [u32; 32],
+    sys_registers: [u32; 32],
 }
-impl<THandler: EventHandler> Cpu<THandler> {
-    pub fn new(memory: Rc<RefCell<Memory>>, handler: THandler) -> Self {
-        let mut cpu = Cpu {
+
+impl Default for CpuState {
+    fn default() -> Self {
+        let mut state = Self {
             cycle: 0,
-            memory,
-            handler,
             bitstring_cycle: 0,
             halted: false,
             pc: 0xfffffff0,
             registers: [0; 32],
             sys_registers: [0; 32],
         };
-        cpu.init();
-        cpu
-    }
-    pub fn init(&mut self) {
-        self.cycle = 0;
-        self.halted = false;
-        self.bitstring_cycle = 0;
-        self.pc = 0xfffffff0;
-        for reg in self.registers.iter_mut() {
-            *reg = 0;
-        }
-        for (sys_reg_index, sys_reg) in self.sys_registers.iter_mut().enumerate() {
+        for (sys_reg_index, sys_reg) in state.sys_registers.iter_mut().enumerate() {
             *sys_reg = match sys_reg_index {
                 4 => 0x0000fff0,       // ECR
                 5 => NMI_PENDING_FLAG, // PSW
@@ -94,6 +82,56 @@ impl<THandler: EventHandler> Cpu<THandler> {
                 _ => 0,
             };
         }
+        state
+    }
+}
+
+pub struct Cpu<THandler: EventHandler> {
+    cycle: u64,
+    bitstring_cycle: u64,
+    halted: bool,
+    pub pc: usize,
+    pub registers: [u32; 32],
+    pub sys_registers: [u32; 32],
+    memory: Rc<RefCell<Memory>>,
+    handler: THandler,
+}
+impl<THandler: EventHandler> Cpu<THandler> {
+    pub fn new(memory: Rc<RefCell<Memory>>, handler: THandler) -> Self {
+        let state = CpuState::default();
+        Self {
+            cycle: state.cycle,
+            bitstring_cycle: state.bitstring_cycle,
+            halted: state.halted,
+            pc: state.pc,
+            registers: state.registers,
+            sys_registers: state.sys_registers,
+            memory,
+            handler,
+        }
+    }
+    pub fn init(&mut self) {
+        self.load_state(&CpuState::default());
+    }
+
+    pub fn save_state(&self) -> CpuState {
+        CpuState {
+            cycle: self.cycle,
+            bitstring_cycle: self.bitstring_cycle,
+            halted: self.halted,
+            pc: self.pc,
+            registers: self.registers,
+            sys_registers: self.sys_registers,
+        }
+    }
+
+    pub fn load_state(&mut self, state: &CpuState) {
+        self.cycle = state.cycle;
+        self.bitstring_cycle = state.bitstring_cycle;
+        self.halted = state.halted;
+        self.pc = state.pc;
+        self.registers.copy_from_slice(&state.registers);
+        self.sys_registers.copy_from_slice(&state.sys_registers);
     }
 
     pub fn run(&mut self, target_cycle: u64) -> Result<CpuProcessingResult> {
@@ -104,11 +142,11 @@ impl<THandler: EventHandler> Cpu<THandler> {
                 cycle: self.cycle,
                 bitstring_cycle: self.bitstring_cycle,
                 halted: self.halted,
+                registers: &mut self.registers,
+                sys_registers: &mut self.sys_registers,
                 event: None,
                 exception: None,
                 memory: self.memory.borrow_mut(),
-                registers: &mut self.registers,
-                sys_registers: &mut self.sys_registers,
             };
             process.run(target_cycle);
             self.pc = process.pc;
@@ -267,11 +305,11 @@ struct CpuProcess<'a> {
     cycle: u64,
     bitstring_cycle: u64,
     halted: bool,
+    registers: &'a mut [u32; 32],
+    sys_registers: &'a mut [u32; 32],
     event: Option<Event>,
     exception: Option<Exception>,
     memory: RefMut<'a, Memory>,
-    registers: &'a mut [u32; 32],
-    sys_registers: &'a mut [u32; 32],
 }
 impl<'a> CpuProcess<'a> {
     pub fn run(&mut self, target_cycle: u64) {
