@@ -40,21 +40,19 @@ class GameActivity : AppCompatActivity() {
 
         viewModel.loadPreviewImage()
 
-        if(savedInstanceState == null){
-            // Get a handle to the Window containing the UI.
-            mDecorView = window.decorView
-            // does this need re-bound onResume?
-            mDecorView.setOnSystemUiVisibilityChangeListener(View.OnSystemUiVisibilityChangeListener { visibility: Int ->
-                if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
-                    // Go back to immersive fullscreen mode in 3s
-                    val handler = Handler(mainLooper)
-                    handler.postDelayed(
-                        { this.toggleImmersiveView(true) },
-                        3000 /* 3s */
-                    )
-                }
-            })
-        }
+        // Get a handle to the Window containing the UI.
+        mDecorView = window.decorView
+        // does this need re-bound onResume?
+        mDecorView.setOnSystemUiVisibilityChangeListener(View.OnSystemUiVisibilityChangeListener { visibility: Int ->
+            if (visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0) {
+                // Go back to immersive fullscreen mode in 3s
+                val handler = Handler(mainLooper)
+                handler.postDelayed(
+                    { this.toggleImmersiveView(true) },
+                    3000 /* 3s */
+                )
+            }
+        })
         // should this move into the view?
         toggleImmersiveView(true)
     }
@@ -115,7 +113,7 @@ class GameActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             window.setSustainedPerformanceMode(immersive)
         }
-        if(immersive){
+        if(immersive && mDecorView !== null){
             mDecorView.systemUiVisibility = View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
                     View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
