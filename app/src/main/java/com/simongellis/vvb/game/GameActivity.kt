@@ -7,6 +7,7 @@ import android.os.Handler
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import androidx.activity.viewModels
 import com.simongellis.vvb.emulator.*
 
@@ -108,10 +109,15 @@ class GameActivity : AppCompatActivity() {
     }
 
     // fires onCreate, onResume
-    fun toggleImmersiveView(immersive: Boolean) {
+    private fun toggleImmersiveView(immersive: Boolean) {
         // todo: make this a user-configurable opt-in "optimization" (trade-off)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             window.setSustainedPerformanceMode(immersive)
+        }
+        if(immersive) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }else{
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
         if(immersive && mDecorView !== null){
             mDecorView.systemUiVisibility = View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
