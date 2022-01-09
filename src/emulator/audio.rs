@@ -160,7 +160,7 @@ impl Modification {
             false
         }
     }
-    fn apply(&mut self, value: usize, mod_data: &[usize; 32]) -> usize {
+    fn apply(&mut self, value: usize, mod_data: &[isize; 32]) -> usize {
         match self.func {
             ModFunction::Sweep => self.apply_sweep(value),
             ModFunction::Modulation => self.apply_modulation(mod_data),
@@ -175,14 +175,14 @@ impl Modification {
         }
     }
 
-    fn apply_modulation(&mut self, mod_data: &[usize; 32]) -> usize {
-        let res = mod_data[self.mod_index] + self.mod_base;
+    fn apply_modulation(&mut self, mod_data: &[isize; 32]) -> usize {
+        let res = mod_data[self.mod_index] + self.mod_base as isize;
         if self.mod_index < 31 {
             self.mod_index += 1;
         } else if self.mod_repeat {
             self.mod_index = 0;
         }
-        res
+        res as usize
     }
 }
 
@@ -217,7 +217,7 @@ impl Frequency {
         }
     }
     // returns number of updates
-    fn tick(&mut self, cycles: usize, mod_data: &[usize; 32]) -> usize {
+    fn tick(&mut self, cycles: usize, mod_data: &[isize; 32]) -> usize {
         // Frequency modification is computed before the tick
         let new_value = self.tick_mod(mod_data);
 
@@ -234,7 +234,7 @@ impl Frequency {
         result
     }
 
-    fn tick_mod(&mut self, mod_data: &[usize; 32]) -> usize {
+    fn tick_mod(&mut self, mod_data: &[isize; 32]) -> usize {
         if let Some(modification) = self.modification.as_mut() {
             let modify = modification.tick();
             if modify {
@@ -332,7 +332,6 @@ impl Channel {
         if let ChannelType::Pcm { waveform, .. } = &mut self.channel_type {
             *waveform = waveform_index;
         }
-        self.frequency.reset();
     }
     fn set_tap(&mut self, new_tap: u8) {
         if let ChannelType::Noise { tap, register } = &mut self.channel_type {
@@ -351,7 +350,7 @@ impl Channel {
         }
     }
 
-    fn next(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[usize; 32]) -> (u16, u16) {
+    fn next(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[isize; 32]) -> (u16, u16) {
         if let Some(counter) = self.enabled_counter.as_mut() {
             if *counter > 0 {
                 *counter -= 1;
@@ -379,7 +378,7 @@ impl Channel {
         }
     }
 
-    fn sample(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[usize; 32]) -> u16 {
+    fn sample(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[isize; 32]) -> u16 {
         let cycles = self.channel_type.base_cycles_per_frame();
         let ticks = self.frequency.tick(cycles, mod_data);
         for _ in 0..ticks {
@@ -408,7 +407,7 @@ pub struct AudioController {
     prev_input: (f32, f32),
     prev_output: (f32, f32),
     waveforms: [[u16; 32]; 5],
-    mod_data: [usize; 32],
+    mod_data: [isize; 32],
     channels: [Channel; 6],
 }
 
@@ -461,10 +460,10 @@ impl AudioController {
                 }
             }
             0x01000280..=0x010002ff => {
-                // Load modulation data (if all channels are disabled)
-                if self.channels.iter().all(|c| !c.enabled) {
+                // Load modulation data (if the channel using it is disabled)
+                if !self.channels[4].enabled {
                     let index = (address - 0x01000280) / 4;
-                    self.mod_data[index] = value as usize;
+                    self.mod_data[index] = value as i8 as isize;
                 }
             }
             0x01000400..=0x0100057f => {
