@@ -386,7 +386,10 @@ impl Channel {
             self.channel_type.tick();
         }
         match &self.channel_type {
-            ChannelType::Pcm { waveform, index } => waveforms[*waveform][*index],
+            ChannelType::Pcm { waveform, index } => match waveforms.get(*waveform) {
+                Some(waveform) => waveform[*index],
+                None => 0,
+            },
             ChannelType::Noise { register, .. } => {
                 if *register & 0x0001 != 0 {
                     0

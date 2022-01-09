@@ -84,8 +84,8 @@ impl<THandler: EventHandler> Cpu<THandler> {
         for reg in self.registers.iter_mut() {
             *reg = 0;
         }
-        for sys_reg in 0..self.sys_registers.len() {
-            self.sys_registers[sys_reg] = match sys_reg {
+        for (sys_reg_index, sys_reg) in self.sys_registers.iter_mut().enumerate() {
+            *sys_reg = match sys_reg_index {
                 4 => 0x0000fff0,       // ECR
                 5 => NMI_PENDING_FLAG, // PSW
                 6 => 0x00008100,       // PIR

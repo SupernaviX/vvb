@@ -37,9 +37,7 @@ impl MemoryRegion {
         }
     }
     pub fn clear(&mut self) {
-        for data in self.value[0x00000000..self.mask].iter_mut() {
-            *data = 0;
-        }
+        self.value[0x00000000..self.mask].fill(0);
     }
     pub fn write_byte(&mut self, address: usize, value: u8) -> Option<Event> {
         let (address, event) = self.resolve_address(address);
