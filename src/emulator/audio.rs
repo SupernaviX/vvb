@@ -169,9 +169,8 @@ impl Modification {
     fn apply_sweep(&mut self, value: u16) -> u16 {
         let delta = value >> self.sweep_shift;
         match self.sweep_dir {
-            // Smaller numbers are higher pitches
-            Direction::Grow => value - delta,
-            Direction::Decay => value + delta,
+            Direction::Grow => value + delta,
+            Direction::Decay => value - delta,
         }
     }
 
