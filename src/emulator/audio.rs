@@ -143,7 +143,7 @@ struct Modification {
     func: ModFunction,
     sweep_dir: Direction,
     sweep_shift: usize,
-    mod_base: usize,
+    mod_base: u16,
     mod_index: usize,
     mod_repeat: bool,
 }
@@ -160,13 +160,13 @@ impl Modification {
             false
         }
     }
-    fn apply(&mut self, value: usize, mod_data: &[isize; 32]) -> usize {
+    fn apply(&mut self, value: u16, mod_data: &[i16; 32]) -> u16 {
         match self.func {
             ModFunction::Sweep => self.apply_sweep(value),
             ModFunction::Modulation => self.apply_modulation(mod_data),
         }
     }
-    fn apply_sweep(&mut self, value: usize) -> usize {
+    fn apply_sweep(&mut self, value: u16) -> u16 {
         let delta = value >> self.sweep_shift;
         match self.sweep_dir {
             // Smaller numbers are higher pitches
@@ -175,19 +175,27 @@ impl Modification {
         }
     }
 
-    fn apply_modulation(&mut self, mod_data: &[isize; 32]) -> usize {
-        let res = mod_data[self.mod_index] + self.mod_base as isize;
+    fn apply_modulation(&mut self, mod_data: &[i16; 32]) -> u16 {
+        let res = mod_data[self.mod_index] + self.mod_base as i16;
         if self.mod_index < 31 {
             self.mod_index += 1;
         } else if self.mod_repeat {
             self.mod_index = 0;
         }
-        res as usize
+        res as u16
     }
 }
 
+fn set_low_byte(value: &mut u16, byte: u8) {
+    *value = *value & 0x0700 | (byte as u16);
+}
+fn set_high_byte(value: &mut u16, byte: u8) {
+    *value = *value & 0x00ff | ((byte as u16) << 8);
+}
+
 struct Frequency {
-    value: usize,
+    current_value: u16,
+    most_recent_value: u16,
     counter: usize,
     modification: Option<Modification>,
 }
@@ -205,43 +213,49 @@ impl Frequency {
             modification.mod_index = 0;
         }
     }
-    fn set(&mut self, low_byte: u8, high_byte: u8) {
-        let value = ((high_byte as usize & 0x07) << 8) + low_byte as usize;
-        // frequency can be anywhere from 0 to 2047
-        // subtract the passed in value from 2048 so that higher values give higher frequencies
-        let value = 2048 - value;
-        self.value = value;
+    fn set_low_byte(&mut self, value: u8) {
+        set_low_byte(&mut self.current_value, value);
+        set_low_byte(&mut self.most_recent_value, value);
+        self.on_set();
+    }
+    fn set_high_byte(&mut self, value: u8) {
+        set_high_byte(&mut self.current_value, value);
+        set_high_byte(&mut self.most_recent_value, value);
+        self.on_set();
+    }
+    fn on_set(&mut self) {
         self.counter = 0;
         if let Some(modification) = self.modification.as_mut() {
-            modification.mod_base = value;
+            modification.mod_base = self.most_recent_value;
         }
     }
     // returns number of updates
-    fn tick(&mut self, cycles: usize, mod_data: &[isize; 32]) -> usize {
+    fn tick(&mut self, cycles: usize, mod_data: &[i16; 32]) -> u16 {
         // Frequency modification is computed before the tick
         let new_value = self.tick_mod(mod_data);
 
         let mut result = 0;
         self.counter += cycles;
-        while self.counter >= self.value {
+        let change_cycles = 2048 - self.current_value as usize;
+        while self.counter >= change_cycles {
             result += 1;
-            self.counter -= self.value;
+            self.counter -= change_cycles;
         }
 
         // Frequency modification happens after the tick
-        self.value = new_value;
+        self.current_value = new_value;
 
         result
     }
 
-    fn tick_mod(&mut self, mod_data: &[isize; 32]) -> usize {
+    fn tick_mod(&mut self, mod_data: &[i16; 32]) -> u16 {
         if let Some(modification) = self.modification.as_mut() {
             let modify = modification.tick();
             if modify {
-                return modification.apply(self.value, mod_data);
+                return modification.apply(self.current_value, mod_data);
             }
         }
-        self.value
+        self.current_value
     }
 
     fn setup_mod_1(&mut self, enabled: bool, repeat: bool, func: ModFunction) {
@@ -266,7 +280,8 @@ impl Frequency {
 impl Default for Frequency {
     fn default() -> Self {
         Frequency {
-            value: 2048,
+            current_value: 0,
+            most_recent_value: 0,
             counter: 0,
             modification: None,
         }
@@ -350,7 +365,7 @@ impl Channel {
         }
     }
 
-    fn next(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[isize; 32]) -> (u16, u16) {
+    fn next(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[i16; 32]) -> (u16, u16) {
         if let Some(counter) = self.enabled_counter.as_mut() {
             if *counter > 0 {
                 *counter -= 1;
@@ -378,7 +393,7 @@ impl Channel {
         }
     }
 
-    fn sample(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[isize; 32]) -> u16 {
+    fn sample(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[i16; 32]) -> u16 {
         let cycles = self.channel_type.base_cycles_per_frame();
         let ticks = self.frequency.tick(cycles, mod_data);
         for _ in 0..ticks {
@@ -407,7 +422,7 @@ pub struct AudioController {
     prev_input: (f32, f32),
     prev_output: (f32, f32),
     waveforms: [[u16; 32]; 5],
-    mod_data: [isize; 32],
+    mod_data: [i16; 32],
     channels: [Channel; 6],
 }
 
@@ -463,7 +478,7 @@ impl AudioController {
                 // Load modulation data (if the channel using it is disabled)
                 if !self.channels[4].enabled {
                     let index = (address - 0x01000280) / 4;
-                    self.mod_data[index] = value as i8 as isize;
+                    self.mod_data[index] = value as i8 as i16;
                 }
             }
             0x01000400..=0x0100057f => {
@@ -488,15 +503,11 @@ impl AudioController {
                     }
                     0x08 => {
                         // Channel frequency (low byte)
-                        let low_byte = value;
-                        let high_byte = memory.read_byte(address + 4);
-                        self.channels[channel].frequency.set(low_byte, high_byte);
+                        self.channels[channel].frequency.set_low_byte(value);
                     }
                     0x0c => {
                         // Channel frequency (high byte)
-                        let low_byte = memory.read_byte(address - 4);
-                        let high_byte = value;
-                        self.channels[channel].frequency.set(low_byte, high_byte);
+                        self.channels[channel].frequency.set_high_byte(value);
                     }
                     0x10 => {
                         // Channel envelope settings
