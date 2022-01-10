@@ -229,10 +229,13 @@ impl Frequency {
             modification.mod_base = self.most_recent_value;
         }
     }
-    // returns number of updates
-    fn tick(&mut self, cycles: usize, mod_data: &[i16; 32]) -> u16 {
+    // returns number of updates, and whether the channel has shut off
+    fn tick(&mut self, cycles: usize, mod_data: &[i16; 32]) -> (u16, bool) {
         // Frequency modification is computed before the tick
         let new_value = self.tick_mod(mod_data);
+        if new_value > 2047 {
+            return (0, true);
+        }
 
         let mut result = 0;
         self.counter += cycles;
@@ -245,7 +248,7 @@ impl Frequency {
         // Frequency modification happens after the tick
         self.current_value = new_value;
 
-        result
+        (result, false)
     }
 
     fn tick_mod(&mut self, mod_data: &[i16; 32]) -> u16 {
@@ -378,6 +381,9 @@ impl Channel {
             return (0, 0);
         }
         let sample = self.sample(waveforms, mod_data);
+        if !self.enabled {
+            return (0, 0);
+        }
         let left = self.amplitude(self.volume.0) * sample;
         let right = self.amplitude(self.volume.1) * sample;
         self.envelope.tick();
@@ -395,7 +401,11 @@ impl Channel {
 
     fn sample(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[i16; 32]) -> u16 {
         let cycles = self.channel_type.base_cycles_per_frame();
-        let ticks = self.frequency.tick(cycles, mod_data);
+        let (ticks, shutoff) = self.frequency.tick(cycles, mod_data);
+        if shutoff {
+            self.enabled = false;
+            return 0
+        }
         for _ in 0..ticks {
             self.channel_type.tick();
         }
