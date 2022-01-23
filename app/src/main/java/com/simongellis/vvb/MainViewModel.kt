@@ -82,7 +82,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun configureAutoSave(enabled: Boolean) {
         _loadedGameId.value?.also {
-            _gameRepo.setAutoSave(it, enabled)
+            _gameRepo.setAutoSaveEnabled(it, enabled)
             if (enabled) {
                 val autoSave = _gameRepo.getAutoSave(it)
                 _emulator.setAutoSaveFile(autoSave.file)

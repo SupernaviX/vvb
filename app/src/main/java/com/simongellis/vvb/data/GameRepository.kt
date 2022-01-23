@@ -53,7 +53,7 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         _dao.put(newData)
     }
 
-    fun setAutoSave(id: String, enabled: Boolean) {
+    fun setAutoSaveEnabled(id: String, enabled: Boolean) {
         val data = _dao.get(id) ?: return
         val newData = data.copy(autoSaveEnabled = enabled)
         _dao.put(newData)
