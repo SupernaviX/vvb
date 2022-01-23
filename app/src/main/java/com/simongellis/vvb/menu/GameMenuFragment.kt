@@ -65,7 +65,7 @@ class GameMenuFragment : PreferenceFragmentCompat() {
             val allStates = states ?: listOf()
             pref?.detailedEntries = allStates.map { slot ->
                 DetailedListPreference.Entry(
-                    slot.index.toString(),
+                    slot.name,
                     getSlotName(slot),
                     getSlotDescription(slot)
                 )
@@ -94,7 +94,7 @@ class GameMenuFragment : PreferenceFragmentCompat() {
 
     private fun getSlotName(slot: StateSlot): String {
         val context = requireContext()
-        return context.getString(R.string.game_menu_state_slot_name, slot.index)
+        return context.getString(R.string.game_menu_state_slot_name, slot.name)
     }
 
     private fun getSlotDescription(slot: StateSlot): String {

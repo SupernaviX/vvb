@@ -36,10 +36,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         return try {
             val game = _gameRepo.getGame(uri)
             val gamePak = _gamePakLoader.tryLoad(game.id, uri)
+            val autoSave = _gameRepo.getAutoSave(game.id)
+
             _emulator.loadGamePak(gamePak)
+            _emulator.setAutoSaveFile(autoSave.file)
+            if (autoSave.exists) {
+                _emulator.loadState(autoSave.file)
+            }
+
             _gameRepo.markAsPlayed(game.id, uri)
             _loadedGameId.value = game.id
             lastEvent.value = GameEvent.Opened
+
             true
         } catch (ex: IllegalArgumentException) {
             Toast.makeText(_application, ex.localizedMessage, Toast.LENGTH_LONG).show()

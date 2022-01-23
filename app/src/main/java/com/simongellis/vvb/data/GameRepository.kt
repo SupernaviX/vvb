@@ -28,11 +28,16 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         return fromData(data)
     }
 
+    fun getAutoSave(id: String): StateSlot {
+        val file = _fileDao.get(getStatePath(id, "auto"))
+        return StateSlot(file, "auto")
+    }
+
     fun watchGame(id: String)
          = _dao.watch(id).map { fromData(it) }
 
     fun watchStateSlots(id: String): Flow<List<StateSlot>> {
-        val flows = (0..9).map { slot -> watchStateSlot(id, slot) }
+        val flows = (0..9).map { slot -> watchStateSlot(id, slot.toString()) }
         return combine(flows) { it.toList() }
     }
 
@@ -67,14 +72,14 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         )
         cursor?.use {
             if (it.moveToFirst()) {
-                return it.getString(it.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                return it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
             }
         }
         return uri.lastPathSegment!!.substringAfterLast('/')
     }
 
-    private fun watchStateSlot(id: String, slot: Int)
+    private fun watchStateSlot(id: String, slot: String)
         = _fileDao.watch(getStatePath(id, slot)).map { StateSlot(it, slot) }
-    private fun getStatePath(id: String, slot: Int)
-        = "$id/save_states/${slot}.sav"
+    private fun getStatePath(id: String, name: String)
+        = "$id/save_states/${name}.sav"
 }

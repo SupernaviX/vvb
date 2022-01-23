@@ -11,6 +11,7 @@ class Emulator {
     private var _thread: Thread? = null
     private var _running = false
     private var _gamePak: GamePak? = null
+    private var _autoSave: File? = null
 
     private val _sramBuffer = ByteBuffer.allocateDirect(GamePak.sramSize)
 
@@ -42,6 +43,11 @@ class Emulator {
         nativeLoadGamePak(rom, _sramBuffer)
 
         _gamePak = gamePak
+        _autoSave = null
+    }
+
+    fun setAutoSaveFile(file: File) {
+        _autoSave = file
     }
 
     fun unloadGamePak() {
@@ -82,6 +88,7 @@ class Emulator {
         _running = false
         _thread?.join()
         saveSRAM()
+        _autoSave?.also { saveState(it) }
     }
 
     private fun run() {
