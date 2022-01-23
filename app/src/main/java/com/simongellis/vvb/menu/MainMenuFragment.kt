@@ -44,8 +44,8 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.preferences, rootKey)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         val chooseGameFilePicker = registerForActivityResult(OpenFilePicker(), this::loadGame)
         val chooseGameStorageFramework = registerForActivityResult(OpenPersistentDocument) { uri ->
@@ -76,9 +76,17 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.preferences, rootKey)
+    }
+
     override fun onResume() {
         super.onResume()
         requireActivity().setTitle(R.string.app_name)
+        if (viewModel.lastEvent.compareAndSet(MainViewModel.GameEvent.Closed, null)) {
+            // if we just closed a game, hide the "game_actions" menu
+            findPreference<Preference>("game_actions")?.isVisible = false
+        }
     }
 
     private fun loadGame(uri: Uri?) {

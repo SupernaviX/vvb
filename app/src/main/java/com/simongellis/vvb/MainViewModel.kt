@@ -26,7 +26,12 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         game?.let { states?.get(it.stateSlot) }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    var wasGameJustOpened = false
+    enum class GameEvent {
+        Opened,
+        Closed
+    }
+    val lastEvent = MutableStateFlow<GameEvent?>(null)
+
     fun loadGame(uri: Uri): Boolean {
         return try {
             val game = _gameRepo.getGame(uri)
@@ -34,7 +39,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             _emulator.loadGamePak(gamePak)
             _gameRepo.markAsPlayed(game.id, uri)
             _loadedGameId.value = game.id
-            wasGameJustOpened = true
+            lastEvent.value = GameEvent.Opened
             true
         } catch (ex: IllegalArgumentException) {
             Toast.makeText(_application, ex.localizedMessage, Toast.LENGTH_LONG).show()
@@ -53,15 +58,16 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun closeGame() {
         _emulator.unloadGamePak()
         _loadedGameId.value = null
+        lastEvent.value = GameEvent.Closed
     }
 
     fun resetGame() {
         _emulator.reset()
-        wasGameJustOpened = true
+        lastEvent.value = GameEvent.Opened
     }
 
     fun openGame() {
-        wasGameJustOpened = true
+        lastEvent.value = GameEvent.Opened
     }
 
     fun saveState() {

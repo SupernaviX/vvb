@@ -37,11 +37,10 @@ class MainActivity : AppCompatActivity(R.layout.main_activity),
 
     override fun onResume() {
         super.onResume()
-        if (viewModel.wasGameJustOpened) {
+        if (viewModel.lastEvent.compareAndSet(MainViewModel.GameEvent.Opened, null)) {
             // If we just returned from a game, show the Game Actions menu
             closeAllSubMenus()
             displayFragment<GameMenuFragment>(null)
-            viewModel.wasGameJustOpened = false
         }
     }
 
