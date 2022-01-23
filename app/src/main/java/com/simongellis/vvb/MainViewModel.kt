@@ -39,9 +39,11 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             val autoSave = _gameRepo.getAutoSave(game.id)
 
             _emulator.loadGamePak(gamePak)
-            _emulator.setAutoSaveFile(autoSave.file)
-            if (autoSave.exists) {
-                _emulator.loadState(autoSave.file)
+            if (game.autoSaveEnabled) {
+                _emulator.setAutoSaveFile(autoSave.file)
+                if (autoSave.exists) {
+                    _emulator.loadState(autoSave.file)
+                }
             }
 
             _gameRepo.markAsPlayed(game.id, uri)
@@ -76,6 +78,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun openGame() {
         lastEvent.value = GameEvent.Opened
+    }
+
+    fun configureAutoSave(enabled: Boolean) {
+        _loadedGameId.value?.also {
+            _gameRepo.setAutoSave(it, enabled)
+            if (enabled) {
+                val autoSave = _gameRepo.getAutoSave(it)
+                _emulator.setAutoSaveFile(autoSave.file)
+            } else {
+                _emulator.setAutoSaveFile(null)
+            }
+        }
     }
 
     fun saveState() {

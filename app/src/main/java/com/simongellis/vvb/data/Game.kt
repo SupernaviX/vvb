@@ -10,4 +10,5 @@ data class Game(
     val uri: Uri,
     val lastPlayed: Date,
     val stateSlot: Int,
+    val autoSaveEnabled: Boolean,
 )

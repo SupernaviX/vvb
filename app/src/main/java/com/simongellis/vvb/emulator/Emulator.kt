@@ -46,7 +46,7 @@ class Emulator {
         _autoSave = null
     }
 
-    fun setAutoSaveFile(file: File) {
+    fun setAutoSaveFile(file: File?) {
         _autoSave = file
     }
 
@@ -54,6 +54,7 @@ class Emulator {
         pause()
         nativeUnloadGamePak()
         _gamePak = null
+        _autoSave = null
     }
 
     fun saveState(state: File) {

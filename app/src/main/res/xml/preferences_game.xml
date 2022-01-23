@@ -6,6 +6,10 @@
     <Preference
         app:key="reset_game"
         app:title="@string/game_menu_reset_game" />
+    <SwitchPreferenceCompat
+        app:key="auto_save"
+        app:title="@string/game_menu_auto_save"
+        app:defaultValue="true" />
     <Preference
         app:key="save_state"
         app:title="@string/game_menu_save_state" />

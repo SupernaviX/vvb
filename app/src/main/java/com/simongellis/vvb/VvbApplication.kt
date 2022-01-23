@@ -142,7 +142,7 @@ class VvbApplication: Application() {
             val (rawLastPlayed, rawUri) = it.split("::")
             val uri = Uri.parse(rawUri)
             val lastPlayed = Date(rawLastPlayed.toLong())
-            val game = GameData(uri, lastPlayed, 0)
+            val game = GameData(uri, lastPlayed, 0, true)
             dao.put(game)
         }
         editor.remove("recent_games")
@@ -153,6 +153,7 @@ class VvbApplication: Application() {
         val dao = PreferencesDao.forClass<GameData>(applicationContext)
         dao.migrate {
             it.put("stateSlot", 0)
+            it.put("autoSaveEnabled", true)
         }
     }
 }

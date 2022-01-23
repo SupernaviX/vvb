@@ -11,6 +11,7 @@ data class GameData(
     @Serializable(with = DateSerializer::class)
     val lastPlayed: Date,
     val stateSlot: Int,
+    val autoSaveEnabled: Boolean,
 ): Entity {
     override val id = getId(uri)
 

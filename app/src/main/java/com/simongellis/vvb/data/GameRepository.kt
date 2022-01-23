@@ -24,7 +24,7 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
 
     fun getGame(uri: Uri): Game {
         val id = GameData.getId(uri)
-        val data = _dao.get(id) ?: GameData(uri, Date(), 0)
+        val data = _dao.get(id) ?: GameData(uri, Date(), 0, true)
         return fromData(data)
     }
 
@@ -42,7 +42,7 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
     }
 
     fun markAsPlayed(id: String, uri: Uri) {
-        val data = _dao.get(id) ?: GameData(uri, Date(), 0)
+        val data = _dao.get(id) ?: GameData(uri, Date(), 0, true)
         val newData = data.copy(uri = uri, lastPlayed = Date())
         _dao.put(newData)
     }
@@ -53,8 +53,14 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         _dao.put(newData)
     }
 
+    fun setAutoSave(id: String, enabled: Boolean) {
+        val data = _dao.get(id) ?: return
+        val newData = data.copy(autoSaveEnabled = enabled)
+        _dao.put(newData)
+    }
+
     private fun fromData(data: GameData): Game {
-        return Game(data.id, getName(data.uri), data.uri, data.lastPlayed, data.stateSlot)
+        return Game(data.id, getName(data.uri), data.uri, data.lastPlayed, data.stateSlot, data.autoSaveEnabled)
     }
 
     private fun getName(uri: Uri): String {

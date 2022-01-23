@@ -6,6 +6,7 @@ import android.text.format.DateFormat
 import androidx.fragment.app.viewModels
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SwitchPreferenceCompat
 import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
@@ -29,6 +30,10 @@ class GameMenuFragment : PreferenceFragmentCompat() {
         findPreference<Preference>("reset_game")?.setOnPreferenceClickListener {
             viewModel.resetGame()
             playGame()
+            true
+        }
+        findPreference<SwitchPreferenceCompat>("auto_save")?.setOnPreferenceChangeListener { _, newValue ->
+            viewModel.configureAutoSave(newValue as Boolean)
             true
         }
         findPreference<Preference>("save_state")?.setOnPreferenceClickListener {
@@ -59,6 +64,7 @@ class GameMenuFragment : PreferenceFragmentCompat() {
 
             title = "$nowPlaying: ${game.name}"
             findPreference<DetailedListPreference>("state_slot")?.value = game.stateSlot.toString()
+            findPreference<SwitchPreferenceCompat>("auto_save")?.isChecked = game.autoSaveEnabled
         }
         observeNow(viewModel.stateSlots) { states ->
             val pref = findPreference<DetailedListPreference>("state_slot")
