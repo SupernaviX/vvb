@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.map
 import java.util.*
 
 class ControllerRepository(context: Context) {
-    private val _dao = PreferencesDao.forClass(ControllerData.serializer(), context)
+    private val _dao = PreferencesDao.forClass<ControllerData>(context)
 
     val controllers by lazy {
         _dao.watchAll().map { it.map(::fromData) }

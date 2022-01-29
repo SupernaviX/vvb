@@ -6,10 +6,12 @@ import com.fredporciuncula.flow.preferences.Preference
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
+import org.json.JSONObject
 
-class PreferencesDao<T: Entity>(clazz: Class<T>, private val serializer: KSerializer<T>, context: Context) {
+class PreferencesDao<T: Entity>(className: String, private val serializer: KSerializer<T>, context: Context) {
     private val _preferences =
-        FlowSharedPreferences(context.getSharedPreferences(clazz.simpleName, 0))
+        FlowSharedPreferences(context.getSharedPreferences(className, 0))
     private val _ids = _preferences.getStringSet("ids")
     private val _prefs = HashMap<String, Preference<String?>>()
     private val _valueFlows = HashMap<String, Flow<String?>>()
@@ -49,6 +51,20 @@ class PreferencesDao<T: Entity>(clazz: Class<T>, private val serializer: KSerial
         _prefs.remove(id)
     }
 
+    fun migrate(transform: (value: JSONObject) -> Unit) {
+        val originals = _ids.get()
+            .mapNotNull { id -> getRaw(id)?.let { id to it } }
+            .toMap()
+        val migrated = originals.mapValues {
+            val parsed = JSONObject(it.value)
+            transform(parsed)
+            parsed.toString()
+        }
+        migrated.forEach{
+            getPreference(it.key).set(it.value)
+        }
+    }
+
     private fun getRaw(id: String): String? {
         return getPreference(id).get()
     }
@@ -77,6 +93,6 @@ class PreferencesDao<T: Entity>(clazz: Class<T>, private val serializer: KSerial
     }
 
     companion object {
-        inline fun <reified T: Entity> forClass(serializer: KSerializer<T>, context: Context) = PreferencesDao(T::class.java, serializer, context)
+        inline fun <reified T : Entity> forClass(context: Context) = PreferencesDao<T>(T::class.java.simpleName, serializer(), context)
     }
 }

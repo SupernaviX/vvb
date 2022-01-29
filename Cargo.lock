@@ -100,6 +100,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ciborium"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de6836a1b6197d8acdaac74a01af077a26aa6953d2e9251eef061c646b0d432c"
+dependencies = [
+ "half",
+ "serde",
+]
+
+[[package]]
 name = "combine"
 version = "4.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -129,6 +139,12 @@ dependencies = [
  "log",
  "xml-rs",
 ]
+
+[[package]]
+name = "half"
+version = "1.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62aca2aba2d62b4a7f5b33f3712cb1b0692779a56fb510499d5c0aa594daeaf3"
 
 [[package]]
 name = "jni"
@@ -292,6 +308,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde"
+version = "1.0.130"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f12d06de37cf59146fbdecab66aa99f9fe4f78722e3607577a5375d66bd0c913"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_bytes"
+version = "0.11.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16ae07dd2f88a366f15bd0632ba725227018c69a1c8550a927324f8eb8368bb9"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.130"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7bc1a1ab1961464eae040d96713baa5a724a8152c1222492465b54322ec508b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "syn"
 version = "1.0.85"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -336,6 +381,7 @@ dependencies = [
  "anyhow",
  "array-init",
  "cgmath",
+ "ciborium",
  "gl_generator",
  "jni",
  "log",
@@ -344,6 +390,9 @@ dependencies = [
  "oboe-sys",
  "paste",
  "ringbuf",
+ "serde",
+ "serde_bytes",
+ "serde_derive",
 ]
 
 [[package]]

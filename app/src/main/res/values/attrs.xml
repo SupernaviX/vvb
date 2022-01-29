@@ -10,4 +10,7 @@
         <attr name="inputDown" format="string" />
         <attr name="inputLeft" format="string" />
     </declare-styleable>
+    <declare-styleable name="DetailedListPreference">
+        <attr name="summaryFormat" format="string" />
+    </declare-styleable>
 </resources>

@@ -1,5 +1,6 @@
 use super::memory::Memory;
 use crate::emulator::cpu::Exception;
+use serde_derive::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU16, Ordering};
@@ -26,41 +27,79 @@ const S_HW_ABORT: u8 = 0x01;
 
 const HARDWARE_READ_CYCLES: u64 = 10240;
 
-pub struct Hardware {
+#[derive(Serialize, Deserialize)]
+pub struct HardwareState {
     cycle: u64,
-    memory: Rc<RefCell<Memory>>,
     next_tick: u64,
     next_controller_read: u64,
     reload_value: u16,
     zero_flag: bool,
-    controller_state: Option<Arc<AtomicU16>>,
-    interrupt: Option<Exception>,
+    interrupt_requested: bool,
 }
-impl Hardware {
-    pub fn new(memory: Rc<RefCell<Memory>>) -> Hardware {
-        Hardware {
+impl Default for HardwareState {
+    fn default() -> Self {
+        Self {
             cycle: 0,
-            memory,
             next_tick: u64::MAX,
             next_controller_read: u64::MAX,
             reload_value: 0,
             zero_flag: false,
+            interrupt_requested: false,
+        }
+    }
+}
+
+pub struct Hardware {
+    cycle: u64,
+    next_tick: u64,
+    next_controller_read: u64,
+    reload_value: u16,
+    zero_flag: bool,
+    interrupt_requested: bool,
+    memory: Rc<RefCell<Memory>>,
+    controller_state: Option<Arc<AtomicU16>>,
+}
+impl Hardware {
+    pub fn new(memory: Rc<RefCell<Memory>>) -> Hardware {
+        let state = HardwareState::default();
+        Hardware {
+            cycle: state.cycle,
+            next_tick: state.next_tick,
+            next_controller_read: state.next_controller_read,
+            reload_value: state.reload_value,
+            zero_flag: state.zero_flag,
+            interrupt_requested: state.interrupt_requested,
+            memory,
             controller_state: None,
-            interrupt: None,
         }
     }
 
     pub fn init(&mut self) {
-        self.cycle = 0;
-        self.next_tick = u64::MAX;
-        self.next_controller_read = u64::MAX;
-        self.reload_value = 0;
-        self.zero_flag = false;
-        self.interrupt = None;
+        self.load_state(&HardwareState::default());
         let mut memory = self.memory.borrow_mut();
         memory.write_byte(TCR, 0);
         memory.write_halfword(TLR, 0xff);
         memory.write_halfword(THR, 0xff);
+    }
+
+    pub fn save_state(&self) -> HardwareState {
+        HardwareState {
+            cycle: self.cycle,
+            next_tick: self.next_tick,
+            next_controller_read: self.next_controller_read,
+            reload_value: self.reload_value,
+            zero_flag: self.zero_flag,
+            interrupt_requested: self.interrupt_requested,
+        }
+    }
+
+    pub fn load_state(&mut self, state: &HardwareState) {
+        self.cycle = state.cycle;
+        self.next_tick = state.next_tick;
+        self.next_controller_read = state.next_controller_read;
+        self.reload_value = state.reload_value;
+        self.zero_flag = state.zero_flag;
+        self.interrupt_requested = state.interrupt_requested;
     }
 
     pub fn get_controller_state(&mut self) -> Arc<AtomicU16> {
@@ -76,7 +115,11 @@ impl Hardware {
 
     // Get any unacknowledged interrupt from this module
     pub fn active_interrupt(&self) -> Option<Exception> {
-        self.interrupt
+        if self.interrupt_requested {
+            Some(Exception::interrupt(0xfe10, 1))
+        } else {
+            None
+        }
     }
 
     // The CPU has written to somewhere in the hardware address space
@@ -96,7 +139,7 @@ impl Hardware {
             self.handle_controller_read();
         }
         // The CPU only needs to stop what it's doing if an interrupt is active
-        self.interrupt.is_none()
+        !self.interrupt_requested
     }
 
     fn update_timer_settings(&mut self) {
@@ -110,11 +153,11 @@ impl Hardware {
         }
         if (tcr & T_INTERRUPT) == 0 {
             // Interrupt was disabled and/or acknowledged
-            self.interrupt = None;
+            self.interrupt_requested = false;
         }
         if (tcr & T_CLEAR_ZERO) != 0 {
             // Interrupt was acknowledged and zero flag was cleared
-            self.interrupt = None;
+            self.interrupt_requested = false;
             self.zero_flag = false;
         }
         self.correct_tcr();
@@ -149,7 +192,7 @@ impl Hardware {
 
                     // Maybe fire the interrupt
                     if (self.memory.borrow().read_byte(TCR) & T_INTERRUPT) != 0 {
-                        self.interrupt = Some(Exception::interrupt(0xfe10, 1));
+                        self.interrupt_requested = true;
                     }
 
                     // Reset the timer

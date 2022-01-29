@@ -1,5 +1,6 @@
 use crate::emulator::memory::Memory;
 use ringbuf::{Consumer, Producer, RingBuffer};
+use serde_derive::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -17,7 +18,7 @@ const ANALOG_FILTER_RC_CONSTANT: f32 = 0.022;
 const ANALOG_FILTER_DECAY_RATE: f32 =
     ANALOG_FILTER_RC_CONSTANT / (ANALOG_FILTER_RC_CONSTANT + 1. / FRAMES_PER_SECOND);
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 enum Direction {
     Decay,
     Grow,
@@ -28,6 +29,7 @@ impl Default for Direction {
     }
 }
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 enum ChannelType {
     Pcm { waveform: usize, index: usize },
     Noise { tap: u16, register: u16 },
@@ -66,7 +68,7 @@ impl ChannelType {
     }
 }
 
-#[derive(Default)]
+#[derive(Copy, Clone, Serialize, Deserialize, Default)]
 struct Envelope {
     value: u16,
     direction: Direction,
@@ -124,7 +126,7 @@ impl Envelope {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 enum ModFunction {
     Sweep,
     Modulation,
@@ -135,7 +137,7 @@ impl Default for ModFunction {
     }
 }
 
-#[derive(Default)]
+#[derive(Copy, Clone, Serialize, Deserialize, Default)]
 struct Modification {
     enabled: bool,
     counter: usize,
@@ -192,6 +194,7 @@ fn set_high_byte(value: &mut u16, byte: u8) {
     *value = *value & 0x00ff | ((byte as u16) << 8);
 }
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 struct Frequency {
     current_value: u16,
     most_recent_value: u16,
@@ -290,6 +293,7 @@ impl Default for Frequency {
     }
 }
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 struct Channel {
     enabled: bool,
     enabled_counter: Option<usize>,
@@ -424,23 +428,19 @@ impl Channel {
     }
 }
 
-pub struct AudioController {
+#[derive(Serialize, Deserialize)]
+pub struct AudioState {
     cycle: u64,
-    memory: Rc<RefCell<Memory>>,
-    buffer: Option<Producer<(f32, f32)>>,
     prev_input: (f32, f32),
     prev_output: (f32, f32),
     waveforms: [[u16; 32]; 5],
     mod_data: [i16; 32],
     channels: [Channel; 6],
 }
-
-impl AudioController {
-    pub fn new(memory: Rc<RefCell<Memory>>) -> AudioController {
-        AudioController {
+impl Default for AudioState {
+    fn default() -> Self {
+        Self {
             cycle: 0,
-            memory,
-            buffer: None,
             prev_input: (0., 0.),
             prev_output: (0., 0.),
             waveforms: [[0; 32]; 5],
@@ -448,15 +448,56 @@ impl AudioController {
             channels: Channel::default_set(),
         }
     }
+}
+
+pub struct AudioController {
+    cycle: u64,
+    prev_input: (f32, f32),
+    prev_output: (f32, f32),
+    waveforms: [[u16; 32]; 5],
+    mod_data: [i16; 32],
+    channels: [Channel; 6],
+    memory: Rc<RefCell<Memory>>,
+    buffer: Option<Producer<(f32, f32)>>,
+}
+
+impl AudioController {
+    pub fn new(memory: Rc<RefCell<Memory>>) -> AudioController {
+        let state = AudioState::default();
+        AudioController {
+            cycle: state.cycle,
+            prev_input: state.prev_input,
+            prev_output: state.prev_output,
+            waveforms: state.waveforms,
+            mod_data: state.mod_data,
+            channels: state.channels,
+            memory,
+            buffer: None,
+        }
+    }
 
     pub fn init(&mut self) {
-        self.cycle = 0;
-        self.buffer = None;
-        self.prev_input = (0., 0.);
-        self.prev_output = (0., 0.);
-        self.waveforms = [[0; 32]; 5];
-        self.mod_data = [0; 32];
-        self.channels = Channel::default_set();
+        self.load_state(&AudioState::default());
+    }
+
+    pub fn save_state(&self) -> AudioState {
+        AudioState {
+            cycle: self.cycle,
+            prev_input: self.prev_input,
+            prev_output: self.prev_output,
+            waveforms: self.waveforms,
+            mod_data: self.mod_data,
+            channels: self.channels,
+        }
+    }
+
+    pub fn load_state(&mut self, state: &AudioState) {
+        self.cycle = state.cycle;
+        self.prev_input = state.prev_input;
+        self.prev_output = state.prev_output;
+        self.waveforms = state.waveforms;
+        self.mod_data = state.mod_data;
+        self.channels = state.channels;
     }
 
     pub fn get_player(&mut self, volume: f32, buffer_size: usize) -> AudioPlayer {

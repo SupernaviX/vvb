@@ -6,6 +6,8 @@ mod hardware;
 use hardware::Hardware;
 pub mod memory;
 use memory::{Memory, Region};
+mod state;
+use state::{GlobalState, SaveStateData};
 pub mod video;
 use video::{Eye, FrameChannel, Video};
 
@@ -69,11 +71,9 @@ impl Emulator {
         Ok(())
     }
 
-    pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
-        if let Some(sram) = self.memory.borrow().read_region(Region::Sram) {
-            buffer.copy_from_slice(sram);
-        }
-        Ok(())
+    pub fn unload_game_pak(&mut self) {
+        self.memory.borrow_mut().unload_game_pak();
+        self.reset();
     }
 
     pub fn reset(&mut self) {
@@ -99,6 +99,67 @@ impl Emulator {
             memory.read_halfword(0xfffffffc),
             memory.read_halfword(0xfffffffe),
         );
+    }
+
+    pub fn read_sram(&self, buffer: &mut [u8]) -> Result<()> {
+        if let Some(sram) = self.memory.borrow().read_region(Region::Sram) {
+            buffer.copy_from_slice(sram);
+        }
+        Ok(())
+    }
+
+    pub fn save_state(&self, filename: &str) -> Result<()> {
+        const REGIONS: [Region; 5] = [
+            Region::Vram,
+            Region::Audio,
+            Region::Hardware,
+            Region::Dram,
+            Region::Sram,
+        ];
+
+        let memory = self.memory.borrow();
+        let video = self.video.borrow();
+        let hardware = self.hardware.borrow();
+        let audio = self.audio.borrow();
+
+        let mut data = vec![SaveStateData::Global(GlobalState {
+            cycle: self.cycle,
+            tick_calls: self.tick_calls,
+        })];
+        let memory_state = REGIONS.iter().copied().map(|region| {
+            SaveStateData::Memory(region, memory.read_region(region).unwrap().to_vec())
+        });
+        data.extend(memory_state);
+        data.push(SaveStateData::Cpu(Box::new(self.cpu.save_state())));
+        data.push(SaveStateData::Audio(Box::new(audio.save_state())));
+        data.push(SaveStateData::Video(video.save_state()));
+        data.push(SaveStateData::Hardware(hardware.save_state()));
+
+        state::save_state(filename, &data)
+    }
+
+    pub fn load_state(&mut self, filename: &str) -> Result<()> {
+        let mut memory = self.memory.borrow_mut();
+        let mut video = self.video.borrow_mut();
+        let mut hardware = self.hardware.borrow_mut();
+        let mut audio = self.audio.borrow_mut();
+        let data = state::load_state(filename)?;
+        for datum in data {
+            match datum {
+                SaveStateData::Global(state) => {
+                    self.cycle = state.cycle;
+                    self.tick_calls = state.tick_calls;
+                }
+                SaveStateData::Memory(region, data) => {
+                    memory.write_region(region).unwrap().copy_from_slice(&data)
+                }
+                SaveStateData::Cpu(state) => self.cpu.load_state(&state),
+                SaveStateData::Audio(state) => audio.load_state(&state),
+                SaveStateData::Video(state) => video.load_state(&state),
+                SaveStateData::Hardware(state) => hardware.load_state(&state),
+            }
+        }
+        Ok(())
     }
 
     pub fn tick(&mut self, nanoseconds: u64) -> Result<()> {
@@ -195,10 +256,11 @@ pub mod jni {
     use super::Emulator;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
-    use jni::objects::JByteBuffer;
+    use jni::objects::{JByteBuffer, JString};
     use jni::sys::{jint, jobject};
     use jni::JNIEnv;
     use log::info;
+    use std::convert::TryInto;
 
     fn get_emulator<'a>(
         env: &'a JNIEnv,
@@ -234,6 +296,22 @@ pub mod jni {
         this.load_game_pak(rom, sram)
     }
 
+    jni_func!(Emulator_nativeUnloadGamePak, unload_game_pak);
+    fn unload_game_pak(env: &JNIEnv, this: jobject) -> Result<()> {
+        info!("Unloading game pak");
+        let mut this = get_emulator(env, this)?;
+        this.unload_game_pak();
+        Ok(())
+    }
+
+    jni_func!(Emulator_nativeReset, reset);
+    fn reset(env: &JNIEnv, this: jobject) -> Result<()> {
+        info!("Resetting game");
+        let mut this = get_emulator(env, this)?;
+        this.reset();
+        Ok(())
+    }
+
     jni_func!(Emulator_nativeTick, tick, jint);
     fn tick(env: &JNIEnv, this: jobject, nanoseconds: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
@@ -245,6 +323,26 @@ pub mod jni {
         let this = get_emulator(env, this)?;
         let buffer = env.get_direct_buffer_address(buffer)?;
         this.read_sram(buffer)
+    }
+
+    jni_func!(Emulator_nativeSaveState, save_state, JString);
+    fn save_state(env: &JNIEnv, this: jobject, filename: JString) -> Result<()> {
+        info!("Saving...");
+        let filename: String = env.get_string(filename)?.try_into()?;
+        let this = get_emulator(env, this)?;
+        this.save_state(&filename)?;
+        info!("Saved!");
+        Ok(())
+    }
+
+    jni_func!(Emulator_nativeLoadState, load_state, JString);
+    fn load_state(env: &JNIEnv, this: jobject, filename: JString) -> Result<()> {
+        info!("Loading...");
+        let filename: String = env.get_string(filename)?.try_into()?;
+        let mut this = get_emulator(env, this)?;
+        this.load_state(&filename)?;
+        info!("Loaded!");
+        Ok(())
     }
 
     jni_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);

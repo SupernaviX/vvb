@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+    <Preference
+        app:key="resume_game"
+        app:title="@string/game_menu_resume_game"/>
+    <Preference
+        app:key="reset_game"
+        app:title="@string/game_menu_reset_game" />
+    <SwitchPreferenceCompat
+        app:key="auto_save"
+        app:title="@string/game_menu_auto_save"
+        app:defaultValue="true" />
+    <Preference
+        app:key="save_state"
+        app:title="@string/game_menu_save_state" />
+    <Preference
+        app:key="load_state"
+        app:title="@string/game_menu_load_state" />
+    <com.simongellis.vvb.menu.DetailedListPreference
+        app:key="state_slot"
+        app:title="@string/game_menu_state_slot"
+        app:persistent="false"
+        app:summaryFormat="%1$s (%2$s)"
+        app:defaultValue="0" />
+    <Preference
+        app:key="close_game"
+        app:title="@string/game_menu_close_game" />
+</PreferenceScreen>
