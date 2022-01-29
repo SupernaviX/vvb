@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.simongellis.vvb.data.GameRepository
+import com.simongellis.vvb.data.StateSlot
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.game.GamePakLoader
 import kotlinx.coroutines.flow.*
@@ -42,7 +43,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
             if (game.autoSaveEnabled) {
                 _emulator.setAutoSaveFile(autoSave.file)
                 if (autoSave.exists) {
-                    _emulator.loadState(autoSave.file)
+                    loadState(autoSave)
                 }
             }
 
@@ -93,15 +94,21 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun saveState() {
-        currentStateSlot.value?.also {
-            _emulator.saveState(it.file)
-        }
+        currentStateSlot.value?.also(this::saveState)
+    }
+
+    private fun saveState(slot: StateSlot) {
+        _emulator.saveState(slot.file)
+        Toast.makeText(_application, R.string.toast_state_saved, Toast.LENGTH_SHORT).show()
     }
 
     fun loadState() {
-        currentStateSlot.value?.also {
-            _emulator.loadState(it.file)
-        }
+        currentStateSlot.value?.also(this::loadState)
+    }
+
+    private fun loadState(slot: StateSlot) {
+        _emulator.loadState(slot.file)
+        Toast.makeText(_application, R.string.toast_state_loaded, Toast.LENGTH_SHORT).show()
     }
 
     fun selectStateSlot(slot: Int) {

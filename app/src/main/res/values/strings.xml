@@ -84,4 +84,6 @@
     <string name="error_not_power_of_two">That\'s not a Virtual Boy game! The file size should be a power of two.</string>
     <string name="error_too_large">That\'s not a Virtual Boy game! They can only be up to 16Mb.</string>
     <string name="error_zip">Nothing in that ZIP file looked like a Virtual Boy game…</string>
+    <string name="toast_state_saved">Saved state</string>
+    <string name="toast_state_loaded">Loaded state</string>
 </resources>

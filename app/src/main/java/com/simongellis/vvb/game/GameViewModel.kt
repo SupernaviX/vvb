@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,6 +29,9 @@ class GameViewModel(application: Application): AndroidViewModel(application) {
 
     fun pauseGame() {
         _emulator.pause()
+        if (_emulator.performAutoSave()) {
+            Toast.makeText(_application, R.string.toast_state_saved, Toast.LENGTH_SHORT).show()
+        }
     }
 
     fun resumeGame() {

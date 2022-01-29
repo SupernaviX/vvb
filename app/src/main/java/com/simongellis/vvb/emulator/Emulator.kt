@@ -82,6 +82,11 @@ class Emulator {
         _thread = thread(name = "EmulatorThread", priority = -12) { run() }
     }
 
+    fun performAutoSave(): Boolean {
+        _autoSave?.also(this::saveState)
+        return _autoSave != null
+    }
+
     fun pause() {
         if (!_running) {
             return
@@ -89,7 +94,6 @@ class Emulator {
         _running = false
         _thread?.join()
         saveSRAM()
-        _autoSave?.also { saveState(it) }
     }
 
     private fun run() {
