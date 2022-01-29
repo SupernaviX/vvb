@@ -6,7 +6,7 @@
         <item name="colorAccent">@color/vb_bright</item>
         <item name="android:windowBackground">@color/vb_black</item>
         <item name="android:colorBackground">@color/vb_black</item>
-        <item name="android:textColorPrimary">@color/vb_bright</item>
+        <item name="android:textColorPrimary">@color/vb_red</item>
         <item name="android:textColorSecondary">@color/vb_dim</item>
     </style>
 
