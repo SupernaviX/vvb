@@ -17,7 +17,7 @@ data class GameData(
 
     companion object {
         fun getId(uri: Uri) = uri.lastPathSegment!!
-            .substringBeforeLast('/')
-            .substringAfterLast('.')
+            .substringAfterLast('/')
+            .substringBeforeLast('.')
     }
 }
