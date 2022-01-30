@@ -234,8 +234,8 @@ impl Frequency {
     // returns number of updates, and whether the channel has shut off
     fn tick(&mut self, cycles: usize, mod_data: &[i16; 32]) -> (u16, bool) {
         // Frequency modification is computed before the tick
-        let new_value = self.tick_mod(mod_data);
-        if new_value > 2047 {
+        let (new_value, cut_off) = self.tick_mod(mod_data);
+        if cut_off {
             return (0, true);
         }
 
@@ -253,14 +253,16 @@ impl Frequency {
         (result, false)
     }
 
-    fn tick_mod(&mut self, mod_data: &[i16; 32]) -> u16 {
+    // return new frequency, and whether the channel should get cut off
+    fn tick_mod(&mut self, mod_data: &[i16; 32]) -> (u16, bool) {
         if let Some(modification) = self.modification.as_mut() {
             let modify = modification.tick();
             if modify {
-                return modification.apply(self.current_value, mod_data);
+                let new_value = modification.apply(self.current_value, mod_data);
+                return (new_value, new_value > 2047)
             }
         }
-        self.current_value
+        (self.current_value, false)
     }
 
     fn setup_mod_1(&mut self, enabled: bool, repeat: bool, func: ModFunction) {
