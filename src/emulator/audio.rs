@@ -510,6 +510,7 @@ impl AudioController {
         AudioPlayer {
             buffer: consumer,
             volume,
+            prev_value: (0., 0.),
         }
     }
 
@@ -680,6 +681,7 @@ impl AudioController {
 
 pub struct AudioPlayer {
     buffer: Consumer<(f32, f32)>,
+    prev_value: (f32, f32),
     volume: f32,
 }
 
@@ -692,10 +694,11 @@ impl AudioPlayer {
         }
         // If we don't know what to play, play that last thing again
         let value = if count == 0 {
-            (0., 0.)
+            self.prev_value
         } else {
             frames[count - 1]
         };
+        self.prev_value = value;
         for missing in &mut frames[count..] {
             *missing = value;
         }
