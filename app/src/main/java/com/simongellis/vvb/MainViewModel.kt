@@ -35,7 +35,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun loadGame(uri: Uri): Boolean {
         return try {
-            val game = _gameRepo.getGame(uri)
+            val game = _gameRepo.getGame(uri) ?: return false
             val gamePak = _gamePakLoader.tryLoad(game.id, uri)
             val autoSave = _gameRepo.getAutoSave(game.id)
 

@@ -1,5 +1,6 @@
 package com.simongellis.vvb.data
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -11,18 +12,18 @@ import kotlin.collections.HashMap
 class GameRepository(scope: CoroutineScope, val context: Context) {
     private val _dao = PreferencesDao.forClass<GameData>(context)
     private val _fileDao = FileDao(scope, context)
-    private val _filenames = HashMap<Uri, String>()
+    private val _filenames = HashMap<Uri, String?>()
 
     val recentGames by lazy {
         _dao.watchAll().map { games ->
             games
                 .sortedByDescending { it.lastPlayed }
                 .take(10)
-                .map(::fromData)
+                .mapNotNull(::fromData)
         }
     }
 
-    fun getGame(uri: Uri): Game {
+    fun getGame(uri: Uri): Game? {
         val id = GameData.getId(uri)
         val data = _dao.get(id) ?: GameData(uri, Date(), 0, true)
         return fromData(data)
@@ -59,23 +60,32 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         _dao.put(newData)
     }
 
-    private fun fromData(data: GameData): Game {
-        return Game(data.id, getName(data.uri), data.uri, data.lastPlayed, data.stateSlot, data.autoSaveEnabled)
+    private fun fromData(data: GameData): Game? {
+        val name = getName(data.uri)
+        return name?.let {
+            Game(data.id, it, data.uri, data.lastPlayed, data.stateSlot, data.autoSaveEnabled)
+        }
     }
 
-    private fun getName(uri: Uri): String {
+    private fun getName(uri: Uri): String? {
         val filename = getFilename(uri)
-        return filename.substringBeforeLast('.')
+        return filename?.substringBeforeLast('.')
     }
 
+    // "cursor" is always freed, the try/catch confuses control flow
+    @SuppressLint("Recycle")
     private fun getFilename(uri: Uri) = _filenames.getOrPut(uri) {
-        val cursor = context.contentResolver.query(
-            uri,
-            arrayOf(OpenableColumns.DISPLAY_NAME),
-            null,
-            null,
-            null
-        )
+        val cursor = try {
+            context.contentResolver.query(
+                uri,
+                arrayOf(OpenableColumns.DISPLAY_NAME),
+                null,
+                null,
+                null
+            )
+        } catch (ex: Exception) {
+            return null
+        }
         cursor?.use {
             if (it.moveToFirst()) {
                 return it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
