@@ -259,7 +259,7 @@ impl Frequency {
             let modify = modification.tick();
             if modify {
                 let new_value = modification.apply(self.current_value, mod_data);
-                return (new_value, new_value > 2047)
+                return (new_value, new_value > 2047);
             }
         }
         (self.current_value, false)
@@ -409,7 +409,7 @@ impl Channel {
         let (ticks, shutoff) = self.frequency.tick(cycles, mod_data);
         if shutoff {
             self.enabled = false;
-            return 0
+            return 0;
         }
         for _ in 0..ticks {
             self.channel_type.tick();
@@ -560,7 +560,7 @@ impl AudioController {
                     }
                     0x0c => {
                         // Channel frequency (high byte)
-                        self.channels[channel].frequency.set_high_byte(value);
+                        self.channels[channel].frequency.set_high_byte(value & 0x07);
                     }
                     0x10 => {
                         // Channel envelope settings
