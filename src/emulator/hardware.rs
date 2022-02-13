@@ -183,8 +183,13 @@ impl Hardware {
         while self.cycle < target_cycle {
             self.cycle = std::cmp::min(target_cycle, self.next_tick);
             if self.cycle == self.next_tick {
-                let new_timer_value = self.read_timer() - 1;
-                if new_timer_value == 0 {
+                let old_timer_value = self.read_timer();
+                let new_timer_value = if old_timer_value == 0 {
+                    self.reload_value
+                } else {
+                    old_timer_value - 1
+                };
+                if old_timer_value == 1 && new_timer_value == 0 {
                     // Timer's going off!
 
                     // Set the flag that says the timer went off
@@ -194,13 +199,9 @@ impl Hardware {
                     if (self.memory.borrow().read_byte(TCR) & T_INTERRUPT) != 0 {
                         self.interrupt_requested = true;
                     }
-
-                    // Reset the timer
-                    self.write_timer(self.reload_value);
-                } else {
-                    // Keep on ticking
-                    self.write_timer(new_timer_value);
                 }
+                // Keep on ticking
+                self.write_timer(new_timer_value);
                 self.compute_next_tick();
             }
         }
@@ -228,8 +229,8 @@ impl Hardware {
         let tcr = memory.read_byte(TCR);
         let enabled = (tcr & T_ENABLED) != 0;
         if enabled && self.reload_value != 0 {
-            let interval = if self.reload_value == 1 {
-                210
+            let interval = if self.reload_value == 1 && self.read_timer() == 0 {
+                70
             } else if (tcr & T_INTERVAL) != 0 {
                 400
             } else {
@@ -363,8 +364,17 @@ mod tests {
             memory.borrow().read_byte(TCR),
             T_ENABLED | T_CLEAR_ZERO | T_IS_ZERO
         );
-        assert_eq!(hardware.read_timer(), 3);
+        assert_eq!(hardware.read_timer(), 0);
         assert_eq!(hardware.next_event(), 8000);
+
+        hardware.run(hardware.next_event());
+        assert!(hardware.active_interrupt().is_none());
+        assert_eq!(
+            memory.borrow().read_byte(TCR),
+            T_ENABLED | T_CLEAR_ZERO | T_IS_ZERO
+        );
+        assert_eq!(hardware.read_timer(), 3);
+        assert_eq!(hardware.next_event(), 10000);
     }
 
     #[test]
