@@ -1,4 +1,5 @@
 use crate::emulator::memory::Memory;
+use log::debug;
 use ringbuf::{Consumer, Producer, RingBuffer};
 use serde_derive::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -194,7 +195,7 @@ fn set_high_byte(value: &mut u16, byte: u8) {
     *value = *value & 0x00ff | ((byte as u16) << 8);
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone, Default, Serialize, Deserialize)]
 struct Frequency {
     current_value: u16,
     most_recent_value: u16,
@@ -281,16 +282,6 @@ impl Frequency {
             };
             modification.sweep_dir = dir;
             modification.sweep_shift = shift;
-        }
-    }
-}
-impl Default for Frequency {
-    fn default() -> Self {
-        Frequency {
-            current_value: 0,
-            most_recent_value: 0,
-            counter: 0,
-            modification: None,
         }
     }
 }
@@ -524,11 +515,20 @@ impl AudioController {
                     let rel_addr = address - 0x01000000;
                     let waveform = rel_addr / 128;
                     let index = (rel_addr % 128) / 4;
+                    debug!(
+                        "0x{:08x} = 0x{:02x} (load waveform ({}, {}) = {})",
+                        address,
+                        value,
+                        waveform,
+                        index,
+                        value & 0x3f
+                    );
                     self.waveforms[waveform][index] = (value as u16) & 0x3f;
                 }
             }
             0x01000280..=0x010002ff => {
                 // Load modulation data (if the channel using it is disabled)
+                debug!("0x{:08x} = 0x{:02x} (load mod data)", address, value);
                 if !self.channels[4].enabled {
                     let index = (address - 0x01000280) / 4;
                     self.mod_data[index] = value as i8 as i16;
@@ -546,20 +546,43 @@ impl AudioController {
                         let enabled = value & 0x80 != 0;
                         let auto = value & 0x20 != 0;
                         let interval = value as usize & 0x1f;
+                        debug!("0x{:08x} = 0x{:02x} (channel {} enablement enabled={} auto={} interval={})", address, value, channel + 1, enabled, auto, interval);
                         self.channels[channel].set_enabled(enabled, auto, interval);
                     }
                     0x04 => {
                         // Channel stereo volume
                         let left_vol = (value as u16 >> 4) & 0x0f;
                         let right_vol = value as u16 & 0x0f;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} volume left={} right={})",
+                            address,
+                            value,
+                            channel + 1,
+                            left_vol,
+                            right_vol
+                        );
                         self.channels[channel].volume = (left_vol, right_vol);
                     }
                     0x08 => {
                         // Channel frequency (low byte)
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} frequency low={})",
+                            address,
+                            value,
+                            channel + 1,
+                            value
+                        );
                         self.channels[channel].frequency.set_low_byte(value);
                     }
                     0x0c => {
                         // Channel frequency (high byte)
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} frequency high={})",
+                            address,
+                            value,
+                            channel + 1,
+                            value
+                        );
                         self.channels[channel].frequency.set_high_byte(value & 0x07);
                     }
                     0x10 => {
@@ -571,6 +594,7 @@ impl AudioController {
                             Direction::Decay
                         };
                         let interval = value as usize & 0x07;
+                        debug!("0x{:08x} = 0x{:02x} (channel {} envelope settings env_value={} direction={:?} interval={})", address, value, channel + 1, env_value, direction, interval);
                         self.channels[channel]
                             .envelope
                             .set(env_value, direction, interval);
@@ -579,6 +603,14 @@ impl AudioController {
                         // Channel envelope modification settings
                         let enabled = value & 0x01 != 0;
                         let repeat = value & 0x02 != 0;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} envelope mod enabled={} repeat={})",
+                            address,
+                            value,
+                            channel + 1,
+                            enabled,
+                            repeat
+                        );
                         self.channels[channel]
                             .envelope
                             .set_modification(enabled, repeat);
@@ -593,6 +625,12 @@ impl AudioController {
                             } else {
                                 ModFunction::Sweep
                             };
+                            debug!(
+                                "0x{:08x} = 0x{:02x} (channel {} envelope bonus)",
+                                address,
+                                value,
+                                channel + 1
+                            );
                             self.channels[4]
                                 .frequency
                                 .setup_mod_1(enabled, repeat, func);
@@ -600,12 +638,24 @@ impl AudioController {
                         if channel == 5 {
                             // This sets the "tap" for the noise channel (channel 6)
                             let tap = (value >> 4) & 0x07;
+                            debug!(
+                                "0x{:08x} = 0x{:02x} (channel {} tap)",
+                                address,
+                                value,
+                                channel + 1
+                            );
                             self.channels[5].set_tap(tap);
                         }
                     }
                     0x18 if channel < 5 => {
                         // Set active waveform for the PCM channels (everything but 6)
                         let wave = value as usize & 0x07;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} active waveform)",
+                            address,
+                            value,
+                            channel + 1
+                        );
                         self.channels[channel].set_waveform(wave);
                     }
                     0x1c if channel == 4 => {
@@ -618,6 +668,12 @@ impl AudioController {
                             Direction::Decay
                         };
                         let shift = value as usize & 0x07;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} envelope mod bonus 2)",
+                            address,
+                            value,
+                            channel + 1
+                        );
                         self.channels[4]
                             .frequency
                             .setup_mod_2(clock, interval, dir, shift);
@@ -627,6 +683,7 @@ impl AudioController {
             }
             0x01000580 => {
                 // Stop all sound
+                debug!("0x{:08x} = 0x{:02x} (STOP AT ONCE)", address, value);
                 if value & 1 != 0 {
                     for channel in &mut self.channels {
                         channel.set_enabled(false, false, 0);
@@ -700,7 +757,7 @@ impl AudioPlayer {
         };
         self.prev_value = value;
         for missing in &mut frames[count..] {
-            *missing = value;
+            *missing = (value.0 * self.volume, value.1 * self.volume);
         }
     }
 }

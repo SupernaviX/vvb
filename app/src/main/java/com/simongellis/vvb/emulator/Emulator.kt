@@ -97,14 +97,12 @@ class Emulator {
     }
 
     private fun run() {
-        var then = SystemClock.elapsedRealtimeNanos()
+        var lastDuration = DEFAULT_TICK_DURATION
         while (_running) {
-            val now = SystemClock.elapsedRealtimeNanos()
-            // By default, emulate however much time passed since the last tick,
-            // but cap it to 1 second in case of extreme lag
-            val duration = kotlin.math.min((now - then).toInt(), 1_000_000_000)
-            nativeTick(duration)
-            then = now
+            val start = SystemClock.elapsedRealtimeNanos()
+            nativeTick(lastDuration.toInt())
+            val duration = SystemClock.elapsedRealtimeNanos() - start
+            lastDuration = duration.coerceAtMost(MAX_TICK_DURATION)
         }
     }
 
@@ -136,5 +134,7 @@ class Emulator {
 
     companion object {
         val instance: Emulator by lazy { Emulator() }
+        private const val DEFAULT_TICK_DURATION = 5_000_000L
+        private const val MAX_TICK_DURATION = 1_000_000_000L
     }
 }

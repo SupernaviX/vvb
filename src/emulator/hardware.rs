@@ -229,7 +229,7 @@ impl Hardware {
         let tcr = memory.read_byte(TCR);
         let enabled = (tcr & T_ENABLED) != 0;
         if enabled && self.reload_value != 0 {
-            let interval = if self.reload_value == 1 && self.read_timer() == 0 {
+            let interval = if self.read_timer() == 0 {
                 70
             } else if (tcr & T_INTERVAL) != 0 {
                 400
@@ -365,7 +365,7 @@ mod tests {
             T_ENABLED | T_CLEAR_ZERO | T_IS_ZERO
         );
         assert_eq!(hardware.read_timer(), 0);
-        assert_eq!(hardware.next_event(), 8000);
+        assert_eq!(hardware.next_event(), 6070);
 
         hardware.run(hardware.next_event());
         assert!(hardware.active_interrupt().is_none());
@@ -374,7 +374,7 @@ mod tests {
             T_ENABLED | T_CLEAR_ZERO | T_IS_ZERO
         );
         assert_eq!(hardware.read_timer(), 3);
-        assert_eq!(hardware.next_event(), 10000);
+        assert_eq!(hardware.next_event(), 8070);
     }
 
     #[test]

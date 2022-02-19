@@ -5,7 +5,7 @@ use crate::emulator::audio::AudioPlayer;
 use anyhow::Result;
 use oboe::{
     AudioOutputStreamSafe, AudioStream, AudioStreamBuilder, DataCallbackResult, Error, Output,
-    PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo,
+    PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo, Usage,
 };
 
 pub fn init(sample_rate: i32, frames_per_burst: i32) {
@@ -27,7 +27,8 @@ impl ManagedAudioOutputCallback for OboeStreamConfiguration {
             .set_sharing_mode(SharingMode::Shared)
             // virtual boy sample rate is mercifully low
             .set_sample_rate(41667)
-            .set_sample_rate_conversion_quality(SampleRateConversionQuality::Fastest)
+            .set_sample_rate_conversion_quality(SampleRateConversionQuality::Best)
+            .set_usage(Usage::Game)
     }
 
     fn on_error_before_close(

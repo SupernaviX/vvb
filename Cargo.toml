@@ -12,7 +12,7 @@ array-init = "2.0.0"
 ciborium = "0.1.0"
 cgmath = "0.18.0"
 jni = "0.19.0"
-log = "0.4.14"
+log = { version = "0.4.14", features = ["max_level_info"] }
 num-traits = "0.2.14"
 paste = "1.0.5"
 ringbuf = "0.2.6"
