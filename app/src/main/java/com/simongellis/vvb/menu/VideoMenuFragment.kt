@@ -37,7 +37,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         super.onCreate(savedInstanceState)
     }
 

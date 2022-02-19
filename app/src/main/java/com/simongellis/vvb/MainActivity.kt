@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity(R.layout.main_activity),
         caller: PreferenceFragmentCompat,
         pref: Preference
     ): Boolean {
-        displayFragment(pref.fragment, pref.extras)
+        pref.fragment?.let { displayFragment(it, pref.extras) }
         return true
     }
 

@@ -37,6 +37,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        val context = requireContext()
         val prefScreen = preferenceManager.createPreferenceScreen(context)
 
         prefScreen.addPreference(PreferenceCategory(context).apply {

@@ -25,7 +25,7 @@ class RecentGamesMenuFragment: PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        preferenceScreen = preferenceManager.createPreferenceScreen(context)
+        preferenceScreen = preferenceManager.createPreferenceScreen(requireContext())
     }
 
     private fun updateRecentGames(recentGames: List<Game>) {
