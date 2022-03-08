@@ -1,10 +1,15 @@
 package com.simongellis.vvb.game
 
+import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.simongellis.vvb.emulator.*
 
 class GameActivity : AppCompatActivity() {
@@ -29,7 +34,28 @@ class GameActivity : AppCompatActivity() {
         _view.controller = _controller
         setContentView(_view)
 
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            hideSystemUI()
+        } else {
+            showSystemUI()
+        }
+
         viewModel.loadPreviewImage()
+    }
+
+    private fun hideSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    private fun showSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+            show(WindowInsetsCompat.Type.systemBars())
+        }
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
