@@ -303,9 +303,12 @@ impl Video {
                     // If we're starting a display frame, check what's enabled
                     self.displaying = (dpctrl & DISP) != 0 && (dpctrl & DPRST) == 0;
 
-                    // If we're starting a game frame, start drawing (if enabled)
+                    // If we're starting a game frame,
                     if self.game_frame_counter == 0 {
+                        // start drawing (if enabled)
                         self.drawing = (xpctrl & XPEN) != 0;
+                        // and let the CPU know
+                        self.pending_interrupts |= GAMESTART;
                         let frmcyc = self.memory.borrow().read_halfword(FRMCYC) & 0x0f;
                         self.game_frame_counter = frmcyc as u8;
                     } else {
@@ -314,10 +317,8 @@ impl Video {
                     }
 
                     // Frame clock up
-                    if self.displaying {
-                        self.dpctrl_flags |= FCLK;
-                        self.pending_interrupts |= FRAMESTART;
-                    }
+                    self.dpctrl_flags |= FCLK;
+                    self.pending_interrupts |= FRAMESTART;
 
                     if self.drawing {
                         // Start drawing on whichever buffer was displayed before
@@ -326,7 +327,6 @@ impl Video {
                             Buffer0 => F0BSY,
                             Buffer1 => F1BSY,
                         };
-                        self.pending_interrupts |= GAMESTART;
 
                         // Switch to displaying the other buffer
                         self.display_buffer = self.display_buffer.toggle();
@@ -360,14 +360,14 @@ impl Video {
                 }
                 8 => {
                     // "Stop displaying" left eye
-                    self.dpctrl_flags &= !(L0BSY | L1BSY);
-                    self.pending_interrupts |= LFBEND;
+                    if self.displaying {
+                        self.dpctrl_flags &= !(L0BSY | L1BSY);
+                        self.pending_interrupts |= LFBEND;
+                    }
                 }
                 10 => {
-                    if self.displaying {
-                        // Frame clock down
-                        self.dpctrl_flags &= !FCLK;
-                    }
+                    // Frame clock down
+                    self.dpctrl_flags &= !FCLK;
                 }
                 13 => {
                     if self.displaying {
@@ -387,8 +387,10 @@ impl Video {
                 }
                 18 => {
                     // "Stop displaying" right eye,
-                    self.dpctrl_flags &= !(R0BSY | R1BSY);
-                    self.pending_interrupts |= RFBEND;
+                    if self.displaying {
+                        self.dpctrl_flags &= !(R0BSY | R1BSY);
+                        self.pending_interrupts |= RFBEND;
+                    }
                 }
                 _ => (),
             };
@@ -793,7 +795,7 @@ mod tests {
         let (mut video, memory) = get_video();
 
         video.init();
-        write_dpctrl(&mut video, &memory, DISP);
+        write_dpctrl(&mut video, &memory, 0);
 
         // While INTENB is unset, set INTPND but don't trigger interrupts
         video.run(ms_to_cycles(37)).unwrap();
@@ -824,8 +826,8 @@ mod tests {
         let (mut video, memory) = get_video();
 
         video.init();
-        write_dpctrl(&mut video, &memory, DISP);
-        write_xpctrl(&mut video, &memory, XPEN);
+        write_dpctrl(&mut video, &memory, 0);
+        write_xpctrl(&mut video, &memory, 0);
         // set FRMCYC to 1 so that there are 1+1==2 display frames per game frame
         // note that this only takes effect after the first game frame
         memory.borrow_mut().write_halfword(FRMCYC, 1);
