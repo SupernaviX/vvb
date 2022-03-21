@@ -34,6 +34,7 @@ const DP_INTERRUPTS: u16 = FRAMESTART | GAMESTART | RFBEND | LFBEND | SCANERR;
 
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
+const VER: usize = 0x0005f844;
 
 // flags for DPSTTS/DPCTRL
 const LOCK: u16 = 0x0400;
@@ -181,6 +182,7 @@ impl Video {
         memory.write_halfword(DPSTTS, self.dpctrl_flags);
         memory.write_halfword(INTPND, self.pending_interrupts);
         memory.write_halfword(INTENB, self.enabled_interrupts);
+        memory.write_halfword(VER, 0x0002);
     }
 
     pub fn save_state(&self) -> VideoState {
