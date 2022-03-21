@@ -361,6 +361,9 @@ impl Channel {
                 _ => 11, // length 28
             };
             *register = 0xffff;
+            // HACK: this behavior isn't documented anywhere, but stopping this channel now
+            // fixes Hyper Fighter and doesn't break anything else I've tried
+            self.enabled = false;
         }
     }
 
@@ -639,10 +642,11 @@ impl AudioController {
                             // This sets the "tap" for the noise channel (channel 6)
                             let tap = (value >> 4) & 0x07;
                             debug!(
-                                "0x{:08x} = 0x{:02x} (channel {} tap)",
+                                "0x{:08x} = 0x{:02x} (channel {} tap = {})",
                                 address,
                                 value,
-                                channel + 1
+                                channel + 1,
+                                tap
                             );
                             self.channels[5].set_tap(tap);
                         }
