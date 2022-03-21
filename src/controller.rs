@@ -33,7 +33,7 @@ pub mod jni {
     jni_func!(Controller_nativeConstructor, constructor, jobject);
     fn constructor(env: &JNIEnv, this: jobject, emulator: jobject) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
-        let controller = Controller::new(emulator.get_controller_state());
+        let controller = Controller::new(emulator.claim_controller_state());
         jni_helpers::java_init(env, this, controller)
     }
 

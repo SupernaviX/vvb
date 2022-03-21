@@ -1075,8 +1075,8 @@ impl<'a> CpuProcess<'a> {
 
     fn cmpf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 - val1;
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
         self.cycle += 10;
@@ -1090,7 +1090,7 @@ impl<'a> CpuProcess<'a> {
     }
     fn cvt_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let fval = self.get_float(self.registers[reg1]).round();
+        let fval = self.read_float(self.registers[reg1]).round();
         let value = fval as i32 as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
@@ -1100,8 +1100,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn addf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 + val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
@@ -1110,8 +1110,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn subf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 - val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
@@ -1120,8 +1120,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn mulf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 * val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
@@ -1130,8 +1130,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn divf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         if val1 == 0.0 {
             let zero_numerator = val2 == 0.0;
             // if it's 0 / 0 this is an invalid operation
@@ -1156,7 +1156,7 @@ impl<'a> CpuProcess<'a> {
     }
     fn trnc_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let fval = self.get_float(self.registers[reg1]).trunc();
+        let fval = self.read_float(self.registers[reg1]).trunc();
         let value = fval as i32 as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
@@ -1165,7 +1165,7 @@ impl<'a> CpuProcess<'a> {
         self.cycle += 14;
     }
 
-    fn get_float(&mut self, raw: u32) -> f32 {
+    fn read_float(&mut self, raw: u32) -> f32 {
         let value = f32::from_bits(raw);
         let invalid = matches!(value.classify(), FpCategory::Nan | FpCategory::Subnormal);
         self.update_psw_flag(FLOAT_RESERVED_OP_FLAG, invalid);

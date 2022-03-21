@@ -52,16 +52,16 @@ impl Emulator {
         }
     }
 
-    pub fn get_frame_channel(&mut self) -> FrameChannel {
-        self.video.borrow_mut().get_frame_channel()
+    pub fn claim_frame_channel(&mut self) -> FrameChannel {
+        self.video.borrow_mut().claim_frame_channel()
     }
 
-    pub fn get_audio_player(&mut self, buffer_size: usize, volume: f32) -> AudioPlayer {
-        self.audio.borrow_mut().get_player(volume, buffer_size)
+    pub fn claim_audio_player(&mut self, buffer_size: usize, volume: f32) -> AudioPlayer {
+        self.audio.borrow_mut().claim_player(volume, buffer_size)
     }
 
-    pub fn get_controller_state(&mut self) -> Arc<AtomicU16> {
-        self.hardware.borrow_mut().get_controller_state()
+    pub fn claim_controller_state(&mut self) -> Arc<AtomicU16> {
+        self.hardware.borrow_mut().claim_controller_state()
     }
 
     pub fn load_game_pak(&mut self, rom: &[u8], sram: &[u8]) -> Result<()> {

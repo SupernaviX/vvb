@@ -436,7 +436,7 @@ impl Video {
         Ok(())
     }
 
-    pub fn get_frame_channel(&mut self) -> FrameChannel {
+    pub fn claim_frame_channel(&mut self) -> FrameChannel {
         let (tx, rx) = mpsc::channel();
         self.frame_channel = Some(tx);
         rx

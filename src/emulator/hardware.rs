@@ -102,7 +102,7 @@ impl Hardware {
         self.interrupt_requested = state.interrupt_requested;
     }
 
-    pub fn get_controller_state(&mut self) -> Arc<AtomicU16> {
+    pub fn claim_controller_state(&mut self) -> Arc<AtomicU16> {
         let controller_state = Arc::new(AtomicU16::new(0));
         self.controller_state = Some(Arc::clone(&controller_state));
         controller_state
@@ -422,7 +422,7 @@ mod tests {
         let (mut hardware, memory) = get_hardware();
 
         // "start" pushing a button on the controller
-        let state = hardware.get_controller_state();
+        let state = hardware.claim_controller_state();
         state.store(0x1002, Ordering::Relaxed);
 
         // Kick off the hardware read
@@ -445,7 +445,7 @@ mod tests {
         let (mut hardware, memory) = get_hardware();
 
         // "start" pushing a button on the controller
-        let state = hardware.get_controller_state();
+        let state = hardware.claim_controller_state();
         state.store(0x1002, Ordering::Relaxed);
 
         // Kick off the hardware read

@@ -163,7 +163,7 @@ impl DistortionRenderer {
         DistortionRenderer(raw)
     }
 
-    pub fn set_mesh(&self, mesh: &CardboardMesh, eye: CardboardEye) {
+    pub fn set_mesh(&mut self, mesh: &CardboardMesh, eye: CardboardEye) {
         #[cfg(target_os = "android")]
         unsafe {
             CardboardDistortionRenderer_setMesh(self.0, mesh, eye);
@@ -199,7 +199,7 @@ impl Drop for DistortionRenderer {
 
 pub struct QrCode;
 impl QrCode {
-    #[allow(unused_mut)]
+    #[allow(unused_mut, clippy::wrong_self_convention)]
     pub fn get_saved_device_params() -> Option<DeviceParams> {
         let mut buffer = std::ptr::null();
         let mut size: c_int = 0;

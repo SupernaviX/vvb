@@ -496,7 +496,7 @@ impl AudioController {
         self.channels = state.channels;
     }
 
-    pub fn get_player(&mut self, volume: f32, buffer_size: usize) -> AudioPlayer {
+    pub fn claim_player(&mut self, volume: f32, buffer_size: usize) -> AudioPlayer {
         let capacity = buffer_size * 833;
         let buffer = RingBuffer::new(capacity);
         let (producer, consumer) = buffer.split();

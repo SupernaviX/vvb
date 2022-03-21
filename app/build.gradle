@@ -160,7 +160,7 @@ dependencies {
 
     // cardboard dependencies
     implementation 'com.google.android.gms:play-services-vision:20.1.3'
-    implementation 'com.google.protobuf:protobuf-javalite:3.17.3'
+    implementation 'com.google.protobuf:protobuf-javalite:3.19.4'
 
     // color picker
     implementation 'com.github.kizitonwose.colorpreference:support:1.1.0'
