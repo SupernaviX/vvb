@@ -1,13 +1,13 @@
 package com.simongellis.vvb.data
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import java.util.*
-import kotlin.collections.HashMap
 
 class GameRepository(scope: CoroutineScope, val context: Context) {
     private val _dao = PreferencesDao.forClass<GameData>(context)
@@ -34,8 +34,7 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         return StateSlot(file, "auto")
     }
 
-    fun watchGame(id: String)
-         = _dao.watch(id).map { fromData(it) }
+    fun watchGame(id: String) = _dao.watch(id).map { fromData(it) }
 
     fun watchStateSlots(id: String): Flow<List<StateSlot>> {
         val flows = (0..9).map { slot -> watchStateSlot(id, slot.toString()) }
@@ -72,8 +71,6 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         return filename?.substringBeforeLast('.')
     }
 
-    // "cursor" is always freed, the try/catch confuses control flow
-    @SuppressLint("Recycle")
     private fun getFilename(uri: Uri) = _filenames.getOrPut(uri) {
         val cursor = try {
             context.contentResolver.query(
@@ -91,11 +88,11 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
                 return it.getString(it.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME))
             }
         }
-        return uri.lastPathSegment!!.substringAfterLast('/')
+        return uri.lastPathSegment?.substringAfterLast('/')
     }
 
-    private fun watchStateSlot(id: String, slot: String)
-        = _fileDao.watch(getStatePath(id, slot)).map { StateSlot(it, slot) }
-    private fun getStatePath(id: String, name: String)
-        = "$id/save_states/${name}.sav"
+    private fun watchStateSlot(id: String, slot: String) =
+        _fileDao.watch(getStatePath(id, slot)).map { StateSlot(it, slot) }
+
+    private fun getStatePath(id: String, name: String) = "$id/save_states/${name}.sav"
 }

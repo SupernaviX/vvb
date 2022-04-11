@@ -27,9 +27,9 @@ class GamePakLoader(private val context: Context) {
     }
 
     private fun loadVbFile(uri: Uri): ByteArray {
-        val size = context.contentResolver.openAssetFileDescriptor(uri, "r")!!.use {
-            it.length
-        }
+        val size = context.contentResolver.openAssetFileDescriptor(uri, "r")
+            ?.use { it.length }
+            ?: throw error(R.string.error_file_not_found)
         if (size.countOneBits() != 1) {
             throw error(R.string.error_not_power_of_two)
         }
@@ -37,9 +37,9 @@ class GamePakLoader(private val context: Context) {
             throw error(R.string.error_too_large)
         }
 
-        context.contentResolver.openInputStream(uri)!!.use { inputStream ->
-            return inputStream.readBytes()
-        }
+        return context.contentResolver.openInputStream(uri)
+            ?.use { it.readBytes() }
+            ?: throw error(R.string.error_file_not_found)
     }
 
     private fun loadZipFile(uri: Uri): ByteArray {
@@ -57,7 +57,7 @@ class GamePakLoader(private val context: Context) {
     }
 
     private fun hasZipHeader(uri: Uri): Boolean {
-        val header = context.contentResolver.openInputStream(uri)!!.use {
+        val header = context.contentResolver.openInputStream(uri)?.use {
             val buffer = ByteArray(4)
             var bytesCopied = 0
             var bytes = it.read(buffer)
@@ -66,7 +66,7 @@ class GamePakLoader(private val context: Context) {
                 bytes = it.read(buffer, bytesCopied, buffer.size - bytesCopied)
             }
             buffer
-        }
+        } ?: throw error(R.string.error_file_not_found)
         val zipHeader = byteArrayOf(0x50, 0x4b, 0x03, 0x04)
         return zipHeader.zip(header).all { it.first == it.second }
     }
@@ -76,11 +76,15 @@ class GamePakLoader(private val context: Context) {
     }
 
     private fun tryGetExtension(uri: Uri): String? {
-        return tryGetExtension(uri.path!!)
+        return uri.path?.let { tryGetExtension(it) }
     }
 
     private fun tryGetExtension(path: String): String? {
         val sep = path.lastIndexOf('.')
-        return if (sep == -1) { null } else { path.substring(sep + 1).lowercase() }
+        return if (sep == -1) {
+            null
+        } else {
+            path.substring(sep + 1).lowercase()
+        }
     }
 }

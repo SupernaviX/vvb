@@ -16,9 +16,8 @@ import org.acra.config.toast
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 import java.util.*
-import kotlin.collections.ArrayList
 
-class VvbApplication: Application() {
+class VvbApplication : Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
 
@@ -87,11 +86,12 @@ class VvbApplication: Application() {
 
         for (input in mappedInputs) {
             // Add the mapping to the new controller in the new format
-            val savedMapping = prefs.getString(input.prefName, null)!!
-            val (device, keyCode) = savedMapping.split("::")
-            val mappingKey = "controller_${controllerId}_${input.prefName}"
-            val mappingValue = "$device::key::$keyCode"
-            editor.putStringSet(mappingKey, setOf(mappingValue))
+            prefs.getString(input.prefName, null)?.also { savedMapping ->
+                val (device, keyCode) = savedMapping.split("::")
+                val mappingKey = "controller_${controllerId}_${input.prefName}"
+                val mappingValue = "$device::key::$keyCode"
+                editor.putStringSet(mappingKey, setOf(mappingValue))
+            }
 
             // and remove the old-format pref
             editor.remove(input.prefName)
