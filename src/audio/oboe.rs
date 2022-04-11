@@ -8,9 +8,13 @@ use oboe::{
     PerformanceMode, SampleRateConversionQuality, SharingMode, Stereo, Usage,
 };
 
-pub fn init(sample_rate: i32, frames_per_burst: i32) {
-    oboe::DefaultStreamValues::set_sample_rate(sample_rate);
-    oboe::DefaultStreamValues::set_frames_per_burst(frames_per_burst);
+pub fn init(sample_rate: Option<i32>, frames_per_burst: Option<i32>) {
+    if let Some(rate) = sample_rate {
+        oboe::DefaultStreamValues::set_sample_rate(rate)
+    }
+    if let Some(frames) = frames_per_burst {
+        oboe::DefaultStreamValues::set_frames_per_burst(frames)
+    }
 }
 
 struct OboeStreamConfiguration {

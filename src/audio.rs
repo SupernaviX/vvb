@@ -8,9 +8,9 @@ mod noop;
 #[cfg(not(target_os = "android"))]
 type Audio = noop::NoopAudio;
 
-pub fn init(sample_rate: i32, frames_per_burst: i32) {
+pub fn init(sample_rate: Option<i32>, frames_per_burst: Option<i32>) {
     log::debug!(
-        "Sample rate: {}, frames per burst: {}",
+        "Sample rate: {:?}, frames per burst: {:?}",
         sample_rate,
         frames_per_burst
     );

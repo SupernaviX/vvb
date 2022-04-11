@@ -9,29 +9,33 @@ mod video;
 
 use android_logger::{self, Config};
 use anyhow::Result;
-use jni::sys::{jint, jobject};
+use jni::sys::jobject;
 use jni::JNIEnv;
 use log::{info, Level};
 use video::{Cardboard, QrCode};
 
+use crate::jni_helpers::EnvExtensions;
 pub use audio::jni::*;
 pub use controller::jni::*;
 pub use emulator::jni::*;
 pub use video::jni::*;
 
-jni_func!(VvbLibrary_nativeInitialize, init, jobject, jint, jint);
+jni_func!(VvbLibrary_nativeInitialize, init, jobject, jobject, jobject);
 fn init(
     env: &JNIEnv,
     _this: jobject,
     context: jobject,
-    sample_rate: jint,
-    frames_per_burst: jint,
+    sample_rate: jobject,
+    frames_per_burst: jobject,
 ) -> Result<()> {
     android_logger::init_once(Config::default().with_min_level(Level::Info));
     info!("Hello from vvb");
 
     let vm = env.get_java_vm()?;
     Cardboard::initialize(vm.get_java_vm_pointer(), context);
+
+    let sample_rate = env.get_integet_value(sample_rate)?;
+    let frames_per_burst = env.get_integet_value(frames_per_burst)?;
 
     audio::init(sample_rate, frames_per_burst);
 

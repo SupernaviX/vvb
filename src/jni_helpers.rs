@@ -40,11 +40,19 @@ pub fn java_take<T: 'static + Send>(env: &JNIEnv, this: jobject) -> Result<()> {
     Ok(())
 }
 pub trait EnvExtensions {
+    fn get_integet_value(&self, integer: jobject) -> Result<Option<i32>>;
     fn get_int(&self, this: jobject, field: &str) -> Result<i32>;
     fn get_percent(&self, this: jobject, field: &str) -> Result<f32>;
     fn get_color(&self, this: jobject, field: &str) -> Result<(u8, u8, u8)>;
 }
 impl<'a> EnvExtensions for JNIEnv<'a> {
+    fn get_integet_value(&self, integer: jobject) -> Result<Option<i32>> {
+        if integer.is_null() {
+            return Ok(None);
+        }
+        let value = self.call_method(integer, "intValue", "()I", &[])?.i()?;
+        Ok(Some(value))
+    }
     fn get_int(&self, this: jobject, field: &str) -> Result<i32> {
         let res = self.get_field(this, field, "I")?.i()?;
         Ok(res)
