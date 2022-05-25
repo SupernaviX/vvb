@@ -81,6 +81,7 @@ android {
     }
 
     ndkVersion = "22.1.7171670"
+    namespace 'com.simongellis.vvb'
 }
 
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
