@@ -46,7 +46,7 @@ pub use sys::CardboardEyeTextureDescription as TextureDescription;
 pub use sys::{CardboardEye, CardboardMesh};
 
 #[cfg(target_os = "android")]
-#[link(name = "cardboard_api")]
+#[link(name = "GfxPluginCardboard")]
 extern "C" {
     #[link_name = "Cardboard_initializeAndroid"]
     pub fn Cardboard_initializeAndroid(vm: *const JavaVM, context: jobject);
