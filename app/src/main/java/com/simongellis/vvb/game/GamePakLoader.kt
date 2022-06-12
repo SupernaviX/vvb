@@ -15,7 +15,7 @@ class GamePakLoader(private val context: Context) {
         val rom = try {
             when {
                 ext == "zip" -> loadZipFile(uri)
-                ext == "vb" -> loadVbFile(uri)
+                isVbFileExt(ext) -> loadVbFile(uri)
                 hasZipHeader(uri) -> loadZipFile(uri)
                 else -> loadVbFile(uri)
             }
@@ -48,7 +48,7 @@ class GamePakLoader(private val context: Context) {
             for (entry in generateSequence { zip.nextEntry }) {
                 val ext = tryGetExtension(entry.name)
                 val size = entry.size
-                if (ext == "vb" && size.countOneBits() == 1 && size <= 0x01000000) {
+                if (isVbFileExt(ext) && size.countOneBits() == 1 && size <= 0x01000000) {
                     return zip.readBytes()
                 }
             }
@@ -86,5 +86,9 @@ class GamePakLoader(private val context: Context) {
         } else {
             path.substring(sep + 1).lowercase()
         }
+    }
+
+    private fun isVbFileExt(ext: String?): Boolean {
+        return ext == "vb" || ext == "vboy" || ext == "bin"
     }
 }
