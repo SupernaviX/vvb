@@ -28,4 +28,12 @@
         <item>@color/black</item>
         <item></item>
     </array>
+    <string-array name="aspect_ratio_values">
+        <item>AUTO</item>
+        <item>STRETCH</item>
+    </string-array>
+    <string-array name="aspect_ratio_names">
+        <item>@string/aspect_ratio_auto</item>
+        <item>@string/aspect_ratio_stretch</item>
+    </string-array>
 </resources>

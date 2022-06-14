@@ -303,11 +303,11 @@ impl DrawingLogic {
                 if self.cell_flip_vertically {
                     char_y = 7 - char_y;
                 }
-                let pixel = self.get_char_pixel(memory, self.cell_char_index, char_x, char_y);
+                let pixel = self.read_char_pixel(memory, self.cell_char_index, char_x, char_y);
                 if pixel == 0 {
                     continue;
                 }
-                let color = self.get_palette_color(memory, GPLT0, self.cell_palette_index, pixel);
+                let color = self.read_palette_color(memory, GPLT0, self.cell_palette_index, pixel);
 
                 self.draw_pixel(dest_x + column, dest_y + row, color);
             }
@@ -391,18 +391,18 @@ impl DrawingLogic {
             let char_y = if flip_vertical { 7 - y } else { y } as u16;
             for x in 0..8 {
                 let char_x = if flip_horizontal { 7 - x } else { x } as u16;
-                let pixel = self.get_char_pixel(memory, jca, char_x, char_y);
+                let pixel = self.read_char_pixel(memory, jca, char_x, char_y);
                 if pixel == 0 {
                     continue;
                 }
 
-                let color = self.get_palette_color(memory, JPLT0, jplts, pixel);
+                let color = self.read_palette_color(memory, JPLT0, jplts, pixel);
                 self.draw_pixel(jx + x, jy + y, color);
             }
         }
     }
 
-    fn get_char_pixel(&mut self, memory: &Memory, index: u16, x: u16, y: u16) -> u16 {
+    fn read_char_pixel(&mut self, memory: &Memory, index: u16, x: u16, y: u16) -> u16 {
         let relative_address = (index << 3) + y;
         if self.last_char_rel_address != relative_address {
             self.last_char_rel_address = relative_address;
@@ -412,7 +412,7 @@ impl DrawingLogic {
         (self.last_char_data >> (x << 1)) & 0x3
     }
 
-    fn get_palette_color(&self, memory: &Memory, base: usize, index: u16, pixel: u16) -> u16 {
+    fn read_palette_color(&self, memory: &Memory, base: usize, index: u16, pixel: u16) -> u16 {
         let palette = memory.read_halfword(base + (index as usize * 2));
         (palette >> (pixel * 2)) & 0x03
     }

@@ -1,5 +1,6 @@
 package com.simongellis.vvb.game
 
+import android.content.res.Configuration
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -9,6 +10,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.viewModels
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.simongellis.vvb.emulator.*
 
 class GameActivity : AppCompatActivity() {
@@ -17,10 +21,6 @@ class GameActivity : AppCompatActivity() {
     private lateinit var _view: GameView
     private lateinit var _audio: Audio
     private lateinit var _controller: Controller
-    private lateinit var _inputBindingMapper: InputBindingMapper
-    private lateinit var _preferences: GamePreferences
-
-    private lateinit var mDecorView: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,13 +31,18 @@ class GameActivity : AppCompatActivity() {
 
         _audio = Audio(emulator, preferences.audioSettings)
         _controller = Controller(emulator)
-        _inputBindingMapper = InputBindingMapper(baseContext)
 
         _view = GameView(baseContext)
         requestedOrientation = _view.requestedOrientation
         _view.controller = _controller
         setContentView(_view)
         _preferences = preferences
+
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            hideSystemUI()
+        } else {
+            showSystemUI()
+        }
 
         viewModel.loadPreviewImage()
 
@@ -58,8 +63,23 @@ class GameActivity : AppCompatActivity() {
         toggleImmersiveView(true)
     }
 
+    private fun hideSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    private fun showSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            show(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        val input = _inputBindingMapper.getBoundInput(event)
+        val input = viewModel.getBoundInput(event)
         if (input != null) {
             if (event.action == KeyEvent.ACTION_DOWN) {
                 _controller.press(input)
@@ -72,7 +92,7 @@ class GameActivity : AppCompatActivity() {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        val (pressed, released) = _inputBindingMapper.getAxisInputs(event)
+        val (pressed, released) = viewModel.getAxisInputs(event)
         if (pressed.isNotEmpty() || released.isNotEmpty()) {
             _controller.update(pressed, released)
             return true
@@ -98,7 +118,6 @@ class GameActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        _inputBindingMapper.destroy()
         _view.controller = null
         _controller.destroy()
         _audio.destroy()

@@ -1,9 +1,13 @@
 package com.simongellis.vvb.game
 
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import com.simongellis.vvb.emulator.Emulator
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import com.simongellis.vvb.emulator.VvbLibrary
 
 class PreviewActivity: AppCompatActivity() {
@@ -15,13 +19,33 @@ class PreviewActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         VvbLibrary.instance.initialize(this)
-
         _view = GameView(baseContext)
         _preferences = GamePreferences(baseContext)
         requestedOrientation = _view.requestedOrientation
         setContentView(_view)
 
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            hideSystemUI()
+        } else {
+            showSystemUI()
+        }
+
         viewModel.loadPreviewImage()
+    }
+
+    private fun hideSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    private fun showSystemUI() {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+            show(WindowInsetsCompat.Type.systemBars())
+        }
     }
 
     override fun onPause() {

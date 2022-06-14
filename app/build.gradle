@@ -1,5 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
+}
 
 static def generatedString(value) {
     if (value == null) {
@@ -30,7 +33,7 @@ repositories {
 }
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 32
     buildToolsVersion "30.0.3"
 
     compileOptions {
@@ -39,6 +42,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+        freeCompilerArgs += [
+                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
+        ]
     }
     buildFeatures {
         viewBinding true
@@ -55,9 +61,9 @@ android {
     defaultConfig {
         applicationId "com.simongellis.vvb"
         minSdkVersion 21
-        targetSdkVersion 30
-        versionCode 20
-        versionName "1.6.3"
+        targetSdkVersion 32
+        versionCode 27
+        versionName "1.8.3"
 
         buildConfigField("String", "ACRA_URI", generatedString("https://vvb-notifications.simongellis.com/report"))
 
@@ -81,7 +87,16 @@ android {
         }
     }
 
+    packagingOptions {
+        pickFirst 'app'
+        jniLibs {
+            // https://issuetracker.google.com/issues/147096055#comment3
+            useLegacyPackaging = true
+        }
+    }
+
     ndkVersion = "22.1.7171670"
+    namespace 'com.simongellis.vvb'
 }
 
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
@@ -113,18 +128,13 @@ cargo {
 // The dependencies for NDK builds live inside the .aar files so they need to
 // be extracted before NDK targets can link against.
 task extractNdk(type: Copy)  {
-    if (file("${project.rootDir}/cardboard-sdk/sdk-release.aar").exists()) {
-        copy {
-            from zipTree("${project.rootDir}/cardboard-sdk/sdk-release.aar")
-            into "libraries/"
-            include "jni/**/libcardboard_api.so"
-        }
-    }
+    from zipTree("${project.rootDir}/cardboard-sdk/sdk-release.aar")
+    into "libraries/"
+    include "jni/**/lib*.so"
 }
 
 task deleteNdk(type: Delete) {
-    delete "libraries/jni"
-    delete "libraries/cardboard.h"
+    delete "libraries"
 }
 
 build.dependsOn(extractNdk)
@@ -134,32 +144,46 @@ tasks.whenTaskAdded { task ->
     if ((task.name == 'javaPreCompileDebug' || task.name == 'javaPreCompileRelease')) {
         task.dependsOn 'cargoBuild'
     }
+    if (task.name.startsWith('cargoBuild')) {
+        task.dependsOn 'extractNdk'
+    }
 }
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation project(':cardboard-sdk')
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.6.0'
-    implementation 'androidx.appcompat:appcompat:1.4.0-alpha03'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
-    implementation "androidx.preference:preference-ktx:1.1.1"
-    testImplementation 'junit:junit:4.12'
+    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation "androidx.preference:preference-ktx:1.2.0"
+    testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+    // lifecycle things
+    def lifecycleVersion = '2.4.1'
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion"
 
     // relinker
     implementation "com.getkeepsafe.relinker:relinker:1.4.3"
 
+    // serializer
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2"
+
     // cardboard dependencies
     implementation 'com.google.android.gms:play-services-vision:20.1.3'
-    implementation 'com.google.protobuf:protobuf-javalite:3.17.3'
+    implementation 'com.google.protobuf:protobuf-javalite:3.19.4'
 
     // color picker
     implementation 'com.github.kizitonwose.colorpreference:support:1.1.0'
 
     // file picker
     implementation 'com.nononsenseapps:filepicker:4.2.1'
+
+    // flow-emitting preferences client
+    implementation 'com.fredporciuncula:flow-preferences:1.5.0'
 
     // error instrumentation
     def acraVersion = '5.8.3'

@@ -2,7 +2,9 @@ use crate::emulator::cpu::Exception;
 use crate::emulator::memory::Memory;
 use crate::emulator::video::drawing::DrawingProcess;
 use anyhow::Result;
+use array_init::array_init;
 use log::error;
+use serde_derive::{Deserialize, Serialize};
 use std::cell::{Ref, RefCell};
 use std::convert::TryFrom;
 use std::rc::Rc;
@@ -32,6 +34,7 @@ const DP_INTERRUPTS: u16 = FRAMESTART | GAMESTART | RFBEND | LFBEND | SCANERR;
 
 const DPSTTS: usize = 0x0005f820;
 const DPCTRL: usize = 0x0005f822;
+const VER: usize = 0x0005f844;
 
 // flags for DPSTTS/DPCTRL
 const LOCK: u16 = 0x0400;
@@ -65,7 +68,7 @@ const XPEN: u16 = 0x0002;
 const XPRST: u16 = 0x0001;
 const XP_READONLY_MASK: u16 = 0x801c;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 enum Buffer {
     Buffer0,
     Buffer1,
@@ -106,58 +109,106 @@ pub struct Frame {
 
 pub type FrameChannel = mpsc::Receiver<Frame>;
 
-pub struct Video {
+#[derive(Serialize, Deserialize)]
+pub struct VideoState {
     cycle: u64,
-    memory: Rc<RefCell<Memory>>,
     displaying: bool,
     drawing: bool,
     game_frame_counter: u8,
-    xp_module: DrawingProcess,
     dpctrl_flags: u16,
     xpctrl_flags: u16,
     pending_interrupts: u16,
     enabled_interrupts: u16,
     display_buffer: Buffer,
-    frame_channel: Option<mpsc::Sender<Frame>>,
-    buffers: [Arc<Mutex<EyeBuffer>>; 2],
 }
-impl Video {
-    pub fn new(memory: Rc<RefCell<Memory>>) -> Video {
-        Video {
+
+impl Default for VideoState {
+    fn default() -> Self {
+        Self {
             cycle: 0,
-            memory,
             displaying: false,
             drawing: false,
             game_frame_counter: 0,
-            xp_module: DrawingProcess::new(),
             dpctrl_flags: SCANRDY,
             xpctrl_flags: 0,
             pending_interrupts: 0,
             enabled_interrupts: 0,
             display_buffer: Buffer0,
+        }
+    }
+}
+
+pub struct Video {
+    cycle: u64,
+    displaying: bool,
+    drawing: bool,
+    game_frame_counter: u8,
+    dpctrl_flags: u16,
+    xpctrl_flags: u16,
+    pending_interrupts: u16,
+    enabled_interrupts: u16,
+    display_buffer: Buffer,
+    memory: Rc<RefCell<Memory>>,
+    xp_module: DrawingProcess,
+    frame_channel: Option<mpsc::Sender<Frame>>,
+    buffers: [Arc<Mutex<EyeBuffer>>; 4],
+    buffer_index: usize,
+}
+impl Video {
+    pub fn new(memory: Rc<RefCell<Memory>>) -> Video {
+        let state = VideoState::default();
+        Video {
+            cycle: state.cycle,
+            displaying: state.displaying,
+            drawing: state.drawing,
+            game_frame_counter: state.game_frame_counter,
+            dpctrl_flags: state.dpctrl_flags,
+            xpctrl_flags: state.xpctrl_flags,
+            pending_interrupts: state.pending_interrupts,
+            enabled_interrupts: state.enabled_interrupts,
+            display_buffer: state.display_buffer,
+            memory,
+            xp_module: DrawingProcess::new(),
             frame_channel: None,
-            buffers: [
-                Arc::new(Mutex::new(vec![0; FRAME_SIZE])),
-                Arc::new(Mutex::new(vec![0; FRAME_SIZE])),
-            ],
+            buffers: array_init(|_| Arc::new(Mutex::new(vec![0; FRAME_SIZE]))),
+            buffer_index: 0,
         }
     }
 
     pub fn init(&mut self) {
-        self.cycle = 0;
-        self.displaying = false;
-        self.drawing = false;
-        self.game_frame_counter = 0;
-        self.dpctrl_flags = SCANRDY;
-        self.xpctrl_flags = 0;
-        self.pending_interrupts = 0;
-        self.enabled_interrupts = 0;
-        self.display_buffer = Buffer0;
+        self.load_state(&VideoState::default());
         let mut memory = self.memory.borrow_mut();
         memory.write_halfword(DPCTRL, self.dpctrl_flags);
         memory.write_halfword(DPSTTS, self.dpctrl_flags);
         memory.write_halfword(INTPND, self.pending_interrupts);
         memory.write_halfword(INTENB, self.enabled_interrupts);
+        memory.write_halfword(VER, 0x0002);
+    }
+
+    pub fn save_state(&self) -> VideoState {
+        VideoState {
+            cycle: self.cycle,
+            displaying: self.displaying,
+            drawing: self.drawing,
+            game_frame_counter: self.game_frame_counter,
+            dpctrl_flags: self.dpctrl_flags,
+            xpctrl_flags: self.xpctrl_flags,
+            pending_interrupts: self.pending_interrupts,
+            enabled_interrupts: self.enabled_interrupts,
+            display_buffer: self.display_buffer,
+        }
+    }
+
+    pub fn load_state(&mut self, state: &VideoState) {
+        self.cycle = state.cycle;
+        self.displaying = state.displaying;
+        self.drawing = state.drawing;
+        self.game_frame_counter = state.game_frame_counter;
+        self.dpctrl_flags = state.dpctrl_flags;
+        self.xpctrl_flags = state.xpctrl_flags;
+        self.pending_interrupts = state.pending_interrupts;
+        self.enabled_interrupts = state.enabled_interrupts;
+        self.display_buffer = state.display_buffer;
     }
 
     pub fn next_event(&self) -> u64 {
@@ -254,9 +305,12 @@ impl Video {
                     // If we're starting a display frame, check what's enabled
                     self.displaying = (dpctrl & DISP) != 0 && (dpctrl & DPRST) == 0;
 
-                    // If we're starting a game frame, start drawing (if enabled)
+                    // If we're starting a game frame,
                     if self.game_frame_counter == 0 {
+                        // start drawing (if enabled)
                         self.drawing = (xpctrl & XPEN) != 0;
+                        // and let the CPU know
+                        self.pending_interrupts |= GAMESTART;
                         let frmcyc = self.memory.borrow().read_halfword(FRMCYC) & 0x0f;
                         self.game_frame_counter = frmcyc as u8;
                     } else {
@@ -265,10 +319,8 @@ impl Video {
                     }
 
                     // Frame clock up
-                    if self.displaying {
-                        self.dpctrl_flags |= FCLK;
-                        self.pending_interrupts |= FRAMESTART;
-                    }
+                    self.dpctrl_flags |= FCLK;
+                    self.pending_interrupts |= FRAMESTART;
 
                     if self.drawing {
                         // Start drawing on whichever buffer was displayed before
@@ -277,7 +329,6 @@ impl Video {
                             Buffer0 => F0BSY,
                             Buffer1 => F1BSY,
                         };
-                        self.pending_interrupts |= GAMESTART;
 
                         // Switch to displaying the other buffer
                         self.display_buffer = self.display_buffer.toggle();
@@ -311,14 +362,14 @@ impl Video {
                 }
                 8 => {
                     // "Stop displaying" left eye
-                    self.dpctrl_flags &= !(L0BSY | L1BSY);
-                    self.pending_interrupts |= LFBEND;
+                    if self.displaying {
+                        self.dpctrl_flags &= !(L0BSY | L1BSY);
+                        self.pending_interrupts |= LFBEND;
+                    }
                 }
                 10 => {
-                    if self.displaying {
-                        // Frame clock down
-                        self.dpctrl_flags &= !FCLK;
-                    }
+                    // Frame clock down
+                    self.dpctrl_flags &= !FCLK;
                 }
                 13 => {
                     if self.displaying {
@@ -338,8 +389,10 @@ impl Video {
                 }
                 18 => {
                     // "Stop displaying" right eye,
-                    self.dpctrl_flags &= !(R0BSY | R1BSY);
-                    self.pending_interrupts |= RFBEND;
+                    if self.displaying {
+                        self.dpctrl_flags &= !(R0BSY | R1BSY);
+                        self.pending_interrupts |= RFBEND;
+                    }
                 }
                 _ => (),
             };
@@ -383,14 +436,14 @@ impl Video {
         Ok(())
     }
 
-    pub fn get_frame_channel(&mut self) -> FrameChannel {
+    pub fn claim_frame_channel(&mut self) -> FrameChannel {
         let (tx, rx) = mpsc::channel();
         self.frame_channel = Some(tx);
         rx
     }
 
-    pub fn load_frame(&self, eye: Eye, image: &[u8]) {
-        let mut buffer = self.buffers[eye as usize]
+    pub fn load_frame(&self, image: &[u8]) {
+        let mut buffer = self.buffers[self.buffer_index]
             .lock()
             .expect("Buffer lock was poisoned!");
         // Input data is RGBA, only copy the R
@@ -399,9 +452,11 @@ impl Video {
         }
     }
 
-    pub fn send_frame(&self, eye: Eye) -> Result<()> {
+    pub fn send_frame(&mut self, eye: Eye) -> Result<()> {
         if let Some(channel) = self.frame_channel.as_ref() {
-            let buffer = &self.buffers[eye as usize];
+            let buffer = &self.buffers[self.buffer_index];
+            self.buffer_index += 1;
+            self.buffer_index %= self.buffers.len();
             let frame = Frame {
                 eye,
                 buffer: Arc::clone(buffer),
@@ -413,7 +468,7 @@ impl Video {
 
     fn build_frame(&self, eye: Eye) {
         let buf_address = self.get_buffer_address(eye, self.display_buffer);
-        let eye_buffer = &mut self.buffers[eye as usize]
+        let eye_buffer = &mut self.buffers[self.buffer_index]
             .lock()
             .expect("Buffer lock was poisoned!");
 
@@ -742,7 +797,7 @@ mod tests {
         let (mut video, memory) = get_video();
 
         video.init();
-        write_dpctrl(&mut video, &memory, DISP);
+        write_dpctrl(&mut video, &memory, 0);
 
         // While INTENB is unset, set INTPND but don't trigger interrupts
         video.run(ms_to_cycles(37)).unwrap();
@@ -773,8 +828,8 @@ mod tests {
         let (mut video, memory) = get_video();
 
         video.init();
-        write_dpctrl(&mut video, &memory, DISP);
-        write_xpctrl(&mut video, &memory, XPEN);
+        write_dpctrl(&mut video, &memory, 0);
+        write_xpctrl(&mut video, &memory, 0);
         // set FRMCYC to 1 so that there are 1+1==2 display frames per game frame
         // note that this only takes effect after the first game frame
         memory.borrow_mut().write_halfword(FRMCYC, 1);

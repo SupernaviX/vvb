@@ -8,25 +8,27 @@ import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.R
-import com.simongellis.vvb.game.ControllerDao
+import com.simongellis.vvb.data.Controller
+import com.simongellis.vvb.utils.observe
+import com.simongellis.vvb.utils.observeNow
 
 class ControllersMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: ControllersViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        viewModel.controllers.observe(this, this::updateControllerList)
-        viewModel.editingController.observe(this, {
+        observeNow(viewModel.controllers) { updateControllerList(it) }
+        observe(viewModel.editingController) {
             editControllerMappings(it.id)
-        })
-        viewModel.renameLabel.observe(this, {
+        }
+        observeNow(viewModel.renameLabel) {
             findPreference<Preference>("rename_controller")?.setTitle(it)
-        })
-        viewModel.deleteLabel.observe(this, {
+        }
+        observeNow(viewModel.deleteLabel) {
             findPreference<Preference>("delete_controller")?.setTitle(it)
-        })
-        viewModel.showNameDialog.observe(this, this::showControllerNameDialog)
-        viewModel.showAutoMapDialog.observe(this) { showAutoMapDialog() }
+        }
+        observe(viewModel.showNameDialog) { showControllerNameDialog(it) }
+        observe(viewModel.showAutoMapDialog) { showAutoMapDialog() }
     }
 
     override fun onResume() {
@@ -35,6 +37,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        val context = requireContext()
         val prefScreen = preferenceManager.createPreferenceScreen(context)
 
         prefScreen.addPreference(PreferenceCategory(context).apply {
@@ -83,7 +86,7 @@ class ControllersMenuFragment: PreferenceFragmentCompat() {
         preferenceScreen = prefScreen
     }
 
-    private fun updateControllerList(controllers: List<ControllerDao.Controller>) {
+    private fun updateControllerList(controllers: List<Controller>) {
         // This method is triggered on preference change, so it can run after the fragment dies.
         // Bail early if this has happened to avoid calamity
         val context = context ?: return

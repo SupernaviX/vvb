@@ -1,5 +1,6 @@
 use super::memory::Memory;
 use anyhow::Result;
+use serde_derive::{Deserialize, Serialize};
 use std::cell::{RefCell, RefMut};
 use std::num::FpCategory;
 use std::rc::Rc;
@@ -51,41 +52,28 @@ fn bit_range_mask(start: u32, length: u32) -> u32 {
     ((i32::MIN >> (length - 1)) as u32) >> (32 - length - start)
 }
 
-pub struct Cpu<THandler: EventHandler> {
+#[derive(Serialize, Deserialize)]
+pub struct CpuState {
     cycle: u64,
-    memory: Rc<RefCell<Memory>>,
-    handler: THandler,
     bitstring_cycle: u64,
     halted: bool,
-    pub pc: usize,
-    pub registers: [u32; 32],
-    pub sys_registers: [u32; 32],
+    pc: usize,
+    registers: [u32; 32],
+    sys_registers: [u32; 32],
 }
-impl<THandler: EventHandler> Cpu<THandler> {
-    pub fn new(memory: Rc<RefCell<Memory>>, handler: THandler) -> Self {
-        let mut cpu = Cpu {
+
+impl Default for CpuState {
+    fn default() -> Self {
+        let mut state = Self {
             cycle: 0,
-            memory,
-            handler,
             bitstring_cycle: 0,
             halted: false,
             pc: 0xfffffff0,
             registers: [0; 32],
             sys_registers: [0; 32],
         };
-        cpu.init();
-        cpu
-    }
-    pub fn init(&mut self) {
-        self.cycle = 0;
-        self.halted = false;
-        self.bitstring_cycle = 0;
-        self.pc = 0xfffffff0;
-        for reg in self.registers.iter_mut() {
-            *reg = 0;
-        }
-        for sys_reg in 0..self.sys_registers.len() {
-            self.sys_registers[sys_reg] = match sys_reg {
+        for (sys_reg_index, sys_reg) in state.sys_registers.iter_mut().enumerate() {
+            *sys_reg = match sys_reg_index {
                 4 => 0x0000fff0,       // ECR
                 5 => NMI_PENDING_FLAG, // PSW
                 6 => 0x00008100,       // PIR
@@ -94,6 +82,56 @@ impl<THandler: EventHandler> Cpu<THandler> {
                 _ => 0,
             };
         }
+        state
+    }
+}
+
+pub struct Cpu<THandler: EventHandler> {
+    cycle: u64,
+    bitstring_cycle: u64,
+    halted: bool,
+    pub pc: usize,
+    pub registers: [u32; 32],
+    pub sys_registers: [u32; 32],
+    memory: Rc<RefCell<Memory>>,
+    handler: THandler,
+}
+impl<THandler: EventHandler> Cpu<THandler> {
+    pub fn new(memory: Rc<RefCell<Memory>>, handler: THandler) -> Self {
+        let state = CpuState::default();
+        Self {
+            cycle: state.cycle,
+            bitstring_cycle: state.bitstring_cycle,
+            halted: state.halted,
+            pc: state.pc,
+            registers: state.registers,
+            sys_registers: state.sys_registers,
+            memory,
+            handler,
+        }
+    }
+    pub fn init(&mut self) {
+        self.load_state(&CpuState::default());
+    }
+
+    pub fn save_state(&self) -> CpuState {
+        CpuState {
+            cycle: self.cycle,
+            bitstring_cycle: self.bitstring_cycle,
+            halted: self.halted,
+            pc: self.pc,
+            registers: self.registers,
+            sys_registers: self.sys_registers,
+        }
+    }
+
+    pub fn load_state(&mut self, state: &CpuState) {
+        self.cycle = state.cycle;
+        self.bitstring_cycle = state.bitstring_cycle;
+        self.halted = state.halted;
+        self.pc = state.pc;
+        self.registers.copy_from_slice(&state.registers);
+        self.sys_registers.copy_from_slice(&state.sys_registers);
     }
 
     pub fn run(&mut self, target_cycle: u64) -> Result<CpuProcessingResult> {
@@ -104,11 +142,11 @@ impl<THandler: EventHandler> Cpu<THandler> {
                 cycle: self.cycle,
                 bitstring_cycle: self.bitstring_cycle,
                 halted: self.halted,
+                registers: &mut self.registers,
+                sys_registers: &mut self.sys_registers,
                 event: None,
                 exception: None,
                 memory: self.memory.borrow_mut(),
-                registers: &mut self.registers,
-                sys_registers: &mut self.sys_registers,
             };
             process.run(target_cycle);
             self.pc = process.pc;
@@ -267,11 +305,11 @@ struct CpuProcess<'a> {
     cycle: u64,
     bitstring_cycle: u64,
     halted: bool,
+    registers: &'a mut [u32; 32],
+    sys_registers: &'a mut [u32; 32],
     event: Option<Event>,
     exception: Option<Exception>,
     memory: RefMut<'a, Memory>,
-    registers: &'a mut [u32; 32],
-    sys_registers: &'a mut [u32; 32],
 }
 impl<'a> CpuProcess<'a> {
     pub fn run(&mut self, target_cycle: u64) {
@@ -1037,8 +1075,8 @@ impl<'a> CpuProcess<'a> {
 
     fn cmpf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 - val1;
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
         self.cycle += 10;
@@ -1052,7 +1090,7 @@ impl<'a> CpuProcess<'a> {
     }
     fn cvt_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let fval = self.get_float(self.registers[reg1]).round();
+        let fval = self.read_float(self.registers[reg1]).round();
         let value = fval as i32 as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
@@ -1062,8 +1100,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn addf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 + val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
@@ -1072,8 +1110,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn subf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 - val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
@@ -1082,8 +1120,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn mulf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         let value = val2 * val1;
         self.registers[reg2] = value.to_bits();
         self.update_psw_flags_cy(value == 0.0, value < 0.0, false, value < 0.0);
@@ -1092,8 +1130,8 @@ impl<'a> CpuProcess<'a> {
     }
     fn divf_s(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let val2 = self.get_float(self.registers[reg2]);
-        let val1 = self.get_float(self.registers[reg1]);
+        let val2 = self.read_float(self.registers[reg2]);
+        let val1 = self.read_float(self.registers[reg1]);
         if val1 == 0.0 {
             let zero_numerator = val2 == 0.0;
             // if it's 0 / 0 this is an invalid operation
@@ -1118,7 +1156,7 @@ impl<'a> CpuProcess<'a> {
     }
     fn trnc_sw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let fval = self.get_float(self.registers[reg1]).trunc();
+        let fval = self.read_float(self.registers[reg1]).trunc();
         let value = fval as i32 as u32;
         self.registers[reg2] = value;
         self.update_psw_flags(value == 0, sign_bit(value), false);
@@ -1127,7 +1165,7 @@ impl<'a> CpuProcess<'a> {
         self.cycle += 14;
     }
 
-    fn get_float(&mut self, raw: u32) -> f32 {
+    fn read_float(&mut self, raw: u32) -> f32 {
         let value = f32::from_bits(raw);
         let invalid = matches!(value.classify(), FpCategory::Nan | FpCategory::Subnormal);
         self.update_psw_flag(FLOAT_RESERVED_OP_FLAG, invalid);

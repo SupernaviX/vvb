@@ -10,9 +10,14 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.emulator.VvbLibrary
+import com.simongellis.vvb.menu.DetailedListPreference
+import com.simongellis.vvb.menu.DetailedListPreferenceDialogFragment
 import com.simongellis.vvb.menu.MainMenuFragment
+import com.simongellis.vvb.menu.GameMenuFragment
 
-class MainActivity : AppCompatActivity(R.layout.main_activity), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+class MainActivity : AppCompatActivity(R.layout.main_activity),
+    PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
+    PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback {
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,22 +37,40 @@ class MainActivity : AppCompatActivity(R.layout.main_activity), PreferenceFragme
 
     override fun onResume() {
         super.onResume()
-        if (viewModel.wasGameJustLoaded) {
-            // If we just returned from launching a game, clear the fragment stack.
-            // This displays the top menu, where "Resume Game" is visible.
-            while (supportFragmentManager.backStackEntryCount > 0) {
-                supportFragmentManager.popBackStackImmediate()
-            }
-            viewModel.wasGameJustLoaded = false
+        if (viewModel.lastEvent.compareAndSet(MainViewModel.GameEvent.Opened, null)) {
+            // If we just returned from a game, show the Game Actions menu
+            closeAllSubMenus()
+            displayFragment<GameMenuFragment>(null)
         }
     }
 
-    override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
-        displayFragment(pref.fragment, pref.extras)
+    override fun onPreferenceStartFragment(
+        caller: PreferenceFragmentCompat,
+        pref: Preference
+    ): Boolean {
+        pref.fragment?.let { displayFragment(it, pref.extras) }
         return true
     }
 
-    inline fun <reified T: Fragment> displayFragment(args: Bundle?) {
+    override fun onPreferenceDisplayDialog(
+        caller: PreferenceFragmentCompat,
+        preference: Preference
+    ): Boolean {
+        return if (preference is DetailedListPreference) {
+            val dialogFragment = DetailedListPreferenceDialogFragment.newInstance(preference.key)
+            @Suppress("DEPRECATION")
+            dialogFragment.setTargetFragment(caller, 0)
+            dialogFragment.show(
+                caller.parentFragmentManager,
+                "androidx.preference.PreferenceFragment.DIALOG"
+            )
+            true
+        } else {
+            false
+        }
+    }
+
+    inline fun <reified T : Fragment> displayFragment(args: Bundle?) {
         displayFragment(T::class.qualifiedName!!, args ?: Bundle())
     }
 
@@ -62,6 +85,12 @@ class MainActivity : AppCompatActivity(R.layout.main_activity), PreferenceFragme
             .addToBackStack(null)
             .setReorderingAllowed(true)
             .commit()
+    }
+
+    fun closeAllSubMenus() {
+        while (supportFragmentManager.backStackEntryCount > 0) {
+            supportFragmentManager.popBackStackImmediate()
+        }
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

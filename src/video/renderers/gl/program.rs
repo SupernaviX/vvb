@@ -84,6 +84,7 @@ pub struct Program {
     vertex_shader: &'static str,
     fragment_shader: &'static str,
 }
+#[allow(clippy::wrong_self_convention)]
 impl Program {
     pub fn new(vertex_shader: &'static str, fragment_shader: &'static str) -> Self {
         Self {

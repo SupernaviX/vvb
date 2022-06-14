@@ -1,8 +1,10 @@
 use crate::emulator::cpu::Event;
 use anyhow::Result;
 use log::info;
+use serde_derive::{Deserialize, Serialize};
 use std::convert::TryInto;
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum Region {
     Vram = 0,
     Audio = 1,
@@ -37,9 +39,7 @@ impl MemoryRegion {
         }
     }
     pub fn clear(&mut self) {
-        for data in self.value[0x00000000..self.mask].iter_mut() {
-            *data = 0;
-        }
+        self.value[0x00000000..self.mask].fill(0);
     }
     pub fn write_byte(&mut self, address: usize, value: u8) -> Option<Event> {
         let (address, event) = self.resolve_address(address);
@@ -151,6 +151,11 @@ impl Memory {
         self.init();
         info!("Initialized all memory");
         Ok(())
+    }
+
+    pub fn unload_game_pak(&mut self) {
+        *self.mut_region(Region::Sram) = None;
+        *self.mut_region(Region::Rom) = None;
     }
 
     fn init(&mut self) {

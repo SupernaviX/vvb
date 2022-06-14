@@ -16,6 +16,7 @@ import com.nononsenseapps.filepicker.FilePickerActivity
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
 import com.simongellis.vvb.game.GameActivity
+import com.simongellis.vvb.utils.observeNow
 
 class MainMenuFragment: PreferenceFragmentCompat() {
     private val viewModel: MainViewModel by viewModels({ requireActivity() })
@@ -43,18 +44,15 @@ class MainMenuFragment: PreferenceFragmentCompat() {
         }
     }
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        setPreferencesFromResource(R.xml.preferences, rootKey)
-
-        findPreference<Preference>("resume_game")?.setOnPreferenceClickListener {
-            playGame()
-            true
-        }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         val chooseGameFilePicker = registerForActivityResult(OpenFilePicker(), this::loadGame)
         val chooseGameStorageFramework = registerForActivityResult(OpenPersistentDocument) { uri ->
             uri?.also {
-                requireContext().contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                if (it.scheme == "content") {
+                    requireContext().contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
             }
             loadGame(uri)
         }
@@ -66,13 +64,28 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             }
             true
         }
+
+        observeNow(viewModel.loadedGame) { game ->
+            findPreference<Preference>("game_actions")?.apply {
+                isVisible = game != null
+                if (game != null) {
+                    val nowPlaying = context.resources.getString(R.string.main_menu_now_playing)
+                    summary = "$nowPlaying: ${game.name}"
+                }
+            }
+        }
+    }
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.preferences, rootKey)
     }
 
     override fun onResume() {
         super.onResume()
         requireActivity().setTitle(R.string.app_name)
-        findPreference<Preference>("resume_game")?.apply {
-            isVisible = viewModel.isGameLoaded
+        if (viewModel.lastEvent.compareAndSet(MainViewModel.GameEvent.Closed, null)) {
+            // if we just closed a game, hide the "game_actions" menu
+            findPreference<Preference>("game_actions")?.isVisible = false
         }
     }
 

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <Preference
-        app:key="resume_game"
-        app:title="@string/main_menu_resume_game"
+        app:key="game_actions"
+        app:title="@string/main_menu_game_actions"
+        app:fragment="com.simongellis.vvb.menu.GameMenuFragment"
+        tools:context=".menu.GameMenuFragment"
         app:isPreferenceVisible="false"/>
     <Preference
         app:key="load_game"

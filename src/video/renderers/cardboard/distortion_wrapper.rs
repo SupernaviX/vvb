@@ -76,7 +76,7 @@ impl DistortionWrapper {
         let left_mesh = lens_distortion.get_distortion_mesh(CardboardEye::kLeft);
         let right_mesh = lens_distortion.get_distortion_mesh(CardboardEye::kRight);
 
-        let distortion_renderer = DistortionRenderer::create();
+        let mut distortion_renderer = DistortionRenderer::create();
         distortion_renderer.set_mesh(&left_mesh, CardboardEye::kLeft);
         distortion_renderer.set_mesh(&right_mesh, CardboardEye::kRight);
 

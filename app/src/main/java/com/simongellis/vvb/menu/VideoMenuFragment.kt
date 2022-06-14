@@ -6,6 +6,7 @@ import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
+import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -20,6 +21,7 @@ import yuku.ambilwarna.AmbilWarnaDialog.OnAmbilWarnaListener
 class VideoMenuFragment: PreferenceFragmentCompat() {
     enum class Prefs(val prefName: String, vararg val modes: VideoMode = VideoMode.values()) {
         MODE("video_mode"),
+        ASPECT_RATIO("video_aspect_ratio"),
         ZOOM("video_screen_zoom_percent"),
         HORIZONTAL_OFFSET("video_horizontal_offset"),
         VERTICAL_OFFSET("video_vertical_offset"),
@@ -40,7 +42,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
     private lateinit var _customColorPicker: AmbilWarnaDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        _sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
         super.onCreate(savedInstanceState)
     }
 
@@ -61,10 +63,24 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         val initialMode = VideoMode.valueOf(initialModeName)
         hidePreferencesByMode(initialMode)
 
+        val videoModePref = findPreference<DetailedListPreference>(Prefs.MODE.prefName)
+        videoModePref?.detailedEntries = VideoMode.values().map {
+            val summary = getString(it.summary)
+            val description = getString(it.description)
+            DetailedListPreference.Entry(it.name, summary, description)
+        }
+
         findPref(Prefs.MODE).setOnPreferenceChangeListener { _, newValue ->
             val mode = VideoMode.valueOf(newValue as String)
             hidePreferencesByMode(mode)
             true
+        }
+
+        findPref(Prefs.ASPECT_RATIO).setSummaryProvider {
+            val pref = it as ListPreference
+            val value = pref.value ?: pref.entryValues.first()
+            val index = pref.entryValues.indexOf(value)
+            pref.entries[index]
         }
 
         findPref(Prefs.COLOR_LEFT).setOnPreferenceChangeListener { _, newLeft ->
@@ -134,17 +150,6 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         findPref(Prefs.PREVIEW).setOnPreferenceClickListener {
             preview()
             true
-        }
-    }
-
-    override fun onDisplayPreferenceDialog(preference: Preference) {
-        if (preference is VideoModeDialogPreference) {
-            val dialogFragment = VideoModePreferenceDialogFragment.newInstance(preference.key)
-            @Suppress("DEPRECATION")
-            dialogFragment.setTargetFragment(this, 0)
-            dialogFragment.show(parentFragmentManager, "androidx.preference.PreferenceFragment.DIALOG")
-        } else {
-            super.onDisplayPreferenceDialog(preference)
         }
     }
 

@@ -1,5 +1,7 @@
 use crate::emulator::memory::Memory;
+use log::debug;
 use ringbuf::{Consumer, Producer, RingBuffer};
+use serde_derive::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -17,7 +19,7 @@ const ANALOG_FILTER_RC_CONSTANT: f32 = 0.022;
 const ANALOG_FILTER_DECAY_RATE: f32 =
     ANALOG_FILTER_RC_CONSTANT / (ANALOG_FILTER_RC_CONSTANT + 1. / FRAMES_PER_SECOND);
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 enum Direction {
     Decay,
     Grow,
@@ -28,6 +30,7 @@ impl Default for Direction {
     }
 }
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 enum ChannelType {
     Pcm { waveform: usize, index: usize },
     Noise { tap: u16, register: u16 },
@@ -66,7 +69,7 @@ impl ChannelType {
     }
 }
 
-#[derive(Default)]
+#[derive(Copy, Clone, Serialize, Deserialize, Default)]
 struct Envelope {
     value: u16,
     direction: Direction,
@@ -124,7 +127,7 @@ impl Envelope {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
 enum ModFunction {
     Sweep,
     Modulation,
@@ -135,7 +138,7 @@ impl Default for ModFunction {
     }
 }
 
-#[derive(Default)]
+#[derive(Copy, Clone, Serialize, Deserialize, Default)]
 struct Modification {
     enabled: bool,
     counter: usize,
@@ -143,7 +146,7 @@ struct Modification {
     func: ModFunction,
     sweep_dir: Direction,
     sweep_shift: usize,
-    mod_base: usize,
+    mod_base: u16,
     mod_index: usize,
     mod_repeat: bool,
 }
@@ -160,34 +163,42 @@ impl Modification {
             false
         }
     }
-    fn apply(&mut self, value: usize, mod_data: &[usize; 32]) -> usize {
+    fn apply(&mut self, value: u16, mod_data: &[i16; 32]) -> u16 {
         match self.func {
             ModFunction::Sweep => self.apply_sweep(value),
             ModFunction::Modulation => self.apply_modulation(mod_data),
         }
     }
-    fn apply_sweep(&mut self, value: usize) -> usize {
+    fn apply_sweep(&mut self, value: u16) -> u16 {
         let delta = value >> self.sweep_shift;
         match self.sweep_dir {
-            // Smaller numbers are higher pitches
-            Direction::Grow => value - delta,
-            Direction::Decay => value + delta,
+            Direction::Grow => value + delta,
+            Direction::Decay => value - delta,
         }
     }
 
-    fn apply_modulation(&mut self, mod_data: &[usize; 32]) -> usize {
-        let res = mod_data[self.mod_index] + self.mod_base;
+    fn apply_modulation(&mut self, mod_data: &[i16; 32]) -> u16 {
+        let res = mod_data[self.mod_index] + self.mod_base as i16;
         if self.mod_index < 31 {
             self.mod_index += 1;
         } else if self.mod_repeat {
             self.mod_index = 0;
         }
-        res
+        res as u16
     }
 }
 
+fn set_low_byte(value: &mut u16, byte: u8) {
+    *value = *value & 0x0700 | (byte as u16);
+}
+fn set_high_byte(value: &mut u16, byte: u8) {
+    *value = *value & 0x00ff | ((byte as u16) << 8);
+}
+
+#[derive(Copy, Clone, Default, Serialize, Deserialize)]
 struct Frequency {
-    value: usize,
+    current_value: u16,
+    most_recent_value: u16,
     counter: usize,
     modification: Option<Modification>,
 }
@@ -205,43 +216,54 @@ impl Frequency {
             modification.mod_index = 0;
         }
     }
-    fn set(&mut self, low_byte: u8, high_byte: u8) {
-        let value = ((high_byte as usize & 0x07) << 8) + low_byte as usize;
-        // frequency can be anywhere from 0 to 2047
-        // subtract the passed in value from 2048 so that higher values give higher frequencies
-        let value = 2048 - value;
-        self.value = value;
+    fn set_low_byte(&mut self, value: u8) {
+        set_low_byte(&mut self.current_value, value);
+        set_low_byte(&mut self.most_recent_value, value);
+        self.on_set();
+    }
+    fn set_high_byte(&mut self, value: u8) {
+        set_high_byte(&mut self.current_value, value);
+        set_high_byte(&mut self.most_recent_value, value);
+        self.on_set();
+    }
+    fn on_set(&mut self) {
         self.counter = 0;
         if let Some(modification) = self.modification.as_mut() {
-            modification.mod_base = value;
+            modification.mod_base = self.most_recent_value;
         }
     }
-    // returns number of updates
-    fn tick(&mut self, cycles: usize, mod_data: &[usize; 32]) -> usize {
+    // returns number of updates, and whether the channel has shut off
+    fn tick(&mut self, cycles: usize, mod_data: &[i16; 32]) -> (u16, bool) {
         // Frequency modification is computed before the tick
-        let new_value = self.tick_mod(mod_data);
+        let (new_value, cut_off) = self.tick_mod(mod_data);
+        if cut_off {
+            return (0, true);
+        }
 
         let mut result = 0;
         self.counter += cycles;
-        while self.counter >= self.value {
+        let change_cycles = 2048 - self.current_value as usize;
+        while self.counter >= change_cycles {
             result += 1;
-            self.counter -= self.value;
+            self.counter -= change_cycles;
         }
 
         // Frequency modification happens after the tick
-        self.value = new_value;
+        self.current_value = new_value;
 
-        result
+        (result, false)
     }
 
-    fn tick_mod(&mut self, mod_data: &[usize; 32]) -> usize {
+    // return new frequency, and whether the channel should get cut off
+    fn tick_mod(&mut self, mod_data: &[i16; 32]) -> (u16, bool) {
         if let Some(modification) = self.modification.as_mut() {
             let modify = modification.tick();
             if modify {
-                return modification.apply(self.value, mod_data);
+                let new_value = modification.apply(self.current_value, mod_data);
+                return (new_value, new_value > 2047);
             }
         }
-        self.value
+        (self.current_value, false)
     }
 
     fn setup_mod_1(&mut self, enabled: bool, repeat: bool, func: ModFunction) {
@@ -263,16 +285,8 @@ impl Frequency {
         }
     }
 }
-impl Default for Frequency {
-    fn default() -> Self {
-        Frequency {
-            value: 2048,
-            counter: 0,
-            modification: None,
-        }
-    }
-}
 
+#[derive(Copy, Clone, Serialize, Deserialize)]
 struct Channel {
     enabled: bool,
     enabled_counter: Option<usize>,
@@ -332,7 +346,6 @@ impl Channel {
         if let ChannelType::Pcm { waveform, .. } = &mut self.channel_type {
             *waveform = waveform_index;
         }
-        self.frequency.reset();
     }
     fn set_tap(&mut self, new_tap: u8) {
         if let ChannelType::Noise { tap, register } = &mut self.channel_type {
@@ -348,10 +361,13 @@ impl Channel {
                 _ => 11, // length 28
             };
             *register = 0xffff;
+            // HACK: this behavior isn't documented anywhere, but stopping this channel now
+            // fixes Hyper Fighter and doesn't break anything else I've tried
+            self.enabled = false;
         }
     }
 
-    fn next(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[usize; 32]) -> (u16, u16) {
+    fn next(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[i16; 32]) -> (u16, u16) {
         if let Some(counter) = self.enabled_counter.as_mut() {
             if *counter > 0 {
                 *counter -= 1;
@@ -364,6 +380,9 @@ impl Channel {
             return (0, 0);
         }
         let sample = self.sample(waveforms, mod_data);
+        if !self.enabled {
+            return (0, 0);
+        }
         let left = self.amplitude(self.volume.0) * sample;
         let right = self.amplitude(self.volume.1) * sample;
         self.envelope.tick();
@@ -379,14 +398,21 @@ impl Channel {
         }
     }
 
-    fn sample(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[usize; 32]) -> u16 {
+    fn sample(&mut self, waveforms: &[[u16; 32]; 5], mod_data: &[i16; 32]) -> u16 {
         let cycles = self.channel_type.base_cycles_per_frame();
-        let ticks = self.frequency.tick(cycles, mod_data);
+        let (ticks, shutoff) = self.frequency.tick(cycles, mod_data);
+        if shutoff {
+            self.enabled = false;
+            return 0;
+        }
         for _ in 0..ticks {
             self.channel_type.tick();
         }
         match &self.channel_type {
-            ChannelType::Pcm { waveform, index } => waveforms[*waveform][*index],
+            ChannelType::Pcm { waveform, index } => match waveforms.get(*waveform) {
+                Some(waveform) => waveform[*index],
+                None => 0,
+            },
             ChannelType::Noise { register, .. } => {
                 if *register & 0x0001 != 0 {
                     0
@@ -398,23 +424,19 @@ impl Channel {
     }
 }
 
-pub struct AudioController {
+#[derive(Serialize, Deserialize)]
+pub struct AudioState {
     cycle: u64,
-    memory: Rc<RefCell<Memory>>,
-    buffer: Option<Producer<(f32, f32)>>,
     prev_input: (f32, f32),
     prev_output: (f32, f32),
     waveforms: [[u16; 32]; 5],
-    mod_data: [usize; 32],
+    mod_data: [i16; 32],
     channels: [Channel; 6],
 }
-
-impl AudioController {
-    pub fn new(memory: Rc<RefCell<Memory>>) -> AudioController {
-        AudioController {
+impl Default for AudioState {
+    fn default() -> Self {
+        Self {
             cycle: 0,
-            memory,
-            buffer: None,
             prev_input: (0., 0.),
             prev_output: (0., 0.),
             waveforms: [[0; 32]; 5],
@@ -422,18 +444,59 @@ impl AudioController {
             channels: Channel::default_set(),
         }
     }
+}
 
-    pub fn init(&mut self) {
-        self.cycle = 0;
-        self.buffer = None;
-        self.prev_input = (0., 0.);
-        self.prev_output = (0., 0.);
-        self.waveforms = [[0; 32]; 5];
-        self.mod_data = [0; 32];
-        self.channels = Channel::default_set();
+pub struct AudioController {
+    cycle: u64,
+    prev_input: (f32, f32),
+    prev_output: (f32, f32),
+    waveforms: [[u16; 32]; 5],
+    mod_data: [i16; 32],
+    channels: [Channel; 6],
+    memory: Rc<RefCell<Memory>>,
+    buffer: Option<Producer<(f32, f32)>>,
+}
+
+impl AudioController {
+    pub fn new(memory: Rc<RefCell<Memory>>) -> AudioController {
+        let state = AudioState::default();
+        AudioController {
+            cycle: state.cycle,
+            prev_input: state.prev_input,
+            prev_output: state.prev_output,
+            waveforms: state.waveforms,
+            mod_data: state.mod_data,
+            channels: state.channels,
+            memory,
+            buffer: None,
+        }
     }
 
-    pub fn get_player(&mut self, volume: f32, buffer_size: usize) -> AudioPlayer {
+    pub fn init(&mut self) {
+        self.load_state(&AudioState::default());
+    }
+
+    pub fn save_state(&self) -> AudioState {
+        AudioState {
+            cycle: self.cycle,
+            prev_input: self.prev_input,
+            prev_output: self.prev_output,
+            waveforms: self.waveforms,
+            mod_data: self.mod_data,
+            channels: self.channels,
+        }
+    }
+
+    pub fn load_state(&mut self, state: &AudioState) {
+        self.cycle = state.cycle;
+        self.prev_input = state.prev_input;
+        self.prev_output = state.prev_output;
+        self.waveforms = state.waveforms;
+        self.mod_data = state.mod_data;
+        self.channels = state.channels;
+    }
+
+    pub fn claim_player(&mut self, volume: f32, buffer_size: usize) -> AudioPlayer {
         let capacity = buffer_size * 833;
         let buffer = RingBuffer::new(capacity);
         let (producer, consumer) = buffer.split();
@@ -441,6 +504,7 @@ impl AudioController {
         AudioPlayer {
             buffer: consumer,
             volume,
+            prev_value: (0., 0.),
         }
     }
 
@@ -454,14 +518,23 @@ impl AudioController {
                     let rel_addr = address - 0x01000000;
                     let waveform = rel_addr / 128;
                     let index = (rel_addr % 128) / 4;
+                    debug!(
+                        "0x{:08x} = 0x{:02x} (load waveform ({}, {}) = {})",
+                        address,
+                        value,
+                        waveform,
+                        index,
+                        value & 0x3f
+                    );
                     self.waveforms[waveform][index] = (value as u16) & 0x3f;
                 }
             }
             0x01000280..=0x010002ff => {
-                // Load modulation data (if all channels are disabled)
-                if self.channels.iter().all(|c| !c.enabled) {
+                // Load modulation data (if the channel using it is disabled)
+                debug!("0x{:08x} = 0x{:02x} (load mod data)", address, value);
+                if !self.channels[4].enabled {
                     let index = (address - 0x01000280) / 4;
-                    self.mod_data[index] = value as usize;
+                    self.mod_data[index] = value as i8 as i16;
                 }
             }
             0x01000400..=0x0100057f => {
@@ -476,25 +549,44 @@ impl AudioController {
                         let enabled = value & 0x80 != 0;
                         let auto = value & 0x20 != 0;
                         let interval = value as usize & 0x1f;
+                        debug!("0x{:08x} = 0x{:02x} (channel {} enablement enabled={} auto={} interval={})", address, value, channel + 1, enabled, auto, interval);
                         self.channels[channel].set_enabled(enabled, auto, interval);
                     }
                     0x04 => {
                         // Channel stereo volume
                         let left_vol = (value as u16 >> 4) & 0x0f;
                         let right_vol = value as u16 & 0x0f;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} volume left={} right={})",
+                            address,
+                            value,
+                            channel + 1,
+                            left_vol,
+                            right_vol
+                        );
                         self.channels[channel].volume = (left_vol, right_vol);
                     }
                     0x08 => {
                         // Channel frequency (low byte)
-                        let low_byte = value;
-                        let high_byte = memory.read_byte(address + 4);
-                        self.channels[channel].frequency.set(low_byte, high_byte);
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} frequency low={})",
+                            address,
+                            value,
+                            channel + 1,
+                            value
+                        );
+                        self.channels[channel].frequency.set_low_byte(value);
                     }
                     0x0c => {
                         // Channel frequency (high byte)
-                        let low_byte = memory.read_byte(address - 4);
-                        let high_byte = value;
-                        self.channels[channel].frequency.set(low_byte, high_byte);
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} frequency high={})",
+                            address,
+                            value,
+                            channel + 1,
+                            value
+                        );
+                        self.channels[channel].frequency.set_high_byte(value & 0x07);
                     }
                     0x10 => {
                         // Channel envelope settings
@@ -505,6 +597,7 @@ impl AudioController {
                             Direction::Decay
                         };
                         let interval = value as usize & 0x07;
+                        debug!("0x{:08x} = 0x{:02x} (channel {} envelope settings env_value={} direction={:?} interval={})", address, value, channel + 1, env_value, direction, interval);
                         self.channels[channel]
                             .envelope
                             .set(env_value, direction, interval);
@@ -513,6 +606,14 @@ impl AudioController {
                         // Channel envelope modification settings
                         let enabled = value & 0x01 != 0;
                         let repeat = value & 0x02 != 0;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} envelope mod enabled={} repeat={})",
+                            address,
+                            value,
+                            channel + 1,
+                            enabled,
+                            repeat
+                        );
                         self.channels[channel]
                             .envelope
                             .set_modification(enabled, repeat);
@@ -527,6 +628,12 @@ impl AudioController {
                             } else {
                                 ModFunction::Sweep
                             };
+                            debug!(
+                                "0x{:08x} = 0x{:02x} (channel {} envelope bonus)",
+                                address,
+                                value,
+                                channel + 1
+                            );
                             self.channels[4]
                                 .frequency
                                 .setup_mod_1(enabled, repeat, func);
@@ -534,12 +641,25 @@ impl AudioController {
                         if channel == 5 {
                             // This sets the "tap" for the noise channel (channel 6)
                             let tap = (value >> 4) & 0x07;
+                            debug!(
+                                "0x{:08x} = 0x{:02x} (channel {} tap = {})",
+                                address,
+                                value,
+                                channel + 1,
+                                tap
+                            );
                             self.channels[5].set_tap(tap);
                         }
                     }
                     0x18 if channel < 5 => {
                         // Set active waveform for the PCM channels (everything but 6)
                         let wave = value as usize & 0x07;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} active waveform)",
+                            address,
+                            value,
+                            channel + 1
+                        );
                         self.channels[channel].set_waveform(wave);
                     }
                     0x1c if channel == 4 => {
@@ -552,6 +672,12 @@ impl AudioController {
                             Direction::Decay
                         };
                         let shift = value as usize & 0x07;
+                        debug!(
+                            "0x{:08x} = 0x{:02x} (channel {} envelope mod bonus 2)",
+                            address,
+                            value,
+                            channel + 1
+                        );
                         self.channels[4]
                             .frequency
                             .setup_mod_2(clock, interval, dir, shift);
@@ -561,6 +687,7 @@ impl AudioController {
             }
             0x01000580 => {
                 // Stop all sound
+                debug!("0x{:08x} = 0x{:02x} (STOP AT ONCE)", address, value);
                 if value & 1 != 0 {
                     for channel in &mut self.channels {
                         channel.set_enabled(false, false, 0);
@@ -615,6 +742,7 @@ impl AudioController {
 
 pub struct AudioPlayer {
     buffer: Consumer<(f32, f32)>,
+    prev_value: (f32, f32),
     volume: f32,
 }
 
@@ -627,12 +755,13 @@ impl AudioPlayer {
         }
         // If we don't know what to play, play that last thing again
         let value = if count == 0 {
-            (0., 0.)
+            self.prev_value
         } else {
             frames[count - 1]
         };
+        self.prev_value = value;
         for missing in &mut frames[count..] {
-            *missing = value;
+            *missing = (value.0 * self.volume, value.1 * self.volume);
         }
     }
 }

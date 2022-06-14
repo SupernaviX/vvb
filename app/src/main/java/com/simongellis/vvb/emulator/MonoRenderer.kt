@@ -37,6 +37,7 @@ class MonoRenderer(emulator: Emulator, settings: Settings): Renderer {
     class Settings(
         @IntRange(from=0, to=1) val eye: Int,
         val screenZoom: Float,
+        val aspectRatio: Int,
         val verticalOffset: Float,
         @ColorInt val color: Int)
 
