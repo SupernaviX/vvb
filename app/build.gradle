@@ -33,6 +33,14 @@ repositories {
 }
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file('C:\\Users\\mail\\Documents\\android-debug-key-store.jks')
+            storePassword 'jakedowns'
+            keyAlias 'jakedownskeystore'
+            keyPassword 'jakedowns'
+        }
+    }
     compileSdkVersion 32
     buildToolsVersion "30.0.3"
 
@@ -75,15 +83,17 @@ android {
             buildConfigField("boolean", "ACRA_ENABLED", "false")
             buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", "null")
             buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", "null")
+            signingConfig signingConfigs.debug
         }
         release {
-            buildConfigField("boolean", "ACRA_ENABLED", "true")
-            def config = tryReadConfig("release.env")
-            buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", generatedString(config.login))
-            buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", generatedString(config.password))
+//            def config = tryReadConfig("release.env")
+            buildConfigField("boolean", "ACRA_ENABLED", "false")
+            buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", "null")
+            buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", "null")
 
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
         }
     }
 
