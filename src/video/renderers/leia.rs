@@ -1,8 +1,10 @@
 use crate::emulator::video::Eye;
 
 use super::common::RenderLogic;
-use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
-use super::gl::{utils, AspectRatio, Program, Textures};
+use super::gl::{
+    utils::{self, VB_HEIGHT, VB_WIDTH},
+    AspectRatio, Program, Textures,
+};
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
 use anyhow::Result;
 use cgmath::{vec3, Matrix4};
@@ -128,7 +130,7 @@ impl RenderLogic for LeiaRenderLogic {
 
 pub struct Settings {
     screen_zoom: f32,
-    aspect_ratio: AspectRatio,
+    pub aspect_ratio: AspectRatio,
     vertical_offset: f32,
     colors: [(u8, u8, u8); 2],
 }
