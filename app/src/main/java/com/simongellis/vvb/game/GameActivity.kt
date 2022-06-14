@@ -21,6 +21,7 @@ class GameActivity : AppCompatActivity() {
     private lateinit var _view: GameView
     private lateinit var _audio: Audio
     private lateinit var _controller: Controller
+    private lateinit var mDecorView: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,7 +37,6 @@ class GameActivity : AppCompatActivity() {
         requestedOrientation = _view.requestedOrientation
         _view.controller = _controller
         setContentView(_view)
-        _preferences = preferences
 
         if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
             hideSystemUI()

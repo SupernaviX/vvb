@@ -2,7 +2,7 @@ use crate::emulator::video::Eye;
 
 use super::common::RenderLogic;
 use super::gl::utils::{VB_HEIGHT, VB_WIDTH};
-use super::gl::{utils, Program, Textures};
+use super::gl::{utils, AspectRatio, Program, Textures};
 use crate::video::gl::types::{GLfloat, GLint, GLuint};
 use anyhow::Result;
 use cgmath::{vec3, Matrix4};
@@ -53,6 +53,7 @@ pub struct LeiaRenderLogic {
     colors_location: GLint,
 
     texture_colors: [[GLfloat; 4]; 2],
+    aspect_ratio: AspectRatio,
     transform: Matrix4<GLfloat>,
 }
 impl LeiaRenderLogic {
@@ -73,6 +74,7 @@ impl LeiaRenderLogic {
                 utils::color_as_vector(settings.colors[0]),
                 utils::color_as_vector(settings.colors[1]),
             ],
+            aspect_ratio: settings.aspect_ratio,
             transform: Matrix4::from_translation(vec3(0.0, offset, 0.0))
                 * Matrix4::from_scale(scale),
         }
@@ -101,7 +103,10 @@ impl RenderLogic for LeiaRenderLogic {
     fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
         self.program.set_viewport(screen_size)?;
 
-        let base_mv = utils::base_model_view(screen_size, (VB_WIDTH, VB_HEIGHT));
+        //let base_mv = utils::base_model_view(screen_size, (VB_WIDTH, VB_HEIGHT));
+        let base_mv = self
+            .aspect_ratio
+            .compute_mvp_matrix(screen_size, (VB_WIDTH, VB_HEIGHT));
         let model_view = utils::to_matrix(base_mv * self.transform);
 
         // model view only changes when the surface is resized, set it here
@@ -123,6 +128,7 @@ impl RenderLogic for LeiaRenderLogic {
 
 pub struct Settings {
     screen_zoom: f32,
+    aspect_ratio: AspectRatio,
     vertical_offset: f32,
     colors: [(u8, u8, u8); 2],
 }
@@ -142,6 +148,7 @@ pub mod jni {
 
     fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
+        let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
         let colors = [
             env.get_color(this, "color")?,
@@ -149,6 +156,7 @@ pub mod jni {
         ];
         Ok(Settings {
             screen_zoom,
+            aspect_ratio,
             vertical_offset,
             colors,
         })
@@ -171,7 +179,7 @@ pub mod jni {
         let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
         let settings = get_settings(&env, settings)?;
         let renderer = Renderer::new(
-            emulator.get_frame_channel(),
+            emulator.claim_frame_channel(),
             LeiaRenderLogic::new(&settings),
         );
         jni_helpers::java_init(env, this, renderer)
