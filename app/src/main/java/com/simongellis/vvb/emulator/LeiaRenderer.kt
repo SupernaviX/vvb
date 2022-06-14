@@ -35,6 +35,7 @@ class LeiaRenderer(emulator: Emulator, settings: Settings) : Renderer {
 
     class Settings(
         val screenZoom: Float,
+        val aspectRatio: Int,
         val verticalOffset: Float,
         @ColorInt val color: Int,
         @ColorInt val colorBG: Int)

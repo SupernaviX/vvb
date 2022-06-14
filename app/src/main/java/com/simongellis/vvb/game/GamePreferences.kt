@@ -72,7 +72,7 @@ class GamePreferences(context: Context) {
         get() = StereoRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color)
 
     val leiaSettings
-        get() = LeiaRenderer.Settings(screenZoom, verticalOffset, color, colorBG)
+        get() = LeiaRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color, colorBG)
 
     init {
 
