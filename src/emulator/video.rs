@@ -2,7 +2,6 @@ use crate::emulator::cpu::Exception;
 use crate::emulator::memory::Memory;
 use crate::emulator::video::drawing::DrawingProcess;
 use anyhow::Result;
-use array_init::array_init;
 use log::error;
 use serde_derive::{Deserialize, Serialize};
 use std::cell::{Ref, RefCell};
@@ -100,7 +99,32 @@ impl TryFrom<i32> for Eye {
         }
     }
 }
-pub type EyeBuffer = Vec<u8>;
+
+pub struct EyeBuffer {
+    writable: bool,
+    data: Vec<u8>,
+}
+impl Default for EyeBuffer {
+    fn default() -> Self {
+        Self {
+            writable: true,
+            data: vec![0; FRAME_SIZE],
+        }
+    }
+}
+impl EyeBuffer {
+    pub fn read(&mut self) -> &[u8] {
+        self.writable = true;
+        &self.data
+    }
+    pub fn try_write(&mut self) -> Option<&mut [u8]> {
+        if !self.writable {
+            return None;
+        }
+        self.writable = false;
+        Some(&mut self.data)
+    }
+}
 
 pub struct Frame {
     pub eye: Eye,
@@ -170,7 +194,7 @@ impl Video {
             memory,
             xp_module: DrawingProcess::new(),
             frame_channel: None,
-            buffers: array_init(|_| Arc::new(Mutex::new(vec![0; FRAME_SIZE]))),
+            buffers: Default::default(),
             buffer_index: 0,
         }
     }
@@ -350,8 +374,9 @@ impl Video {
                     }
                     if self.displaying {
                         // Actually display the left eye
-                        self.build_frame(Left);
-                        self.send_frame(Left)?;
+                        if self.build_frame(Left) {
+                            self.send_frame(Left)?;
+                        }
                     }
 
                     if self.drawing {
@@ -383,8 +408,9 @@ impl Video {
                 15 => {
                     if self.displaying {
                         // Actually display the right eye
-                        self.build_frame(Right);
-                        self.send_frame(Right)?;
+                        if self.build_frame(Right) {
+                            self.send_frame(Right)?;
+                        }
                     }
                 }
                 18 => {
@@ -446,9 +472,11 @@ impl Video {
         let mut buffer = self.buffers[self.buffer_index]
             .lock()
             .expect("Buffer lock was poisoned!");
-        // Input data is RGBA, only copy the R
-        for (place, data) in buffer.iter_mut().zip(image.iter().step_by(4)) {
-            *place = *data;
+        if let Some(data) = buffer.try_write() {
+            // Input data is RGBA, only copy the R
+            for (place, data) in data.iter_mut().zip(image.iter().step_by(4)) {
+                *place = *data;
+            }
         }
     }
 
@@ -466,12 +494,21 @@ impl Video {
         Ok(())
     }
 
-    fn build_frame(&self, eye: Eye) {
-        let buf_address = self.get_buffer_address(eye, self.display_buffer);
+    fn build_frame(&self, eye: Eye) -> bool {
         let eye_buffer = &mut self.buffers[self.buffer_index]
             .lock()
             .expect("Buffer lock was poisoned!");
+        return match eye_buffer.try_write() {
+            Some(data) => {
+                self.write_frame(eye, data);
+                true
+            }
+            None => false,
+        };
+    }
 
+    fn write_frame(&self, eye: Eye, buffer: &mut [u8]) {
+        let buf_address = self.get_buffer_address(eye, self.display_buffer);
         let memory = self.memory.borrow();
         for (col, col_offset) in (0..(384 * 64)).step_by(64).enumerate() {
             // colors to render
@@ -482,7 +519,7 @@ impl Video {
                 let pixels = memory.read_halfword(address);
                 for (row, pixel) in (0..16).step_by(2).map(|i| (pixels >> i) & 0b11).enumerate() {
                     let index = col + (top_row + row) * 384;
-                    eye_buffer[index] = colors[pixel as usize];
+                    buffer[index] = colors[pixel as usize];
                 }
             }
         }
