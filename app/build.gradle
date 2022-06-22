@@ -33,14 +33,6 @@ repositories {
 }
 
 android {
-    signingConfigs {
-        debug {
-            storeFile file('C:\\Users\\mail\\Documents\\android-debug-key-store.jks')
-            storePassword 'jakedowns'
-            keyAlias 'jakedownskeystore'
-            keyPassword 'jakedowns'
-        }
-    }
     compileSdkVersion 32
     buildToolsVersion "30.0.3"
 
