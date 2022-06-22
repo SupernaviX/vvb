@@ -8,6 +8,8 @@ import android.util.DisplayMetrics
 import androidx.annotation.ColorInt
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.*
+import com.leia.android.lights.LeiaSDK
+import com.leia.android.lights.LeiaDisplayManager
 
 class GamePreferences(context: Context) {
     val videoMode: VideoMode
@@ -78,7 +80,12 @@ class GamePreferences(context: Context) {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-        videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.LEIA.name)!!)
+        val displayManager = LeiaSDK.getDisplayManager(context)
+        var defaultMode = VideoMode.ANAGLYPH.name
+        if(displayManager !== null){
+            defaultMode = VideoMode.LEIA.name
+        }
+        videoMode = VideoMode.valueOf(prefs.getString("video_mode", defaultMode)!!)
 
         screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 100)
         aspectRatio = AspectRatio.valueOf(prefs.getString("video_aspect_ratio", "AUTO")!!)

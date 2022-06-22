@@ -10,6 +10,7 @@ import androidx.preference.ListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
+import com.leia.android.lights.LeiaSDK
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.game.PreviewActivity
@@ -64,10 +65,17 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         hidePreferencesByMode(initialMode)
 
         val videoModePref = findPreference<DetailedListPreference>(Prefs.MODE.prefName)
-        videoModePref?.detailedEntries = VideoMode.values().map {
-            val summary = getString(it.summary)
-            val description = getString(it.description)
-            DetailedListPreference.Entry(it.name, summary, description)
+        videoModePref?.detailedEntries = VideoMode.values().mapNotNull {
+            if(it.name === VideoMode.LEIA.name
+                && LeiaSDK.getDisplayManager(context) === null
+            ){
+                // skip leia on
+                null;
+            }else{
+                val summary = getString(it.summary)
+                val description = getString(it.description)
+                DetailedListPreference.Entry(it.name, summary, description)
+            }
         }
 
         findPref(Prefs.MODE).setOnPreferenceChangeListener { _, newValue ->
