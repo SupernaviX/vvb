@@ -44,8 +44,8 @@ impl<TLogic: RenderLogic> Renderer<TLogic> {
         match self.frame_channel.try_recv() {
             Ok(frame) => {
                 let eye = frame.eye;
-                let buffer = frame.buffer.lock().expect("Buffer lock was poisoned!");
-                self.logic.update(eye, &buffer)?;
+                let mut buffer = frame.buffer.lock().expect("Buffer lock was poisoned!");
+                self.logic.update(eye, buffer.read())?;
                 drop(buffer);
                 self.logic.draw()
             }

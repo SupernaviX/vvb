@@ -4,7 +4,6 @@ import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -35,7 +34,7 @@ class PreviewActivity: AppCompatActivity() {
 
     private fun hideSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             hide(WindowInsetsCompat.Type.systemBars())
         }
@@ -43,7 +42,7 @@ class PreviewActivity: AppCompatActivity() {
 
     private fun showSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(window, true)
-        ViewCompat.getWindowInsetsController(window.decorView)?.apply {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
             show(WindowInsetsCompat.Type.systemBars())
         }
     }
