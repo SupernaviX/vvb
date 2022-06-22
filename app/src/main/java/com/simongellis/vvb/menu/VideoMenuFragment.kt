@@ -65,17 +65,13 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         hidePreferencesByMode(initialMode)
 
         val videoModePref = findPreference<DetailedListPreference>(Prefs.MODE.prefName)
-        videoModePref?.detailedEntries = VideoMode.values().mapNotNull {
-            if(it.name === VideoMode.LEIA.name
-                && LeiaSDK.getDisplayManager(context) === null
-            ){
-                // skip leia on
-                null;
-            }else{
-                val summary = getString(it.summary)
-                val description = getString(it.description)
-                DetailedListPreference.Entry(it.name, summary, description)
-            }
+        videoModePref?.detailedEntries = VideoMode.values().filter {
+            it != VideoMode.LEIA
+                    || LeiaSDK.getDisplayManager(context) != null
+        }.map {
+            val summary = getString(it.summary)
+            val description = getString(it.description)
+            DetailedListPreference.Entry(it.name, summary, description)
         }
 
         findPref(Prefs.MODE).setOnPreferenceChangeListener { _, newValue ->
