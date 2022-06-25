@@ -17,6 +17,7 @@ import com.leia.android.lights.LeiaDisplayManager
 import com.leia.android.lights.LeiaDisplayManager.BacklightMode
 import com.leia.android.lights.LeiaSDK
 import com.leia.android.lights.BacklightModeListener
+import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_2D
 import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_3D
 
 class GameView : ConstraintLayout, BacklightModeListener {
@@ -26,7 +27,7 @@ class GameView : ConstraintLayout, BacklightModeListener {
 
     // LitByLeia
     private var prev_desired_backlight_state = false
-    private val mExpectedBacklightMode: LeiaDisplayManager.BacklightMode? = null
+    private val mExpectedBacklightMode: BacklightMode? = null
     private var mBacklightHasShutDown = false
     private var mDisplayManager: LeiaDisplayManager? = null
 
@@ -117,7 +118,7 @@ class GameView : ConstraintLayout, BacklightModeListener {
 
     fun checkShouldToggle3D(desired_state: Boolean) {
         if(mDisplayManager === null) {
-            return;
+            return
         }
         if (desired_state && _preferences.isLeia) {
             Enable3D()
@@ -128,10 +129,10 @@ class GameView : ConstraintLayout, BacklightModeListener {
     }
 
     fun Enable3D() {
-        mDisplayManager?.setBacklightMode(LeiaDisplayManager.BacklightMode.MODE_3D)
+        mDisplayManager?.requestBacklightMode(MODE_3D)
     }
 
     fun Disable3D() {
-        mDisplayManager?.setBacklightMode(LeiaDisplayManager.BacklightMode.MODE_2D)
+        mDisplayManager?.requestBacklightMode(MODE_2D)
     }
 }
