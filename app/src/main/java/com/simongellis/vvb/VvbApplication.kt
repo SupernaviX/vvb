@@ -21,18 +21,34 @@ class VvbApplication : Application() {
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
 
-        if (BuildConfig.ACRA_ENABLED) initAcra {
-            buildConfigClass = BuildConfig::class.java
-            reportFormat = StringFormat.JSON
-            httpSender {
-                uri = BuildConfig.ACRA_URI
-                basicAuthLogin = BuildConfig.ACRA_BASIC_AUTH_LOGIN
-                basicAuthPassword = BuildConfig.ACRA_BASIC_AUTH_PASSWORD
+        AcraConfig.load()?.also { config ->
+            initAcra {
+                buildConfigClass = BuildConfig::class.java
+                reportFormat = StringFormat.JSON
+                httpSender {
+                    uri = config.uri
+                    basicAuthLogin = config.login
+                    basicAuthPassword = config.password
+                }
+                toast {
+                    text = getString(R.string.application_crashed)
+                    @SuppressLint("Range")
+                    length = Toast.LENGTH_LONG
+                }
             }
-            toast {
-                text = getString(R.string.application_crashed)
-                @SuppressLint("Range")
-                length = Toast.LENGTH_LONG
+        }
+    }
+
+    private class AcraConfig(val uri: String, val login: String, val password: String) {
+        companion object {
+            fun load(): AcraConfig? {
+                if (!BuildConfig.ACRA_ENABLED) {
+                    return null
+                }
+                val uri = BuildConfig.ACRA_URI
+                val login = BuildConfig.ACRA_BASIC_AUTH_LOGIN ?: return null
+                val password = BuildConfig.ACRA_BASIC_AUTH_PASSWORD ?: return null
+                return AcraConfig(uri, login, password)
             }
         }
     }
