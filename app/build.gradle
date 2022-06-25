@@ -78,8 +78,8 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-//            def config = tryReadConfig("release.env")
-            buildConfigField("boolean", "ACRA_ENABLED", "false")
+            def config = tryReadConfig("release.env")
+            buildConfigField("boolean", "ACRA_ENABLED", "true")
             buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", "null")
             buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", "null")
 
