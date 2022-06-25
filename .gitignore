@@ -1,5 +1,3 @@
-local.properties
-*.idea
 *.iml
 .gradle
 /local.properties
@@ -31,4 +29,4 @@ flamegraph.svg
 perf.data
 perf.data.old
 app/release
-app/release.env
+release.env
