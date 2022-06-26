@@ -57,10 +57,12 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             loadGame(uri)
         }
         findPreference<Preference>("load_game")?.setOnPreferenceClickListener {
+            startActivity(Intent(activity, LoadGameActivity::class.java))
+
             if (isFilePickerSupported()) {
-                chooseGameFilePicker.launch(Unit)
+                //chooseGameFilePicker.launch(Unit)
             } else {
-                chooseGameStorageFramework.launch(arrayOf("*/*"))
+                //chooseGameStorageFramework.launch(arrayOf("*/*"))
             }
             true
         }

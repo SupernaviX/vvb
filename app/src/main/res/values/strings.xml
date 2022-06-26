@@ -8,6 +8,10 @@
     <string name="main_menu_controller_setup">Controller Setup</string>
     <string name="main_menu_video_setup">Video Setup</string>
     <string name="main_menu_audio_setup">Audio Setup</string>
+    <string name="load_game_recent_games">Recent Games</string>
+    <string name="load_game_no_recent_games">You haven\'t played any games yet. Try one out!</string>
+    <string name="load_game_bundled_games">Bundled Games</string>
+    <string name="load_game_no_bundled_games">No Bundled Games</string>
     <string name="game_menu_resume_game">Resume Game</string>
     <string name="game_menu_reset_game">Reset</string>
     <string name="game_menu_auto_save">Auto-Save</string>
