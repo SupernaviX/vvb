@@ -37,7 +37,7 @@
             android:label="@string/app_name"
             android:theme="@style/FilePickerTheme">
         </activity>
-        <activity android:name=".menu.LoadGameActivity" android:theme="@style/AppTheme" />
+        <activity android:name=".menu.LoadGameMenuFragment" android:theme="@style/AppTheme" />
         <activity android:name=".game.GameActivity" android:theme="@style/GameTheme" />
         <activity android:name=".game.PreviewActivity" android:theme="@style/GameTheme" />
     </application>

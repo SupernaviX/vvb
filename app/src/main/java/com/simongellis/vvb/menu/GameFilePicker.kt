@@ -1,7 +1,6 @@
 package com.simongellis.vvb.menu
 
 import android.app.Activity
-import androidx.activity.ComponentActivity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -9,14 +8,15 @@ import android.os.Build
 import android.os.Environment
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.fragment.app.Fragment
 import com.nononsenseapps.filepicker.FilePickerActivity
 
-class GameFilePicker(activity: ComponentActivity, loadGame: (uri: Uri?) -> Unit) {
-    private val chooseGameFilePicker = activity.registerForActivityResult(OpenFilePicker(), loadGame)
-    private val chooseGameStorageFramework = activity.registerForActivityResult(OpenPersistentDocument) { uri ->
+class GameFilePicker(fragment: Fragment, loadGame: (uri: Uri?) -> Unit) {
+    private val chooseGameFilePicker = fragment.registerForActivityResult(OpenFilePicker(), loadGame)
+    private val chooseGameStorageFramework = fragment.registerForActivityResult(OpenPersistentDocument) { uri ->
         uri?.also {
             if (it.scheme == "content") {
-                activity.baseContext.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                fragment.requireContext().contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }
         loadGame(uri)

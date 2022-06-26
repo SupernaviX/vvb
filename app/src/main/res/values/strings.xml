@@ -8,6 +8,7 @@
     <string name="main_menu_controller_setup">Controller Setup</string>
     <string name="main_menu_video_setup">Video Setup</string>
     <string name="main_menu_audio_setup">Audio Setup</string>
+    <string name="load_game_from_file">Load From File</string>
     <string name="load_game_recent_games">Recent Games</string>
     <string name="load_game_no_recent_games">You haven\'t played any games yet. Try one out!</string>
     <string name="load_game_bundled_games">Bundled Games</string>

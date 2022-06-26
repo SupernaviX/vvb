@@ -7,10 +7,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.viewModels
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.*
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
@@ -19,9 +19,10 @@ import com.simongellis.vvb.game.GameActivity
 import java.lang.IllegalArgumentException
 import kotlin.properties.Delegates
 
-class LoadGameActivity: AppCompatActivity() {
-    private val viewModel: MainViewModel by viewModels()
+class LoadGameMenuFragment: Fragment() {
+    private val viewModel: MainViewModel by viewModels({ requireActivity() })
 
+    private lateinit var _loadGame: LoadFromFileAdapter
     private val _recentGames = GameListAdapter(R.string.load_game_no_recent_games).apply {
         games = mutableListOf("foo", "bar", "baz", "quux", "xyzzy", "make", "up", "some", "more", "words", "please")
     }
@@ -31,19 +32,30 @@ class LoadGameActivity: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val context = this
 
         val fileLoader = GameFilePicker(this, this::loadGame)
-        val loadGameAdapter = LoadGameAdapter(fileLoader::open)
-        setContentView(RecyclerView(context).apply {
+        _loadGame = LoadFromFileAdapter(fileLoader::open)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        requireActivity().setTitle(R.string.main_menu_load_game)
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return RecyclerView(requireContext()).apply {
             layoutManager = LinearLayoutManager(context)
             adapter = ConcatAdapter(
-                loadGameAdapter,
+                _loadGame,
                 _recentGamesHeader,
                 _recentGames,
                 _bundledGamesHeader,
                 _bundledGames)
-        })
+        }
     }
 
     private fun loadGame(uri: Uri?) {
@@ -55,7 +67,7 @@ class LoadGameActivity: AppCompatActivity() {
     }
 
     private fun playGame() {
-        val intent = Intent(this, GameActivity::class.java)
+        val intent = Intent(requireActivity(), GameActivity::class.java)
         startActivity(intent)
     }
 
@@ -72,9 +84,9 @@ class LoadGameActivity: AppCompatActivity() {
         }
     }
 
-    class LoadGameAdapter(val onClick: () -> Unit): MenuItemAdapter() {
+    class LoadFromFileAdapter(val onClick: () -> Unit): MenuItemAdapter() {
         override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
-            holder.binding.title.setText(R.string.main_menu_load_game)
+            holder.binding.title.setText(R.string.load_game_from_file)
             holder.binding.root.setOnClickListener { onClick() }
         }
     }
