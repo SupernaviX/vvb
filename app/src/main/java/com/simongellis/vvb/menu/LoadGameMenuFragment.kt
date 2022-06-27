@@ -1,6 +1,5 @@
 package com.simongellis.vvb.menu
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -8,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.*
@@ -16,19 +14,16 @@ import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
 import com.simongellis.vvb.databinding.TextSummaryBinding
 import com.simongellis.vvb.game.GameActivity
-import java.lang.IllegalArgumentException
 import kotlin.properties.Delegates
 
 class LoadGameMenuFragment: Fragment() {
     private val viewModel: MainViewModel by viewModels({ requireActivity() })
 
     private lateinit var _loadGame: LoadFromFileAdapter
-    private val _recentGames = GameListAdapter(R.string.load_game_no_recent_games).apply {
-        games = mutableListOf("foo", "bar", "baz", "quux", "xyzzy", "make", "up", "some", "more", "words", "please")
+    private val _recentGames = SimpleListAdapter(R.string.load_game_recent_games, R.string.load_game_no_recent_games).apply {
+        items = listOf("foo", "bar", "baz", "quux", "xyzzy", "make", "up", "some", "more", "words", "please")
     }
-    private val _recentGamesHeader = GameListHeaderAdapter(R.string.load_game_recent_games, _recentGames)
-    private val _bundledGames = GameListAdapter(R.string.load_game_no_bundled_games)
-    private val _bundledGamesHeader = GameListHeaderAdapter(R.string.load_game_bundled_games, _bundledGames)
+    private val _bundledGames = SimpleListAdapter(R.string.load_game_bundled_games, R.string.load_game_no_bundled_games)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,10 +46,8 @@ class LoadGameMenuFragment: Fragment() {
             layoutManager = LinearLayoutManager(context)
             adapter = ConcatAdapter(
                 _loadGame,
-                _recentGamesHeader,
-                _recentGames,
-                _bundledGamesHeader,
-                _bundledGames)
+                *_recentGames.adapters,
+                *_bundledGames.adapters)
         }
     }
 
@@ -91,48 +84,78 @@ class LoadGameMenuFragment: Fragment() {
         }
     }
 
-    class GameListHeaderAdapter(@StringRes val titleText: Int, val list: GameListAdapter) : MenuItemAdapter() {
-        private var expanded by list::expanded
-
-        override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
-            holder.binding.title.setText(titleText)
-            holder.binding.icon.setImageResource(R.drawable.ic_arrow_down_24)
-            holder.binding.root.setOnClickListener {
-                expanded = !expanded
-                holder.binding.icon.rotation = if (expanded) { 180f } else { 0f }
-            }
-        }
-    }
-
-    class GameListAdapter(@StringRes val noGamesText: Int): ListAdapter<String, GameListAdapter.ViewHolder>(Differ) {
-        var games: MutableList<String> by Delegates.observable(mutableListOf()) { _, _, newValue ->
-            if (expanded) {
-                submitList(newValue)
-            }
-        }
-        var expanded by Delegates.observable(false) { _, oldValue, newValue ->
+    class SimpleListAdapter(@StringRes val titleText: Int, @StringRes val noEntriesText: Int) {
+        var expanded: Boolean by Delegates.observable(false) { _, oldValue, newValue ->
             if (!oldValue && newValue) {
-                // expanded
-                submitList(games)
+                _headerAdapter.notifyItemChanged(0)
+                showItems()
             }
             if (oldValue && !newValue) {
-                // collapsed
-                submitList(null)
+                _headerAdapter.notifyItemChanged(0)
+                hideItems()
+            }
+        }
+        var items: List<String> by Delegates.observable(listOf()) { _, oldValue, newValue ->
+            if (expanded) {
+                if (oldValue.isEmpty() && newValue.isNotEmpty()) {
+                    _noEntriesAdapter.notifyItemRemoved(0)
+                }
+                if (oldValue.isNotEmpty() && newValue.isEmpty()) {
+                    _noEntriesAdapter.notifyItemInserted(0)
+                }
+                _entriesAdapter.submitList(newValue.toMutableList())
             }
         }
 
-        companion object {
-            private const val GAME = 1
-            private const val NO_GAMES = 2
-
-            private val EMPTY_GAME_LIST = listOf("one element")
+        private fun showItems() {
+            if (items.isEmpty()) {
+                _noEntriesAdapter.notifyItemInserted(0)
+            } else {
+                _entriesAdapter.submitList(items.toMutableList())
+            }
         }
 
-        override fun submitList(list: MutableList<String>?) {
-            if (list?.isEmpty() == true) {
-                super.submitList(EMPTY_GAME_LIST)
+        private fun hideItems() {
+            if (items.isEmpty()) {
+                _noEntriesAdapter.notifyItemRemoved(0)
             } else {
-                super.submitList(list)
+                _entriesAdapter.submitList(null)
+            }
+        }
+
+        private val _headerAdapter = object : MenuItemAdapter() {
+            override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
+                holder.binding.title.setText(titleText)
+                holder.binding.icon.setImageResource(R.drawable.ic_arrow_down_24)
+                holder.binding.icon.rotation = if (expanded) { 180f } else { 0f }
+                holder.binding.root.setOnClickListener {
+                    expanded = !expanded
+                }
+            }
+        }
+
+        private val _noEntriesAdapter = object : MenuItemAdapter() {
+            override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
+                holder.binding.title.setText(noEntriesText)
+            }
+
+            override fun getItemCount(): Int {
+                return if (expanded && items.isEmpty()) { 1 } else { 0 }
+            }
+        }
+
+        private val _entriesAdapter = object : ListAdapter<String, MenuItemViewHolder>(Differ) {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuItemViewHolder {
+                val holder = TextSummaryBinding.inflate(LayoutInflater.from(parent.context))
+                return MenuItemViewHolder(holder)
+            }
+
+            override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
+                holder.binding.title.text = items[position]
+            }
+
+            override fun getItemCount(): Int {
+                return if (expanded) { super.getItemCount() } else { 0 }
             }
         }
 
@@ -146,47 +169,6 @@ class LoadGameMenuFragment: Fragment() {
             }
         }
 
-        sealed class ViewHolder(val view: View): RecyclerView.ViewHolder(view) {
-            class GameViewHolder(view: View): GameListAdapter.ViewHolder(view) {
-                fun bind(name: String) {
-                    val binding = TextSummaryBinding.bind(view)
-                    binding.title.text = name
-                    binding.summary.isVisible = false
-                }
-            }
-            class NoGamesViewHolder(view: View): GameListAdapter.ViewHolder(view)
-        }
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val context = parent.context
-            return when (viewType) {
-                GAME -> {
-                    ViewHolder.GameViewHolder(newView(context).root)
-                }
-                NO_GAMES -> {
-                    val view = newView(context)
-                    view.title.setText(noGamesText)
-                    ViewHolder.NoGamesViewHolder(view.root)
-                }
-                else -> throw IllegalArgumentException("Unrecognized view type $viewType")
-            }
-        }
-
-        private fun newView(context: Context): TextSummaryBinding {
-            return TextSummaryBinding.inflate(LayoutInflater.from(context))
-        }
-
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            if (holder is ViewHolder.GameViewHolder) {
-                holder.bind(games[position])
-            }
-        }
-
-        override fun getItemViewType(position: Int): Int {
-            if (games.isEmpty()) {
-                return NO_GAMES
-            }
-            return GAME
-        }
+        val adapters = arrayOf(_headerAdapter, _noEntriesAdapter, _entriesAdapter)
     }
 }
