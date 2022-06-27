@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.*
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
 import com.simongellis.vvb.data.Game
-import com.simongellis.vvb.databinding.TextSummaryBinding
+import com.simongellis.vvb.databinding.MenuItemBinding
 import com.simongellis.vvb.game.GameActivity
 import com.simongellis.vvb.utils.observeNow
 import kotlin.properties.Delegates
@@ -68,11 +68,11 @@ class LoadGameMenuFragment: Fragment() {
         startActivity(intent)
     }
 
-    class MenuItemViewHolder(val binding: TextSummaryBinding) : RecyclerView.ViewHolder(binding.root)
+    class MenuItemViewHolder(val binding: MenuItemBinding) : RecyclerView.ViewHolder(binding.root)
 
     abstract class MenuItemAdapter : RecyclerView.Adapter<MenuItemViewHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuItemViewHolder {
-            val binding = TextSummaryBinding.inflate(LayoutInflater.from(parent.context))
+            val binding = MenuItemBinding.inflate(LayoutInflater.from(parent.context))
             return MenuItemViewHolder(binding)
         }
 
@@ -89,9 +89,9 @@ class LoadGameMenuFragment: Fragment() {
     }
 
     class RecentGamesListAdapter(val loadGame: (uri: Uri) -> Unit): SimpleListAdapter<Game>(R.string.load_game_recent_games, R.string.load_game_no_recent_games) {
-        override fun onBindViewHolder(holder: MenuItemViewHolder, item: Game) {
-            holder.binding.title.text = item.name
-            holder.binding.root.setOnClickListener { loadGame(item.uri) }
+        override fun onBindMenuItem(binding: MenuItemBinding, item: Game) {
+            binding.title.text = item.name
+            binding.root.setOnClickListener { loadGame(item.uri) }
         }
 
         override fun areItemsTheSame(oldItem: Game, newItem: Game): Boolean {
@@ -104,8 +104,8 @@ class LoadGameMenuFragment: Fragment() {
     }
 
     class BundledGamesListAdapter: SimpleListAdapter<String>(R.string.load_game_bundled_games, R.string.load_game_no_bundled_games) {
-        override fun onBindViewHolder(holder: MenuItemViewHolder, item: String) {
-            holder.binding.title.text = item
+        override fun onBindMenuItem(binding: MenuItemBinding, item: String) {
+            binding.title.text = item
         }
 
         override fun areItemsTheSame(oldItem: String, newItem: String): Boolean {
@@ -140,7 +140,7 @@ class LoadGameMenuFragment: Fragment() {
             }
         }
 
-        abstract fun onBindViewHolder(holder: MenuItemViewHolder, item: T)
+        abstract fun onBindMenuItem(binding: MenuItemBinding, item: T)
         abstract fun areItemsTheSame(oldItem: T, newItem: T): Boolean
         abstract fun areContentsTheSame(oldItem: T, newItem: T): Boolean
 
@@ -193,12 +193,12 @@ class LoadGameMenuFragment: Fragment() {
 
         private val _entriesAdapter = object : ListAdapter<T, MenuItemViewHolder>(_differ) {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuItemViewHolder {
-                val holder = TextSummaryBinding.inflate(LayoutInflater.from(parent.context))
+                val holder = MenuItemBinding.inflate(LayoutInflater.from(parent.context))
                 return MenuItemViewHolder(holder)
             }
 
             override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
-                onBindViewHolder(holder, items[position])
+                onBindMenuItem(holder.binding, items[position])
             }
 
             override fun getItemCount(): Int {
