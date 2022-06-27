@@ -3,7 +3,6 @@
     <string name="main_menu_game_actions">Game Actions</string>
     <string name="main_menu_now_playing">Now playing</string>
     <string name="main_menu_load_game">Load Game</string>
-    <string name="main_menu_recent_games">Recent Games</string>
     <string name="main_menu_onscreen_input_setup">On-Screen Input Setup</string>
     <string name="main_menu_controller_setup">Controller Setup</string>
     <string name="main_menu_video_setup">Video Setup</string>

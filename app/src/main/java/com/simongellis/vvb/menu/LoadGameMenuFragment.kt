@@ -12,24 +12,28 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.*
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
+import com.simongellis.vvb.data.Game
 import com.simongellis.vvb.databinding.TextSummaryBinding
 import com.simongellis.vvb.game.GameActivity
+import com.simongellis.vvb.utils.observeNow
 import kotlin.properties.Delegates
 
 class LoadGameMenuFragment: Fragment() {
     private val viewModel: MainViewModel by viewModels({ requireActivity() })
 
     private lateinit var _loadGame: LoadFromFileAdapter
-    private val _recentGames = SimpleListAdapter(R.string.load_game_recent_games, R.string.load_game_no_recent_games).apply {
-        items = listOf("foo", "bar", "baz", "quux", "xyzzy", "make", "up", "some", "more", "words", "please")
-    }
-    private val _bundledGames = SimpleListAdapter(R.string.load_game_bundled_games, R.string.load_game_no_bundled_games)
+    private val _recentGames = RecentGamesListAdapter(::loadGame)
+    private val _bundledGames = BundledGamesListAdapter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val fileLoader = GameFilePicker(this, this::loadGame)
+        val fileLoader = GameFilePicker(this, ::loadGame)
         _loadGame = LoadFromFileAdapter(fileLoader::open)
+
+        observeNow(viewModel.recentGames) {
+            _recentGames.items = it
+        }
     }
 
     override fun onResume() {
@@ -77,14 +81,43 @@ class LoadGameMenuFragment: Fragment() {
         }
     }
 
-    class LoadFromFileAdapter(val onClick: () -> Unit): MenuItemAdapter() {
+    class LoadFromFileAdapter(val openFileLoader: () -> Unit): MenuItemAdapter() {
         override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
             holder.binding.title.setText(R.string.load_game_from_file)
-            holder.binding.root.setOnClickListener { onClick() }
+            holder.binding.root.setOnClickListener { openFileLoader() }
         }
     }
 
-    class SimpleListAdapter(@StringRes val titleText: Int, @StringRes val noEntriesText: Int) {
+    class RecentGamesListAdapter(val loadGame: (uri: Uri) -> Unit): SimpleListAdapter<Game>(R.string.load_game_recent_games, R.string.load_game_no_recent_games) {
+        override fun onBindViewHolder(holder: MenuItemViewHolder, item: Game) {
+            holder.binding.title.text = item.name
+            holder.binding.root.setOnClickListener { loadGame(item.uri) }
+        }
+
+        override fun areItemsTheSame(oldItem: Game, newItem: Game): Boolean {
+            return oldItem.id == newItem.id
+        }
+
+        override fun areContentsTheSame(oldItem: Game, newItem: Game): Boolean {
+            return oldItem == newItem
+        }
+    }
+
+    class BundledGamesListAdapter: SimpleListAdapter<String>(R.string.load_game_bundled_games, R.string.load_game_no_bundled_games) {
+        override fun onBindViewHolder(holder: MenuItemViewHolder, item: String) {
+            holder.binding.title.text = item
+        }
+
+        override fun areItemsTheSame(oldItem: String, newItem: String): Boolean {
+            return oldItem == newItem
+        }
+
+        override fun areContentsTheSame(oldItem: String, newItem: String): Boolean {
+            return oldItem == newItem
+        }
+    }
+
+    abstract class SimpleListAdapter<T : Any>(@StringRes val titleText: Int, @StringRes val noEntriesText: Int) {
         var expanded: Boolean by Delegates.observable(false) { _, oldValue, newValue ->
             if (!oldValue && newValue) {
                 _headerAdapter.notifyItemChanged(0)
@@ -95,7 +128,7 @@ class LoadGameMenuFragment: Fragment() {
                 hideItems()
             }
         }
-        var items: List<String> by Delegates.observable(listOf()) { _, oldValue, newValue ->
+        var items: List<T> by Delegates.observable(listOf()) { _, oldValue, newValue ->
             if (expanded) {
                 if (oldValue.isEmpty() && newValue.isNotEmpty()) {
                     _noEntriesAdapter.notifyItemRemoved(0)
@@ -106,6 +139,10 @@ class LoadGameMenuFragment: Fragment() {
                 _entriesAdapter.submitList(newValue.toMutableList())
             }
         }
+
+        abstract fun onBindViewHolder(holder: MenuItemViewHolder, item: T)
+        abstract fun areItemsTheSame(oldItem: T, newItem: T): Boolean
+        abstract fun areContentsTheSame(oldItem: T, newItem: T): Boolean
 
         private fun showItems() {
             if (items.isEmpty()) {
@@ -120,6 +157,16 @@ class LoadGameMenuFragment: Fragment() {
                 _noEntriesAdapter.notifyItemRemoved(0)
             } else {
                 _entriesAdapter.submitList(null)
+            }
+        }
+
+        private val _differ = object : DiffUtil.ItemCallback<T>() {
+            override fun areItemsTheSame(oldItem: T, newItem: T): Boolean {
+                return this@SimpleListAdapter.areItemsTheSame(oldItem, newItem)
+            }
+
+            override fun areContentsTheSame(oldItem: T, newItem: T): Boolean {
+                return this@SimpleListAdapter.areContentsTheSame(oldItem, newItem)
             }
         }
 
@@ -144,28 +191,18 @@ class LoadGameMenuFragment: Fragment() {
             }
         }
 
-        private val _entriesAdapter = object : ListAdapter<String, MenuItemViewHolder>(Differ) {
+        private val _entriesAdapter = object : ListAdapter<T, MenuItemViewHolder>(_differ) {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuItemViewHolder {
                 val holder = TextSummaryBinding.inflate(LayoutInflater.from(parent.context))
                 return MenuItemViewHolder(holder)
             }
 
             override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
-                holder.binding.title.text = items[position]
+                onBindViewHolder(holder, items[position])
             }
 
             override fun getItemCount(): Int {
                 return if (expanded) { super.getItemCount() } else { 0 }
-            }
-        }
-
-        object Differ : DiffUtil.ItemCallback<String>() {
-            override fun areItemsTheSame(oldItem: String, newItem: String): Boolean {
-                return oldItem == newItem
-            }
-
-            override fun areContentsTheSame(oldItem: String, newItem: String): Boolean {
-                return oldItem == newItem
             }
         }
 

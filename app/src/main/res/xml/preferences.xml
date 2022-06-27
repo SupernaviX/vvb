@@ -13,11 +13,6 @@
         app:fragment="com.simongellis.vvb.menu.LoadGameMenuFragment"
         tools:context=".menu.LoadGameMenuFragment"/>
     <Preference
-        app:key="recent_games"
-        app:title="@string/main_menu_recent_games"
-        app:fragment="com.simongellis.vvb.menu.RecentGamesMenuFragment"
-        tools:context=".menu.RecentGamesMenuFragment"/>
-    <Preference
         app:key="onscreen_input"
         app:title="@string/main_menu_onscreen_input_setup"
         app:fragment="com.simongellis.vvb.menu.OnscreenInputMenuFragment"
