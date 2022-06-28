@@ -73,6 +73,10 @@ android {
         }
     }
 
+    aaptOptions {
+        noCompress "vb"
+    }
+
     packagingOptions {
         pickFirst 'app'
         jniLibs {

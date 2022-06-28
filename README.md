@@ -28,6 +28,10 @@ If you're testing on a specific device, you can speed up builds by setting `rust
 rust.targets=x86_64
 ```
 
+### Adding new bundled games
+1. Add a .vb file to [./app/src/main/assets/games].
+2. Add an entry to [./app/src/main/res/raw/bundledgames.json].
+
 ### Running tests
 ```shell script
 cargo test

@@ -24,6 +24,10 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/nnf_provider_paths" />
         </provider>
+        <provider
+            android:authorities="com.simongellis.vvb.assets"
+            android:name="com.simongellis.vvb.AssetsProvider"
+            android:exported="false" />
 
         <activity android:name=".MainActivity"
             android:exported="true">

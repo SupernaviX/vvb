@@ -6,6 +6,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.simongellis.vvb.data.BundledGameRepository
 import com.simongellis.vvb.data.GameRepository
 import com.simongellis.vvb.data.StateSlot
 import com.simongellis.vvb.emulator.Emulator
@@ -16,6 +17,7 @@ import java.lang.Exception
 
 class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _gameRepo = GameRepository(viewModelScope, application)
+    private val _bundledGameRepo = BundledGameRepository(application)
     private val _application = getApplication<VvbApplication>()
     private val _emulator = Emulator.instance
     private val _gamePakLoader = GamePakLoader(application)
@@ -118,6 +120,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     val recentGames by _gameRepo::recentGames
+    val bundledGames by _bundledGameRepo::bundledGames
 
     private fun <T> forCurrentGame(getter: (String) -> Flow<T>): Flow<T?> {
         return _loadedGameId
