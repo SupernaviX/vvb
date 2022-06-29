@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.util.DisplayMetrics
+import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.*
@@ -85,6 +86,8 @@ class GamePreferences(context: Context) {
         if(displayManager !== null){
             defaultMode = VideoMode.LEIA.name
         }
+        Log.d("vvb-jake","default Mode" + defaultMode)
+
         videoMode = VideoMode.valueOf(prefs.getString("video_mode", defaultMode)!!)
 
         screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 100)
@@ -95,7 +98,11 @@ class GamePreferences(context: Context) {
         colorLeft = prefs.getInt("video_color_left", Color.RED)
         colorRight = prefs.getInt("video_color_right", Color.BLUE)
 
-        colorBG = prefs.getInt("video_color_bg", Color.BLACK)
+        var defaultBGColor = Color.BLACK
+        if(displayManager !== null){
+            defaultBGColor = Color.parseColor("#333333")
+        }
+        colorBG = prefs.getInt("video_color_bg", defaultBGColor)
 
         color = prefs.getInt("video_color", Color.RED)
 
