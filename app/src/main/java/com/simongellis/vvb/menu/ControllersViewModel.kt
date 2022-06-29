@@ -25,8 +25,8 @@ class ControllersViewModel(application: Application): AndroidViewModel(applicati
     val editingController = _editingController.asSharedFlow()
 
     private val _newControllerName = controllers
-        .map { "Controller ${it.size + 1}" }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, "Controller 1")
+        .map { application.getString(R.string.controller_menu_default_name, it.size + 1) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, application.getString(R.string.controller_menu_default_name, 1) )
 
     val renameLabel = _state.map {
         if (it == State.Renaming) {

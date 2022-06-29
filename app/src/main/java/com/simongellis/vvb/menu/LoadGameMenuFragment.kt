@@ -1,7 +1,9 @@
 package com.simongellis.vvb.menu
 
 import android.content.Intent
+import android.icu.text.ListFormatter
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -115,7 +117,8 @@ class LoadGameMenuFragment : Fragment() {
         override fun onBindMenuItem(binding: MenuItemBinding, item: BundledGame) {
             binding.title.text = item.name
             binding.summary.isVisible = true
-            binding.summary.text = item.authors.joinToString(", ")
+
+            binding.summary.text = binding.root.context.getString(R.string.load_game_created_by, authorsToString(item.authors))
             binding.root.setOnClickListener { loadGame(item.uri) }
         }
 
@@ -126,6 +129,15 @@ class LoadGameMenuFragment : Fragment() {
         override fun areContentsTheSame(oldItem: BundledGame, newItem: BundledGame): Boolean {
             return oldItem == newItem
         }
+
+        private fun authorsToString(authors: List<String>): String {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ListFormatter.getInstance().format(authors)
+            } else {
+                authors.joinToString(", ")
+            }
+        }
+
     }
 
     abstract class SimpleListAdapter<T : Any>(

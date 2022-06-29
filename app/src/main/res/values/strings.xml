@@ -12,6 +12,7 @@
     <string name="load_game_no_recent_games">You haven\'t played any games yet. Try one out!</string>
     <string name="load_game_bundled_games">Bundled Games</string>
     <string name="load_game_no_bundled_games">No Bundled Games</string>
+    <string name="load_game_created_by">Created by %1$s</string>
     <string name="game_menu_resume_game">Resume Game</string>
     <string name="game_menu_reset_game">Reset</string>
     <string name="game_menu_auto_save">Auto-Save</string>
@@ -42,6 +43,7 @@
     <string name="controller_menu_rename">Rename</string>
     <string name="controller_menu_choose_rename">Choose controller to rename…</string>
     <string name="controller_menu_choose_delete">Choose controller to delete…</string>
+    <string name="controller_menu_default_name">Controller %1$d</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
     <string name="input_menu_button_left">Left</string>
