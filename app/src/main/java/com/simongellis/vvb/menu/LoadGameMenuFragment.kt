@@ -29,17 +29,34 @@ class LoadGameMenuFragment : Fragment() {
     private val _recentGames = RecentGamesListAdapter(::loadGame)
     private val _bundledGames = BundledGamesListAdapter(::loadGame)
 
+    private companion object {
+        const val EXPAND_RECENT_GAMES = "EXPAND_RECENT_GAMES"
+        const val EXPAND_BUNDLED_GAMES = "EXPAND_BUNDLED_GAMES"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val fileLoader = GameFilePicker(this, ::loadGame)
         _loadGame = LoadFromFileAdapter(fileLoader::open)
 
+        var recentGamesLoaded = false
         observeNow(viewModel.recentGames) {
             _recentGames.items = it
+            if (!recentGamesLoaded) {
+                recentGamesLoaded = true
+                _recentGames.expanded = savedInstanceState?.getBoolean(EXPAND_RECENT_GAMES) ?: it.isNotEmpty()
+                _bundledGames.expanded = savedInstanceState?.getBoolean(EXPAND_BUNDLED_GAMES) ?: true
+            }
         }
 
         _bundledGames.items = viewModel.bundledGames
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(EXPAND_RECENT_GAMES, _recentGames.expanded)
+        outState.putBoolean(EXPAND_BUNDLED_GAMES, _bundledGames.expanded)
     }
 
     override fun onResume() {
