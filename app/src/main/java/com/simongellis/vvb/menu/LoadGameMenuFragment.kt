@@ -1,17 +1,25 @@
 package com.simongellis.vvb.menu
 
+import android.app.Dialog
 import android.content.Intent
 import android.icu.text.ListFormatter
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.method.LinkMovementMethod
+import android.text.util.Linkify
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AlertDialog
+import androidx.core.content.edit
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.*
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
@@ -29,6 +37,12 @@ class LoadGameMenuFragment : Fragment() {
     private val _recentGames = RecentGamesListAdapter(::loadGame)
     private val _bundledGames = BundledGamesListAdapter(::loadGame)
 
+    private var _dialog: Dialog? = null
+        set(value) {
+            field = value
+            value?.setOnDismissListener { field = null }
+        }
+
     private companion object {
         const val EXPAND_RECENT_GAMES = "EXPAND_RECENT_GAMES"
         const val EXPAND_BUNDLED_GAMES = "EXPAND_BUNDLED_GAMES"
@@ -37,8 +51,19 @@ class LoadGameMenuFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
+
         val fileLoader = GameFilePicker(this, ::loadGame)
-        _loadGame = LoadFromFileAdapter(fileLoader::open)
+        _loadGame = LoadFromFileAdapter {
+            if (prefs.contains("seen_load_game_explanation")) {
+                fileLoader.open()
+            } else {
+                showLoadGameExplanation {
+                    prefs.edit { putBoolean("seen_load_game_explanation", true) }
+                    fileLoader.open()
+                }
+            }
+        }
 
         observeNow(viewModel.recentGames) {
             _recentGames.items = it
@@ -83,6 +108,23 @@ class LoadGameMenuFragment : Fragment() {
         }
     }
 
+    private fun showLoadGameExplanation(onConfirm: () -> Unit) {
+        val context = requireContext()
+        val message = SpannableString(context.getString(R.string.load_game_from_file_explanation))
+        Linkify.addLinks(message, Linkify.ALL)
+
+        _dialog = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.load_game_from_file)
+            .setMessage(message)
+            .setPositiveButton(R.string.load_game_from_file_explanation_button) { _, _ -> onConfirm() }
+            .create()
+
+        _dialog?.apply {
+            show()
+            findViewById<TextView>(android.R.id.message)?.movementMethod = LinkMovementMethod.getInstance()
+        }
+    }
+
     private fun playGame() {
         val intent = Intent(requireActivity(), GameActivity::class.java)
         startActivity(intent)
@@ -101,10 +143,10 @@ class LoadGameMenuFragment : Fragment() {
         }
     }
 
-    class LoadFromFileAdapter(val openFileLoader: () -> Unit) : MenuItemAdapter() {
+    class LoadFromFileAdapter(val onClick: () -> Unit) : MenuItemAdapter() {
         override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
             holder.binding.title.setText(R.string.load_game_from_file)
-            holder.binding.root.setOnClickListener { openFileLoader() }
+            holder.binding.root.setOnClickListener { onClick() }
         }
     }
 

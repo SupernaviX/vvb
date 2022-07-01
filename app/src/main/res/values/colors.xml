@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="vb_bright">#ef0000</color>
+    <color name="vb_very_dim">#440000</color>
     <color name="vb_dim">#660000</color>
     <color name="vb_black">#000000</color>
     <color name="alignment_marker_color">#b4b4b4</color>
