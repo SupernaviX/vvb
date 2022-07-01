@@ -8,8 +8,13 @@
         <item name="android:colorBackground">@color/vb_black</item>
         <item name="android:textColorPrimary">@color/vb_red</item>
         <item name="android:textColorSecondary">@color/vb_dim</item>
+        <item name="actionBarTheme">@style/ActionBarTheme</item>
         <item name="dialogTheme">@style/DialogTheme</item>
         <item name="alertDialogTheme">@style/AlertDialogTheme</item>
+    </style>
+
+    <style name="ActionBarTheme" parent="ThemeOverlay.AppCompat.ActionBar">
+        <item name="fontFamily">@font/title</item>
     </style>
 
     <style name="AlertDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
