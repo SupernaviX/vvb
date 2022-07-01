@@ -15,6 +15,7 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.game.PreviewActivity
 import com.simongellis.vvb.game.VideoMode
+import com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
 import yuku.ambilwarna.AmbilWarnaDialog
 import yuku.ambilwarna.AmbilWarnaDialog.OnAmbilWarnaListener
 
@@ -61,8 +62,10 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences_video, rootKey)
         var defaultModeName = VideoMode.ANAGLYPH.name
         val leiaDisplayManager = LeiaSDK.getDisplayManager(context)
+        var defaultBGColor = Color.BLACK
         if(leiaDisplayManager !== null){
             defaultModeName = VideoMode.LEIA.name
+            defaultBGColor = Color.parseColor("#4A4A4A")
         }
         val initialModeName = _sharedPreferences.getString(Prefs.MODE.prefName, defaultModeName)!!
         val initialMode = VideoMode.valueOf(initialModeName)
@@ -79,8 +82,12 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
             DetailedListPreference.Entry(it.name, summary, description)
         }
         videoModePref?.apply {
-            setDefaultValue(detailedEntries[0].value)
+            if (value == null) {
+                value = detailedEntries[0].value
+            }
         }
+
+//        val bgColorPref = findPreference<ColorPreferenceCompat>(Prefs.COLOR_BG.prefName)
 
         findPref(Prefs.MODE).setOnPreferenceChangeListener { _, newValue ->
             val mode = VideoMode.valueOf(newValue as String)
@@ -133,11 +140,8 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         }
         findPref(Prefs.COLOR_BG).setOnPreferenceChangeListener { _, newColor ->
             val newColorInt = newColor as Int
-            var defaultColor = Color.BLACK
-            if(leiaDisplayManager !== null){
-                defaultColor = Color.parseColor("#4A4A4A")
-            }
-            val oldColor = _sharedPreferences.getInt(Prefs.COLOR_BG.prefName, defaultColor)
+
+            val oldColor = _sharedPreferences.getInt(Prefs.COLOR_BG.prefName, defaultBGColor)
             if(newColorInt == 0){
                 _customColorPicker = AmbilWarnaDialog(
                     requireContext(),

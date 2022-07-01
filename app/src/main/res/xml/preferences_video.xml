@@ -3,8 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <com.simongellis.vvb.menu.DetailedListPreference
         app:key="video_mode"
-        app:title="@string/video_menu_mode"
-        app:defaultValue="ANAGLYPH"/>
+        app:title="@string/video_menu_mode"/>
     <ListPreference
         app:key="video_aspect_ratio"
         app:title="@string/video_menu_aspect_ratio"
