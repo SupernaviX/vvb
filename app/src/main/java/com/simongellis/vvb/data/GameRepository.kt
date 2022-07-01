@@ -23,6 +23,14 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
         }
     }
 
+    fun hasRecentGames(): Boolean {
+        return _dao.getAll()
+            .sortedByDescending { it.lastPlayed }
+            .take(10)
+            .mapNotNull(::fromData)
+            .isNotEmpty()
+    }
+
     fun getGame(uri: Uri): Game? {
         val id = GameData.getId(uri)
         val data = _dao.get(id) ?: GameData(uri, Date(), 0, true)

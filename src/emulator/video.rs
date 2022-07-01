@@ -124,6 +124,9 @@ impl EyeBuffer {
         self.writable = false;
         Some(&mut self.data)
     }
+    pub fn reset(&mut self) {
+        self.writable = true;
+    }
 }
 
 pub struct Frame {
@@ -465,6 +468,12 @@ impl Video {
     pub fn claim_frame_channel(&mut self) -> FrameChannel {
         let (tx, rx) = mpsc::channel();
         self.frame_channel = Some(tx);
+        // reset the buffers; they should all be "blank" and writable
+        for buffer in &self.buffers {
+            let mut buffer = buffer.lock().expect("Buffer lock was poisoned!");
+            buffer.reset();
+        }
+        self.buffer_index = 0;
         rx
     }
 

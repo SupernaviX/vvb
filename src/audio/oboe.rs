@@ -28,7 +28,7 @@ impl ManagedAudioOutputCallback for OboeStreamConfiguration {
             .set_format::<f32>()
             .set_channel_count::<Stereo>()
             .set_performance_mode(PerformanceMode::LowLatency)
-            .set_sharing_mode(SharingMode::Shared)
+            .set_sharing_mode(SharingMode::Exclusive)
             // virtual boy sample rate is mercifully low
             .set_sample_rate(41667)
             .set_sample_rate_conversion_quality(SampleRateConversionQuality::Best)

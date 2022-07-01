@@ -62,8 +62,8 @@ android {
         applicationId "com.simongellis.vvb"
         minSdkVersion 21
         targetSdkVersion 32
-        versionCode 28
-        versionName "1.8.4"
+        versionCode 30
+        versionName "1.8.6"
 
         buildConfigField("String", "ACRA_URI", generatedString("https://vvb-notifications.simongellis.com/report"))
 
@@ -87,6 +87,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.debug
         }
+    }
+
+    aaptOptions {
+        noCompress "vb"
     }
 
     packagingOptions {
@@ -158,6 +162,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation "androidx.preference:preference-ktx:1.2.0"
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'

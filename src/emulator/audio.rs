@@ -363,7 +363,9 @@ impl Channel {
             *register = 0xffff;
             // HACK: this behavior isn't documented anywhere, but stopping this channel now
             // fixes Hyper Fighter and doesn't break anything else I've tried
-            self.enabled = false;
+            if !self.envelope.enabled && self.envelope.value == 7 && self.volume == (15, 15) {
+                self.enabled = false;
+            }
         }
     }
 
@@ -629,10 +631,13 @@ impl AudioController {
                                 ModFunction::Sweep
                             };
                             debug!(
-                                "0x{:08x} = 0x{:02x} (channel {} envelope bonus)",
+                                "0x{:08x} = 0x{:02x} (channel {} envelope bonus enabled={} repeat={} func={:?})",
                                 address,
                                 value,
-                                channel + 1
+                                channel + 1,
+                                enabled,
+                                repeat,
+                                func
                             );
                             self.channels[4]
                                 .frequency
@@ -673,10 +678,14 @@ impl AudioController {
                         };
                         let shift = value as usize & 0x07;
                         debug!(
-                            "0x{:08x} = 0x{:02x} (channel {} envelope mod bonus 2)",
+                            "0x{:08x} = 0x{:02x} (channel {} envelope mod bonus 2 clock={} interval={} dir={:?} shift={})",
                             address,
                             value,
-                            channel + 1
+                            channel + 1,
+                            clock,
+                            interval,
+                            dir,
+                            shift
                         );
                         self.channels[4]
                             .frequency
