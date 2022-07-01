@@ -80,8 +80,8 @@ android {
         release {
             def config = tryReadConfig("release.env")
             buildConfigField("boolean", "ACRA_ENABLED", "true")
-            buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", "null")
-            buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", "null")
+            buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", generatedString(config.login))
+            buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", generatedString(config.password))
 
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -179,6 +179,7 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-javalite:3.19.4'
 
     // color picker
+    implementation 'com.github.kizitonwose.colorpreference:core:1.1.0'
     implementation 'com.github.kizitonwose.colorpreference:support:1.1.0'
 
     // file picker

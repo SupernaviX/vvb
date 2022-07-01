@@ -12,5 +12,6 @@
     <color name="blue">#0000ff</color>
     <color name="violet">#ff00ff</color>
     <color name="white">#ffffff</color>
+    <color name="leia_grey">#4a4a4a</color>
     <color name="black">#000000</color>
 </resources>

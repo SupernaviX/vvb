@@ -83,14 +83,15 @@ class GamePreferences(context: Context) {
 
         val displayManager = LeiaSDK.getDisplayManager(context)
         var defaultMode = VideoMode.ANAGLYPH.name
+        var defaultScreenZoom = 100
         if(displayManager !== null){
             defaultMode = VideoMode.LEIA.name
+            defaultScreenZoom = 65
         }
-        Log.d("vvb-jake","default Mode" + defaultMode)
 
         videoMode = VideoMode.valueOf(prefs.getString("video_mode", defaultMode)!!)
 
-        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 100)
+        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", defaultScreenZoom)
         aspectRatio = AspectRatio.valueOf(prefs.getString("video_aspect_ratio", "AUTO")!!)
         horizontalOffset = prefs.getIntPercent("video_horizontal_offset", 0)
         verticalOffset = prefs.getIntPercent("video_vertical_offset", 0)
@@ -100,7 +101,7 @@ class GamePreferences(context: Context) {
 
         var defaultBGColor = Color.BLACK
         if(displayManager !== null){
-            defaultBGColor = Color.parseColor("#333333")
+            defaultBGColor = Color.parseColor("#434343")
         }
         colorBG = prefs.getInt("video_color_bg", defaultBGColor)
 

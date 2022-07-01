@@ -16,8 +16,7 @@
         app:min="0"
         android:max="100"
         app:showSeekBarValue="true"
-        app:seekBarIncrement="5"
-        app:defaultValue="100"/>
+        app:seekBarIncrement="5" />
     <SeekBarPreference
         app:key="video_horizontal_offset"
         app:title="@string/video_menu_horizontal_offset"

@@ -5,11 +5,10 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.os.Bundle
+import android.widget.SeekBar
 import androidx.appcompat.app.AlertDialog
-import androidx.preference.ListPreference
-import androidx.preference.Preference
-import androidx.preference.PreferenceFragmentCompat
-import androidx.preference.PreferenceManager
+import androidx.core.content.ContextCompat
+import androidx.preference.*
 import com.leia.android.lights.LeiaSDK
 import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.VvbLibrary
@@ -62,17 +61,18 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         setPreferencesFromResource(R.xml.preferences_video, rootKey)
         var defaultModeName = VideoMode.ANAGLYPH.name
         val leiaDisplayManager = LeiaSDK.getDisplayManager(context)
-        var defaultBGColor = Color.BLACK
+        var defaultBGColor = ContextCompat.getColor(requireContext(), R.color.black)
+        var defaultScreenZoom = 100
         if(leiaDisplayManager !== null){
             defaultModeName = VideoMode.LEIA.name
-            defaultBGColor = Color.parseColor("#4A4A4A")
+            defaultBGColor = ContextCompat.getColor(requireContext(), R.color.leia_grey)
+            defaultScreenZoom = 65
         }
         val initialModeName = _sharedPreferences.getString(Prefs.MODE.prefName, defaultModeName)!!
         val initialMode = VideoMode.valueOf(initialModeName)
         hidePreferencesByMode(initialMode)
 
         val videoModePref = findPreference<DetailedListPreference>(Prefs.MODE.prefName)
-
         videoModePref?.detailedEntries = VideoMode.values().filter {
             it != VideoMode.LEIA
                     || leiaDisplayManager !== null
@@ -87,7 +87,19 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
             }
         }
 
-//        val bgColorPref = findPreference<ColorPreferenceCompat>(Prefs.COLOR_BG.prefName)
+        val bgColorPref = findPreference<ColorPreferenceCompat>(Prefs.COLOR_BG.prefName)
+        bgColorPref?.apply {
+            if (!_sharedPreferences.contains(key)) {
+                value = defaultBGColor
+            }
+        }
+
+        val zoomPref = findPreference<SeekBarPreference>(Prefs.ZOOM.prefName)
+        zoomPref?.apply {
+            if (!_sharedPreferences.contains(key)) {
+                value = defaultScreenZoom
+            }
+        }
 
         findPref(Prefs.MODE).setOnPreferenceChangeListener { _, newValue ->
             val mode = VideoMode.valueOf(newValue as String)
