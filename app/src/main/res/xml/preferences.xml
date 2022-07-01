@@ -9,12 +9,9 @@
         app:isPreferenceVisible="false"/>
     <Preference
         app:key="load_game"
-        app:title="@string/main_menu_load_game"/>
-    <Preference
-        app:key="recent_games"
-        app:title="@string/main_menu_recent_games"
-        app:fragment="com.simongellis.vvb.menu.RecentGamesMenuFragment"
-        tools:context=".menu.RecentGamesMenuFragment"/>
+        app:title="@string/main_menu_load_game"
+        app:fragment="com.simongellis.vvb.menu.LoadGameMenuFragment"
+        tools:context=".menu.LoadGameMenuFragment"/>
     <Preference
         app:key="onscreen_input"
         app:title="@string/main_menu_onscreen_input_setup"

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Fishbone",
+    "uri": "content://com.simongellis.vvb.assets/games/Fishbone.vb",
+    "authors": ["thunderstruck"]
+  },
+  {
+    "name": "Formula V Public Demo",
+    "uri": "content://com.simongellis.vvb.assets/games/Formula V Public Demo.vb",
+    "authors": ["KR155E"]
+  },
+  {
+    "name": "VUE Snake",
+    "uri": "content://com.simongellis.vvb.assets/games/VUE Snake.vb",
+    "authors": ["KR155E"]
+  },
+  {
+    "name": "VUEngine Platformer Demo",
+    "uri": "content://com.simongellis.vvb.assets/games/VUEngine Platformer Demo.vb",
+    "authors": ["KR155E"]
+  }
+]

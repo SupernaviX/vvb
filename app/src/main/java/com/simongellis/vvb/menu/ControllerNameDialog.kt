@@ -36,7 +36,7 @@ class ControllerNameDialog: DialogFragment() {
             }
         }
 
-        return AlertDialog.Builder(context)
+        return AlertDialog.Builder(context, R.style.AlertDialogTheme)
             .setTitle(R.string.controller_menu_name)
             .setView(view.root)
             .setPositiveButton(action) { _, _ ->
