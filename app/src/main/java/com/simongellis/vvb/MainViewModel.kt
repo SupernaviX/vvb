@@ -120,6 +120,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     val recentGames by _gameRepo::recentGames
+    val hasRecentGames
+        get() = _gameRepo.hasRecentGames()
     val bundledGames by _bundledGameRepo::bundledGames
 
     private fun <T> forCurrentGame(getter: (String) -> Flow<T>): Flow<T?> {
