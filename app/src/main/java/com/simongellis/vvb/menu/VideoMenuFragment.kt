@@ -59,15 +59,19 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences_video, rootKey)
-
-        val initialModeName = _sharedPreferences.getString(Prefs.MODE.prefName, VideoMode.ANAGLYPH.name)!!
+        var defaultModeName = VideoMode.ANAGLYPH.name
+        val leiaDisplayManager = LeiaSDK.getDisplayManager(context)
+        if(leiaDisplayManager !== null){
+            defaultModeName = VideoMode.LEIA.name
+        }
+        val initialModeName = _sharedPreferences.getString(Prefs.MODE.prefName, defaultModeName)!!
         val initialMode = VideoMode.valueOf(initialModeName)
         hidePreferencesByMode(initialMode)
 
         val videoModePref = findPreference<DetailedListPreference>(Prefs.MODE.prefName)
         videoModePref?.detailedEntries = VideoMode.values().filter {
             it != VideoMode.LEIA
-                    || LeiaSDK.getDisplayManager(context) != null
+                    || leiaDisplayManager !== null
         }.map {
             val summary = getString(it.summary)
             val description = getString(it.description)
@@ -102,9 +106,9 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
         }
 
         findPref(Prefs.COLOR).setOnPreferenceChangeListener { _, newColor ->
-            val newColor = newColor as Int
+            val newColorInt = newColor as Int
             val oldColor = _sharedPreferences.getInt(Prefs.COLOR.prefName, Color.RED)
-            if(newColor === 0){
+            if(newColorInt == 0){
                 _customColorPicker = AmbilWarnaDialog(
                     requireContext(),
                     oldColor,
@@ -115,18 +119,22 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
                         override fun onOk(dialog: AmbilWarnaDialog, color: Int) {
                             val editor = _sharedPreferences.edit()
                             editor.putInt(Prefs.COLOR.prefName, color)
-                            editor.commit()
+                            editor.apply()
                         }
                     }
                 )
-                _customColorPicker.show();
+                _customColorPicker.show()
             }
             true
         }
         findPref(Prefs.COLOR_BG).setOnPreferenceChangeListener { _, newColor ->
-            val newColor = newColor as Int
-            val oldColor = _sharedPreferences.getInt(Prefs.COLOR_BG.prefName, Color.BLACK)
-            if(newColor === 0){
+            val newColorInt = newColor as Int
+            var defaultColor = Color.BLACK
+            if(leiaDisplayManager !== null){
+                defaultColor = Color.parseColor("#4A4A4A")
+            }
+            val oldColor = _sharedPreferences.getInt(Prefs.COLOR_BG.prefName, defaultColor)
+            if(newColorInt == 0){
                 _customColorPicker = AmbilWarnaDialog(
                     requireContext(),
                     oldColor,
@@ -137,11 +145,11 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
                         override fun onOk(dialog: AmbilWarnaDialog, color: Int) {
                             val editor = _sharedPreferences.edit()
                             editor.putInt(Prefs.COLOR_BG.prefName, color)
-                            editor.commit()
+                            editor.apply()
                         }
                     }
                 )
-                _customColorPicker.show();
+                _customColorPicker.show()
             }
             true
         }
