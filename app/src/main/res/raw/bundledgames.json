@@ -10,6 +10,11 @@
     "authors": ["KR155E"]
   },
   {
+    "name": "The Red Castle",
+    "uri": "content://com.simongellis.vvb.assets/games/The Red Castle.vb",
+    "authors": ["Timothy Beck"]
+  },
+  {
     "name": "VUE Snake",
     "uri": "content://com.simongellis.vvb.assets/games/VUE Snake.vb",
     "authors": ["KR155E"]
