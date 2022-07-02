@@ -9,6 +9,7 @@ use std::convert::TryFrom;
 use std::rc::Rc;
 use std::sync::{mpsc, Arc, Mutex};
 
+mod buffer;
 pub mod drawing;
 
 pub const VB_WIDTH: usize = 384;
