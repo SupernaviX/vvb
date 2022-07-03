@@ -118,9 +118,9 @@ class GameActivity : AppCompatActivity() {
     // fires onCreate, onResume
     private fun toggleImmersiveView(immersive: Boolean) {
         // todo: make this a user-configurable opt-in "optimization" (trade-off)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            window.setSustainedPerformanceMode(immersive)
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+//            window.setSustainedPerformanceMode(immersive)
+//        }
         if(immersive) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }else{
