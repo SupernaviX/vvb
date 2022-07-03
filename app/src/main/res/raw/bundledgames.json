@@ -10,6 +10,11 @@
     "authors": ["KR155E"]
   },
   {
+    "name": "Red Square",
+    "uri": "content://com.simongellis.vvb.assets/games/Red Square.vb",
+    "authors": ["Kresna", "Nyrator"]
+  },
+  {
     "name": "The Red Castle",
     "uri": "content://com.simongellis.vvb.assets/games/The Red Castle.vb",
     "authors": ["Timothy Beck"]
