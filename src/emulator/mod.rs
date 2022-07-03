@@ -9,7 +9,7 @@ use memory::{Memory, Region};
 mod state;
 use state::{GlobalState, SaveStateData};
 pub mod video;
-use video::{Eye, FrameChannel, Video};
+use video::{Eye, FrameBufferConsumers, Video};
 
 use anyhow::Result;
 use log::{debug, info};
@@ -52,8 +52,8 @@ impl Emulator {
         }
     }
 
-    pub fn claim_frame_channel(&mut self) -> FrameChannel {
-        self.video.borrow_mut().claim_frame_channel()
+    pub fn claim_frame_buffer_consumers(&mut self) -> FrameBufferConsumers {
+        self.video.borrow_mut().claim_frame_buffer_consumers()
     }
 
     pub fn claim_audio_player(&mut self, buffer_size: usize, volume: f32) -> AudioPlayer {
@@ -211,11 +211,9 @@ impl Emulator {
     }
 
     pub fn load_image(&self, left_eye: &[u8], right_eye: &[u8]) -> Result<()> {
-        let mut video = self.video.borrow_mut();
-        video.load_frame(left_eye);
-        video.send_frame(Eye::Left)?;
-        video.load_frame(right_eye);
-        video.send_frame(Eye::Right)?;
+        let video = self.video.borrow_mut();
+        video.load_and_send_frame(Eye::Left, left_eye);
+        video.load_and_send_frame(Eye::Right, right_eye);
         Ok(())
     }
 }
