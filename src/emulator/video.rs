@@ -103,35 +103,6 @@ impl TryFrom<i32> for Eye {
     }
 }
 
-pub struct EyeBuffer {
-    writable: bool,
-    data: Vec<u8>,
-}
-impl Default for EyeBuffer {
-    fn default() -> Self {
-        Self {
-            writable: true,
-            data: vec![0; FRAME_SIZE],
-        }
-    }
-}
-impl EyeBuffer {
-    pub fn read(&mut self) -> &[u8] {
-        self.writable = true;
-        &self.data
-    }
-    pub fn try_write(&mut self) -> Option<&mut [u8]> {
-        if !self.writable {
-            return None;
-        }
-        self.writable = false;
-        Some(&mut self.data)
-    }
-    pub fn reset(&mut self) {
-        self.writable = true;
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct VideoState {
     cycle: u64,
