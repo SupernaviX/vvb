@@ -18,6 +18,7 @@ class MainMenuFragment: PreferenceFragmentCompat() {
             findPreference<Preference>("game_actions")?.apply {
                 isVisible = game != null
                 if (game != null) {
+                    // TODO: if playing from a .zip, the name is encoded here
                     val nowPlaying = context.resources.getString(R.string.main_menu_now_playing)
                     summary = "$nowPlaying: ${game.name}"
                 }
