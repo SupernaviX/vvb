@@ -32,4 +32,9 @@
         app:title="@string/main_menu_audio_setup"
         app:fragment="com.simongellis.vvb.menu.AudioMenuFragment"
         tools:context=".menu.AudioMenuFragment"/>
+    <Preference
+        app:key="general"
+        app:title="@string/main_menu_general_setup"
+        app:fragment="com.simongellis.vvb.menu.GeneralMenuFragment"
+        tools:context=".menu.GeneralMenuFragment"/>
 </PreferenceScreen>

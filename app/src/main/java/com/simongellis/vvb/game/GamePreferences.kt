@@ -77,6 +77,8 @@ class GamePreferences(context: Context) {
     val leiaSettings
         get() = LeiaRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color, colorBG)
 
+    val sustainedPerformanceModeOn: Boolean
+
     init {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
@@ -116,6 +118,8 @@ class GamePreferences(context: Context) {
         controlParallax = convertDpToPixels(context,
             prefs.getInt("onscreen_input_parallax", 8).toFloat())
         showControlBounds = prefs.getBoolean("onscreen_input_show_bounds", false)
+
+        sustainedPerformanceModeOn = prefs.getBoolean("sustained_performance_mode_on", false)
     }
 
     private fun convertDpToPixels(context: Context, dp: Float): Float {
