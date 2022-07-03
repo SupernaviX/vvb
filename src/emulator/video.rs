@@ -6,8 +6,8 @@ use log::error;
 use serde_derive::{Deserialize, Serialize};
 use std::cell::{Ref, RefCell};
 use std::convert::TryFrom;
+use std::ops::{Index, IndexMut};
 use std::rc::Rc;
-use std::sync::{mpsc, Arc, Mutex};
 
 mod buffer;
 pub mod drawing;
@@ -88,7 +88,9 @@ pub enum Eye {
     Left,
     Right,
 }
+use crate::emulator::video::buffer::{SharedBuffer, SharedBufferConsumer};
 use Eye::{Left, Right};
+
 impl TryFrom<i32> for Eye {
     type Error = anyhow::Error;
 
@@ -130,13 +132,6 @@ impl EyeBuffer {
     }
 }
 
-pub struct Frame {
-    pub eye: Eye,
-    pub buffer: Arc<Mutex<EyeBuffer>>,
-}
-
-pub type FrameChannel = mpsc::Receiver<Frame>;
-
 #[derive(Serialize, Deserialize)]
 pub struct VideoState {
     cycle: u64,
@@ -166,6 +161,54 @@ impl Default for VideoState {
     }
 }
 
+#[derive(Default)]
+struct FrameBuffers {
+    left: SharedBuffer,
+    right: SharedBuffer,
+}
+impl FrameBuffers {
+    pub fn consumers(&self) -> FrameBufferConsumers {
+        FrameBufferConsumers {
+            left: self.left.consumer(),
+            right: self.right.consumer(),
+        }
+    }
+}
+impl Index<Eye> for FrameBuffers {
+    type Output = SharedBuffer;
+
+    fn index(&self, index: Eye) -> &Self::Output {
+        match index {
+            Left => &self.left,
+            Right => &self.right,
+        }
+    }
+}
+
+pub struct FrameBufferConsumers {
+    left: SharedBufferConsumer,
+    right: SharedBufferConsumer,
+}
+impl Index<Eye> for FrameBufferConsumers {
+    type Output = SharedBufferConsumer;
+
+    fn index(&self, index: Eye) -> &Self::Output {
+        match index {
+            Left => &self.left,
+            Right => &self.right,
+        }
+    }
+}
+
+impl IndexMut<Eye> for FrameBufferConsumers {
+    fn index_mut(&mut self, index: Eye) -> &mut Self::Output {
+        match index {
+            Left => &mut self.left,
+            Right => &mut self.right,
+        }
+    }
+}
+
 pub struct Video {
     cycle: u64,
     displaying: bool,
@@ -178,9 +221,7 @@ pub struct Video {
     display_buffer: Buffer,
     memory: Rc<RefCell<Memory>>,
     xp_module: DrawingProcess,
-    frame_channel: Option<mpsc::Sender<Frame>>,
-    buffers: [Arc<Mutex<EyeBuffer>>; 4],
-    buffer_index: usize,
+    frame_buffers: Option<FrameBuffers>,
 }
 impl Video {
     pub fn new(memory: Rc<RefCell<Memory>>) -> Video {
@@ -197,9 +238,7 @@ impl Video {
             display_buffer: state.display_buffer,
             memory,
             xp_module: DrawingProcess::new(),
-            frame_channel: None,
-            buffers: Default::default(),
-            buffer_index: 0,
+            frame_buffers: None,
         }
     }
 
@@ -378,9 +417,7 @@ impl Video {
                     }
                     if self.displaying {
                         // Actually display the left eye
-                        if self.build_frame(Left) {
-                            self.send_frame(Left)?;
-                        }
+                        self.build_and_send_frame(Left);
                     }
 
                     if self.drawing {
@@ -412,9 +449,7 @@ impl Video {
                 15 => {
                     if self.displaying {
                         // Actually display the right eye
-                        if self.build_frame(Right) {
-                            self.send_frame(Right)?;
-                        }
+                        self.build_and_send_frame(Right);
                     }
                 }
                 18 => {
@@ -466,55 +501,32 @@ impl Video {
         Ok(())
     }
 
-    pub fn claim_frame_channel(&mut self) -> FrameChannel {
-        let (tx, rx) = mpsc::channel();
-        self.frame_channel = Some(tx);
-        // reset the buffers; they should all be "blank" and writable
-        for buffer in &self.buffers {
-            let mut buffer = buffer.lock().expect("Buffer lock was poisoned!");
-            buffer.reset();
-        }
-        self.buffer_index = 0;
-        rx
+    pub fn claim_frame_buffer_consumers(&mut self) -> FrameBufferConsumers {
+        let frame_buffers = FrameBuffers::default();
+        let consumers = frame_buffers.consumers();
+        self.frame_buffers = Some(frame_buffers);
+        consumers
     }
 
-    pub fn load_frame(&self, image: &[u8]) {
-        let mut buffer = self.buffers[self.buffer_index]
-            .lock()
-            .expect("Buffer lock was poisoned!");
-        if let Some(data) = buffer.try_write() {
+    pub fn load_and_send_frame(&self, eye: Eye, image: &[u8]) {
+        let buffer = match &self.frame_buffers {
+            Some(fb) => &fb[eye],
+            None => return,
+        };
+        buffer.write(|data| {
             // Input data is RGBA, only copy the R
             for (place, data) in data.iter_mut().zip(image.iter().step_by(4)) {
                 *place = *data;
             }
-        }
+        })
     }
 
-    pub fn send_frame(&mut self, eye: Eye) -> Result<()> {
-        if let Some(channel) = self.frame_channel.as_ref() {
-            let buffer = &self.buffers[self.buffer_index];
-            self.buffer_index += 1;
-            self.buffer_index %= self.buffers.len();
-            let frame = Frame {
-                eye,
-                buffer: Arc::clone(buffer),
-            };
-            channel.send(frame)?;
-        }
-        Ok(())
-    }
-
-    fn build_frame(&self, eye: Eye) -> bool {
-        let eye_buffer = &mut self.buffers[self.buffer_index]
-            .lock()
-            .expect("Buffer lock was poisoned!");
-        return match eye_buffer.try_write() {
-            Some(data) => {
-                self.write_frame(eye, data);
-                true
-            }
-            None => false,
+    pub fn build_and_send_frame(&mut self, eye: Eye) {
+        let buffer = match &self.frame_buffers {
+            Some(fb) => &fb[eye],
+            None => return,
         };
+        buffer.write(|data| self.write_frame(eye, data));
     }
 
     fn write_frame(&self, eye: Eye, buffer: &mut [u8]) {

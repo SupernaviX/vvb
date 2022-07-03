@@ -68,6 +68,7 @@ pub struct SharedBuffer {
 }
 
 impl SharedBuffer {
+    #[test]
     pub fn read<F>(&self, consumer: F)
     where
         F: FnOnce(&[u8; FRAME_SIZE]),

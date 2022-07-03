@@ -1,6 +1,5 @@
-use crate::emulator::video::{Eye, FrameChannel};
+use crate::emulator::video::{Eye, FrameBufferConsumers};
 use anyhow::Result;
-use std::sync::mpsc::TryRecvError;
 
 pub trait RenderLogic {
     fn init(&mut self) -> Result<()>;
@@ -10,50 +9,37 @@ pub trait RenderLogic {
 }
 
 pub struct Renderer<TLogic: RenderLogic> {
-    frame_channel: FrameChannel,
-    disconnected: bool,
+    frame_buffers: FrameBufferConsumers,
     pub logic: TLogic,
 }
 impl<TLogic: RenderLogic> Renderer<TLogic> {
-    pub fn new(frame_channel: FrameChannel, logic: TLogic) -> Self {
+    pub fn new(frame_buffers: FrameBufferConsumers, logic: TLogic) -> Self {
         Self {
-            frame_channel,
-            disconnected: false,
+            frame_buffers,
             logic,
         }
     }
 
     pub fn on_surface_created(&mut self) -> Result<()> {
-        if self.disconnected {
-            return Ok(());
-        }
         self.logic.init()
     }
 
     pub fn on_surface_changed(&mut self, width: i32, height: i32) -> Result<()> {
-        if self.disconnected {
-            return Ok(());
-        }
         self.logic.resize((width, height))
     }
 
     pub fn on_draw_frame(&mut self) -> Result<()> {
-        if self.disconnected {
-            return Ok(());
-        }
-        match self.frame_channel.try_recv() {
-            Ok(frame) => {
-                let eye = frame.eye;
-                let mut buffer = frame.buffer.lock().expect("Buffer lock was poisoned!");
-                self.logic.update(eye, buffer.read())?;
-                drop(buffer);
-                self.logic.draw()
+        self.update_eye(Eye::Left);
+        self.update_eye(Eye::Right);
+        self.logic.draw()
+    }
+
+    fn update_eye(&mut self, eye: Eye) {
+        let logic = &mut self.logic;
+        self.frame_buffers[eye].try_read(|data| {
+            if logic.update(eye, data).is_err() {
+                log::error!("Error updating eye!");
             }
-            Err(TryRecvError::Empty) => self.logic.draw(),
-            Err(TryRecvError::Disconnected) => {
-                self.disconnected = true;
-                Ok(())
-            }
-        }
+        });
     }
 }
