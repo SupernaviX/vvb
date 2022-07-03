@@ -89,10 +89,10 @@ abstract class Control: View {
         val canvas = Canvas(bitmap)
 
         val paint = Paint()
-        paint.colorFilter = PorterDuffColorFilter(_leftColor, PorterDuff.Mode.MULTIPLY)
+        paint.colorFilter = PorterDuffColorFilter(_rightColor, PorterDuff.Mode.MULTIPLY)
         canvas.drawBitmap(source, 0f, 0f, paint)
 
-        paint.colorFilter = PorterDuffColorFilter(_rightColor, PorterDuff.Mode.MULTIPLY)
+        paint.colorFilter = PorterDuffColorFilter(_leftColor, PorterDuff.Mode.MULTIPLY)
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.LIGHTEN)
         canvas.drawBitmap(source, parallax, 0f, paint)
 
