@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <SwitchPreferenceCompat
+        app:key="sustained_performance_mode_on"
+        app:title="@string/sustained_performance_mode"
+        app:summary="@string/sustained_performance_mode_summary"
+        app:defaultValue="false" />
+</PreferenceScreen>

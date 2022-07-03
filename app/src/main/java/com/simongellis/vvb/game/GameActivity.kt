@@ -21,6 +21,7 @@ class GameActivity : AppCompatActivity() {
     private lateinit var _view: GameView
     private lateinit var _audio: Audio
     private lateinit var _controller: Controller
+    private lateinit var _preferences: GamePreferences
     private lateinit var mDecorView: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,9 +29,9 @@ class GameActivity : AppCompatActivity() {
         VvbLibrary.instance.initialize(this)
 
         val emulator = Emulator.instance
-        val preferences = GamePreferences(baseContext)
+        _preferences = GamePreferences(baseContext)
 
-        _audio = Audio(emulator, preferences.audioSettings)
+        _audio = Audio(emulator, _preferences.audioSettings)
         _controller = Controller(emulator)
 
         _view = GameView(baseContext)
@@ -117,12 +118,11 @@ class GameActivity : AppCompatActivity() {
 
     // fires onCreate, onResume
     private fun toggleImmersiveView(immersive: Boolean) {
-        // todo: make this a user-configurable opt-in "optimization" (trade-off)
-        // I think this is tanking performance on RH1 (SD 835)
-        // testing disable it
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-//            window.setSustainedPerformanceMode(immersive)
-//        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            if(_preferences.sustainedPerformanceModeOn){
+                window.setSustainedPerformanceMode(immersive)
+            }
+        }
         if(immersive) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }else{
