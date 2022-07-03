@@ -50,6 +50,22 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    signingConfigs {
+        debug {
+            storeFile file('C:\\Users\\mail\\Documents\\android-debug-key-store.jks')
+            storePassword 'jakedowns'
+            keyAlias 'jakedownskeystore'
+            keyPassword 'jakedowns'
+        }
+        release {
+            storeFile file('C:\\Users\\mail\\Documents\\android-debug-key-store.jks')
+            storePassword 'jakedowns'
+            keyAlias 'jakedownskeystore'
+            keyPassword 'jakedowns'
+        }
+    }
+
     kotlinOptions {
         jvmTarget = "1.8"
         freeCompilerArgs += [
@@ -78,6 +94,7 @@ android {
         buildConfigField("String", "ACRA_URI", generatedString("https://vvb-notifications.simongellis.com/report"))
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.release
     }
 
     buildTypes {
@@ -88,7 +105,9 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
+            buildConfigField("boolean", "ACRA_ENABLED", "false")
             def config = tryReadConfig("release.env")
+
             buildConfigField("boolean", "ACRA_ENABLED", "true")
             buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", generatedString(config.login))
             buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", generatedString(config.password))
@@ -114,14 +133,14 @@ android {
     ndkVersion = "22.1.7171670"
     namespace 'com.simongellis.vvb'
 
-    signingConfigs {
-        config {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
-        }
-    }
+//    signingConfigs {
+//        config {
+//            keyAlias keystoreProperties['keyAlias']
+//            keyPassword keystoreProperties['keyPassword']
+//            storeFile file(keystoreProperties['storeFile'])
+//            storePassword keystoreProperties['storePassword']
+//        }
+//    }
 }
 
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
