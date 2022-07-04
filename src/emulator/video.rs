@@ -63,11 +63,12 @@ const XPCTRL: usize = 0x0005f842;
 
 // flags for XPSTTS/XPCTRL
 const SBOUT: u16 = 0x8000;
+const SBCOUNT_MASK: u16 = 0x1f00;
 const F1BSY: u16 = 0x0008;
 const F0BSY: u16 = 0x0004;
 const XPEN: u16 = 0x0002;
 const XPRST: u16 = 0x0001;
-const XP_READONLY_MASK: u16 = 0x801c;
+const XP_READONLY_MASK: u16 = !(XPEN | XPRST);
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 enum Buffer {
@@ -463,6 +464,15 @@ impl Video {
             memory.write_halfword(CTA, cta);
         }
 
+        // calculate SBCOUNT
+        self.xpctrl_flags &= !SBCOUNT_MASK;
+        if (self.xpctrl_flags & SBOUT) != 0 {
+            // find the current row batch based on how much time has passed
+            const CYCLES_PER_ROW_BATCH: u64 = 100000 / 24;
+            let row_batch = ((self.cycle % 100000) / CYCLES_PER_ROW_BATCH) as u16;
+            self.xpctrl_flags |= row_batch << 8;
+        }
+
         dpctrl &= !DP_READONLY_MASK;
         dpctrl |= self.dpctrl_flags;
         memory.write_halfword(DPCTRL, dpctrl);
@@ -571,8 +581,8 @@ impl Video {
 mod tests {
     use crate::emulator::memory::Memory;
     use crate::emulator::video::{
-        Video, DISP, DPCTRL, DPRST, FRAMESTART, FRMCYC, GAMESTART, INTCLR, INTENB, INTPND, SBOUT,
-        XPEND, XPRST,
+        Video, DISP, DPCTRL, DPRST, FRAMESTART, FRMCYC, GAMESTART, INTCLR, INTENB, INTPND,
+        SBCOUNT_MASK, SBOUT, XPEND, XPRST,
     };
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
@@ -793,7 +803,10 @@ mod tests {
         // turn off drawing
         write_xpctrl(&mut video, &memory, 0);
         video.run(ms_to_cycles(42)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), F0BSY | SBOUT);
+        assert_eq!(
+            memory.borrow().read_halfword(XPSTTS) & !SBCOUNT_MASK,
+            F0BSY | SBOUT
+        );
 
         video.run(ms_to_cycles(45)).unwrap();
         assert_eq!(memory.borrow().read_halfword(XPSTTS), 0);
