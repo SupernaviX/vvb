@@ -62,6 +62,7 @@ const XPSTTS: usize = 0x0005f840;
 const XPCTRL: usize = 0x0005f842;
 
 // flags for XPSTTS/XPCTRL
+const SBOUT: u16 = 0x8000;
 const F1BSY: u16 = 0x0008;
 const F0BSY: u16 = 0x0004;
 const XPEN: u16 = 0x0002;
@@ -367,6 +368,8 @@ impl Video {
                             Buffer0 => F0BSY,
                             Buffer1 => F1BSY,
                         };
+                        // Pretend we're drawing line by line
+                        self.xpctrl_flags |= SBOUT;
 
                         // Switch to displaying the other buffer
                         self.display_buffer = self.display_buffer.toggle();
@@ -393,7 +396,7 @@ impl Video {
 
                     if self.drawing {
                         // "Stop drawing" on background buffer
-                        self.xpctrl_flags &= !(F0BSY | F1BSY);
+                        self.xpctrl_flags &= !(F0BSY | F1BSY | SBOUT);
                         self.pending_interrupts |= XPEND;
                     }
                 }
@@ -568,8 +571,8 @@ impl Video {
 mod tests {
     use crate::emulator::memory::Memory;
     use crate::emulator::video::{
-        Video, DISP, DPCTRL, DPRST, FRAMESTART, FRMCYC, GAMESTART, INTCLR, INTENB, INTPND, XPEND,
-        XPRST,
+        Video, DISP, DPCTRL, DPRST, FRAMESTART, FRMCYC, GAMESTART, INTCLR, INTENB, INTPND, SBOUT,
+        XPEND, XPRST,
     };
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
@@ -747,7 +750,7 @@ mod tests {
 
         // start 2 frames in, because that's the first time we see a rising FCLK
         video.run(ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY | SBOUT);
 
         video.run(ms_to_cycles(45)).unwrap();
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
@@ -759,7 +762,7 @@ mod tests {
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
         video.run(ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY | SBOUT);
 
         video.run(ms_to_cycles(65)).unwrap();
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
@@ -771,7 +774,7 @@ mod tests {
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
         video.run(ms_to_cycles(80)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY | SBOUT);
     }
 
     #[test]
@@ -785,12 +788,12 @@ mod tests {
         video.run(ms_to_cycles(39)).unwrap();
         write_xpctrl(&mut video, &memory, XPEN);
         video.run(ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY | SBOUT);
 
         // turn off drawing
         write_xpctrl(&mut video, &memory, 0);
         video.run(ms_to_cycles(42)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), F0BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), F0BSY | SBOUT);
 
         video.run(ms_to_cycles(45)).unwrap();
         assert_eq!(memory.borrow().read_halfword(XPSTTS), 0);
@@ -819,7 +822,7 @@ mod tests {
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
         video.run(ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY | SBOUT);
     }
 
     #[test]
