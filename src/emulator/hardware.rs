@@ -172,8 +172,10 @@ impl Hardware {
             self.next_controller_read = u64::MAX;
             new_value &= !S_HW_STAT;
         } else if value & S_HW_READ != 0 {
-            // hardware read has begun
-            self.next_controller_read = self.cycle + HARDWARE_READ_CYCLES;
+            // hardware read has begun (maybe? if it's in progress already, just continue it)
+            self.next_controller_read = self
+                .next_controller_read
+                .min(self.cycle + HARDWARE_READ_CYCLES);
             new_value |= S_HW_STAT;
         }
         memory.write_byte(SCR, new_value);
@@ -275,8 +277,8 @@ impl Hardware {
 #[cfg(test)]
 mod tests {
     use crate::emulator::hardware::{
-        Hardware, SCR, SDHR, SDLR, S_HW_ABORT, S_HW_READ, S_HW_STAT, TCR, THR, TLR, T_CLEAR_ZERO,
-        T_ENABLED, T_INTERRUPT, T_IS_ZERO,
+        Hardware, HARDWARE_READ_CYCLES, SCR, SDHR, SDLR, S_HW_ABORT, S_HW_READ, S_HW_STAT, TCR,
+        THR, TLR, T_CLEAR_ZERO, T_ENABLED, T_INTERRUPT, T_IS_ZERO,
     };
     use crate::emulator::memory::Memory;
     use std::cell::RefCell;
@@ -427,7 +429,40 @@ mod tests {
 
         // Kick off the hardware read
         set_scr(&mut hardware, &memory, S_HW_READ);
-        assert_eq!(hardware.next_event(), 10240);
+        assert_eq!(hardware.next_event(), HARDWARE_READ_CYCLES);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_STAT);
+
+        // Wait for the hardware read to complete
+        hardware.run(hardware.next_event());
+        assert_eq!(hardware.next_event(), u64::MAX);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x10);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x02);
+        assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ);
+    }
+
+    #[test]
+    fn does_not_restart_in_progress_hardware_read() {
+        let (mut hardware, memory) = get_hardware();
+
+        // "start" pushing a button on the controller
+        let state = hardware.claim_controller_state();
+        state.store(0x1002, Ordering::Relaxed);
+
+        // Kick off the hardware read
+        set_scr(&mut hardware, &memory, S_HW_READ);
+        assert_eq!(hardware.next_event(), HARDWARE_READ_CYCLES);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_STAT);
+
+        // Partway through, kick off ANOTHER HARDWARE READ!!!
+        hardware.run(HARDWARE_READ_CYCLES / 2);
+        set_scr(&mut hardware, &memory, S_HW_READ);
+
+        // assert we're still in the middle of the original hardware read
+        assert_eq!(hardware.next_event(), HARDWARE_READ_CYCLES);
         assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
         assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
         assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_STAT);
@@ -450,15 +485,16 @@ mod tests {
 
         // Kick off the hardware read
         set_scr(&mut hardware, &memory, S_HW_READ);
-        assert_eq!(hardware.next_event(), 10240);
+        assert_eq!(hardware.next_event(), HARDWARE_READ_CYCLES);
         assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
         assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
         assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_STAT);
 
         // run, but abort the hardware read before it should go off
-        hardware.run(5120);
+        hardware.run(HARDWARE_READ_CYCLES / 2);
         set_scr(&mut hardware, &memory, S_HW_ABORT);
-        hardware.run(10240);
+
+        hardware.run(HARDWARE_READ_CYCLES);
         assert_eq!(hardware.next_event(), u64::MAX);
         assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
         assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
