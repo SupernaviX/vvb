@@ -661,7 +661,9 @@ impl AudioController {
                         }
                     }
                     0x18 if channel < 5 => {
-                        // Set active waveform for the PCM channels (everything but 6)
+                        // Set active waveform for the PCM channels (everything but 6).
+                        // The Sacred Tech Scroll claims that we should only read the last 3 bits,
+                        // but reading the last 4 instead fixes audio in BLOX.
                         let wave = value as usize & 0x0f;
                         debug!(
                             "0x{:08x} = 0x{:02x} (channel {} active waveform is {})",
