@@ -62,11 +62,13 @@ const XPSTTS: usize = 0x0005f840;
 const XPCTRL: usize = 0x0005f842;
 
 // flags for XPSTTS/XPCTRL
+const SBOUT: u16 = 0x8000;
+const SBCOUNT_MASK: u16 = 0x1f00;
 const F1BSY: u16 = 0x0008;
 const F0BSY: u16 = 0x0004;
 const XPEN: u16 = 0x0002;
 const XPRST: u16 = 0x0001;
-const XP_READONLY_MASK: u16 = 0x801c;
+const XP_READONLY_MASK: u16 = !(XPEN | XPRST);
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 enum Buffer {
@@ -250,14 +252,29 @@ impl Video {
     }
 
     pub fn next_event(&self) -> u64 {
-        if self.drawing && (self.dpctrl_flags & DPBSY) != 0 {
-            // When we're "drawing", CTA goes through 96 values over the course of 5ms.
+        let next_cta_event = if self.drawing && (self.dpctrl_flags & DPBSY) != 0 {
+            // When we're "displaying", CTA goes through 96 values over the course of 5ms.
             // We should update the value every ~1040 cycles to achieve that
-            let last_draw_start = ((self.cycle / 200000) * 200000) + 600000;
-            return (((self.cycle - last_draw_start) / 1040) + 1) * 1040 + last_draw_start;
-        }
+            let last_display_start = ((self.cycle / 200000) * 200000) + 600000;
+            (((self.cycle - last_display_start) / 1040) + 1) * 1040 + last_display_start
+        } else {
+            u64::MAX
+        };
+        let next_sbcount_event = if self.drawing && (self.xpctrl_flags & SBOUT) != 0 {
+            // When we're "drawing", SBCOUNT goes through 24 values over the course of 5ms.
+            // find the current row batch based on how much time has passed
+            const CYCLES_PER_ROW_BATCH: u64 = 100000 / 24;
+            let last_draw_start = (self.cycle / 200000) * 200000;
+            (((self.cycle - last_draw_start) / CYCLES_PER_ROW_BATCH) + 1) * CYCLES_PER_ROW_BATCH
+                + last_draw_start
+        } else {
+            u64::MAX
+        };
         // Every other event happens at 1ms intervals
-        ((self.cycle / 20000) + 1) * 20000
+        let next_normal_event = ((self.cycle / 20000) + 1) * 20000;
+        next_cta_event
+            .min(next_sbcount_event)
+            .min(next_normal_event)
     }
 
     pub fn active_interrupt(&self) -> Option<Exception> {
@@ -367,6 +384,8 @@ impl Video {
                             Buffer0 => F0BSY,
                             Buffer1 => F1BSY,
                         };
+                        // Pretend we're drawing line by line
+                        self.xpctrl_flags |= SBOUT;
 
                         // Switch to displaying the other buffer
                         self.display_buffer = self.display_buffer.toggle();
@@ -393,7 +412,7 @@ impl Video {
 
                     if self.drawing {
                         // "Stop drawing" on background buffer
-                        self.xpctrl_flags &= !(F0BSY | F1BSY);
+                        self.xpctrl_flags &= !(F0BSY | F1BSY | SBOUT);
                         self.pending_interrupts |= XPEND;
                     }
                 }
@@ -458,6 +477,15 @@ impl Video {
             }
             let cta = ((0x52 + 95 - col_r) << 8) + (0x52 + 95 - col_l);
             memory.write_halfword(CTA, cta);
+        }
+
+        // calculate SBCOUNT
+        self.xpctrl_flags &= !SBCOUNT_MASK;
+        if (self.xpctrl_flags & SBOUT) != 0 {
+            // find the current row batch based on how much time has passed
+            const CYCLES_PER_ROW_BATCH: u64 = 100000 / 24;
+            let row_batch = ((self.cycle % 100000) / CYCLES_PER_ROW_BATCH) as u16;
+            self.xpctrl_flags |= row_batch << 8;
         }
 
         dpctrl &= !DP_READONLY_MASK;
@@ -568,8 +596,8 @@ impl Video {
 mod tests {
     use crate::emulator::memory::Memory;
     use crate::emulator::video::{
-        Video, DISP, DPCTRL, DPRST, FRAMESTART, FRMCYC, GAMESTART, INTCLR, INTENB, INTPND, XPEND,
-        XPRST,
+        Video, DISP, DPCTRL, DPRST, FRAMESTART, FRMCYC, GAMESTART, INTCLR, INTENB, INTPND,
+        SBCOUNT_MASK, SBOUT, XPEND, XPRST,
     };
     use crate::emulator::video::{DPSTTS, FCLK, L0BSY, L1BSY, R0BSY, R1BSY, SCANRDY};
     use crate::emulator::video::{F0BSY, F1BSY, XPCTRL, XPEN, XPSTTS};
@@ -747,7 +775,7 @@ mod tests {
 
         // start 2 frames in, because that's the first time we see a rising FCLK
         video.run(ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY | SBOUT);
 
         video.run(ms_to_cycles(45)).unwrap();
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
@@ -759,7 +787,7 @@ mod tests {
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
         video.run(ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY | SBOUT);
 
         video.run(ms_to_cycles(65)).unwrap();
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
@@ -771,7 +799,7 @@ mod tests {
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
         video.run(ms_to_cycles(80)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F1BSY | SBOUT);
     }
 
     #[test]
@@ -785,12 +813,15 @@ mod tests {
         video.run(ms_to_cycles(39)).unwrap();
         write_xpctrl(&mut video, &memory, XPEN);
         video.run(ms_to_cycles(40)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY | SBOUT);
 
         // turn off drawing
         write_xpctrl(&mut video, &memory, 0);
         video.run(ms_to_cycles(42)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), F0BSY);
+        assert_eq!(
+            memory.borrow().read_halfword(XPSTTS) & !SBCOUNT_MASK,
+            F0BSY | SBOUT
+        );
 
         video.run(ms_to_cycles(45)).unwrap();
         assert_eq!(memory.borrow().read_halfword(XPSTTS), 0);
@@ -819,7 +850,7 @@ mod tests {
         assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN);
 
         video.run(ms_to_cycles(60)).unwrap();
-        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY);
+        assert_eq!(memory.borrow().read_halfword(XPSTTS), XPEN | F0BSY | SBOUT);
     }
 
     #[test]
