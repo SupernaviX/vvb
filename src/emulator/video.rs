@@ -252,14 +252,29 @@ impl Video {
     }
 
     pub fn next_event(&self) -> u64 {
-        if self.drawing && (self.dpctrl_flags & DPBSY) != 0 {
-            // When we're "drawing", CTA goes through 96 values over the course of 5ms.
+        let next_cta_event = if self.drawing && (self.dpctrl_flags & DPBSY) != 0 {
+            // When we're "displaying", CTA goes through 96 values over the course of 5ms.
             // We should update the value every ~1040 cycles to achieve that
-            let last_draw_start = ((self.cycle / 200000) * 200000) + 600000;
-            return (((self.cycle - last_draw_start) / 1040) + 1) * 1040 + last_draw_start;
-        }
+            let last_display_start = ((self.cycle / 200000) * 200000) + 600000;
+            (((self.cycle - last_display_start) / 1040) + 1) * 1040 + last_display_start
+        } else {
+            u64::MAX
+        };
+        let next_sbcount_event = if self.drawing && (self.xpctrl_flags & SBOUT) != 0 {
+            // When we're "drawing", SBCOUNT goes through 24 values over the course of 5ms.
+            // find the current row batch based on how much time has passed
+            const CYCLES_PER_ROW_BATCH: u64 = 100000 / 24;
+            let last_draw_start = (self.cycle / 200000) * 200000;
+            (((self.cycle - last_draw_start) / CYCLES_PER_ROW_BATCH) + 1) * CYCLES_PER_ROW_BATCH
+                + last_draw_start
+        } else {
+            u64::MAX
+        };
         // Every other event happens at 1ms intervals
-        ((self.cycle / 20000) + 1) * 20000
+        let next_normal_event = ((self.cycle / 20000) + 1) * 20000;
+        next_cta_event
+            .min(next_sbcount_event)
+            .min(next_normal_event)
     }
 
     pub fn active_interrupt(&self) -> Option<Exception> {

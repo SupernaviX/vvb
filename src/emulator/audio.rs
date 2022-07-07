@@ -512,7 +512,7 @@ impl AudioController {
 
     pub fn process_event(&mut self, address: usize) {
         if address & 0x00000003 != 0 {
-            return
+            return;
         }
         let memory = self.memory.borrow();
         let address = address & 0x010007ff;
