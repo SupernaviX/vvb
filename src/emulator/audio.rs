@@ -511,7 +511,11 @@ impl AudioController {
     }
 
     pub fn process_event(&mut self, address: usize) {
+        if address & 0x00000003 != 0 {
+            return;
+        }
         let memory = self.memory.borrow();
+        let address = address & 0x010007ff;
         let value = memory.read_byte(address);
         match address {
             0x01000000..=0x0100027f => {
@@ -657,13 +661,16 @@ impl AudioController {
                         }
                     }
                     0x18 if channel < 5 => {
-                        // Set active waveform for the PCM channels (everything but 6)
-                        let wave = value as usize & 0x07;
+                        // Set active waveform for the PCM channels (everything but 6).
+                        // The Sacred Tech Scroll claims that we should only read the last 3 bits,
+                        // but reading the last 4 instead fixes audio in BLOX.
+                        let wave = value as usize & 0x0f;
                         debug!(
-                            "0x{:08x} = 0x{:02x} (channel {} active waveform)",
+                            "0x{:08x} = 0x{:02x} (channel {} active waveform is {})",
                             address,
                             value,
-                            channel + 1
+                            channel + 1,
+                            wave
                         );
                         self.channels[channel].set_waveform(wave);
                     }

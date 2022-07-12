@@ -1,5 +1,15 @@
 [
   {
+    "name": "BLOX",
+    "uri": "content://com.simongellis.vvb.assets/games/BLOX.vb",
+    "authors": ["KR155E"]
+  },
+  {
+    "name": "BLOX 2",
+    "uri": "content://com.simongellis.vvb.assets/games/BLOX 2.vb",
+    "authors": ["KR155E"]
+  },
+  {
     "name": "Fishbone",
     "uri": "content://com.simongellis.vvb.assets/games/Fishbone.vb",
     "authors": ["thunderstruck"]
@@ -8,6 +18,11 @@
     "name": "Formula V Public Demo",
     "uri": "content://com.simongellis.vvb.assets/games/Formula V Public Demo.vb",
     "authors": ["KR155E"]
+  },
+  {
+    "name": "Red Square",
+    "uri": "content://com.simongellis.vvb.assets/games/Red Square.vb",
+    "authors": ["Kresna", "Nyrator"]
   },
   {
     "name": "The Red Castle",

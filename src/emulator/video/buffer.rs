@@ -68,7 +68,7 @@ pub struct SharedBuffer {
 }
 
 impl SharedBuffer {
-    #[test]
+    #[allow(dead_code)]
     pub fn read<F>(&self, consumer: F)
     where
         F: FnOnce(&[u8; FRAME_SIZE]),
