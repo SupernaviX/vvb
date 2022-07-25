@@ -56,8 +56,8 @@
     <string name="input_menu_button_b">B</string>
     <string name="input_menu_button_lt">L触发器</string>
     <string name="input_menu_button_rt">R触发器</string>
-    <string name="input_menu_button_start">开始</string>
-    <string name="input_menu_button_select">选择</string>
+    <string name="input_menu_button_start">Start</string>
+    <string name="input_menu_button_select">Select</string>
     <string name="input_menu_unmapped">未映射</string>
     <string name="input_menu_put_mapping">按任意控件将其映射到此输入。长按映射多个控件。</string>
     <string name="input_menu_add_mapping">按任意控件为此输入添加另一个映射。</string>
