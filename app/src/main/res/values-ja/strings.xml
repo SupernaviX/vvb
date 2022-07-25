@@ -62,7 +62,7 @@
     <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップします。長押しして複数のコントロールをマッピングします。</string>
     <string name="input_menu_add_mapping">任意のコントロールを押して、この入力に別のマッピングを追加します。</string>
     <string name="video_menu_screen_zoom_percent">画面ズーム（パーセント）</string>
-    <string name="video_menu_horizo​​ntal_offset">水平オフセット</string>
+    <string name="video_menu_horizontal_offset">水平オフセット</string>
     <string name="video_menu_vertical_offset">垂直オフセット</string>
     <string name="video_menu_mode">表示モード</string>
     <string name="video_mode_anaglyph_summary">アナグリフ（2色）</string>
