@@ -71,23 +71,23 @@ impl<'a> EnvExtensions for JNIEnv<'a> {
 #[macro_export]
 macro_rules! jni_func {
     ($name:ident, $func:ident) => {
-        crate::jni_func!(name $name func $func params ());
+        $crate::jni_func!(name $name func $func params ());
     };
     ($name:ident, $func:ident, $param0:ty) => {
-        crate::jni_func!(name $name func $func params (p0: $param0));
+        $crate::jni_func!(name $name func $func params (p0: $param0));
     };
     ($name:ident, $func:ident, $param0:ty, $param1:ty) => {
-        crate::jni_func!(name $name func $func params (p0: $param0, p1: $param1));
+        $crate::jni_func!(name $name func $func params (p0: $param0, p1: $param1));
     };
     ($name:ident, $func:ident, $param0:ty, $param1:ty, $param2:ty) => {
-        crate::jni_func!(name $name func $func params (p0: $param0, p1: $param1, p2: $param2));
+        $crate::jni_func!(name $name func $func params (p0: $param0, p1: $param1, p2: $param2));
     };
     (name $name:ident func $func:ident params ($($pname:ident: $ptype:ty),*)) => {
         paste::paste! {
             #[no_mangle]
             pub unsafe extern "C" fn [<Java_com_simongellis_vvb_emulator_ $name>](env: JNIEnv, this: jobject $(, $pname: $ptype)*) {
                 let result = $func(&env, this $(, $pname)*);
-                crate::jni_helpers::to_java_exception(&env, result);
+                $crate::jni_helpers::to_java_exception(&env, result);
             }
         }
     };
