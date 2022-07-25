@@ -73,7 +73,7 @@
     <string name="video_mode_mono_right_summary">仅右眼</string>
     <string name="video_mode_mono_description">无需设备，但无3D效果</string>
     <string name="video_mode_stereo_summary">并排</string>
-    <string name="video_mode_stereo_description">适用于3D电视</string>
+    <string name="video_mode_stereo_description">适用于3D TV</string>
     <string name="video_menu_aspect_ratio">宽高比</string>
     <string name="aspect_ratio_auto">自动</string>
     <string name="aspect_ratio_stretch">拉伸以适应</string>
