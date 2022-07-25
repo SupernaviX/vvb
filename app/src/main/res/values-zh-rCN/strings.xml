@@ -8,7 +8,7 @@
     <string name="main_menu_video_setup">视频设置</string>
     <string name="main_menu_audio_setup">音频设置</string>
     <string name="load_game_from_file">从文件加载</string>
-    <string name="load_game_from_file_explanation">你可以下载 Virtual Boy 游戏的 ROM，并在此处加载它们以进行游戏。\n你可以在https://virtual-boy.com/homebrew/ 上找到来自 Planet Virtual Boy的免费ROM。</string>
+    <string name="load_game_from_file_explanation">你可以下载Virtual Boy游戏的ROM，并在此处加载它们以进行游戏。\n你可以在https://virtual-boy.com/homebrew/ 上找到来自Planet Virtual Boy的免费ROM。</string>
     <string name="load_game_from_file_explanation_button">OK</string>
     <string name="load_game_recent_games">近期游戏</string>
     <string name="load_game_no_recent_games">你还没有玩过任何游戏。试一试！</string>
@@ -90,7 +90,7 @@
     <string name="application_crashed">抱歉，应用程序崩溃了。将向开发者发送报告。</string>
     <string name="error_file_not_found">​​找不到那个文件。也许它被移动了？</string>
     <string name="error_not_power_of_two">这不是Virtual Boy游戏！文件大小应该是2的幂。</string>
-    <string name="error_too_large">那不是 Virtual Boy 游戏！它们最多只能达到 16Mb。</string>
+    <string name="error_too_large">那不是Virtual Boy游戏！它们最多只能达到16Mb。</string>
     <string name="error_zip">该ZIP文件中的任何内容都不像Virtual Boy游戏……</string>
     <string name="toast_state_saved">保存状态</string>
     <string name="toast_state_loaded">加载状态</string>
