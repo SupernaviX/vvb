@@ -56,8 +56,8 @@
     <string name="input_menu_button_b">B</string>
     <string name="input_menu_button_lt">Триггер L</string>
     <string name="input_menu_button_rt">Триггер R</string>
-    <string name="input_menu_button_start">Начать</string>
-    <string name="input_menu_button_select">Выбрать</string>
+    <string name="input_menu_button_start">Start</string>
+    <string name="input_menu_button_select">Select</string>
     <string name="input_menu_unmapped">Не сопоставлено</string>
     <string name="input_menu_put_mapping">Нажмите любой элемент управления, чтобы сопоставить его с этим входом. Нажмите и удерживайте, чтобы сопоставить несколько элементов управления.</string>
     <string name="input_menu_add_mapping">Нажмите любой элемент управления, чтобы добавить другое сопоставление для этого ввода.</string>
