@@ -88,7 +88,7 @@
     <string name="audio_menu_volume">音量</string>
     <string name="audio_menu_buffer_size">バッファサイズ（フレーム単位）</string>
     <string name="application_crashed">申し訳ありませんが、アプリケーションがクラッシュしました。レポートが開発者に送信されます。</string>
-    <string name="error_file_not_found">​​そのファイルが見つかりませんでした。多分それは動かされましたか？</string>
+    <string name="error_file_not_found">そのファイルが見つかりませんでした。多分それは動かされましたか？</string>
     <string name="error_not_power_of_two">それはバーチャルボーイのゲームではありません！ファイルサイズは2の累乗である必要があります。</string>
     <string name="error_too_large">それはバーチャルボーイのゲームではありません！最大16Mbまでです。</string>
     <string name="error_zip">そのZIPファイルにはバーチャルボーイのゲームのように見えるものはありません…</string>
