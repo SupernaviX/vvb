@@ -14,14 +14,14 @@
     <string name="load_game_no_recent_games">你還沒有玩過任何遊戲。試一試！</string>
     <string name="load_game_bundled_games">捆綁遊戲</string>
     <string name="load_game_no_bundled_games">無捆綁遊戲</string>
-    <string name="load_game_created_by">創建者 %1$s</string>
+    <string name="load_game_created_by">創建者%1$s</string>
     <string name="game_menu_resume_game">繼續遊戲</string>
     <string name="game_menu_reset_game">重置</string>
     <string name="game_menu_auto_save">自動保存</string>
     <string name="game_menu_save_state">保存狀態</string>
     <string name="game_menu_load_state">加載狀態</string>
     <string name="game_menu_state_slot">當前狀態槽</string>
-    <string name="game_menu_state_slot_name">插槽 %1$s</string>
+    <string name="game_menu_state_slot_name">插槽%1$s</string>
     <string name="game_menu_state_slot_empty">空</string>
     <string name="game_menu_state_slot_saved">已保存：%1$s</string>
     <string name="game_menu_close_game">關閉遊戲</string>
@@ -45,7 +45,7 @@
     <string name="controller_menu_rename">重命名</string>
     <string name="controller_menu_choose_rename">選擇要重命名的控制器...</string>
     <string name="controller_menu_choose_delete">選擇要刪除的控制器...</string>
-    <string name="controller_menu_default_name">控制器 %1$d</string>
+    <string name="controller_menu_default_name">控制器%1$d</string>
     <string name="input_menu_dpad_left">左方向鍵</string>
     <string name="input_menu_dpad_right">右方向鍵</string>
     <string name="input_menu_button_left">左</string>
