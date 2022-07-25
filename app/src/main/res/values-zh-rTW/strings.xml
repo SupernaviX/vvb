@@ -91,7 +91,7 @@
     <string name="error_file_not_found">​​找不到那個文件。也許它被移動了？</string>
     <string name="error_not_power_of_two">這不是Virtual Boy遊戲！文件大小應該是2的冪。</string>
     <string name="error_too_large">那不是Virtual Boy遊戲！它們最多只能達到16Mb。</string>
-    <string name="error_zip">該 ZIP 文件中的任何內容都不像Virtual Boy遊戲……</string>
+    <string name="error_zip">該ZIP文件中的任何內容都不像Virtual Boy遊戲……</string>
     <string name="toast_state_saved">保存狀態</string>
     <string name="toast_state_loaded">加載狀態</string>
 </resources>
