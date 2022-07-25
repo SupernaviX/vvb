@@ -56,8 +56,8 @@
     <string name="input_menu_button_b">B</string>
     <string name="input_menu_button_lt">Lトリガー</string>
     <string name="input_menu_button_rt">Rトリガー</string>
-    <string name="input_menu_button_start">スタート</string>
-    <string name="input_menu_button_select">セレクト</string>
+    <string name="input_menu_button_start">Start</string>
+    <string name="input_menu_button_select">Select</string>
     <string name="input_menu_unmapped">マップされていない</string>
     <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップします。長押しして複数のコントロールをマッピングします。</string>
     <string name="input_menu_add_mapping">任意のコントロールを押して、この入力に別のマッピングを追加します。</string>
