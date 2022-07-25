@@ -53,7 +53,7 @@
     <string name="input_menu_button_up">Вверх</string>
     <string name="input_menu_button_down">Вниз</string>
     <string name="input_menu_button_a">А</string>
-    <string name="input_menu_button_b">Б</string>
+    <string name="input_menu_button_b">B</string>
     <string name="input_menu_button_lt">Триггер L</string>
     <string name="input_menu_button_rt">Триггер R</string>
     <string name="input_menu_button_start">Начать</string>
