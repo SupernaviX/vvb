@@ -67,7 +67,7 @@
     <string name="video_menu_mode">顯示模式</string>
     <string name="video_mode_anaglyph_summary">立體圖（雙色）</string>
     <string name="video_mode_anaglyph_description">適用於大多數3D眼鏡</string>
-    <string name="video_mode_cardboard_summary">谷歌紙板</string>
+    <string name="video_mode_cardboard_summary">Google Cardboard</string>
     <string name="video_mode_cardboard_description">適用於Google Cardboard或Daydream</string>
     <string name="video_mode_mono_left_summary">僅左眼</string>
     <string name="video_mode_mono_right_summary">僅右眼</string>
