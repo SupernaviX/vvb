@@ -9,7 +9,7 @@
     <string name="main_menu_audio_setup">音頻設置</string>
     <string name="load_game_from_file">從文件加載</string>
     <string name="load_game_from_file_explanation">你可以下載Virtual Boy遊戲的ROM，並在此處加載它們以進行遊戲。\n你可以在https://virtual-boy.com/homebrew/ 上找到來自Planet Virtual Boy的免費ROM。</string>
-    <string name="load_game_from_file_explanation_button">確定</string>
+    <string name="load_game_from_file_explanation_button">OK</string>
     <string name="load_game_recent_games">近期遊戲</string>
     <string name="load_game_no_recent_games">你還沒有玩過任何遊戲。試一試！</string>
     <string name="load_game_bundled_games">捆綁遊戲</string>
@@ -82,7 +82,7 @@
     <string name="video_menu_color_right">右眼顏色</string>
     <string name="video_menu_invalid_colors_title">無效顏色</string>
     <string name="video_menu_invalid_colors_message">左右眼顏色在至少一個顏色通道上“重疊”。3D效果可能無法正常工作。</string>
-    <string name="video_menu_invalid_colors_button">確定</string>
+    <string name="video_menu_invalid_colors_button">OK</string>
     <string name="video_menu_switch_viewer">切換Cardboard查看器</string>
     <string name="video_menu_preview">預覽</string>
     <string name="audio_menu_volume">音量</string>
