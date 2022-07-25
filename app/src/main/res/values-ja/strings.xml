@@ -68,7 +68,7 @@
     <string name="video_mode_anaglyph_summary">アナグリフ（2色）</string>
     <string name="video_mode_anaglyph_description">3Dメガネのほとんどのペアで機能します</string>
     <string name="video_mode_cardboard_summary">Google Cardboard</string>
-    <string name="video_mode_cardboard_description">GoogleCardboardまたはDaydreamで動作します</string>
+    <string name="video_mode_cardboard_description">Google CardboardまたはDaydreamで動作します</string>
     <string name="video_mode_mono_left_summary">左目のみ</string>
     <string name="video_mode_mono_right_summary">右目のみ</string>
     <string name="video_mode_mono_description">機器は必要ありませんが、3D効果はありません</string>
