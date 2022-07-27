@@ -48,8 +48,8 @@ android {
         applicationId "com.simongellis.vvb"
         minSdkVersion 21
         targetSdkVersion 32
-        versionCode 31
-        versionName "1.9.0"
+        versionCode 32
+        versionName "1.10.0"
 
         buildConfigField("String", "ACRA_URI", generatedString("https://vvb-notifications.simongellis.com/report"))
 
@@ -152,7 +152,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     // lifecycle things
-    def lifecycleVersion = '2.4.1'
+    def lifecycleVersion = '2.5.0'
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion"

@@ -10,6 +10,11 @@
     "authors": ["KR155E"]
   },
   {
+    "name": "Elevated Speed",
+    "uri": "content://com.simongellis.vvb.assets/games/Elevated Speed.vb",
+    "authors": ["PizzaRollsRoyce"]
+  },
+  {
     "name": "Fishbone",
     "uri": "content://com.simongellis.vvb.assets/games/Fishbone.vb",
     "authors": ["thunderstruck"]
