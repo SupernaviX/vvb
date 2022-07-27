@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">VVB</string>
+    <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">遊戲動作</string>
     <string name="main_menu_now_playing">正在播放</string>
     <string name="main_menu_load_game">加載遊戲</string>
@@ -46,16 +46,16 @@
     <string name="controller_menu_choose_rename">選擇要重命名的控制器...</string>
     <string name="controller_menu_choose_delete">選擇要刪除的控制器...</string>
     <string name="controller_menu_default_name">控制器%1$d</string>
-    <string name="input_menu_dpad_left">左方向鍵</string>
-    <string name="input_menu_dpad_right">右方向鍵</string>
-    <string name="input_menu_button_left">左</string>
-    <string name="input_menu_button_right">右</string>
-    <string name="input_menu_button_up">上</string>
-    <string name="input_menu_button_down">下</string>
+    <string name="input_menu_dpad_left">Left D-Pad</string>
+    <string name="input_menu_dpad_right">Right D-Pad</string>
+    <string name="input_menu_button_left">Left</string>
+    <string name="input_menu_button_right">Right</string>
+    <string name="input_menu_button_up">Up</string>
+    <string name="input_menu_button_down">Down</string>
     <string name="input_menu_button_a">A</string>
     <string name="input_menu_button_b">B</string>
-    <string name="input_menu_button_lt">L觸發器</string>
-    <string name="input_menu_button_rt">R觸發器</string>
+    <string name="input_menu_button_lt">L Trigger</string>
+    <string name="input_menu_button_rt">R Trigger</string>
     <string name="input_menu_button_start">Start</string>
     <string name="input_menu_button_select">Select</string>
     <string name="input_menu_unmapped">未映射</string>
