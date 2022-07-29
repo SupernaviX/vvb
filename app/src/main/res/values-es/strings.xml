@@ -1,5 +1,5 @@
 <resources>
-    <string name="nombre_de_la_aplicación">Virtual Virtual Boy</string>
+    <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">Acciones del juego</string>
     <string name="main_menu_now_playing">Ahora jugando</string>
     <string name="main_menu_load_game">Cargar juego</string>
