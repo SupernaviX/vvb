@@ -34,7 +34,7 @@
     <string name="controller_menu_controllers">控制器</string>
     <string name="controller_menu_manage">管理控制器</string>
     <string name="controller_menu_automap_new_controller">自动映射新控制器</string>
-    <string name="controller_menu_choose_controller">选择要映射的控制器</string>
+    <string name="controller_menu_choose_controller">选择映射控制器</string>
     <string name="controller_menu_no_controllers_detected">未检测到控制器...</string>
     <string name="controller_menu_new_controller">新控制器</string>
     <string name="controller_menu_rename_controller">重命名控制器</string>
@@ -43,8 +43,8 @@
     <string name="controller_menu_create">创建</string>
     <string name="controller_menu_cancel">取消</string>
     <string name="controller_menu_rename">重命名</string>
-    <string name="controller_menu_choose_rename">选择要重命名的控制器...</string>
-    <string name="controller_menu_choose_delete">选择要删除的控制器...</string>
+    <string name="controller_menu_choose_rename">选择重命名控制器...</string>
+    <string name="controller_menu_choose_delete">选择删除控制器...</string>
     <string name="controller_menu_default_name">控制器%1d</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
