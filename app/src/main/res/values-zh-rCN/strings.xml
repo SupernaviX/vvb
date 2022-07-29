@@ -8,10 +8,10 @@
     <string name="main_menu_video_setup">视频设置</string>
     <string name="main_menu_audio_setup">音频设置</string>
     <string name="load_game_from_file">从文件加载</string>
-    <string name="load_game_from_file_explanation">你可下载Virtual Boy游戏ROM，并在此加载进行游戏。\n你可在https://virtual-boy.com/homebrew/ 找到来自Planet Virtual Boy的免费ROM。</string>
+    <string name="load_game_from_file_explanation">下载Virtual Boy游戏ROM，在此加载游戏。\n在https://virtual-boy.com/homebrew/ 找到来自Planet Virtual Boy免费ROM。</string>
     <string name="load_game_from_file_explanation_button">OK</string>
     <string name="load_game_recent_games">近期游戏</string>
-    <string name="load_game_no_recent_games">你未玩任何游戏。试！</string>
+    <string name="load_game_no_recent_games">未玩任何游戏。试！</string>
     <string name="load_game_bundled_games">捆绑游戏</string>
     <string name="load_game_no_bundled_games">无捆绑游戏</string>
     <string name="load_game_created_by">作者%1s</string>
@@ -81,7 +81,7 @@
     <string name="video_menu_color_left">左眼色</string>
     <string name="video_menu_color_right">右眼色</string>
     <string name="video_menu_invalid_colors_title">无效色</string>
-    <string name="video_menu_invalid_colors_message">左右眼色在至少一色通道“重叠”。3D效果可能无法正常工作。</string>
+    <string name="video_menu_invalid_colors_message">左右眼色在至少一色道“重叠”。3D效果可能无法正常工作。</string>
     <string name="video_menu_invalid_colors_button">OK</string>
     <string name="video_menu_switch_viewer">切换Cardboard查看器</string>
     <string name="video_menu_preview">预览</string>
