@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">游戏动作</string>
-    <string name="main_menu_now_playing">游玩中</string>
+    <string name="main_menu_now_playing">正玩</string>
     <string name="main_menu_load_game">加载游戏</string>
     <string name="main_menu_onscreen_input_setup">屏幕输入设置</string>
     <string name="main_menu_controller_setup">控制器设置</string>
