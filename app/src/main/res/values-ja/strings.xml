@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">ゲームアクション</string>
     <string name="main_menu_now_playing">再生中</string>
     <string name="main_menu_load_game">ゲームの読み込み</string>
@@ -9,7 +8,6 @@
     <string name="main_menu_audio_setup">オーディオ設定</string>
     <string name="load_game_from_file">ファイルから読み込む</string>
     <string name="load_game_from_file_explanation">バーチャルボーイゲームのROMをダウンロードし、ここに読み込んでプレイできます。\nプラネットバーチャルボーイの無料ROMは、https://virtual-boy.com/homebrew/ で見つけることができます。</string>
-    <string name="load_game_from_file_explanation_button">OK</string>
     <string name="load_game_recent_games">最近のゲーム</string>
     <string name="load_game_no_recent_games">まだゲームをプレイしていません。試してみてください！</string>
     <string name="load_game_bundled_games">バンドルされたゲーム</string>
@@ -46,18 +44,6 @@
     <string name="controller_menu_choose_rename">名前を変更するコントローラーを選択してください…</string>
     <string name="controller_menu_choose_delete">削除するコントローラーを選択してください…</string>
     <string name="controller_menu_default_name">コントローラー%1$d</string>
-    <string name="input_menu_dpad_left">Left D-Pad</string>
-    <string name="input_menu_dpad_right">Right D-Pad</string>
-    <string name="input_menu_button_left">Left</string>
-    <string name="input_menu_button_right">Right</string>
-    <string name="input_menu_button_up">Up</string>
-    <string name="input_menu_button_down">Down</string>
-    <string name="input_menu_button_a">A</string>
-    <string name="input_menu_button_b">B</string>
-    <string name="input_menu_button_lt">L Trigger</string>
-    <string name="input_menu_button_rt">R Trigger</string>
-    <string name="input_menu_button_start">Start</string>
-    <string name="input_menu_button_select">Select</string>
     <string name="input_menu_unmapped">マップされていない</string>
     <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップします。長押しして複数のコントロールをマッピングします。</string>
     <string name="input_menu_add_mapping">任意のコントロールを押して、この入力に別のマッピングを追加します。</string>
@@ -82,7 +68,6 @@
     <string name="video_menu_color_right">右目の色</string>
     <string name="video_menu_invalid_colors_title">無効な色</string>
     <string name="video_menu_invalid_colors_message">左目と右目の色は少なくとも1つのカラーチャンネルで「重なり合っています」。3D効果が正しく機能しない場合があります。</string>
-    <string name="video_menu_invalid_colors_button">OK</string>
     <string name="video_menu_switch_viewer">スイッチ段ボールビューア</string>
     <string name="video_menu_preview">プレビュー</string>
     <string name="audio_menu_volume">音量</string>
