@@ -70,7 +70,7 @@
     <string name="video_mode_cardboard_summary">Google Cardboard</string>
     <string name="video_mode_cardboard_description">Funciona con Google Cardboard o Daydream</string>
     <string name="video_mode_mono_left_summary">Sólo ojo izquierdo</string>
-    <string name="video_mono_right_summary">Sólo ojo derecho</string>
+    <string name="video_mode_mono_right_summary">Sólo ojo derecho</string>
     <string name="video_mono_description">No se necesita equipo, pero no hay efectos 3D</string>
     <string name="video_mode_stereo_summary">Lado a lado</string>
     <string name="video_mode_stereo_description">Funciona con televisores 3D</string>
@@ -78,8 +78,8 @@
     <string name="aspect_ratio_auto">Auto</string>
     <string name="aspect_ratio_stretch">Estirar para ajustar</string>
     <string name="video_menu_color">Color</string>
-    <string name="video_menu_color_izquierdo">Color del ojo izquierdo</string>
-    <string name="video_menu_color_derecho">Color del ojo derecho</string>
+    <string name="video_menu_color_left">Color del ojo izquierdo</string>
+    <string name="video_menu_color_right">Color del ojo derecho</string>
     <string name="video_menu_invalid_colors_title">Colores no válidos</string>
     <string name="video_menu_invalid_colors_message">Los colores del ojo izquierdo y derecho se "superponen" en al menos un canal de color. Es posible que el efecto 3D no funcione correctamente.</string>
     <string name="video_menu_invalid_colors_button">Aceptar</string>
