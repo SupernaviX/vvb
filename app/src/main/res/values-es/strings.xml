@@ -46,8 +46,8 @@
     <string name="controller_menu_choose_rename">Elegir controlador para renombrar...</string>
     <string name="controller_menu_choose_delete">Elegir controlador para borrar...</string>
     <string name="controller_menu_default_name">Controlador %1$d</string>
-    <string name="input_menu_dpad_left">Pad D izquierdo</string>
-    <string name="input_menu_dpad_right">Pad D derecho</string>
+    <string name="input_menu_dpad_left">D-Pad izquierdo</string>
+    <string name="input_menu_dpad_right">D-Pad derecho</string>
     <string name="input_menu_button_left">Izquierda</string>
     <string name="input_menu_button_right">Derecha</string>
     <string name="input_menu_button_up">Arriba</string>
