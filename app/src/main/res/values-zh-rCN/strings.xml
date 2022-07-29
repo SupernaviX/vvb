@@ -9,7 +9,7 @@
     <string name="load_game_from_file">从文件加载</string>
     <string name="load_game_from_file_explanation">下载Virtual Boy游戏ROM，在此加载游戏。\n在https://virtual-boy.com/homebrew/ 找到来自Planet Virtual Boy免费ROM。</string>
     <string name="load_game_recent_games">近期游戏</string>
-    <string name="load_game_no_recent_games">未玩任何游戏。试！</string>
+    <string name="load_game_no_recent_games">未玩游戏。试！</string>
     <string name="load_game_bundled_games">捆绑游戏</string>
     <string name="load_game_no_bundled_games">无捆绑游戏</string>
     <string name="load_game_created_by">作者%1s</string>
@@ -76,7 +76,7 @@
     <string name="error_file_not_found">​​找不到那文件。也许它被移动了？</string>
     <string name="error_not_power_of_two">这不是Virtual Boy游戏！文件大小应是2的幂。</string>
     <string name="error_too_large">那不是Virtual Boy游戏！最多只能达到16Mb。</string>
-    <string name="error_zip">ZIP文件中任何内容都不像Virtual Boy游戏……</string>
+    <string name="error_zip">ZIP文件内容不像Virtual Boy游戏……</string>
     <string name="toast_state_saved">保存状态</string>
     <string name="toast_state_loaded">加载状态</string>
 </resources>
