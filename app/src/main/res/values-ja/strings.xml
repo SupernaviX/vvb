@@ -45,7 +45,6 @@
     <string name="controller_menu_rename">名前の変更</string>
     <string name="controller_menu_choose_rename">名前を変更するコントローラを選択...</string>
     <string name="controller_menu_choose_delete">削除するコントローラを選択...</string>
-    <string name="controller_menu_default_name">Controller %1$d</string>
     <string name="controller_menu_default_name">コントローラ %1$d</string>
     <string name="input_menu_dpad_left">左のD-Pad</string>
     <string name="input_menu_dpad_right">右の D パッド</string>
