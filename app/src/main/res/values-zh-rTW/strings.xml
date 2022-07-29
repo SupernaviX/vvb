@@ -8,7 +8,7 @@
     <string name="main_menu_video_setup">視頻設置</string>
     <string name="main_menu_audio_setup">音頻設置</string>
     <string name="load_game_from_file">文件加載</string>
-    <string name="load_game_from_file_explanation">下載Virtual Boy遊戲ROM，在此加載進行遊戲。\n在https://virtual-boy.com/homebrew/ 找到來自Planet Virtual Boy的免費ROM。</string>
+    <string name="load_game_from_file_explanation">下載Virtual Boy遊戲ROM，在此加載遊戲。\n在https://virtual-boy.com/homebrew/ 找到來自Planet Virtual Boy免費ROM。</string>
     <string name="load_game_from_file_explanation_button">OK</string>
     <string name="load_game_recent_games">近期遊戲</string>
     <string name="load_game_no_recent_games">未玩任何遊戲。試！</string>
@@ -34,7 +34,7 @@
     <string name="controller_menu_controllers">控制器</string>
     <string name="controller_menu_manage">管理控制器</string>
     <string name="controller_menu_automap_new_controller">自動映射新控制器</string>
-    <string name="controller_menu_choose_controller">選擇要映射的控制器</string>
+    <string name="controller_menu_choose_controller">選擇映射控制器</string>
     <string name="controller_menu_no_controllers_detected">未檢測到控制器...</string>
     <string name="controller_menu_new_controller">新控制器</string>
     <string name="controller_menu_rename_controller">重命名控制器</string>
@@ -43,8 +43,8 @@
     <string name="controller_menu_create">創建</string>
     <string name="controller_menu_cancel">取消</string>
     <string name="controller_menu_rename">重命名</string>
-    <string name="controller_menu_choose_rename">選擇要重命名的控制器...</string>
-    <string name="controller_menu_choose_delete">選擇要刪除的控制器...</string>
+    <string name="controller_menu_choose_rename">選擇重命名控制器...</string>
+    <string name="controller_menu_choose_delete">選擇刪除控制器...</string>
     <string name="controller_menu_default_name">控制器%1$d</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
