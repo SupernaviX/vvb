@@ -78,7 +78,7 @@
     <string name="aspect_ratio_auto">Auto</string>
     <string name="aspect_ratio_stretch">Anpassen an Größe</string>
     <string name="video_menu_color">Farbe</string>
-    <string name="video_menu_color_left">Farbe für das linke Auge</string>
+    <string name="video_menu_color_left">Linke Augenfarbe</string>
     <string name="video_menu_color_right">Rechte Augenfarbe</string>
     <string name="video_menu_invalid_colors_title">Ungültige Farben</string>
     <string name="video_menu_invalid_colors_message">Die Farben des linken und rechten Auges "überschneiden" sich auf mindestens einem Farbkanal. Der 3D-Effekt funktioniert möglicherweise nicht richtig.</string>
