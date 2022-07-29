@@ -46,8 +46,8 @@
     <string name="controller_menu_choose_rename">名前を変更するコントローラを選択...</string>
     <string name="controller_menu_choose_delete">削除するコントローラを選択...</string>
     <string name="controller_menu_default_name">コントローラ %1$d</string>
-    <string name="input_menu_dpad_left">左のD-Pad</string>
-    <string name="input_menu_dpad_right">右の D パッド</string>
+    <string name="input_menu_dpad_left">左のDパッド</string>
+    <string name="input_menu_dpad_right">右のDパッド</string>
     <string name="input_menu_button_left">左</string>
     <string name="input_menu_button_right">右</string>
     <string name="input_menu_button_up">上</string>
@@ -69,7 +69,7 @@
     <string name="video_mode_anaglyph_description">ほとんどの 3D メガネで使用可能</string>
     <string name="video_mode_cardboard_summary">Google Cardboard</string>
     <string name="video_mode_cardboard_description">Google Cardboard または Daydream と共に動作します</string>
-    <string name="video_mode_mono_left_summary">左目のみ</string>
+    <string name="video_mode_mono_left_summary">左目用</string>
     <string name="video_mode_mono_right_summary">右目用</string>
     <string name="video_mode_mono_description">機材は不要だが、3D効果はない</string>
     <string name="video_mode_stereo_summary">サイド・バイ・サイド</string>
@@ -79,7 +79,7 @@
     <string name="aspect_ratio_stretch">フィットするように引き伸ばす</string>
     <string name="video_menu_color">色</string>
     <string name="video_menu_color_left">左目の色</string>
-    <string name="video_menu_color_right">右眼の色</string>
+    <string name="video_menu_color_right">右目の色</string>
     <string name="video_menu_invalid_colors_title">無効な色</string>
     <string name="video_menu_invalid_colors_message">左右の目の色が少なくとも1つのカラーチャンネルで「重なって」います。3D効果が正しく動作しない可能性があります</string>
     <string name="video_menu_invalid_colors_button">OK</string>と表示されます。
