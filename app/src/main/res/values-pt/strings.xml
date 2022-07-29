@@ -8,7 +8,7 @@
     <string name="main_menu_menu_video_setup">Configuração do vídeo</string>
     <string name="main_menu_audio_setup">Configuração de áudio</string>
     <string name="load_game_from_file">Load From File</string>
-    <string name="load_game_from_from_file_explanation">Pode descarregar ROMs de jogos do Virtual Boy, e carregá-las aqui para as jogar.\n Pode encontrar ROMs grátis de Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Pode descarregar ROMs de jogos do Virtual Boy, e carregá-las aqui para as jogar.\n Pode encontrar ROMs grátis de Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button">OK</string>
     <string name="load_game_recent_games"> Jogos recentes</string>
     <string name="load_game_no_recent_games">Você ainda não jogou nenhum jogo. Experimente um!</string>
@@ -47,9 +47,9 @@
     <string name="controller_menu_choose_delete">Selecionar controlador para apagar...</string>
     <string name="controller_menu_default_name">Controller %1$d</string>
     <string name="input_menu_dpad_left">Pade-D esquerda</string>
-    <string name="input_menu_dpad_right">D-Pad D-Pad correcto</string>
+    <string name="input_menu_dpad_right">Pade-D direita</string>
     <string name="input_menu_button_left">Esquerda</string>
-    <string name="input_menu_button_right">Corda_direita</string>
+    <string name="input_menu_button_right">Direita</string>
     <string name="input_menu_button_up">Up</string>
     <string name="input_menu_button_down">Down</string>
     <string name="input_menu_button_a">A</string>
