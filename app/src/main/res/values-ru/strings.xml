@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">Игровые действия</string>
     <string name="main_menu_now_playing">Воспроизведение</string>
     <string name="main_menu_load_game">Загрузить игру</string>
@@ -9,7 +8,6 @@
     <string name="main_menu_audio_setup">Настройка звука</string>
     <string name="load_game_from_file">Загрузить из файла</string>
     <string name="load_game_from_file_explanation">Вы можете загрузить ПЗУ игр Virtual Boy и загрузить их здесь, чтобы играть в них.\nВы можете найти бесплатные ПЗУ от Planet Virtual Boy по адресу https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_from_file_explanation_button">OK</string>
     <string name="load_game_recent_games">Последние игры</string>
     <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте!</string>
     <string name="load_game_bundled_games">Игры в комплекте</string>
@@ -46,18 +44,6 @@
     <string name="controller_menu_choose_rename">Выберите контроллер для переименования…</string>
     <string name="controller_menu_choose_delete">Выберите контроллер для удаления…</string>
     <string name="controller_menu_default_name">Контроллер %1$d</string>
-    <string name="input_menu_dpad_left">Left D-Pad</string>
-    <string name="input_menu_dpad_right">Right D-Pad</string>
-    <string name="input_menu_button_left">Left</string>
-    <string name="input_menu_button_right">Right</string>
-    <string name="input_menu_button_up">Up</string>
-    <string name="input_menu_button_down">Down</string>
-    <string name="input_menu_button_a">A</string>
-    <string name="input_menu_button_b">B</string>
-    <string name="input_menu_button_lt">L Trigger</string>
-    <string name="input_menu_button_rt">R Trigger</string>
-    <string name="input_menu_button_start">Start</string>
-    <string name="input_menu_button_select">Select</string>
     <string name="input_menu_unmapped">Не сопоставлено</string>
     <string name="input_menu_put_mapping">Нажмите любой элемент управления, чтобы сопоставить его с этим входом. Нажмите и удерживайте, чтобы сопоставить несколько элементов управления.</string>
     <string name="input_menu_add_mapping">Нажмите любой элемент управления, чтобы добавить другое сопоставление для этого ввода.</string>
@@ -82,7 +68,6 @@
     <string name="video_menu_color_right">Цвет правого глаза</string>
     <string name="video_menu_invalid_colors_title">Недопустимые цвета</string>
     <string name="video_menu_invalid_colors_message">Цвета левого и правого глаза "перекрываются" по крайней мере в одном цветовом канале. 3D-эффект может работать неправильно.</string>
-    <string name="video_menu_invalid_colors_button">OK</string>
     <string name="video_menu_switch_viewer">Переключить средство просмотра Cardboard</string>
     <string name="video_menu_preview">Предварительный просмотр</string>
     <string name="audio_menu_volume">Громкость</string>
