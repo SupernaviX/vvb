@@ -48,8 +48,8 @@
     <string name="controller_menu_default_name">Controller %1$d</string>
     <string name="input_menu_dpad_left">Linkse D-Pad</string>
     <string name="input_menu_dpad_right">Rechtse D-Pad</string>
-    <string name="input_menu_button_left">Left</string>
-    <string name="input_menu_button_right">Right</string>
+    <string name="input_menu_button_left">Links</string>
+    <string name="input_menu_button_right">Rechts</string>
     <string name="input_menu_button_up">Up</string>
     <string name="input_menu_button_down">Down</string>
     <string name="input_menu_button_a">A</string>
