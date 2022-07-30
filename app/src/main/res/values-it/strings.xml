@@ -34,7 +34,6 @@
     <string name="controller_menu_name">Nome controllore?</string>
     <string name="controller_menu_create">Creare</string>
     <string name="controller_menu_cancel">Annulla</string>
-    <string name="controller_menu_rename">Rename</string>
     <string name="controller_menu_choose_rename">Scegliere il controller da rinominare...</string>
     <string name="controller_menu_choose_delete">Scegliere il controllore da eliminare...</string>
     <string name="input_menu_put_mapping">Premere un qualsiasi controllo per mapparlo a questo ingresso. Premere a lungo per mappare più controlli.</string>
