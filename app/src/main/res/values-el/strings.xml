@@ -31,7 +31,6 @@
     <string name="video_mode_anaglyph_description">Δουλεύει με τα περισσότερα ζευγάρια γυαλιών 3D</string>
     <string name="video_mode_cardboard_description">Εργάζεται με το Google Cardboard ή το Daydream</string>
     <string name="video_mode_mono_left_summary">Μόνο για το αριστερό μάτι</string>
-    <string name="video_mode_mono_right_summary">Right eye only</string>
     <string name="video_mode_mono_description">Δεν απαιτείται εξοπλισμός, αλλά δεν υπάρχουν τρισδιάστατα εφέ</string>
     <string name="video_mode_stereo_summary">Πλάι-πλάι</string>
     <string name="video_mode_stereo_description">Εργάζεται με τρισδιάστατες τηλεοράσεις</string>
