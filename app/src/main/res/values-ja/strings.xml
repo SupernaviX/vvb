@@ -24,9 +24,9 @@
     <string name="onscreen_input_menu_on">仮想ゲームパッドを使用</string>
     <string name="onscreen_input_menu_toggle_controls">トリガーボタンをトグルモードにする</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptic Feedback を有効にする</string>
-    <string name="onscreen_input_menu_parallax">視差</string>を有効にする。
+    <string name="onscreen_input_menu_parallax">視差</string>
     <string name="onscreen_input_menu_show_bounds">コントロールの境界を表示する</string>
-    <string name="onscreen_input_menu_preview">プレビュー</string>を表示します。
+    <string name="onscreen_input_menu_preview">プレビュー</string>
     <string name="controller_menu_controllers">コントローラ</string>
     <string name="controller_menu_manage">コントローラの管理</string>
     <string name="controller_menu_automap_new_controller">新しいコントローラを自動マップ</string>
@@ -53,10 +53,10 @@
     <string name="video_mode_anaglyph_description">ほとんどの 3D メガネで使用可能</string>
     <string name="video_mode_cardboard_description">Google Cardboard または Daydream と共に動作します</string>
     <string name="video_mode_mono_left_summary">左目用</string>
-    <string name="video_mode_mono_right_summary">右目用</string>となります。
+    <string name="video_mode_mono_right_summary">右目用</string>
     <string name="video_mode_mono_description">機材は不要だが、3D効果はない</string>
     <string name="video_mode_stereo_summary">サイド・バイ・サイド</string>
-    <string name="video_mode_stereo_description">3Dテレビで動作</string>するようになりました。
+    <string name="video_mode_stereo_description">3Dテレビで動作</string>
     <string name="video_menu_aspect_ratio">アスペクト比</string>
     <string name="aspect_ratio_auto">自動</string>
     <string name="aspect_ratio_stretch">フィットするように引き伸ばす</string>
