@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">Acciones del juego</string>
     <string name="main_menu_now_playing">Ahora jugando</string>
     <string name="main_menu_load_game">Cargar juego</string>
@@ -8,7 +7,7 @@
     <string name="main_menu_video_setup">Configuración de vídeo</string>
     <string name="main_menu_audio_setup">Configuración de audio</string>
     <string name="load_game_from_file">Cargar desde archivo</string>
-    <string name="load_game_from_file_explanation">Puedes descargar ROMs de juegos de Virtual Boy, y cargarlos aquí para jugarlos. Puedes encontrar ROMs gratuitas de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Puedes descargar ROMs de juegos de Virtual Boy, y cargarlos aquí para jugarlos.Puedes encontrar ROMs gratis de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button">Aceptar</string>
     <string name="load_game_recent_games">Juegos recientes</string>
     <string name="load_game_no_recent_games">Todavía no has jugado a ningún juego. Prueba uno! </string>
@@ -28,7 +27,6 @@
     <string name="onscreen_input_menu_on">Usar Gamepad Virtual</string>
     <string name="onscreen_input_menu_toggle_controls">Poner los botones de disparo en modo de conmutación</string>
     <string name="onscreen_input_menu_haptic_feedback">Activar la retroalimentación háptica</string>
-    <string name="onscreen_input_menu_parallax">Parallax</string>
     <string name="onscreen_input_menu_show_bounds">Mostrar límites de control</string>
     <string name="onscreen_input_menu_preview">Vista previa</string>
     <string name="controller_menu_controllers">Controladores</string>
@@ -42,23 +40,10 @@
     <string name="controller_menu_name">Nombre del controlador</string>
     <string name="controller_menu_create">Crear</string>
     <string name="controller_menu_cancel">Cancelar</string>
-    <string name="controller_menu_rename">Rename</string>
     <string name="controller_menu_choose_rename">Elegir controlador para renombrar...</string>
     <string name="controller_menu_choose_delete">Elegir controlador para borrar...</string>
     <string name="controller_menu_default_name">Controlador %1$d</string>
-    <string name="input_menu_dpad_left">D-Pad izquierdo</string>
-    <string name="input_menu_dpad_right">D-Pad derecho</string>
-    <string name="input_menu_button_left">Izquierda</string>
-    <string name="input_menu_button_right">Derecha</string>
-    <string name="input_menu_button_up">Arriba</string>
-    <string name="input_menu_button_down">Abajo</string>
-    <string name="input_menu_button_a">A</string>
-    <string name="input_menu_button_b">B</string>
-    <string name="input_menu_button_lt">Disparo L</string>
-    <string name="input_menu_button_rt">Disparo R</string>
-    <string name="input_menu_button_start">Inicio</string>
-    <string name="input_menu_button_select">Seleccionar</string>
-    <string name="input_menu_unmapped">Sin mapear</string>
+    <string name="input_menu_unmapped">Sin asignar</string>
     <string name="input_menu_put_mapping">Pulsa cualquier control para asignarlo a esta entrada. Pulse prolongadamente para asignar varios controles.</string>
     <string name="input_menu_add_mapping">Pulsa cualquier control para añadir otra asignación para esta entrada.</string>
     <string name="video_menu_screen_zoom_percent">Ampliación de la pantalla (porcentaje)</string>
@@ -67,7 +52,6 @@
     <string name="video_menu_mode">Modo de visualización</string>
     <string name="video_mode_anaglyph_summary">Anaglifo (dos colores)</string>
     <string name="video_mode_anaglyph_description">Funciona con la mayoría de los pares de gafas 3D</string>
-    <string name="video_mode_cardboard_summary">Google Cardboard</string>
     <string name="video_mode_cardboard_description">Funciona con Google Cardboard o Daydream</string>
     <string name="video_mode_mono_left_summary">Sólo ojo izquierdo</string>
     <string name="video_mode_mono_right_summary">Sólo ojo derecho</string>
@@ -75,11 +59,9 @@
     <string name="video_mode_stereo_summary">Lado a lado</string>
     <string name="video_mode_stereo_description">Funciona con televisores 3D</string>
     <string name="video_menu_aspect_ratio">Relación de aspecto</string>
-    <string name="aspect_ratio_auto">Auto</string>
     <string name="aspect_ratio_stretch">Estirar para ajustar</string>
-    <string name="video_menu_color">Color</string>
-    <string name="video_menu_color_left">Color del ojo izquierdo</string>
-    <string name="video_menu_color_right">Color del ojo derecho</string>
+    <string name="video_menu_color_izquierdo">Color del ojo izquierdo</string>
+    <string name="video_menu_color_derecho">Color del ojo derecho</string>
     <string name="video_menu_invalid_colors_title">Colores no válidos</string>
     <string name="video_menu_invalid_colors_message">Los colores del ojo izquierdo y derecho se "superponen" en al menos un canal de color. Es posible que el efecto 3D no funcione correctamente.</string>
     <string name="video_menu_invalid_colors_button">Aceptar</string>
