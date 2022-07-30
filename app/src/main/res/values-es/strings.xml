@@ -20,7 +20,6 @@
     <string name="game_menu_save_state">Estado de guardado</string>
     <string name="game_menu_load_state">Estado de carga</string>
     <string name="game_menu_state_slot">Ranura de estado actual</string>
-    <string name="game_menu_state_slot_name">Slot %1$s</string>
     <string name="game_menu_state_slot_empty">Vacío</string>
     <string name="game_menu_state_slot_saved">Guardado: %1$s</string>
     <string name="game_menu_close_game">Cerrar juego</string>
