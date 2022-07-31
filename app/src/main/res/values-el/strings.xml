@@ -42,7 +42,7 @@
     <string name="video_menu_preview">Προεπισκόπηση</string>
     <string name="audio_menu_buffer_size">Μέγεθος buffer (σε καρέ)</string>
     <string name="application_crashed">Συγγνώμη, η εφαρμογή κατέρρευσε. Θα σταλεί μια αναφορά στον προγραμματιστή.</string>
-    <string name="error_file_not_found">Το συγκεκριμένο αρχείο δεν βρέθηκε. Μήπως μετακινήθηκε; </string>
+    <string name="error_file_not_found">Το συγκεκριμένο αρχείο δεν βρέθηκε. Μήπως μετακινήθηκε;</string>
     <string name="error_not_power_of_two">Αυτό\ δεν είναι παιχνίδι Virtual Boy! Το μέγεθος του αρχείου πρέπει να είναι δύναμη του δύο.</string>
     <string name="error_too_large">Αυτό\ δεν είναι παιχνίδι Virtual Boy! Μπορούν να είναι μόνο μέχρι 16Mb.</string>
     <string name="error_zip">Τίποτα σε αυτό το αρχείο ZIP δεν έμοιαζε με παιχνίδι Virtual Boy...</string>
