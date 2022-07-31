@@ -67,7 +67,7 @@
     <string name="error_file_not_found">找不到那个文件。也许它被移动了？</string>
     <string name="error_not_power_of_two">那不是一个Virtual Boy游戏!文件大小应是二的幂。</string>
     <string name="error_too_large">That\'s not a Virtual Boy game!它们只能达到16Mb。</string>
-    <string name="error_zip">那个ZIP文件中无任何东西看起来像Virtual Boy游戏......</string>
+    <string name="error_zip">那个ZIP文件中无任何东西看着像Virtual Boy游戏......</string>
     <string name="toast_state_saved">保存状态</string>
     <string name="toast_state_loaded">加载状态</string>
 </resources>
