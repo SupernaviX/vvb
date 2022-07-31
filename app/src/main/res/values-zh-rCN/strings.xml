@@ -45,7 +45,7 @@
     <string name="video_menu_horizontal_offset">水平偏移</string>
     <string name="video_menu_vertical_offset">垂直偏移</string>
     <string name="video_menu_mode">显示模式</string>
-    <string name="video_mode_anaglyph_summary">Anaglyph (双色)</string>
+    <string name="video_mode_anaglyph_summary">Anaglyph(双色)</string>
     <string name="video_mode_anaglyph_description">与大多数3D眼镜配合使用</string>
     <string name="video_mode_cardboard_description">适用于Google Cardboard或Daydream</string>
     <string name="video_mode_mono_left_summary">只用左眼</string>
