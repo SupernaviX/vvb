@@ -6,7 +6,7 @@
     <string name="main_menu_controller_setup">Controller einrichten</string>
     <string name="main_menu_audio_setup">Audio-Einstellungen</string>
     <string name="load_game_from_file">Laden aus Datei</string>
-    <string name="load_game_from_file_explanation">Sie können ROMs von Virtual Boy-Spielen herunterladen und sie hier laden, um sie zu spielen. Sie können kostenlose ROMs von Planet Virtual Boy finden, unter https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Sie können ROMs von Virtual Boy-Spielen herunterladen und sie hier laden, um sie zu spielen.\nSie können kostenlose ROMs von Planet Virtual Boy finden, unter https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_no_recent_games">Du hast noch keine Spiele gespielt. Probiere eines aus!</string>
     <string name="load_game_bundled_games">Gebündelte Spiele</string>
     <string name="load_game_no_bundled_games">Keine gebündelten Spiele</string>
