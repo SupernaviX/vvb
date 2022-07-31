@@ -9,7 +9,7 @@
     <string name="load_game_from_file">Загрузка из файла</string>
     <string name="load_game_from_file_explanation">Вы можете скачать ПЗУ игр Virtual Boy и загрузить их сюда, чтобы играть.\nВы можете найти бесплатные ПЗУ с Planet Virtual Boy, на https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Последние игры</string>
-    <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте одну! </string>
+    <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте одну!</string>
     <string name="load_game_bundled_games">Публикованные игры</string>
     <string name="load_game_no_bundled_games">Нет игр в комплекте</string>
     <string name="load_game_created_by">Создано %1$s</string>
@@ -71,8 +71,8 @@
     <string name="audio_menu_volume">Громкость</string>
     <string name="audio_menu_buffer_size">Размер буфера (в кадрах)</string>
     <string name="application_crashed">Извините, приложение потерпело крах. Отчет будет отправлен разработчику.</string>
-    <string name="error_file_not_found">Этот файл не может быть найден. Возможно, он был перемещен? </string>
-    <string name="error_not_power_of_two">Это\ не игра для Virtual Boy! Размер файла должен быть равен двум. </string>
+    <string name="error_file_not_found">Этот файл не может быть найден. Возможно, он был перемещен?</string>
+    <string name="error_not_power_of_two">Это\ не игра для Virtual Boy! Размер файла должен быть равен двум.</string>
     <string name="error_too_large">Это\ не игра для Virtual Boy! Они могут быть только до 16 Мб.</string>
     <string name="error_zip">Ничто в этом ZIP-файле не похоже на игру для Virtual Boy...</string>
     <string name="toast_state_saved">Сохраненное состояние</string>
