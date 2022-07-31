@@ -7,10 +7,10 @@
     <string name="main_menu_video_setup">Configuración de vídeo</string>
     <string name="main_menu_audio_setup">Configuración de audio</string>
     <string name="load_game_from_file">Cargar desde archivo</string>
-    <string name="load_game_from_file_explanation">Puedes descargar ROMs de juegos de Virtual Boy, y cargarlos aquí para jugarlos.Puedes encontrar ROMs gratis de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Puedes descargar ROMs de juegos de Virtual Boy, y cargarlos aquí para jugarlos.\nPuedes encontrar ROMs gratis de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button">Aceptar</string>
     <string name="load_game_recent_games">Juegos recientes</string>
-    <string name="load_game_no_recent_games">Todavía no has jugado a ningún juego. Prueba uno! </string>
+    <string name="load_game_no_recent_games">Todavía no has jugado a ningún juego. Prueba uno!</string>
     <string name="load_game_bundled_games">Juegos incluidos</string>
     <string name="load_game_no_bundled_games">Sin juegos incluidos</string>
     <string name="load_game_created_by">Creado por %1$s</string>
@@ -69,7 +69,7 @@
     <string name="audio_menu_volume">Volumen</string>
     <string name="audio_menu_buffer_size">Tamaño del buffer (en fotogramas)</string>
     <string name="application_crashed">Lo siento, la aplicación se ha bloqueado. Se enviará un informe al desarrollador.</string>
-    <string name="error_file_not_found">Ese archivo no se pudo encontrar. ¿Tal vez se ha movido? </string>
+    <string name="error_file_not_found">Ese archivo no se pudo encontrar. ¿Tal vez se ha movido?</string>
     <string name="error_not_power_of_two">¡Ese no es un juego de Virtual Boy! El tamaño del archivo debería ser una potencia de dos.</string>
     <string name="error_too_large">¡Ese no es un juego de Virtual Boy! Sólo pueden ser de hasta 16Mb.</string>
     <string name="error_zip">Nada en ese archivo ZIP parecía un juego de Virtual Boy...</string>
