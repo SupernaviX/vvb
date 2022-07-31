@@ -4,8 +4,8 @@
     <string name="main_menu_onscreen_input_setup">Configuração de entrada na tela</string>
     <string name="main_menu_menu_video_setup">Configuração do vídeo</string>
     <string name="main_menu_audio_setup">Configuração de áudio</string>
-    <string name="load_game_from_file_explanation"> Você pode baixar ROMs de jogos Virtual Boy, e carregá-las aqui para jogá-las.\ Você pode encontrar ROMs grátis do Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games"> Jogos recentes</string>
+    <string name="load_game_from_file_explanation"> Você pode baixar ROMs de jogos Virtual Boy, e carregá-las aqui para jogá-las.\nVocê pode encontrar ROMs grátis do Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_recent_games">Jogos recentes</string>
     <string name="load_game_no_recent_games">Você ainda não jogou nenhum jogo. Experimente um!</string>
     <string name="load_game_bundled_games">Jogos_bundled</string>
     <string name="load_game_no_bundled_games">Sem_game_agrupado</string>
