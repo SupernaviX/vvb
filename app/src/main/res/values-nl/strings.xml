@@ -5,7 +5,7 @@
     <string name="main_menu_controller_setup">Controller-instelling</string>
     <string name="main_menu_video_setup">Video-instelling</string>
     <string name="main_menu_audio_setup">Audio-instelling</string>
-    <string name="load_game_from_file_execution">U kunt ROM's van Virtual Boy-spellen downloaden en ze hier laden om ze te spelen.>U kunt gratis ROM's van Planet Virtual Boy vinden op https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_execution">U kunt ROM's van Virtual Boy-spellen downloaden en ze hier laden om ze te spelen.\nU kunt gratis ROM's van Planet Virtual Boy vinden op https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_no_recent_games">Je hebt nog geen spelletjes gespeeld. Probeer er een uit!</string>
     <string name="load_game_bundled_games">Gebundelde spellen</string>
     <string name="load_game_no_bundled_games">Geen gebundelde spellen</string>
@@ -48,7 +48,7 @@
     <string name="video_menu_invalid_colors_message">De kleuren van het linker- en rechteroog "overlappen" elkaar op ten minste één kleurkanaal. Het 3D-effect werkt mogelijk niet goed.</string>
     <string name="audio_menu_buffer_size">Buffergrootte (in frames)</string>
     <string name="application_crashed">Sorry, de applicatie is gecrasht. Een rapport zal naar de ontwikkelaar worden gestuurd.</string>
-    <string name="error_file_not_found">Dat bestand kon niet worden gevonden. Misschien is het verplaatst? </string>
+    <string name="error_file_not_found">Dat bestand kon niet worden gevonden. Misschien is het verplaatst?</string>
     <string name="error_not_power_of_two">Dat is geen Virtual Boy spel! De bestandsgrootte moet een macht van twee zijn.</string>
     <string name="error_too_large">Dat is geen Virtual Boy spel! Ze mogen maar 16Mb groot zijn.</string>
     <string name="error_zip">Niets in dat ZIP-bestand leek op een Virtual Boy-spel...</string>
