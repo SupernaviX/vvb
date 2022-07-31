@@ -26,8 +26,8 @@
     <string name="controller_menu_create">Skapa</string>
     <string name="controller_menu_choose_rename">Välj kontrollant för att byta namn...</string>
     <string name="controller_menu_choose_delete">Välj kontrollant för att ta bort...</string>
-    <string name="input_menu_put_mapping"> Tryck på någon kontroll för att mappa den till den här ingången. Tryck länge för att koppla flera kontroller.</string>
-    <string name="input_menu_add_mapping"> Tryck på valfri kontroll för att lägga till en annan mappning för denna ingång.</string>
+    <string name="input_menu_put_mapping">Tryck på någon kontroll för att mappa den till den här ingången. Tryck länge för att koppla flera kontroller.</string>
+    <string name="input_menu_add_mapping">Tryck på valfri kontroll för att lägga till en annan mappning för denna ingång.</string>
     <string name="video_menu_screen_zoom_percent">Skärmzoom (procent)</string>
     <string name="video_menu_horizontal_offset">Horisontell förskjutning</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (två färger)</string>
