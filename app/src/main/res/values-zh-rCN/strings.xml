@@ -7,7 +7,7 @@
     <string name="main_menu_video_setup">视频设置</string>
     <string name="main_menu_audio_setup">音频设置</string>
     <string name="load_game_from_file">文件加载</string>
-    <string name="load_game_from_file_explanation">你可下载Virtual Boy游戏ROM，并在这里加载它们来玩。你可从Planet Virtual Boy找到免费ROM，网址是https://virtual-boy.com/homebrew/。</string>
+    <string name="load_game_from_file_explanation">你可下载Virtual Boy游戏ROM，并在这里加载它们来玩。\n你可从Planet Virtual Boy找到免费ROM，网址https://virtual-boy.com/homebrew/。</string>
     <string name="load_game_recent_games">最近游戏</string>
     <string name="load_game_no_recent_games">你未玩任何游戏。试试！</string>
     <string name="load_game_bundled_games">捆绑游戏</string>
