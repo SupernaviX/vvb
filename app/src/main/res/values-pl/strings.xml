@@ -7,7 +7,7 @@
     <string name="main_menu_video_setup">Skonfiguruj wideo</string>
     <string name="main_menu_audio_setup">Sytuacja audio</string>
     <string name="load_game_from_file">Wczytaj z pliku</string>
-    <string name="load_game_from_file_explanation">Możesz pobrać ROM-y gier Virtual Boy i załadować je tutaj, aby w nie zagrać. Możesz znaleźć darmowe ROM-y z Planet Virtual Boy, na stronie https://virtual-boy.com/homebrew/. </string>
+    <string name="load_game_from_file_explanation">Możesz pobrać ROM-y gier Virtual Boy i załadować je tutaj, aby w nie zagrać.\nMożesz znaleźć darmowe ROM-y z Planet Virtual Boy, na stronie https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_no_recent_games">Nie grałeś jeszcze w żadną grę. Wypróbuj jedną z nich! </string>
     <string name="load_game_bundled_games">Gry w pakiecie</string>
     <string name="load_game_created_by">Stworzone przez %1$s</string>
