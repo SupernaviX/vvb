@@ -49,7 +49,7 @@
     <string name="video_menu_horizontal_offset">水平方向のオフセット</string>
     <string name="video_menu_vertical_offset">縦方向のオフセット</string>
     <string name="video_menu_mode">表示モード</string>
-    <string name="video_mode_anaglyph_summary">アナグリフ (2色)</string>
+    <string name="video_mode_anaglyph_summary">アナグリフ(2色)</string>
     <string name="video_mode_anaglyph_description">ほとんどの 3D メガネで使用可能</string>
     <string name="video_mode_cardboard_description">Google Cardboard または Daydream と共に動作します</string>
     <string name="video_mode_mono_left_summary">左目用</string>
