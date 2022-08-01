@@ -57,7 +57,7 @@
     <string name="video_menu_invalid_colors_message">I colori dell\'occhio destro e sinistro si "sovrappongono" su almeno un canale di colore. L\'effetto 3D potrebbe non funzionare correttamente.</string>
     <string name="video_menu_preview">Anteprima</string>
     <string name="audio_menu_buffer_size">Dimensione del buffer (in frame)</string>
-    <string name="application_crashed">Spiacente, l'applicazione si è bloccata. Verrà inviato un rapporto allo sviluppatore.</string>
+    <string name="application_crashed">Spiacente, l\'applicazione si è bloccata. Verrà inviato un rapporto allo sviluppatore.</string>
     <string name="error_file_not_found">Il file non è stato trovato. Forse è stato spostato?</string>
     <string name="error_not_power_of_two">Quello non è un gioco per Virtual Boy! La dimensione del file dovrebbe essere una potenza di due.</string>
     <string name="error_too_large">Questo non è un gioco per Virtual Boy! Possono essere solo fino a 16Mb.</string>
