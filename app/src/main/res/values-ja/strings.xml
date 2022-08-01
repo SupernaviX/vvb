@@ -71,8 +71,8 @@
     <string name="audio_menu_buffer_size">バッファサイズ（フレーム数）</string>
     <string name="application_crashed">申し訳ありませんが、アプリケーションがクラッシュしました。開発者にレポートが送信されます</string>
     <string name="error_file_not_found">そのファイルは見つかりませんでした。移動されたのでしょうか？</string>
-    <string name="error_not_power_of_two">That's not a Virtual Boy game!ファイル サイズは 2 のべき乗であるべきです</string>
-    <string name="error_too_large">That's not a Virtual Boy game!16Mb までのサイズしかありません。</string>
+    <string name="error_not_power_of_two">That\'s not a Virtual Boy game!ファイル サイズは 2 のべき乗であるべきです</string>
+    <string name="error_too_large">That\'s not a Virtual Boy game!16Mb までのサイズしかありません。</string>
     <string name="error_zip">そのZIPファイルにはバーチャルボーイのゲームらしいものは何もなかった...</string>
     <string name="toast_state_saved">保存された状態</string>
     <string name="toast_state_loaded">ロードされた状態</string>
