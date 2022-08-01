@@ -58,7 +58,7 @@
     <string name="application_crashed">Üzgünüm, uygulama çöktü. Geliştiriciye bir rapor gönderilecektir.</string>
     <string name="error_file_not_found">Bu dosya bulunamadı. Belki taşınmıştır?</string>
     <string name="error_not_power_of_two">Bu bir Virtual Boy oyunu değil! Dosya boyutu ikinin kuvveti olmalıdır.</string>
-    <string name="error_too_large">Bu bir Virtual Boy oyunu değil! Sadece 16Mb'a kadar olabilirler.</string>
+    <string name="error_too_large">Bu bir Virtual Boy oyunu değil! Sadece 16Mb\'a kadar olabilirler.</string>
     <string name="error_zip">Bu ZIP dosyasındaki hiçbir şey bir Virtual Boy oyununa benzemiyordu...</string>
     <string name="toast_state_saved">Kaydedilmiş durum</string>
     <string name="toast_state_loaded">Yüklenmiş durum</string>
