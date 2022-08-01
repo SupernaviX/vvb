@@ -54,7 +54,7 @@
     <string name="video_menu_color_left">Colore occhio sinistro</string>
     <string name="video_menu_color_right">Colore occhio destro</string>
     <string name="video_menu_invalid_colors_title">Colori non validi</string>
-    <string name="video_menu_invalid_colors_message">I colori dell'occhio destro e sinistro si "sovrappongono" su almeno un canale di colore. L'effetto 3D potrebbe non funzionare correttamente.</string>
+    <string name="video_menu_invalid_colors_message">I colori dell\'occhio destro e sinistro si "sovrappongono" su almeno un canale di colore. L\'effetto 3D potrebbe non funzionare correttamente.</string>
     <string name="video_menu_preview">Anteprima</string>
     <string name="audio_menu_buffer_size">Dimensione del buffer (in frame)</string>
     <string name="application_crashed">Spiacente, l'applicazione si è bloccata. Verrà inviato un rapporto allo sviluppatore.</string>
