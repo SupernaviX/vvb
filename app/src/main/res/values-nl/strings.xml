@@ -38,7 +38,7 @@
     <string name="video_mode_mono_left_summary">Alleen linkeroog</string>
     <string name="video_mode_mono_right_summary">Alleen rechteroog</string>
     <string name="video_mode_mono_description">Geen apparatuur nodig, maar geen 3D-effecten</string>
-    <string name="video_mode_stereo_description">Werkt met 3D-TV's</string>
+    <string name="video_mode_stereo_description">Werkt met 3D-TV\'s</string>
     <string name="video_menu_aspect_ratio">Breedteverhouding</string>
     <string name="aspect_ratio_stretch">Recht uit om aan te passen</string>
     <string name="video_menu_color">Kleur</string>
