@@ -10,7 +10,7 @@
     <string name="load_game_no_recent_games">Vous n\'avez encore joué à aucun jeu. Essayez-en un !</string>
     <string name="load_game_bundled_games">Jeux groupés</string>
     <string name="load_game_created_by">Créé par %1$s</string>
-    <string name="game_menu_save_state">Etat d'enregistrement</string>
+    <string name="game_menu_save_state">Etat d\'enregistrement</string>
     <string name="game_menu_load_state">Etat de chargement</string>
     <string name="game_menu_state_slot">Slot de l'état actuel</string>
     <string name="game_menu_close_game">Fermer le jeu</string>
