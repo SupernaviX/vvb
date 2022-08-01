@@ -60,7 +60,7 @@
     <string name="video_menu_invalid_colors_title">Ungültige Farben</string>
     <string name="video_menu_invalid_colors_message">Die Farben des linken und rechten Auges "überschneiden" sich auf mindestens einem Farbkanal. Der 3D-Effekt funktioniert möglicherweise nicht richtig.</string>
     <string name="video_menu_switch_viewer">Cardboard-Betrachter umschalten</string>
-    <string name="video_menu_vorschau">Vorschau</string>
+    <string name="video_menu_preview">Vorschau</string>
     <string name="audio_menu_volume">Lautstärke</string>
     <string name="audio_menu_buffer_size">Puffergröße (in Frames)</string>
     <string name="application_crashed">Sorry, die Anwendung ist abgestürzt. Ein Bericht wird an den Entwickler gesendet.</string>
