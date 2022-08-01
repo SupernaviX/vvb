@@ -45,7 +45,7 @@
     <string name="video_mode_mono_left_summary">Sadece sol göz</string>
     <string name="video_mode_mono_right_summary">Sadece sağ göz</string>
     <string name="video_mode_mono_description">Ekipman gerekmez, ancak 3D efektleri yoktur</string>
-    <string name="video_mode_stereo_description">3D TV'lerle çalışır</string>
+    <string name="video_mode_stereo_description">3D TV\'lerle çalışır</string>
     <string name="aspect_ratio_stretch">Sığdırmak için Daralt</string>
     <string name="video_menu_color">Renk</string>
     <string name="video_menu_color_left">Sol Göz Rengi</string>
