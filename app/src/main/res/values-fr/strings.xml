@@ -33,7 +33,7 @@
     <string name="video_menu_screen_zoom_percent">Zoom de l\'écran (pourcentage)</string>
     <string name="video_menu_horizontal_offset">Décalage horizontal</string>
     <string name="video_menu_vertical_offset">Décalage vertical</string>
-    <string name="video_menu_mode">Mode d'affichage</string>
+    <string name="video_menu_mode">Mode d\'affichage</string>
     <string name="video_mode_anaglyph_description">Fonctionne avec la plupart des paires de lunettes 3D</string>
     <string name="video_mode_cardboard_description">Fonctionne avec Google Cardboard ou Daydream</string>.
     <string name="video_mode_mono_left_summary">Oil gauche uniquement</string>
