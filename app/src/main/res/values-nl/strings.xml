@@ -5,7 +5,7 @@
     <string name="main_menu_controller_setup">Controller-instelling</string>
     <string name="main_menu_video_setup">Video-instelling</string>
     <string name="main_menu_audio_setup">Audio-instelling</string>
-    <string name="load_game_from_file_execution">U kunt ROM's van Virtual Boy-spellen downloaden en ze hier laden om ze te spelen.\nU kunt gratis ROM's van Planet Virtual Boy vinden op https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">U kunt ROM\'s van Virtual Boy-spellen downloaden en ze hier laden om ze te spelen.\nU kunt gratis ROM\'s van Planet Virtual Boy vinden op https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_no_recent_games">Je hebt nog geen spelletjes gespeeld. Probeer er een uit!</string>
     <string name="load_game_bundled_games">Gebundelde spellen</string>
     <string name="load_game_no_bundled_games">Geen gebundelde spellen</string>
