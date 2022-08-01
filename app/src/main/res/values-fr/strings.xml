@@ -7,7 +7,7 @@
     <string name="main_menu_audio_setup">Configuration audio</string>
     <string name="load_game_from_file_explanation">Vous pouvez télécharger des ROMs de jeux Virtual Boy, et les charger ici pour y jouer.\nVous pouvez trouver des ROMs gratuites de Planet Virtual Boy, sur https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Jeux récents</string>
-    <string name="load_game_no_recent_games">Vous n'avez encore joué à aucun jeu. Essayez-en un !</string>
+    <string name="load_game_no_recent_games">Vous n\'avez encore joué à aucun jeu. Essayez-en un !</string>
     <string name="load_game_bundled_games">Jeux groupés</string>
     <string name="load_game_created_by">Créé par %1$s</string>
     <string name="game_menu_save_state">Etat d'enregistrement</string>
