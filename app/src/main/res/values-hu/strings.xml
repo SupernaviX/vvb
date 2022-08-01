@@ -40,7 +40,7 @@
     <string name="application_crashed">Sorry, az alkalmazás lezuhant. Jelentést küldünk a fejlesztőnek.</string>
     <string name="error_file_not_found">Azt a fájlt nem találtuk meg. Talán áthelyezték?</string>
     <string name="error_not_power_of_two">Ez\ nem egy Virtual Boy játék! A fájlméretnek a kettő hatványának kellene lennie.</string>
-    <string name="error_too_too_large">Ez\ nem Virtual Boy játék! Csak 16 Mb lehet.</string>
+    <string name="error_too_large">Ez\ nem Virtual Boy játék! Csak 16 Mb lehet.</string>
     <string name="error_zip">A ZIP fájlban semmi sem hasonlít egy Virtual Boy játékra...</string>
     <string name="toast_state_saved">Mentett állapot</string>
     <string name="toast_state_loaded">Letöltött állapot</string>
