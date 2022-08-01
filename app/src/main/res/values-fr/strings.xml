@@ -28,7 +28,7 @@
     <string name="controller_menu_choose_rename">Choisir le contrôleur à renommer...</string>
     <string name="controller_menu_choose_delete">Choisissez le contrôleur à supprimer...</string>
     <string name="controller_menu_default_name">Contrôleur %1$d</string>
-    <string name="input_menu_put_mapping">Appuyez sur n'importe quel contrôle pour le mapper à cette entrée. Appuyez longuement pour mapper plusieurs contrôles.</string>
+    <string name="input_menu_put_mapping">Appuyez sur n\'importe quel contrôle pour le mapper à cette entrée. Appuyez longuement pour mapper plusieurs contrôles.</string>
     <string name="input_menu_add_mapping">Appuyez sur n'importe quel contrôle pour ajouter un autre mappage pour cette entrée.</string>
     <string name="video_menu_screen_zoom_percent">Zoom de l'écran (pourcentage)</string>
     <string name="video_menu_horizontal_offset">Décalage horizontal</string>
