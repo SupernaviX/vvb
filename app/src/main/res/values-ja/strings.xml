@@ -9,7 +9,7 @@
     <string name="load_game_from_file">ファイルから読み込む</string>
     <string name="load_game_from_file_explanation">バーチャルボーイのゲームのROMをダウンロードして、ここにロードして遊ぶことができます。\nPlanet Virtual BoyのROMは、https://virtual-boy.com/homebrew/。</string>
     <string name="load_game_recent_games">最近のゲーム</string>
-    <string name="load_game_no_recent_games">You haven't played any games yet.試してみてください！</string>
+    <string name="load_game_no_recent_games">You haven\'t played any games yet.試してみてください！</string>
     <string name="load_game_bundled_games">バンドルされているゲーム</string>
     <string name="load_game_no_bundled_games">バンドルされているゲームはありません</string>
     <string name="load_game_created_by">%1$sによって作成されました</string>
