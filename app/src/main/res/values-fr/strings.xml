@@ -1,7 +1,7 @@
 <resources>
     <string name="main_menu_game_actions">Actions de jeu</string>
     <string name="main_menu_now_playing">Je joue actuellement</string>
-    <string name="main_menu_onscreen_input_setup">Configuration de la saisie à l'écran</string>
+    <string name="main_menu_onscreen_input_setup">Configuration de la saisie à l\'écran</string>
     <string name="main_menu_controller_setup">Configuration du contrôleur</string>
     <string name="main_menu_video_setup">Configuration de la vidéo</string>
     <string name="main_menu_audio_setup">Configuration audio</string>
