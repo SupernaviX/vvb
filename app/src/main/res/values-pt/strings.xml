@@ -37,7 +37,7 @@
     <string name="video_mode_cardboard_description">Trabalha com Google Cardboard ou Daydream</string>
     <string name="video_mode_mono_left_summary">Apenas olho esquerdo</string>
     <string name="video_mode_mono_right_summary">Apenas olho direito</string>
-    <string name="video_mode_stereo_description">Nenhum equipamento necessário, mas nenhum efeito 3D</string>
+    <string name="video_mode_mono_description">Nenhum equipamento necessário, mas nenhum efeito 3D</string>
     <string name="video_mode_stereo_summary">Lado-a-lado</string>
     <string name="video_mode_stereo_description">Trabalha com TVs 3D</string>
     <string name="video_menu_aspect_ratio">Rácio de Espectro</string>
