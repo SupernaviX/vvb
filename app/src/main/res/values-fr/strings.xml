@@ -12,7 +12,7 @@
     <string name="load_game_created_by">Créé par %1$s</string>
     <string name="game_menu_save_state">Etat d\'enregistrement</string>
     <string name="game_menu_load_state">Etat de chargement</string>
-    <string name="game_menu_state_slot">Slot de l'état actuel</string>
+    <string name="game_menu_state_slot">Slot de l\'état actuel</string>
     <string name="game_menu_close_game">Fermer le jeu</string>
     <string name="onscreen_input_menu_on">Utiliser le Gamepad virtuel</string>
     <string name="onscreen_input_menu_toggle_controls">Mettre les boutons de déclenchement en mode Toggle</string>
