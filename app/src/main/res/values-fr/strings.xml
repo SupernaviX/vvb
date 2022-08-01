@@ -45,7 +45,7 @@
     <string name="video_menu_color_left">Couleur de l\'oeil gauche</string>
     <string name="video_menu_color_right">Couleur des yeux droits</string>
     <string name="video_menu_invalid_colors_title">Couleurs non valides</string>
-    <string name="video_menu_invalid_colors_message">Les couleurs des yeux gauche et droit se "chevauchent" sur au moins un canal de couleur. L'effet 3D peut ne pas fonctionner correctement.</string>
+    <string name="video_menu_invalid_colors_message">Les couleurs des yeux gauche et droit se "chevauchent" sur au moins un canal de couleur. L\'effet 3D peut ne pas fonctionner correctement.</string>
     <string name="audio_menu_buffer_size">Taille du tampon (en images)</string>
     <string name="application_crashed">Désolé, l'application s'est écrasée. Un rapport sera envoyé au développeur.</string>
     <string name="error_file_not_found">Ce fichier n'a pas pu être trouvé. Peut-être a-t-il été déplacé ?</string>
