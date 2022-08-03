@@ -13,7 +13,7 @@
     <string name="load_game_bundled_games">バンドルされているゲーム</string>
     <string name="load_game_no_bundled_games">バンドルされているゲームはありません</string>
     <string name="load_game_created_by">%1$sによって作成されました</string>
-    <string name="game_menu_resume_game">ゲームを再開する</string>
+    <string name="game_menu_resume_game">レジューム・ゲーム</string>
     <string name="game_menu_reset_game">リセット</string>
     <string name="game_menu_auto_save">自動セーブ</string>
     <string name="game_menu_save_state">セーブ状態</string>
