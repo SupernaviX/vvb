@@ -55,7 +55,6 @@
     <string name="video_mode_mono_left_summary">左目用</string>
     <string name="video_mode_mono_right_summary">右目用</string>
     <string name="video_mode_mono_description">機材は不要だが、3D効果はない</string>
-    <string name="video_mode_stereo_summary">サイド・バイ・サイド</string>
     <string name="video_mode_stereo_description">3Dテレビで動作</string>
     <string name="video_menu_aspect_ratio">アスペクト比</string>
     <string name="aspect_ratio_auto">自動</string>
