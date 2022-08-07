@@ -13,7 +13,7 @@
     <string name="load_game_no_bundled_games">Paketlenmiş Oyun Yok</string>
     <string name="game_menu_resume_game">Oyuna Devam Et</string>
     <string name="game_menu_auto_save">Otomatik Kaydet</string>
-    <string name="game_menu_save_state">Durumu Kaydet</string>
+    <string name="game_menu_save_state">Kaydet Durumu</string>
     <string name="game_menu_load_state">Yükleme Durumu</string>
     <string name="game_menu_state_slot">Geçerli Durum Yuvası</string>
     <string name="game_menu_state_slot_empty">Boş</string>
