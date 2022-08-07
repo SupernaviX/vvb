@@ -1,5 +1,5 @@
 <resources>
-    <string name="main_menu_game_actions">ゲーム・アクション</string>
+    <string name="main_menu_game_actions">ゲームアクション</string>
     <string name="main_menu_now_playing">現在プレイ中</string>
     <string name="main_menu_load_game">ゲームを読み込む</string>
     <string name="main_menu_onscreen_input_setup">オンスクリーン入力の設定</string>
@@ -7,13 +7,13 @@
     <string name="main_menu_video_setup">ビデオのセットアップ</string>
     <string name="main_menu_audio_setup">オーディオのセットアップ</string>
     <string name="load_game_from_file">ファイルから読み込む</string>
-    <string name="load_game_from_file_explanation">バーチャルボーイのゲームのROMをダウンロードして、ここにロードして遊ぶことができます。\nPlanet Virtual BoyのROMは、https://virtual-boy.com/homebrew/。</string>
+    <string name="load_game_from_file_explanation">バーチャルボーイのゲームのROMをダウンロードして、ここにロードしてプレイすることができます。\nPlanet Virtual Boyの無料ROMは、https://virtual-boy.com/homebrew/。</string>
     <string name="load_game_recent_games">最近のゲーム</string>
-    <string name="load_game_no_recent_games">You haven\'t played any games yet.試してみてください！</string>
+    <string name="load_game_no_recent_games">あなたはまだゲームをプレイしていません。試してみてください！</string>
     <string name="load_game_bundled_games">バンドルされているゲーム</string>
     <string name="load_game_no_bundled_games">バンドルされているゲームはありません</string>
     <string name="load_game_created_by">%1$sによって作成されました</string>
-    <string name="game_menu_resume_game">レジューム・ゲーム</string>
+    <string name="game_menu_resume_game">レジュームゲーム</string>
     <string name="game_menu_reset_game">リセット</string>
     <string name="game_menu_auto_save">自動セーブ</string>
     <string name="game_menu_save_state">セーブ状態</string>
@@ -23,7 +23,7 @@
     <string name="game_menu_close_game">ゲームを終了する</string>
     <string name="onscreen_input_menu_on">仮想ゲームパッドを使用</string>
     <string name="onscreen_input_menu_toggle_controls">トリガーボタンをトグルモードにする</string>
-    <string name="onscreen_input_menu_haptic_feedback">Haptic Feedback を有効にする</string>
+    <string name="onscreen_input_menu_haptic_feedback">ハプティックフィードバックを有効にする</string>
     <string name="onscreen_input_menu_parallax">視差</string>
     <string name="onscreen_input_menu_show_bounds">コントロールの境界を表示する</string>
     <string name="onscreen_input_menu_preview">プレビュー</string>
@@ -31,7 +31,7 @@
     <string name="controller_menu_manage">コントローラの管理</string>
     <string name="controller_menu_automap_new_controller">新しいコントローラを自動マップ</string>
     <string name="controller_menu_choose_controller">マップするコントローラを選択</string>
-    <string name="controller_menu_no_controllers_detected">No controllers detected...</string>
+    <string name="controller_menu_no_controllers_detected">コントローラが検出されない...</string>
     <string name="controller_menu_new_controller">新しいコントローラー</string>
     <string name="controller_menu_rename_controller">コントローラの名前を変更</string>
     <string name="controller_menu_delete_controller">コントローラの削除</string>
@@ -50,8 +50,8 @@
     <string name="video_menu_vertical_offset">縦方向のオフセット</string>
     <string name="video_menu_mode">表示モード</string>
     <string name="video_mode_anaglyph_summary">アナグリフ(2色)</string>
-    <string name="video_mode_anaglyph_description">ほとんどの 3D メガネで使用可能</string>
-    <string name="video_mode_cardboard_description">Google Cardboard または Daydream と共に動作します</string>
+    <string name="video_mode_anaglyph_description">ほとんどの3Dメガネで使用可能</string>
+    <string name="video_mode_cardboard_description">Google CardboardまたはDaydreamで動作します。</string>
     <string name="video_mode_mono_left_summary">左目用</string>
     <string name="video_mode_mono_right_summary">右目用</string>
     <string name="video_mode_mono_description">機材は不要だが、3D効果はない</string>
@@ -64,14 +64,14 @@
     <string name="video_menu_color_right">右目の色</string>
     <string name="video_menu_invalid_colors_title">無効な色</string>
     <string name="video_menu_invalid_colors_message">左右の目の色が少なくとも1つのカラーチャンネルで「重なって」います。3D効果が正しく動作しない可能性があります</string>
-    <string name="video_menu_switch_viewer">Cardboard ビューアを切り替える</string>
+    <string name="video_menu_switch_viewer">Cardboardビューアを切り替える</string>
     <string name="video_menu_preview">プレビュー</string>
     <string name="audio_menu_volume">音量</string>
     <string name="audio_menu_buffer_size">バッファサイズ（フレーム数）</string>
-    <string name="application_crashed">申し訳ありませんが、アプリケーションがクラッシュしました。開発者にレポートが送信されます</string>
+    <string name="application_crashed">(｡ŏ﹏ŏ)、アプリケーションがクラッシュしました。開発者にレポートを送ります。</string>
     <string name="error_file_not_found">そのファイルは見つかりませんでした。移動されたのでしょうか？</string>
-    <string name="error_not_power_of_two">That\'s not a Virtual Boy game!ファイル サイズは 2 のべき乗であるべきです</string>
-    <string name="error_too_large">That\'s not a Virtual Boy game!16Mb までのサイズしかありません。</string>
+    <string name="error_not_power_of_two">バーチャルボーイのゲームじゃないんだから!ファイルサイズは2のべき乗のはずです。</string>
+    <string name="error_too_large">バーチャルボーイのゲームじゃないんだから。16Mbまでしかないんだよ。</string>
     <string name="error_zip">そのZIPファイルにはバーチャルボーイのゲームらしいものは何もなかった...</string>
     <string name="toast_state_saved">保存された状態</string>
     <string name="toast_state_loaded">ロードされた状態</string>
