@@ -38,7 +38,8 @@
     <string name="application_crashed">Sorry, sovellus kaatui. Raportti lähetetään kehittäjälle.</string>
     <string name="error_file_not_found">Tätä tiedostoa ei löytynyt. Ehkä se on siirretty?</string>
     <string name="error_not_power_of_two">Tämä\ ei ole Virtual Boy -peli! Tiedoston koon pitäisi olla kahden potenssi.</string>
-    <string name="error_too_large">Tämä\ ei ole Virtual Boy -peli! Niiden koko voi olla vain 16 Mt.</string>.
-    <string name="error_zip">Tässä ZIP-tiedostossa ei näytä mikään Virtual Boy -peliltä...</string>.
+    <string name="error_too_large">Tämä\ ei ole Virtual Boy -peli! Niiden koko voi olla vain 16 Mt.</string>
+    <string name="error_zip">Tässä ZIP-tiedostossa ei näytä mikään Virtual Boy -peliltä...</string>
+    <string name="toast_state_saved">Tallennettu tila</string>
     <string name="toast_state_loaded">Ladattu tila</string>
 </resources>
