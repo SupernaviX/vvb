@@ -73,6 +73,6 @@
     <string name="error_not_power_of_two">バーチャルボーイのゲームじゃないんだから!ファイルサイズは2のべき乗のはずです。</string>
     <string name="error_too_large">バーチャルボーイのゲームじゃないんだから。16Mbまでしかないんだよ。</string>
     <string name="error_zip">そのZIPファイルにはバーチャルボーイのゲームらしいものは何もなかった...</string>
-    <string name="toast_state_saved">保存された状態</string>
+    <string name="toast_state_saved">セーブされた状態</string>
     <string name="toast_state_loaded">ロードされた状態</string>
 </resources>
