@@ -8,7 +8,7 @@
     <string name="main_menu_audio_setup">Sytuacja audio</string>
     <string name="load_game_from_file">Wczytaj z pliku</string>
     <string name="load_game_from_file_explanation">Możesz pobrać ROM-y gier Virtual Boy i załadować je tutaj, aby w nie zagrać.\nMożesz znaleźć darmowe ROM-y z Planet Virtual Boy, na stronie https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_no_recent_games">Nie grałeś jeszcze w żadną grę. Wypróbuj jedną z nich! </string>
+    <string name="load_game_no_recent_games">Nie grałeś jeszcze w żadną grę. Wypróbuj jedną z nich!</string>
     <string name="load_game_bundled_games">Gry w pakiecie</string>
     <string name="load_game_created_by">Stworzone przez %1$s</string>
     <string name="game_menu_resume_game">Wznów grę</string>
@@ -55,8 +55,8 @@
     <string name="audio_menu_volume">Głośność</string>
     <string name="audio_menu_buffer_size">Rozmiar bufora (w klatkach)</string>
     <string name="application_crashed">Przepraszamy, aplikacja uległa awarii. Raport zostanie wysłany do dewelopera.</string>
-    <string name="error_file_not_found">Tego pliku nie można było znaleźć. Może został przeniesiony? </string>
-    <string name="error_not_power_of_two">To nie jest gra na Virtual Boy\'a! Rozmiar pliku powinien być potęgą dwóch. </string>
+    <string name="error_file_not_found">Tego pliku nie można było znaleźć. Może został przeniesiony?</string>
+    <string name="error_not_power_of_two">To nie jest gra na Virtual Boy\'a! Rozmiar pliku powinien być potęgą dwóch.</string>
     <string name="error_too_large">Ta gra nie jest grą Virtual Boy! Mogą mieć tylko do 16Mb.</string>
     <string name="error_zip">Nic w tym pliku ZIP nie wyglądało jak gra Virtual Boy...</string>
     <string name="toast_state_saved">Zapisany stan</string>
