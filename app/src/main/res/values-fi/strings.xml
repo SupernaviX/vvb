@@ -25,7 +25,7 @@
     <string name="video_mode_anaglyph_summary">Anaglyph (kaksivärinen)</string>
     <string name="video_mode_anaglyph_description">Toimii useimpien 3D-lasien kanssa</string>
     <string name="video_mode_cardboard_description">Toimii Google Cardboardin tai Daydreamin kanssa</string>
-    <string name="video_mode_mono_left_summary">Vasen silmä vain</string>
+    <string name="video_mode_mono_left_summary">Vain vasen silmä</string>
     <string name="video_mode_mono_right_summary">Vain oikea silmä</string>
     <string name="video_mode_mono_description">Ei tarvita laitteita, mutta ei 3D-efektejä</string>
     <string name="video_mode_stereo_description">Toimii 3D-televisioiden kanssa</string>
