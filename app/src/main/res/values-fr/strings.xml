@@ -35,10 +35,10 @@
     <string name="video_menu_vertical_offset">Décalage vertical</string>
     <string name="video_menu_mode">Mode d\'affichage</string>
     <string name="video_mode_anaglyph_description">Fonctionne avec la plupart des paires de lunettes 3D</string>
-    <string name="video_mode_cardboard_description">Fonctionne avec Google Cardboard ou Daydream</string>.
+    <string name="video_mode_cardboard_description">Fonctionne avec Google Cardboard ou Daydream</string>
     <string name="video_mode_mono_left_summary">Oil gauche uniquement</string>
     <string name="video_mode_mono_right_summary">Oil droit uniquement</string>
-    <string name="video_mode_mono_description">Pas besoin d\'équipement, mais pas d\'effets 3D</string>.
+    <string name="video_mode_mono_description">Pas besoin d\'équipement, mais pas d\'effets 3D</string>
     <string name="video_mode_stereo_summary">Côté à côte</string>
     <string name="video_mode_stereo_description">Fonctionne avec les téléviseurs 3D</string>
     <string name="video_menu_aspect_ratio">Ratio d\'aspect</string>
