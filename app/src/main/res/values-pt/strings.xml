@@ -11,7 +11,8 @@
     <string name="load_game_no_bundled_games">Sem_game_agrupado</string>
     <string name="load_game_created_by">Criado por %1$s</string>
     <string name="game_menu_resume_game">Resume do jogo</string>
-    <string name="game_menu_load_state">Estado_de_curso</string>
+    <string name="game_menu_save_state">Salvar Estado</string>
+    <string name="game_menu_load_state">Estado de Carga</string>
     <string name="game_menu_state_slot">Chave de Estado actual</string>
     <string name="game_menu_state_slot_empty">Ampty</string>
     <string name="game_menu_state_slot_saved">Salvada: %1$s</string>
