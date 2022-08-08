@@ -26,6 +26,7 @@
     <string name="input_menu_add_mapping">Πιέστε οποιοδήποτε στοιχείο ελέγχου για να προσθέσετε άλλη αντιστοίχιση για αυτή την είσοδο.</string>
     <string name="video_menu_screen_zoom_percent">Ζουμ οθόνης (ποσοστό)</string>
     <string name="video_menu_horizontal_offset">Οριζόντια μετατόπιση</string>
+    <string name="video_menu_vertical_offset">Κάθετη μετατόπιση</string>
     <string name="video_menu_mode">Μορφή εμφάνισης</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (δύο χρωμάτων)</string>
     <string name="video_mode_anaglyph_description">Δουλεύει με τα περισσότερα ζευγάρια γυαλιών 3D</string>
