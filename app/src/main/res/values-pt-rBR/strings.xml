@@ -53,6 +53,6 @@
     <string name="error_not_power_of_two">Isso não é um jogo do Virtual Boy! O tamanho do arquivo deve ser um poder de dois.</string>
     <string name="error_too_large">Isso não é um jogo do Virtual Boy! Eles só podem ser de até 16Mb.</string>
     <string name="error_zip">Nada naquele arquivo ZIP parecia um jogo do Virtual Boy...</string>
-    <string name="toast_state_saved">Estado_salvado</string>
+    <string name="toast_state_saved">Estado salvado</string>
     <string name="toast_state_loaded">Estado carregado</string>
 </resources>
