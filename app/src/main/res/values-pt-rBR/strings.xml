@@ -31,7 +31,8 @@
     <string name="input_menu_put_mapping">Pressione qualquer controle para mapeá-lo para esta entrada. Pressione longo para mapear múltiplos controles.</string>
     <string name="input_menu_add_mapping">Pressione qualquer controle para adicionar outro mapeamento para esta entrada.</string>
     <string name="video_menu_screen_zoom_percent">Zoom da tela (porcentagem)</string>
-    <string name="video_menu_vertical_offset">Deslocamento Vertical</string>
+    <string name="video_menu_horizontal_offset">Deslocamento horizontal</string>
+    <string name="video_menu_vertical_offset">Deslocamento vertical</string>
     <string name="video_menu_mode">Modo de exibição</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (bicolor)</string>
     <string name="video_mode_anaglyph_description">Trabalha com a maioria dos pares de óculos 3D</string>
