@@ -6,7 +6,8 @@
     <string name="load_game_no_bundled_games">Ei pakattuja pelejä</string>
     <string name="load_game_created_by">Luonut %1$s</string>
     <string name="game_menu_resume_game">Jatka peliä</string>
-    <string name="game_menu_save_state">Tallennustila</string>
+    <string name="game_menu_save_state">Tallenna tila</string>
+    <string name="game_menu_load_state">Lataa tila</string>
     <string name="game_menu_state_slot">Virran tilan paikka</string>
     <string name="game_menu_state_slot_empty">Tyhjä</string>
     <string name="game_menu_close_game">Sulje peli</string>
@@ -20,7 +21,8 @@
     <string name="input_menu_put_mapping">Paina mitä tahansa ohjainta, jotta se voidaan liittää tähän syötteeseen. Paina pitkään kartoittaaksesi useita ohjaimia.</string>
     <string name="input_menu_add_mapping">Paina mitä tahansa ohjainta lisätäksesi toisen kartoituksen tälle syötteelle.</string>
     <string name="video_menu_screen_zoom_percent">Ruudun zoomaus (prosenttia)</string>
-    <string name="video_menu_vertical_offset">Vertikaalinen offset</string>
+    <string name="video_menu_horizontal_offset">Vaakasuora siirtymä</string>
+    <string name="video_menu_vertical_offset">Pystysuora siirtymä</string>
     <string name="video_menu_mode">Näyttötila</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (kaksivärinen)</string>
     <string name="video_mode_anaglyph_description">Toimii useimpien 3D-lasien kanssa</string>

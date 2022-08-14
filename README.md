@@ -4,6 +4,10 @@
 
 Virtual Virtual Boy is an emulator for the [Virtual Boy](https://en.wikipedia.org/wiki/Virtual_Boy) 3D console. You can use it with a pair of cheap [Anaglyph 3D glasses](https://en.wikipedia.org/wiki/Anaglyph_3D) or with [Google Cardboard](https://arvr.google.com/cardboard/) to play Virtual Boy games on an Android phone.
 
+[<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
+     alt="Get it on Google Play"
+     height="80">](https://play.google.com/store/apps/details?id=com.simongellis.vvb)
+
 ## Development
 
 ### Initial Setup
@@ -49,4 +53,4 @@ Several features are not implemented:
 ## Credits
 - Guy Perfect for writing the extremely helpful [Virtual Boy Sacred Tech Scroll](https://www.virtual-boy.com/documents/virtual-boy-sacred-tech-scroll/)
 - [Pi Lanningham](https://github.com/Quantumplation) and [Robert Kellett](https://github.com/Splagoon) for rubber ducking
-- [AngelofMe](https://github.com/AngelofMe) for the Japanese translation
+- [AngelofMe](https://github.com/AngelofMe) for the Chinese (PRC), Dutch, Finnish, French, German, Greek, Hungarian, Italian, Japanese, Lithuanian, Polish, Portuguese (plus Brazilian Portuguese), Russian, Spanish, Swedish, Turkish translations

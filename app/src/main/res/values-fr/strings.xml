@@ -10,8 +10,8 @@
     <string name="load_game_no_recent_games">Vous n\'avez encore joué à aucun jeu. Essayez-en un !</string>
     <string name="load_game_bundled_games">Jeux groupés</string>
     <string name="load_game_created_by">Créé par %1$s</string>
-    <string name="game_menu_save_state">Etat d\'enregistrement</string>
-    <string name="game_menu_load_state">Etat de chargement</string>
+    <string name="game_menu_save_state">État de enregistrement</string>
+    <string name="game_menu_load_state">État de chargement</string>
     <string name="game_menu_state_slot">Slot de l\'état actuel</string>
     <string name="game_menu_close_game">Fermer le jeu</string>
     <string name="onscreen_input_menu_on">Utiliser le Gamepad virtuel</string>
@@ -43,7 +43,7 @@
     <string name="video_mode_stereo_description">Fonctionne avec les téléviseurs 3D</string>
     <string name="video_menu_aspect_ratio">Ratio d\'aspect</string>
     <string name="video_menu_color_left">Couleur de l\'oeil gauche</string>
-    <string name="video_menu_color_right">Couleur des yeux droits</string>
+    <string name="video_menu_color_right">Couleur de l\'oeil droit</string>
     <string name="video_menu_invalid_colors_title">Couleurs non valides</string>
     <string name="video_menu_invalid_colors_message">Les couleurs des yeux gauche et droit se "chevauchent" sur au moins un canal de couleur. L\'effet 3D peut ne pas fonctionner correctement.</string>
     <string name="audio_menu_buffer_size">Taille du tampon (en images)</string>
@@ -52,6 +52,6 @@
     <string name="error_not_power_of_two">Ce n\'est pas un jeu Virtual Boy ! La taille du fichier devrait être une puissance de deux.</string>
     <string name="error_too_large">Ce n\'est pas un jeu Virtual Boy ! Ils ne peuvent faire que 16Mb maximum.</string>
     <string name="error_zip">Rien dans ce fichier ZIP ne ressemblait à un jeu Virtual Boy...</string>
-    <string name="toast_state_saved">Etat sauvegardé</string>
-    <string name="toast_state_loaded">Etat chargé</string>
+    <string name="toast_state_saved">État enregistré</string>
+    <string name="toast_state_loaded">État chargé</string>
 </resources>

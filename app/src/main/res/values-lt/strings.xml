@@ -15,7 +15,8 @@
     <string name="game_menu_resume_game">Atnaujinti žaidimą</string>
     <string name="game_menu_reset_game">Atnaujinti žaidimą</string>
     <string name="game_menu_auto_save">Automatinis išsaugojimas</string>
-    <string name="game_menu_load_state">Įkrovimo būsena</string>
+    <string name="game_menu_save_state">Išsaugoti būseną</string>
+    <string name="game_menu_load_state">Įkelti būseną</string>
     <string name="game_menu_state_slot">Šiuo metu esamos būsenos lizdas</string>
     <string name="game_menu_state_slot_empty">Tuščias</string>
     <string name="game_menu_close_game">Uždaryti žaidimą</string>
@@ -47,8 +48,8 @@
     <string name="video_mode_anaglyph_summary">Anaglifas (dviejų spalvų)</string>
     <string name="video_mode_anaglyph_description">Dirba su dauguma 3D akinių porų</string>
     <string name="video_mode_cardboard_description">Dirba su "Google Cardboard" arba "Daydream"</string>
-    <string name="video_mode_mono_left_summary">Tik kairiąja akimi</string>
-    <string name="video_mode_mono_right_summary">Tik dešinė akis</string>
+    <string name="video_mode_mono_left_summary">Tik kairioji akis</string>
+    <string name="video_mode_mono_right_summary">Tik dešinioji akis</string>
     <string name="video_mode_mono_description">Nereikia jokios įrangos, bet nėra 3D efektų</string>
     <string name="video_mode_stereo_description">Dirba su 3D televizoriais</string>
     <string name="video_menu_aspect_ratio">Aspect Ratio</string>
@@ -58,7 +59,7 @@
     <string name="video_menu_color_right">Dešiniosios akies spalva</string>
     <string name="video_menu_invalid_colors_title">Neteisingos spalvos</string>
     <string name="video_menu_invalid_colors_message">Kairės ir dešinės akies spalvos "persidengia" bent viename spalvų kanale. 3D efektas gali veikti netinkamai.</string>
-    <string name="video_menu_switch_viewer">Perjungti "Cardboard Viewer">Switch Cardboard Viewer</string>
+    <string name="video_menu_switch_viewer">Perjungti "Cardboard Viewer"</string>
     <string name="audio_menu_volume">Garsumas</string>
     <string name="audio_menu_buffer_size">Buferio dydis (kadrais)</string>
     <string name="application_crashed">Atleiskite, programa sugedo. Pranešimas bus išsiųstas kūrėjui.</string>

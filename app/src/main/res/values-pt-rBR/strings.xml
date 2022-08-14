@@ -13,7 +13,7 @@
     <string name="game_menu_resume_game">Resume do jogo</string>
     <string name="game_menu_auto_save">Auto-Salvamento</string>
     <string name="game_menu_save_state">Salvar Estado</string>
-    <string name="game_menu_load_state">Estado_de_curso</string>
+    <string name="game_menu_load_state">Carregar Estado</string>
     <string name="game_menu_state_slot">Chave do estado atual</string>
     <string name="game_menu_state_slot_empty">Ampty</string>
     <string name="game_menu_state_slot_saved">Salvado: %1$s</string>
@@ -31,7 +31,8 @@
     <string name="input_menu_put_mapping">Pressione qualquer controle para mapeá-lo para esta entrada. Pressione longo para mapear múltiplos controles.</string>
     <string name="input_menu_add_mapping">Pressione qualquer controle para adicionar outro mapeamento para esta entrada.</string>
     <string name="video_menu_screen_zoom_percent">Zoom da tela (porcentagem)</string>
-    <string name="video_menu_vertical_offset">Deslocamento Vertical</string>
+    <string name="video_menu_horizontal_offset">Deslocamento horizontal</string>
+    <string name="video_menu_vertical_offset">Deslocamento vertical</string>
     <string name="video_menu_mode">Modo de exibição</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (bicolor)</string>
     <string name="video_mode_anaglyph_description">Trabalha com a maioria dos pares de óculos 3D</string>
@@ -52,6 +53,6 @@
     <string name="error_not_power_of_two">Isso não é um jogo do Virtual Boy! O tamanho do arquivo deve ser um poder de dois.</string>
     <string name="error_too_large">Isso não é um jogo do Virtual Boy! Eles só podem ser de até 16Mb.</string>
     <string name="error_zip">Nada naquele arquivo ZIP parecia um jogo do Virtual Boy...</string>
-    <string name="toast_state_saved">Estado_salvado</string>
+    <string name="toast_state_saved">Estado salvado</string>
     <string name="toast_state_loaded">Estado carregado</string>
 </resources>

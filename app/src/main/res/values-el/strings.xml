@@ -5,8 +5,8 @@
     <string name="load_game_recent_games">Προηγούμενα παιχνίδια</string>
     <string name="load_game_no_recent_games">Δεν έχετε παίξει ακόμα κανένα παιχνίδι. Δοκιμάστε ένα!</string>
     <string name="game_menu_resume_game">Συνεχίστε το παιχνίδι</string>
-    <string name="game_menu_save_state">Κατάσταση αποθήκευσης</string>
-    <string name="game_menu_load_state">Κατάσταση φόρτωσης</string>
+    <string name="game_menu_save_state">Αποθήκευση κατάστασης</string>
+    <string name="game_menu_load_state">Φόρτωση κατάστασης</string>
     <string name="game_menu_state_slot">Κατάσταση τρέχουσας κατάστασης</string>
     <string name="onscreen_input_menu_toggle_controls">Προσθήκη κουμπιών ενεργοποίησης σε λειτουργία εναλλαγής</string>
     <string name="onscreen_input_menu_haptic_feedback">Ενεργοποίηση της απτικής ανάδρασης</string>
@@ -26,6 +26,7 @@
     <string name="input_menu_add_mapping">Πιέστε οποιοδήποτε στοιχείο ελέγχου για να προσθέσετε άλλη αντιστοίχιση για αυτή την είσοδο.</string>
     <string name="video_menu_screen_zoom_percent">Ζουμ οθόνης (ποσοστό)</string>
     <string name="video_menu_horizontal_offset">Οριζόντια μετατόπιση</string>
+    <string name="video_menu_vertical_offset">Κάθετη μετατόπιση</string>
     <string name="video_menu_mode">Μορφή εμφάνισης</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (δύο χρωμάτων)</string>
     <string name="video_mode_anaglyph_description">Δουλεύει με τα περισσότερα ζευγάρια γυαλιών 3D</string>
@@ -36,7 +37,7 @@
     <string name="video_mode_stereo_summary">Πλάι-πλάι</string>
     <string name="video_mode_stereo_description">Εργάζεται με τρισδιάστατες τηλεοράσεις</string>
     <string name="video_menu_color_left">Χρώμα αριστερού ματιού</string>
-    <string name="video_menu_color_right">Χρώμα ματιού δεξιά</string>
+    <string name="video_menu_color_right">Χρώμα δεξιού ματιού</string>
     <string name="video_menu_invalid_colors_title">Άκυρα χρώματα</string>
     <string name="video_menu_invalid_colors_message">Τα χρώματα του αριστερού και του δεξιού ματιού "επικαλύπτονται" σε τουλάχιστον ένα χρωματικό κανάλι. Το εφέ 3D ενδέχεται να μην λειτουργεί σωστά.</string>
     <string name="video_menu_switch_viewer">Αλλάξτε το Cardboard Viewer</string>
@@ -47,6 +48,6 @@
     <string name="error_not_power_of_two">Αυτό\ δεν είναι παιχνίδι Virtual Boy! Το μέγεθος του αρχείου πρέπει να είναι δύναμη του δύο.</string>
     <string name="error_too_large">Αυτό\ δεν είναι παιχνίδι Virtual Boy! Μπορούν να είναι μόνο μέχρι 16Mb.</string>
     <string name="error_zip">Τίποτα σε αυτό το αρχείο ZIP δεν έμοιαζε με παιχνίδι Virtual Boy...</string>
-    <string name="toast_state_saved">Αποθηκευμένη κατάσταση</string>
+    <string name="toast_state_saved">Κατάσταση αποθήκευσης</string>
     <string name="toast_state_loaded">Κατάσταση φόρτωσης</string>
 </resources>

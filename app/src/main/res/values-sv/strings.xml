@@ -30,6 +30,7 @@
     <string name="input_menu_add_mapping">Tryck på valfri kontroll för att lägga till en annan mappning för denna ingång.</string>
     <string name="video_menu_screen_zoom_percent">Skärmzoom (procent)</string>
     <string name="video_menu_horizontal_offset">Horisontell förskjutning</string>
+    <string name="video_menu_vertical_offset">Vertikal förskjutning</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (två färger)</string>
     <string name="video_mode_anaglyph_description">Fungerar med de flesta par 3D-glasögon</string>
     <string name="video_mode_cardboard_description">Fungerar med Google Cardboard eller Daydream</string>

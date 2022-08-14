@@ -35,7 +35,7 @@
     <string name="input_menu_put_mapping">Naciśnij dowolny element sterujący, aby zmapować go do tego wejścia. Długie naciśnięcie powoduje mapowanie wielu kontrolek.</string>
     <string name="input_menu_add_mapping">Naciśnij dowolny element sterujący, aby dodać inne mapowanie dla tego wejścia.</string>
     <string name="video_menu_screen_zoom_percent">Powiększenie ekranu (procent)</string>
-    <string name="video_menu_horizontal_offset">Przesunięcie w poziomie</string>
+    <string name="video_menu_horizontal_offset">Przesunięcie poziomie</string>
     <string name="video_menu_vertical_offset">Przesunięcie pionowe</string>
     <string name="video_menu_mode">Tryb wyświetlania</string>
     <string name="video_mode_anaglyph_summary">Anaglif (dwukolorowy)</string>

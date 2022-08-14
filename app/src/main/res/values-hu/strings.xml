@@ -6,8 +6,8 @@
     <string name="load_game_from_file_explanation">Virtuális Boy játékok ROM-jait töltheti le, és itt töltheti be őket a játékhoz.\nIngyenes ROM-okat talál a Planet Virtual Boy-ról, a https://virtual-boy.com/homebrew/ címen.</string>
     <string name="load_game_no_recent_games">Még nem játszottál semmilyen játékot. Próbálj ki egyet!</string>
     <string name="game_menu_resume_game">Játék folytatása</string>    
-    <string name="game_menu_save_state">Mentés állapota</string>
-    <string name="game_menu_load_state">Load State</string>
+    <string name="game_menu_save_state">Állapot mentése</string>
+    <string name="game_menu_load_state">Állapot betöltése</string>
     <string name="game_menu_state_slot">A jelenlegi állapot slot</string>
     <string name="game_menu_state_slot_saved">Mentve: %1$s</string>
     <string name="game_menu_close_game">Játék bezárása</string>
@@ -27,8 +27,8 @@
     <string name="video_mode_anaglyph_summary">Anaglyph (kétszínű)</string>
     <string name="video_mode_anaglyph_description">A legtöbb 3D szemüveggel működik</string>
     <string name="video_mode_cardboard_description">Működik a Google Cardboard vagy Daydream rendszerrel</string>
-    <string name="video_mode_mono_left_summary">Kizárólag bal szemmel</string>
-    <string name="video_mode_mono_right_summary">Csak a jobb szemnek</string>
+    <string name="video_mode_mono_left_summary">Csak a bal szem</string>
+    <string name="video_mode_mono_right_summary">Csak a jobb szem</string>
     <string name="video_mode_mono_description">Nincs szükség berendezésre, de nincsenek 3D effektek</string>
     <string name="video_mode_stereo_description">Működik 3D TV-kkel</string>
     <string name="video_menu_color_left">Bal szem színe</string>
@@ -43,5 +43,5 @@
     <string name="error_too_large">Ez\ nem Virtual Boy játék! Csak 16 Mb lehet.</string>
     <string name="error_zip">A ZIP fájlban semmi sem hasonlít egy Virtual Boy játékra...</string>
     <string name="toast_state_saved">Mentett állapot</string>
-    <string name="toast_state_loaded">Letöltött állapot</string>
+    <string name="toast_state_loaded">Betöltött állapot</string>
 </resources>
