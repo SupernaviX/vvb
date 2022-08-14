@@ -85,7 +85,7 @@ impl Buffer {
 }
 use Buffer::{Buffer0, Buffer1};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Eye {
     Left,
     Right,
