@@ -10,12 +10,10 @@
     <string name="load_game_from_file_explanation">Możesz pobrać ROM-y gier Virtual Boy i załadować je tutaj, aby w nie zagrać.\nMożesz znaleźć darmowe ROM-y z Planet Virtual Boy, na stronie https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_no_recent_games">Nie grałeś jeszcze w żadną grę. Wypróbuj jedną z nich!</string>
     <string name="load_game_bundled_games">Gry w pakiecie</string>
-    <string name="load_game_created_by">Stworzone przez %1$s</string>
     <string name="game_menu_resume_game">Wznów grę</string>
     <string name="game_menu_save_state">Stan zapisu</string>
     <string name="game_menu_load_state">Stan załadowania</string>
     <string name="game_menu_state_slot">Slot stanu bieżącego</string>
-    <string name="game_menu_state_slot_saved">Zapisane: %1$s</string>
     <string name="game_menu_close_game">Zamknij grę</string>
     <string name="onscreen_input_menu_toggle_controls">Przełącz przyciski spustowe w tryb Toggle</string>
     <string name="onscreen_input_menu_haptic_feedback">Włącz Haptic Feedback</string>
@@ -30,7 +28,6 @@
     <string name="controller_menu_create">Utwórz</string>
     <string name="controller_menu_choose_rename">Wybierz kontroler do zmiany nazwy...</string>
     <string name="controller_menu_choose_delete">Wybierz kontroler do usunięcia...</string>
-    <string name="controller_menu_default_name">Kontroler %1$d</string>
     <string name="input_menu_unmapped">Niezamknięte</string>
     <string name="input_menu_put_mapping">Naciśnij dowolny element sterujący, aby zmapować go do tego wejścia. Długie naciśnięcie powoduje mapowanie wielu kontrolek.</string>
     <string name="input_menu_add_mapping">Naciśnij dowolny element sterujący, aby dodać inne mapowanie dla tego wejścia.</string>
