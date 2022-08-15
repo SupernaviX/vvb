@@ -21,7 +21,6 @@
     <string name="controller_menu_create">Δημιουργία</string>
     <string name="controller_menu_choose_rename">Επιλογή ελεγκτή για μετονομασία...</string>
     <string name="controller_menu_choose_delete">Επιλογή ελεγκτή για διαγραφή...</string>
-    <string name="controller_menu_default_name">Ελεγκτής %1$d</string>
     <string name="input_menu_put_mapping">Πιέστε οποιοδήποτε στοιχείο ελέγχου για να το αντιστοιχίσετε σε αυτή την είσοδο. Πατήστε παρατεταμένα για να αντιστοιχίσετε πολλαπλά στοιχεία ελέγχου.</string>
     <string name="input_menu_add_mapping">Πιέστε οποιοδήποτε στοιχείο ελέγχου για να προσθέσετε άλλη αντιστοίχιση για αυτή την είσοδο.</string>
     <string name="video_menu_screen_zoom_percent">Ζουμ οθόνης (ποσοστό)</string>
