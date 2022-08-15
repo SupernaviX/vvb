@@ -23,7 +23,7 @@
     <string name="onscreen_input_menu_on">使用虚拟游戏手柄</string>
     <string name="onscreen_input_menu_toggle_controls">将触发器按钮置于切换模式</string>
     <string name="onscreen_input_menu_haptic_feedback">启用触觉反馈</string>
-    <string name="onscreen_input_menu_parallax">视差效应</string>
+    <string name="onscreen_input_menu_parallax">视差</string>
     <string name="onscreen_input_menu_show_bounds">显示控制界线</string>
     <string name="onscreen_input_menu_preview">预览</string>
     <string name="controller_menu_manage">管理控制器</string>
@@ -37,7 +37,6 @@
     <string name="controller_menu_create">创建</string>
     <string name="controller_menu_choose_rename">选择再名控制器...</string>
     <string name="controller_menu_choose_delete">选择删除控制器...</string>
-    <string name="controller_menu_default_name">控制器%1$d</string>
     <string name="input_menu_unmapped">未被映射</string>
     <string name="input_menu_put_mapping">按下任何一个控件就可将其映射到这个输入。长按可映射多个控件。</string>
     <string name="input_menu_add_mapping">按任何控件都可为这个输入添加另一个映射。</string>
@@ -67,7 +66,7 @@
     <string name="error_file_not_found">找不到那个文件。也许它被移动了？</string>
     <string name="error_not_power_of_two">那不是Virtual Boy游戏!文件大小应是二的幂。</string>
     <string name="error_too_large">那不是Virtual Boy游戏!它们只能达到16Mb。</string>
-    <string name="error_zip">那ZIP文件中无任何东西看着像Virtual Boy游戏......</string>
+    <string name="error_zip">那ZIP文件中无任何内容看着像Virtual Boy游戏......</string>
     <string name="toast_state_saved">保存状态</string>
     <string name="toast_state_loaded">加载状态</string>
 </resources>
