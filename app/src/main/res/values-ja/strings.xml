@@ -12,7 +12,6 @@
     <string name="load_game_no_recent_games">あなたはまだゲームをプレイしていません。試してみてください！</string>
     <string name="load_game_bundled_games">バンドルされているゲーム</string>
     <string name="load_game_no_bundled_games">バンドルされているゲームはありません</string>
-    <string name="load_game_created_by">%1$sによって作成されました</string>
     <string name="game_menu_resume_game">レジュームゲーム</string>
     <string name="game_menu_reset_game">リセット</string>
     <string name="game_menu_auto_save">自動セーブ</string>
@@ -41,7 +40,6 @@
     <string name="controller_menu_rename">名前の変更</string>
     <string name="controller_menu_choose_rename">名前を変更するコントローラを選択...</string>
     <string name="controller_menu_choose_delete">削除するコントローラを選択...</string>
-    <string name="controller_menu_default_name">コントローラ%1$d</string>
     <string name="input_menu_unmapped">未対応</string>
     <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップします。複数のコントロールをマッピングするには、長押しします</string>
     <string name="input_menu_add_mapping">任意のコントロールを押して、この入力に別のマッピングを追加します</string>
