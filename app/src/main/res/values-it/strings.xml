@@ -12,14 +12,12 @@
     <string name="load_game_no_recent_games">Non hai ancora giocato a nessun gioco. Provane uno!</string>
     <string name="load_game_bundled_games">Giochi in blocco</string>
     <string name="load_game_no_bundled_games">Nessun gioco in bundle</string>
-    <string name="load_game_created_by">Creato da %1$s</string>
     <string name="game_menu_resume_game">Riprendi gioco</string>
     <string name="game_menu_auto_save">Salvataggio automatico</string>
     <string name="game_menu_save_state">Stato di salvataggio</string>
     <string name="game_menu_load_state">Stato di caricamento</string>
     <string name="game_menu_state_slot">Standard dello Stato corrente</string>
     <string name="game_menu_state_slot_empty">Vuoto</string>
-    <string name="game_menu_state_slot_saved">Salvato: %1$s</string>
     <string name="game_menu_close_game">Chiudi gioco</string>
     <string name="onscreen_input_menu_on">Usa il Gamepad virtuale</string>
     <string name="onscreen_input_menu_toggle_controls">Mettere i pulsanti di attivazione in modalità "Toggle"</string>
