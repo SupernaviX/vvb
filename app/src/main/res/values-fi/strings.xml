@@ -4,7 +4,6 @@
     <string name="load_game_from_file_explanation">Voit ladata Virtual Boy -pelien ROM-muisteja ja ladata ne tänne pelataksesi niitä.\nVoit löytää ilmaisia ROM-muisteja Planet Virtual Boysta, osoitteesta https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_no_recent_games">Et ole vielä pelannut yhtään peliä. Kokeile yhtä!</string>
     <string name="load_game_no_bundled_games">Ei pakattuja pelejä</string>
-    <string name="load_game_created_by">Luonut %1$s</string>
     <string name="game_menu_resume_game">Jatka peliä</string>
     <string name="game_menu_save_state">Tallenna tila</string>
     <string name="game_menu_load_state">Lataa tila</string>
