@@ -17,7 +17,6 @@
     <string name="game_menu_load_state">Yükleme Durumu</string>
     <string name="game_menu_state_slot">Geçerli Durum Yuvası</string>
     <string name="game_menu_state_slot_empty">Boş</string>
-    <string name="game_menu_state_slot_saved">Kaydedildi: %1$s</string>
     <string name="game_menu_close_game">Oyunu Kapat</string>
     <string name="onscreen_input_menu_toggle_controls">Tetik Düğmelerini Geçiş Moduna Al</string>
     <string name="onscreen_input_menu_haptic_feedback">Dokunsal Geri Bildirimi Etkinleştir</string>
