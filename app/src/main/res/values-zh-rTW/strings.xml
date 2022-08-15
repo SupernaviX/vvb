@@ -38,8 +38,8 @@
     <string name="controller_menu_choose_rename">選擇再名控制器...</string>
     <string name="controller_menu_choose_delete">選擇刪除控制器...</string>
     <string name="input_menu_unmapped">未映射</string>
-    <string name="input_menu_put_mapping">按下任一控件就可將其映射到此輸入。長按可映射多控件。</string>
-    <string name="input_menu_add_mapping">按任何控件都可為此輸入添加另一映射。</string>
+    <string name="input_menu_put_mapping">按任一控件可將其映射到此輸入。長按可映射多控件。</string>
+    <string name="input_menu_add_mapping">按任何控件可為此輸入添加另一映射。</string>
     <string name="video_menu_screen_zoom_percent">屏幕縮放（百分比）</string>
     <string name="video_menu_horizontal_offset">水平偏移</string>
     <string name="video_menu_vertical_offset">垂直偏移</string>
