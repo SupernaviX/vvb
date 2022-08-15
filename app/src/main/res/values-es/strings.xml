@@ -13,7 +13,6 @@
     <string name="load_game_no_recent_games">Todavía no has jugado a ningún juego. Prueba uno!</string>
     <string name="load_game_bundled_games">Juegos incluidos</string>
     <string name="load_game_no_bundled_games">Sin juegos incluidos</string>
-    <string name="load_game_created_by">Creado por %1$s</string>
     <string name="game_menu_resume_game">Reanudar juego</string>
     <string name="game_menu_reset_game">Reiniciar</string>
     <string name="game_menu_auto_save">Guardar automáticamente</string>
@@ -21,7 +20,6 @@
     <string name="game_menu_load_state">Estado de carga</string>
     <string name="game_menu_state_slot">Ranura de estado actual</string>
     <string name="game_menu_state_slot_empty">Vacío</string>
-    <string name="game_menu_state_slot_saved">Guardado: %1$s</string>
     <string name="game_menu_close_game">Cerrar juego</string>
     <string name="onscreen_input_menu_on">Usar Gamepad Virtual</string>
     <string name="onscreen_input_menu_toggle_controls">Poner los botones de disparo en modo de conmutación</string>
@@ -41,7 +39,6 @@
     <string name="controller_menu_cancel">Cancelar</string>
     <string name="controller_menu_choose_rename">Elegir controlador para renombrar...</string>
     <string name="controller_menu_choose_delete">Elegir controlador para borrar...</string>
-    <string name="controller_menu_default_name">Controlador %1$d</string>
     <string name="input_menu_unmapped">Sin asignar</string>
     <string name="input_menu_put_mapping">Pulsa cualquier control para asignarlo a esta entrada. Pulse prolongadamente para asignar varios controles.</string>
     <string name="input_menu_add_mapping">Pulsa cualquier control para añadir otra asignación para esta entrada.</string>
