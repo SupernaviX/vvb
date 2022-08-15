@@ -37,20 +37,20 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun loadGame(uri: Uri): Boolean {
         return try {
-            val game = _gameRepo.getGame(uri) ?: return false
-            val gamePak = _gamePakLoader.tryLoad(game.id, uri)
-            val autoSave = _gameRepo.getAutoSave(game.id)
+            val gamePak = _gamePakLoader.load(uri)
+            val data = _gameRepo.getGameData(gamePak.hash, uri)
+            val autoSave = _gameRepo.getAutoSave(data.id)
 
             _emulator.loadGamePak(gamePak)
-            if (game.autoSaveEnabled) {
+            if (data.autoSaveEnabled) {
                 _emulator.setAutoSaveFile(autoSave.file)
                 if (autoSave.exists) {
                     loadState(autoSave)
                 }
             }
 
-            _gameRepo.markAsPlayed(game.id, uri)
-            _loadedGameId.value = game.id
+            _gameRepo.markAsPlayed(data.id, uri)
+            _loadedGameId.value = data.id
             lastEvent.value = GameEvent.Opened
 
             true

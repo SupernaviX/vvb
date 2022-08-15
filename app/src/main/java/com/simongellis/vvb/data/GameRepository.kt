@@ -31,10 +31,8 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
             .isNotEmpty()
     }
 
-    fun getGame(uri: Uri): Game? {
-        val id = GameData.getId(uri)
-        val data = _dao.get(id) ?: GameData(uri, Date(), 0, true)
-        return fromData(data)
+    fun getGameData(id: String, uri: Uri): GameData {
+        return _dao.get(id) ?: GameData(id, uri, Date(), 0, true)
     }
 
     fun getAutoSave(id: String): StateSlot {
@@ -50,7 +48,7 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
     }
 
     fun markAsPlayed(id: String, uri: Uri) {
-        val data = _dao.get(id) ?: GameData(uri, Date(), 0, true)
+        val data = _dao.get(id) ?: GameData(id, uri, Date(), 0, true)
         val newData = data.copy(uri = uri, lastPlayed = Date())
         _dao.put(newData)
     }
