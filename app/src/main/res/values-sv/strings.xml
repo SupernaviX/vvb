@@ -9,10 +9,8 @@
     <string name="load_game_recent_games">Reksa spel</string>
     <string name="load_game_no_recent_games">Du har inte spelat några spel ännu. Prova ett!</string>
     <string name="load_game_no_bundled_games">Ingen bundlade spel</string>
-    <string name="load_game_created_by">Skapad av %1$s</string>
     <string name="game_menu_resume_game">Fortsätt spelet</string>
     <string name="game_menu_state_slot_empty">Tomt</string>
-    <string name="game_menu_state_slot_saved">Sparat: %1$s</string>
     <string name="game_menu_close_game">Slut spelet</string>
     <string name="onscreen_input_menu_on">Använd virtuell gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Sätt utlösarknapparna i växelläge</string>
