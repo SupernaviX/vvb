@@ -50,14 +50,13 @@
     <string name="video_mode_mono_left_summary">仅左眼</string>
     <string name="video_mode_mono_right_summary">仅右眼</string>
     <string name="video_mode_mono_description">不需设备，但无3D效果</string>
-    <string name="video_mode_stereo_summary">并排</string>
     <string name="video_mode_stereo_description">与3D电视配合使用</string>
     <string name="video_menu_aspect_ratio">纵横比</string>
     <string name="video_menu_color">色</string>
     <string name="video_menu_color_left">左眼色</string>
     <string name="video_menu_color_right">右眼色</string>
     <string name="video_menu_invalid_colors_title">无效色</string>
-    <string name="video_menu_invalid_colors_message">左和右眼色至少在一色道"重叠 "。3D效果可能无法正常工作。</string>
+    <string name="video_menu_invalid_colors_message">左和右眼色至少在一色道"重叠"。3D效果可能无法正常工作。</string>
     <string name="video_menu_switch_viewer">切换Cardboard浏览器</string>
     <string name="video_menu_preview">预览</string>
     <string name="audio_menu_volume">音量</string>
