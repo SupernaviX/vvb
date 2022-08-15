@@ -38,8 +38,8 @@
     <string name="controller_menu_choose_rename">选择再名控制器...</string>
     <string name="controller_menu_choose_delete">选择删除控制器...</string>
     <string name="input_menu_unmapped">未被映射</string>
-    <string name="input_menu_put_mapping">按下任何一个控件就可将其映射到这个输入。长按可映射多个控件。</string>
-    <string name="input_menu_add_mapping">按任何控件都可为这个输入添加另一个映射。</string>
+    <string name="input_menu_put_mapping">按下任一控件就可将其映射到此输入。长按可映射多控件。</string>
+    <string name="input_menu_add_mapping">按任何控件都可为此输入添加另一映射。</string>
     <string name="video_menu_screen_zoom_percent">屏幕缩放（百分比）</string>
     <string name="video_menu_horizontal_offset">水平偏移</string>
     <string name="video_menu_vertical_offset">垂直偏移</string>
@@ -57,12 +57,12 @@
     <string name="video_menu_color_right">右眼色</string>
     <string name="video_menu_invalid_colors_title">无效色</string>
     <string name="video_menu_invalid_colors_message">左和右眼色至少在一色道"重叠"。3D效果可能无法正常工作。</string>
-    <string name="video_menu_switch_viewer">切换Cardboard浏览器</string>
+    <string name="video_menu_switch_viewer">切换Cardboard观览器</string>
     <string name="video_menu_preview">预览</string>
     <string name="audio_menu_volume">音量</string>
     <string name="audio_menu_buffer_size">缓冲区大小（以帧为单位）</string>
-    <string name="application_crashed">ಠ_ಠ，应用程序崩溃。一份报告将被发送给开发者。</string>
-    <string name="error_file_not_found">找不到那个文件。也许它被移动了？</string>
+    <string name="application_crashed">ಠ_ಠ，应用程序崩溃。一报告将被发送至开发者。</string>
+    <string name="error_file_not_found">找不到那文件。也许它被移动了？</string>
     <string name="error_not_power_of_two">那不是Virtual Boy游戏!文件大小应是二的幂。</string>
     <string name="error_too_large">那不是Virtual Boy游戏!它们只能达到16Mb。</string>
     <string name="error_zip">那ZIP文件中无任何内容看着像Virtual Boy游戏......</string>
