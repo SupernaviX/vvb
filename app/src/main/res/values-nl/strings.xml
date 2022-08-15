@@ -9,11 +9,9 @@
     <string name="load_game_no_recent_games">Je hebt nog geen spelletjes gespeeld. Probeer er een uit!</string>
     <string name="load_game_bundled_games">Gebundelde spellen</string>
     <string name="load_game_no_bundled_games">Geen gebundelde spellen</string>
-    <string name="load_game_created_by">Gemaakt door %1$s</string>
     <string name="game_menu_resume_game">Hervat spel</string>
     <string name="game_menu_reset_game">Hervat spel</string>
     <string name="game_menu_state_slot_empty">Leeg</string>
-    <string name="game_menu_state_slot_saved">Opgeslagen: %1$s</string>
     <string name="game_menu_close_game">Game sluiten</string>
     <string name="onscreen_input_menu_toggle_controls">Zet triggerknoppen in schakelmodus</string>
     <string name="onscreen_input_menu_haptic_feedback">Schakel Haptische Feedback in</string>
