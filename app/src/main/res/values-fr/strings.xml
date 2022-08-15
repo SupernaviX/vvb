@@ -9,7 +9,6 @@
     <string name="load_game_recent_games">Jeux récents</string>
     <string name="load_game_no_recent_games">Vous n\'avez encore joué à aucun jeu. Essayez-en un !</string>
     <string name="load_game_bundled_games">Jeux groupés</string>
-    <string name="load_game_created_by">Créé par %1$s</string>
     <string name="game_menu_save_state">État de enregistrement</string>
     <string name="game_menu_load_state">État de chargement</string>
     <string name="game_menu_state_slot">Slot de l\'état actuel</string>
@@ -27,7 +26,6 @@
     <string name="controller_menu_create">Créer</string>
     <string name="controller_menu_choose_rename">Choisir le contrôleur à renommer...</string>
     <string name="controller_menu_choose_delete">Choisissez le contrôleur à supprimer...</string>
-    <string name="controller_menu_default_name">Contrôleur %1$d</string>
     <string name="input_menu_put_mapping">Appuyez sur n\'importe quel contrôle pour le mapper à cette entrée. Appuyez longuement pour mapper plusieurs contrôles.</string>
     <string name="input_menu_add_mapping">Appuyez sur n\'importe quel contrôle pour ajouter un autre mappage pour cette entrée.</string>
     <string name="video_menu_screen_zoom_percent">Zoom de l\'écran (pourcentage)</string>
