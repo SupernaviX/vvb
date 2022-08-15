@@ -11,7 +11,6 @@
     <string name="load_game_recent_games">Paskutiniai žaidimai</string>
     <string name="load_game_no_recent_games">Jūs dar nežaidėte jokių žaidimų. Išbandykite vieną iš jų!</string>
     <string name="load_game_no_bundled_games">Nėra paketinių žaidimų</string>
-    <string name="load_game_created_by">Sukurta %1$s</string>
     <string name="game_menu_resume_game">Atnaujinti žaidimą</string>
     <string name="game_menu_reset_game">Atnaujinti žaidimą</string>
     <string name="game_menu_auto_save">Automatinis išsaugojimas</string>
@@ -37,7 +36,6 @@
     <string name="controller_menu_rename">Pakeisti pavadinimą</string>
     <string name="controller_menu_choose_rename">Pervadinti valdiklį...</string>
     <string name="controller_menu_choose_delete">Pasirinkite valdiklį, kurį norite ištrinti...</string>
-    <string name="controller_menu_default_name">Kontroleris %1$d</string>
     <string name="input_menu_unmapped">Nepripažintas</string>
     <string name="input_menu_put_mapping">Spauskite bet kurį valdiklį, kad jį atvaizduotumėte į šią įvestį. Ilgai paspauskite, jei norite priskirti kelis valdiklius.</string>
     <string name="input_menu_add_mapping">Spauskite bet kurį valdiklį, kad pridėtumėte kitą šios įvesties atvaizdavimą.</string>
