@@ -9,7 +9,6 @@
     <string name="game_menu_save_state">Állapot mentése</string>
     <string name="game_menu_load_state">Állapot betöltése</string>
     <string name="game_menu_state_slot">A jelenlegi állapot slot</string>
-    <string name="game_menu_state_slot_saved">Mentve: %1$s</string>
     <string name="game_menu_close_game">Játék bezárása</string>
     <string name="onscreen_input_menu_toggle_controls">Trigger gombok váltó üzemmódba helyezése</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptikus visszajelzés bekapcsolása</string>
