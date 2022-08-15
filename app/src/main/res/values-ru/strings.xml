@@ -12,16 +12,13 @@
     <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте одну!</string>
     <string name="load_game_bundled_games">Публикованные игры</string>
     <string name="load_game_no_bundled_games">Нет игр в комплекте</string>
-    <string name="load_game_created_by">Создано %1$s</string>
     <string name="game_menu_resume_game">Возобновить игру</string>
     <string name="game_menu_reset_game">Перезагрузка</string>
     <string name="game_menu_auto_save">Автосохранение</string>
     <string name="game_menu_save_state">Состояние сохранения</string>
     <string name="game_menu_load_state">Состояние загрузки</string>
     <string name="game_menu_state_slot">Текущий слот состояния</string>
-    <string name="game_menu_state_slot_name">Слот %1$s</string>
     <string name="game_menu_state_slot_empty">Пустой</string>
-    <string name="game_menu_state_slot_saved">Сохранено: %1$s</string>
     <string name="game_menu_close_game">Закрыть игру</string>
     <string name="onscreen_input_menu_on">Использовать виртуальный геймпад</string>
     <string name="onscreen_input_menu_toggle_controls">Переключить кнопки триггера в режим переключения</string>
@@ -43,7 +40,6 @@
     <string name="controller_menu_rename">Переименовать</string>
     <string name="controller_menu_choose_rename">Выберите контроллер для переименования...</string>
     <string name="controller_menu_choose_delete">Выберите контроллер для удаления...</string>
-    <string name="controller_menu_default_name">Контроллер %1$d</string>
     <string name="input_menu_put_mapping">Нажмите на любой элемент управления, чтобы сопоставить его с этим входом. Длительное нажатие позволяет сопоставить несколько элементов управления.</string>
     <string name="input_menu_add_mapping">Нажмите на любой элемент управления, чтобы добавить другой элемент управления для этого входа.</string>
     <string name="video_menu_screen_zoom_percent">Масштаб экрана (в процентах)</string>
