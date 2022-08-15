@@ -10,14 +10,12 @@
     <string name="load_game_no_recent_games">Du hast noch keine Spiele gespielt. Probiere eines aus!</string>
     <string name="load_game_bundled_games">Gebündelte Spiele</string>
     <string name="load_game_no_bundled_games">Keine gebündelten Spiele</string>
-    <string name="load_game_created_by">Erstellt von %1$s</string>
     <string name="game_menu_resume_game">Spiel fortsetzen</string>
     <string name="game_menu_reset_game">Zurücksetzen</string>
     <string name="game_menu_save_state">Speicherstatus</string>
     <string name="game_menu_load_state">Ladestatus</string>
     <string name="game_menu_state_slot">Aktueller Zustands-Slot</string>
     <string name="game_menu_state_slot_empty">Leer</string>
-    <string name="game_menu_state_slot_saved">Gespeichert: %1$s</string>
     <string name="game_menu_close_game">Spiel schließen</string>
     <string name="onscreen_input_menu_on">Virtuelles Gamepad verwenden</string>
     <string name="onscreen_input_menu_toggle_controls">Auslöser-Tasten in den Umschaltmodus versetzen</string>
