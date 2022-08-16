@@ -16,8 +16,8 @@
     <string name="game_menu_resume_game">Reanudar juego</string>
     <string name="game_menu_reset_game">Reiniciar</string>
     <string name="game_menu_auto_save">Guardar automáticamente</string>
-    <string name="game_menu_save_state">Estado de guardado</string>
-    <string name="game_menu_load_state">Estado de carga</string>
+    <string name="game_menu_save_state">Guardar partida</string>
+    <string name="game_menu_load_state">Cargar partida</string>
     <string name="game_menu_state_slot">Ranura de estado actual</string>
     <string name="game_menu_state_slot_empty">Vacío</string>
     <string name="game_menu_close_game">Cerrar juego</string>
