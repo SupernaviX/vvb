@@ -1,7 +1,10 @@
 <resources>
     <string name="main_menu_game_actions">Spiel-Aktionen</string>
-    <string name="main_menu_now_playing">Jetzt spielen</string>
+    <string name="main_menu_now_playing">Spiele</string>
     <string name="main_menu_load_game">Spiel laden</string>
+    <string name="main_menu_onscreen_input_setup">Touch Bildschirmtasten</string>
+    <string name="main_menu_controller_setup">Steuerung</string>
+    <string name="main_menu_audio_setup">Ton</string>
     <string name="load_game_from_file">Aus Datei laden</string>
     <string name="load_game_from_file_explanation">Sie können ROMs von Virtual Boy-Spielen herunterladen und sie hier laden, um sie zu spielen.\nSie können kostenlose ROMs von Planet Virtual Boy finden, unter https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Zuletzt gespielt</string>
@@ -11,8 +14,8 @@
     <string name="game_menu_resume_game">Fortsetzen</string>
     <string name="game_menu_reset_game">Zurücksetzen</string>
     <string name="game_menu_auto_save">Automatischer Speicherung</string>
-    <string name="game_menu_save_state">Speicherstatus</string>
-    <string name="game_menu_load_state">Ladestatus</string>
+    <string name="game_menu_save_state">Stand speichern</string>
+    <string name="game_menu_load_state">Stand laden</string>
     <string name="game_menu_state_slot">Aktueller Zustands-Slot</string>
     <string name="game_menu_state_slot_empty">Leer</string>
     <string name="game_menu_close_game">Spiel schließen</string>
@@ -28,8 +31,8 @@
     <string name="controller_menu_choose_controller">Wählen Sie einen Controller für die Zuordnung</string>
     <string name="controller_menu_no_controllers_detected">Keine Controller gefunden...</string>
     <string name="controller_menu_new_controller">Neuer Controller</string>
-    <string name="controller_menu_rename_controller">Umbenennen</string>
-    <string name="controller_menu_delete_controller">Löschen</string>
+    <string name="controller_menu_rename_controller">Controller umbenennen</string>
+    <string name="controller_menu_delete_controller">Controller löschen</string>
     <string name="controller_menu_name">Steuergerät benennen?</string>
     <string name="controller_menu_create">Erstellen</string>
     <string name="controller_menu_cancel">Abbrechen</string>
@@ -66,6 +69,6 @@
     <string name="error_not_power_of_two">Das ist kein Virtual Boy Spiel! Die Dateigröße sollte eine Potenz von zwei sein.</string>
     <string name="error_too_large">Das\ ist kein Virtual Boy Spiel! Sie können nur bis zu 16Mb groß sein.</string>
     <string name="error_zip">Nichts in dieser ZIP-Datei sah wie ein Virtual Boy-Spiel aus...</string>
-    <string name="toast_state_saved">Gespeicherter Zustand</string>
-    <string name="toast_state_loaded">Geladener Zustand</string>
+    <string name="toast_state_saved">Spielstand gespeichert</string>
+    <string name="toast_state_loaded">Spielstand geladen</string>
 </resources>
