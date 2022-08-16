@@ -2,10 +2,10 @@
     <string name="main_menu_game_actions">遊戲動作</string>
     <string name="main_menu_now_playing">此時正玩</string>
     <string name="main_menu_load_game">加載遊戲</string>
-    <string name="main_menu_onscreen_input_setup">屏幕輸入設置</string>
-    <string name="main_menu_controller_setup">控制器設置</string>
-    <string name="main_menu_video_setup">視頻設置</string>
-    <string name="main_menu_audio_setup">音頻設置</string>
+    <string name="main_menu_onscreen_input_setup">屏幕輸入</string>
+    <string name="main_menu_controller_setup">控制器</string>
+    <string name="main_menu_video_setup">視頻</string>
+    <string name="main_menu_audio_setup">音頻</string>
     <string name="load_game_from_file">文件加載</string>
     <string name="load_game_from_file_explanation">你可下載Virtual Boy遊戲ROM，並於此加載它們來玩。\n你可從Planet Virtual Boy找到免費ROM，網址https://virtual-boy.com/homebrew/。</string>
     <string name="load_game_recent_games">最近遊戲</string>
