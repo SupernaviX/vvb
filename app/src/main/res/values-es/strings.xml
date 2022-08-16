@@ -5,7 +5,6 @@
     <string name="main_menu_onscreen_input_setup">Configuración de la entrada en pantalla</string>
     <string name="main_menu_controller_setup">Configuración del controlador</string>
     <string name="main_menu_video_setup">Configuración de vídeo</string>
-    <string name="main_menu_audio_setup">Configuración de audio</string>
     <string name="load_game_from_file">Cargar desde archivo</string>
     <string name="load_game_from_file_explanation">Puedes descargar ROMs de juegos de Virtual Boy, y cargarlos aquí para jugarlos.\nPuedes encontrar ROMs gratis de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button">Aceptar</string>
@@ -13,9 +12,9 @@
     <string name="load_game_no_recent_games">Todavía no has jugado a ningún juego. Prueba uno!</string>
     <string name="load_game_bundled_games">Juegos incluidos</string>
     <string name="load_game_no_bundled_games">Sin juegos incluidos</string>
-    <string name="game_menu_resume_game">Reanudar juego</string>
+    <string name="game_menu_resume_game">Reanudar</string>
     <string name="game_menu_reset_game">Resetear</string>
-    <string name="game_menu_auto_save">Guardar automáticamente</string>
+    <string name="game_menu_auto_save">Autoguardado</string>
     <string name="game_menu_save_state">Guardar partida</string>
     <string name="game_menu_load_state">Cargar partida</string>
     <string name="game_menu_state_slot">Ranura de estado actual</string>
@@ -32,11 +31,12 @@
     <string name="controller_menu_choose_controller">Elegir controlador para mapear</string>
     <string name="controller_menu_no_controllers_detected">No se han detectado controladores...</string>
     <string name="controller_menu_new_controller">Nuevo controlador</string>
-    <string name="controller_menu_rename_controller">Renombrar controlador</string>
-    <string name="controller_menu_delete_controller">Borrar controlador</string>
+    <string name="controller_menu_rename_controller">Renombrar</string>
+    <string name="controller_menu_delete_controller">Borrar</string>
     <string name="controller_menu_name">Nombre del controlador</string>
     <string name="controller_menu_create">Crear</string>
     <string name="controller_menu_cancel">Cancelar</string>
+    <string name="controller_menu_rename">Renombrar</string>
     <string name="controller_menu_choose_rename">Elegir controlador para renombrar...</string>
     <string name="controller_menu_choose_delete">Elegir controlador para borrar...</string>
     <string name="input_menu_unmapped">Sin asignar</string>
