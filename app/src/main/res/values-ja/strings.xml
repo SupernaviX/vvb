@@ -1,12 +1,9 @@
 <resources>
     <string name="main_menu_now_playing">現在プレイ中</string>
     <string name="main_menu_load_game">ゲームを読み込む</string>
-    <string name="main_menu_onscreen_input_setup">オンスクリーン入力の設定</string>
-    <string name="main_menu_controller_setup">コントローラの設定</string>
-    <string name="main_menu_video_setup">ビデオの設定</string>
-    <string name="main_menu_audio_setup">オーディオの設定</string>
+    <string name="main_menu_onscreen_input_setup">オンスクリーン入力</string>
     <string name="load_game_from_file">ファイルから読み込む</string>
-    <string name="load_game_from_file_explanation">バーチャルボーイのゲームのROMをダウンロードして、ここにロードしてプレイすることができます。\nPlanet Virtual Boyの無料ROMは、https://virtual-boy.com/homebrew/。</string>
+    <string name="load_game_from_file_explanation">バーチャルボーイのゲームのROMをダウンロードして、ここにロードしてプレイことができます。\nPlanet Virtual Boyの無料ROMは、https://virtual-boy.com/homebrew/。</string>
     <string name="load_game_recent_games">最近のゲーム</string>
     <string name="load_game_no_recent_games">あなたはまだゲームをプレイしていません。試してみてください！</string>
     <string name="game_menu_auto_save">自動セーブ</string>
@@ -14,14 +11,14 @@
     <string name="game_menu_load_state">ロード状態</string>
     <string name="game_menu_state_slot">現在の状態のスロット</string>
     <string name="game_menu_state_slot_empty">空</string>
-    <string name="game_menu_close_game">ゲームを終了する</string>
+    <string name="game_menu_close_game">ゲームを終了</string>
     <string name="onscreen_input_menu_on">仮想ゲームパッドを使用</string>
-    <string name="onscreen_input_menu_haptic_feedback">Haptic Feedbackを有効にする</string>
+    <string name="onscreen_input_menu_haptic_feedback">Haptic Feedbackを有効に</string>
     <string name="onscreen_input_menu_parallax">視差</string>
-    <string name="onscreen_input_menu_show_bounds">コントロールの境界を表示する</string>
+    <string name="onscreen_input_menu_show_bounds">コントロールの境界を表示</string>
     <string name="controller_menu_manage">コントローラの管理</string>
     <string name="controller_menu_automap_new_controller">新しいコントローラを自動マップ</string>
-    <string name="controller_menu_choose_controller">マップするコントローラを選択</string>
+    <string name="controller_menu_choose_controller">マップコントローラを選択</string>
     <string name="controller_menu_no_controllers_detected">コントローラが検出されない...</string>
     <string name="controller_menu_new_controller">新しいコントローラー</string>
     <string name="controller_menu_rename_controller">コントローラの名前を変更</string>
@@ -29,10 +26,10 @@
     <string name="controller_menu_name">コントローラ名?</string>
     <string name="controller_menu_create">作成</string>
     <string name="controller_menu_rename">名前の変更</string>
-    <string name="controller_menu_choose_rename">名前を変更するコントローラを選択...</string>
-    <string name="controller_menu_choose_delete">削除するコントローラを選択...</string>
+    <string name="controller_menu_choose_rename">名前を変更コントローラを選択...</string>
+    <string name="controller_menu_choose_delete">削除コントローラを選択...</string>
     <string name="input_menu_unmapped">未対応</string>
-    <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップします。複数のコントロールをマッピングするには、長押しします</string>
+    <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップします。複数のコントロールをマッピングには、長押しします</string>
     <string name="input_menu_add_mapping">任意のコントロールを押して、この入力に別のマッピングを追加します</string>
     <string name="video_menu_screen_zoom_percent">画面の拡大率（パーセント）</string>
     <string name="video_menu_horizontal_offset">水平オフセット</string>
@@ -47,7 +44,7 @@
     <string name="video_mode_stereo_description">3Dテレビで動作</string>
     <string name="video_menu_aspect_ratio">アスペクト比</string>
     <string name="aspect_ratio_auto">自動</string>
-    <string name="aspect_ratio_stretch">フィットするように引き伸ばす</string>
+    <string name="aspect_ratio_stretch">フィットように引き伸ばす</string>
     <string name="video_menu_color">色</string>
     <string name="video_menu_color_left">左目の色</string>
     <string name="video_menu_color_right">右目の色</string>
