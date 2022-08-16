@@ -8,7 +8,7 @@
     <string name="main_menu_audio_setup">音频</string>
     <string name="load_game_from_file">文件加载</string>
     <string name="load_game_from_file_explanation">你可下载Virtual Boy游戏ROM，并于此加载它们来玩。\n你可从Planet Virtual Boy找到免费ROM，网址https://virtual-boy.com/homebrew/。</string>
-    <string name="load_game_recent_games">最近游戏</string>
+    <string name="load_game_recent_games">近日游戏</string>
     <string name="load_game_no_recent_games">你未玩任何游戏。试！</string>
     <string name="load_game_bundled_games">捆绑游戏</string>
     <string name="load_game_no_bundled_games">无捆绑游戏</string>
