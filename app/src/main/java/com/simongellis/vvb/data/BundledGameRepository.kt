@@ -11,6 +11,6 @@ class BundledGameRepository(context: Context) {
     private fun readBundledGames(context: Context): List<BundledGame> {
         val text = context.resources.openRawResource(R.raw.bundledgames).bufferedReader().use { it.readText() }
         val gameData: List<BundledGameData> = Json.decodeFromString(serializer(), text)
-        return gameData.map { BundledGame(GameData.getId(it.uri), it.name, it.uri, it.authors) }
+        return gameData.map { BundledGame(it.id, it.name, it.uri, it.authors) }
     }
 }

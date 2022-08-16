@@ -13,11 +13,4 @@ data class GameData(
     val lastPlayed: Date,
     val stateSlot: Int,
     val autoSaveEnabled: Boolean,
-): Entity {
-
-    companion object {
-        fun getId(uri: Uri) = uri.lastPathSegment!!
-            .substringAfterLast('/')
-            .substringBeforeLast('.')
-    }
-}
+): Entity
