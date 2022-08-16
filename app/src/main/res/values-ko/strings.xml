@@ -19,7 +19,7 @@
     <string name="game_menu_load_state">로드 상태</string>
     <string name="game_menu_state_slot">현재 상태 슬롯</string>
     <string name="game_menu_state_slot_empty">비어 있음</string>
-    <string name="game_menu_close_game">게임 종료</string>
+    <string name="game_menu_close_game">게임 닫기</string>
     <string name="onscreen_input_menu_on">가상 게임패드 사용</string>
     <string name="onscreen_input_menu_toggle_controls">트리거 버튼을 토글 모드로 설정</string>
     <string name="onscreen_input_menu_haptic_feedback">햅틱 피드백</string>
