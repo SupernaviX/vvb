@@ -14,7 +14,7 @@
     <string name="load_game_bundled_games">Juegos incluidos</string>
     <string name="load_game_no_bundled_games">Sin juegos incluidos</string>
     <string name="game_menu_resume_game">Reanudar juego</string>
-    <string name="game_menu_reset_game">Reiniciar</string>
+    <string name="game_menu_reset_game">Resetear</string>
     <string name="game_menu_auto_save">Guardar automáticamente</string>
     <string name="game_menu_save_state">Guardar partida</string>
     <string name="game_menu_load_state">Cargar partida</string>
@@ -23,7 +23,7 @@
     <string name="game_menu_close_game">Cerrar juego</string>
     <string name="onscreen_input_menu_on">Usar Gamepad Virtual</string>
     <string name="onscreen_input_menu_toggle_controls">Poner los botones de disparo en modo de conmutación</string>
-    <string name="onscreen_input_menu_haptic_feedback">Activar la retroalimentación háptica</string>
+    <string name="onscreen_input_menu_haptic_feedback">Retroalimentación háptica</string>
     <string name="onscreen_input_menu_show_bounds">Mostrar límites de control</string>
     <string name="onscreen_input_menu_preview">Vista previa</string>
     <string name="controller_menu_controllers">Controladores</string>
@@ -55,6 +55,7 @@
     <string name="video_mode_stereo_summary">Lado a lado</string>
     <string name="video_mode_stereo_description">Funciona con televisores 3D</string>
     <string name="video_menu_aspect_ratio">Relación de aspecto</string>
+    <string name="aspect_ratio_auto">Automático</string>
     <string name="aspect_ratio_stretch">Estirar para ajustar</string>
     <string name="video_menu_color_left">Color del ojo izquierdo</string>
     <string name="video_menu_color_right">Color del ojo derecho</string>
