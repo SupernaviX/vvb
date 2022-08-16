@@ -9,9 +9,9 @@
     <string name="load_game_no_recent_games">Você ainda não jogou nenhum jogo. Experimente um!</string>
     <string name="load_game_bundled_games">Jogos_bundled</string>
     <string name="load_game_no_bundled_games">Sem_game_agrupado</string>
-    <string name="game_menu_resume_game">Resume do jogo</string>
-    <string name="game_menu_save_state">Salvar Estado</string>
-    <string name="game_menu_load_state">Carregar Estado</string>
+    <string name="game_menu_resume_game">Resumir jogo</string>
+    <string name="game_menu_save_state">Salvar estado</string>
+    <string name="game_menu_load_state">Carregar estado</string>
     <string name="game_menu_state_slot">Chave de Estado actual</string>
     <string name="game_menu_state_slot_empty">Ampty</string>
     <string name="game_menu_close_game">Jogo Fechado</string>
@@ -22,6 +22,7 @@
     <string name="controller_menu_no_controllers_detected">Nenhum controlador detectado...</string>
     <string name="controller_menu_name">Nome do controlador?</string>
     <string name="controller_menu_create">Criar</string>
+    <string name="controller_menu_cancel">Cancelar</string>
     <string name="controller_menu_rename">Renome</string>
     <string name="controller_menu_choose_rename">Selecionar controlador para renomear...</string>
     <string name="controller_menu_choose_delete">Selecionar controlador para apagar...</string>
@@ -39,7 +40,7 @@
     <string name="video_mode_mono_description">Nenhum equipamento necessário, mas nenhum efeito 3D</string>
     <string name="video_mode_stereo_summary">Lado-a-lado</string>
     <string name="video_mode_stereo_description">Trabalha com TVs 3D</string>
-    <string name="video_menu_aspect_ratio">Rácio de Espectro</string>
+    <string name="video_menu_aspect_ratio">Razão de aspecto</string>
     <string name="video_menu_color">Cor</string>
     <string name="video_menu_color_left">Cor do olho esquerdo</string>
     <string name="video_menu_color_right">Cor do olho direito</string>
