@@ -22,7 +22,7 @@
     <string name="game_menu_close_game">关闭游戏</string>
     <string name="onscreen_input_menu_on">使用虚拟游戏手柄</string>
     <string name="onscreen_input_menu_toggle_controls">将触发器按钮置于切换模式</string>
-    <string name="onscreen_input_menu_haptic_feedback">启用触觉反馈</string>
+    <string name="onscreen_input_menu_haptic_feedback">触觉反馈</string>
     <string name="onscreen_input_menu_parallax">视差</string>
     <string name="onscreen_input_menu_show_bounds">显示控制界线</string>
     <string name="onscreen_input_menu_preview">预览</string>
@@ -52,6 +52,8 @@
     <string name="video_mode_mono_description">不需设备，但无3D效果</string>
     <string name="video_mode_stereo_description">与3D电视配合使用</string>
     <string name="video_menu_aspect_ratio">纵横比</string>
+    <string name="aspect_ratio_auto">自动</string>
+    <string name="aspect_ratio_stretch">拉伸以适应</string>
     <string name="video_menu_color">色</string>
     <string name="video_menu_color_left">左眼色</string>
     <string name="video_menu_color_right">右眼色</string>
