@@ -2,10 +2,6 @@
     <string name="main_menu_game_actions">Azioni di gioco</string>
     <string name="main_menu_now_playing">Ora in riproduzione</string>
     <string name="main_menu_load_game">Carica gioco</string>
-    <string name="main_menu_onscreen_input_setup">Impostazione ingresso su schermo</string>
-    <string name="main_menu_controller_setup">Impostazione del controller</string>
-    <string name="main_menu_video_setup">Impostazione video</string>
-    <string name="main_menu_audio_setup">Impostazione audio</string>
     <string name="load_game_from_file">Carica da file</string>
     <string name="load_game_from_file_explanation">Puoi scaricare ROM di giochi per Virtual Boy e caricarle qui per giocarci.\nPuoi trovare ROM gratuite da Planet Virtual Boy, all\'indirizzo https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Giochi recenti</string>
@@ -18,7 +14,7 @@
     <string name="game_menu_load_state">Stato di caricamento</string>
     <string name="game_menu_state_slot">Standard dello Stato corrente</string>
     <string name="game_menu_state_slot_empty">Vuoto</string>
-    <string name="game_menu_close_game">Chiudi gioco</string>
+    <string name="game_menu_close_game">Chiudi il Gioco</string>
     <string name="onscreen_input_menu_on">Usa il Gamepad virtuale</string>
     <string name="onscreen_input_menu_toggle_controls">Mettere i pulsanti di attivazione in modalità "Toggle"</string>
     <string name="onscreen_input_menu_haptic_feedback">Attivare il feedback aptico</string>
