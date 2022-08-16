@@ -4,11 +4,10 @@
     <string name="main_menu_load_game">Cargar juego</string>
     <string name="main_menu_onscreen_input_setup">Configuración de la entrada en pantalla</string>
     <string name="main_menu_controller_setup">Configuración del controlador</string>
-    <string name="main_menu_video_setup">Configuración de vídeo</string>
     <string name="load_game_from_file">Cargar desde archivo</string>
     <string name="load_game_from_file_explanation">Puedes descargar ROMs de juegos de Virtual Boy, y cargarlos aquí para jugarlos.\nPuedes encontrar ROMs gratis de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button">Aceptar</string>
-    <string name="load_game_recent_games">Juegos recientes</string>
+    <string name="load_game_recent_games">Recientes Jugados</string>
     <string name="load_game_no_recent_games">Todavía no has jugado a ningún juego. Prueba uno!</string>
     <string name="load_game_bundled_games">Juegos incluidos</string>
     <string name="load_game_no_bundled_games">Sin juegos incluidos</string>
@@ -55,7 +54,7 @@
     <string name="video_mode_stereo_summary">Lado a lado</string>
     <string name="video_mode_stereo_description">Funciona con televisores 3D</string>
     <string name="video_menu_aspect_ratio">Relación de aspecto</string>
-    <string name="aspect_ratio_auto">Automático</string>
+    <string name="aspect_ratio_auto">Automatico</string>
     <string name="aspect_ratio_stretch">Estirar para ajustar</string>
     <string name="video_menu_color_left">Color del ojo izquierdo</string>
     <string name="video_menu_color_right">Color del ojo derecho</string>
@@ -65,7 +64,7 @@
     <string name="video_menu_switch_viewer">Cambiar el visor de cartón</string>
     <string name="video_menu_preview">Vista previa</string>
     <string name="audio_menu_volume">Volumen</string>
-    <string name="audio_menu_buffer_size">Tamaño del buffer (en fotogramas)</string>
+    <string name="audio_menu_buffer_size">Tamaño del Búfer (en fotogramas)</string>
     <string name="application_crashed">Lo siento, la aplicación se ha bloqueado. Se enviará un informe al desarrollador.</string>
     <string name="error_file_not_found">Ese archivo no se pudo encontrar. ¿Tal vez se ha movido?</string>
     <string name="error_not_power_of_two">¡Ese no es un juego de Virtual Boy! El tamaño del archivo debería ser una potencia de dos.</string>
