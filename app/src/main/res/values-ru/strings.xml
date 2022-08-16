@@ -12,11 +12,11 @@
     <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте одну!</string>
     <string name="load_game_bundled_games">Публикованные игры</string>
     <string name="load_game_no_bundled_games">Нет игр в комплекте</string>
-    <string name="game_menu_resume_game">Возобновить игру</string>
+    <string name="game_menu_resume_game">Продолжить</string>
     <string name="game_menu_reset_game">Перезагрузка</string>
     <string name="game_menu_auto_save">Автосохранение</string>
-    <string name="game_menu_save_state">Состояние сохранения</string>
-    <string name="game_menu_load_state">Состояние загрузки</string>
+    <string name="game_menu_save_state">Сохранить состояние</string>
+    <string name="game_menu_load_state">Загрузить состояние</string>
     <string name="game_menu_state_slot">Текущий слот состояния</string>
     <string name="game_menu_state_slot_empty">Пустой</string>
     <string name="game_menu_close_game">Закрыть игру</string>
