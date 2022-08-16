@@ -10,7 +10,6 @@
     <string name="load_game_bundled_games">Gebundelde spellen</string>
     <string name="load_game_no_bundled_games">Geen gebundelde spellen</string>
     <string name="game_menu_resume_game">Hervat spel</string>
-    <string name="game_menu_reset_game">Hervat spel</string>
     <string name="game_menu_state_slot_empty">Leeg</string>
     <string name="game_menu_close_game">Game sluiten</string>
     <string name="onscreen_input_menu_toggle_controls">Zet triggerknoppen in schakelmodus</string>
@@ -37,7 +36,7 @@
     <string name="video_mode_mono_right_summary">Alleen rechteroog</string>
     <string name="video_mode_mono_description">Geen apparatuur nodig, maar geen 3D-effecten</string>
     <string name="video_mode_stereo_description">Werkt met 3D-TV\'s</string>
-    <string name="video_menu_aspect_ratio">Breedteverhouding</string>
+    <string name="video_menu_aspect_ratio">Schermverhouding</string>
     <string name="aspect_ratio_stretch">Recht uit om aan te passen</string>
     <string name="video_menu_color">Kleur</string>
     <string name="video_menu_color_left">Kleur linkeroog</string>
