@@ -2,10 +2,14 @@
     <string name="main_menu_now_playing">現在プレイ中</string>
     <string name="main_menu_load_game">ゲームを読み込む</string>
     <string name="main_menu_onscreen_input_setup">オンスクリーン入力</string>
-    <string name="load_game_from_file">ファイルから読み込む</string>
+    <string name="main_menu_video_setup">ビデオ</string>
+    <string name="main_menu_audio_setup">オーディオ</string>
+    <string name="load_game_from_file">ファイルからのロード</string>
     <string name="load_game_from_file_explanation">バーチャルボーイのゲームのROMをダウンロードして、ここにロードしてプレイことができます。\nPlanet Virtual Boyの無料ROMは、https://virtual-boy.com/homebrew/。</string>
     <string name="load_game_recent_games">最近のゲーム</string>
     <string name="load_game_no_recent_games">あなたはまだゲームをプレイしていません。試してみてください！</string>
+    <string name="game_menu_resume_game">再開</string>
+    <string name="game_menu_reset_game">ゲームをリセット</string>
     <string name="game_menu_auto_save">自動セーブ</string>
     <string name="game_menu_save_state">セーブ状態</string>
     <string name="game_menu_load_state">ロード状態</string>
@@ -13,9 +17,10 @@
     <string name="game_menu_state_slot_empty">空</string>
     <string name="game_menu_close_game">ゲームを終了</string>
     <string name="onscreen_input_menu_on">仮想ゲームパッドを使用</string>
-    <string name="onscreen_input_menu_haptic_feedback">Haptic Feedbackを有効に</string>
+    <string name="onscreen_input_menu_haptic_feedback">触覚フィードバック</string>
     <string name="onscreen_input_menu_parallax">視差</string>
     <string name="onscreen_input_menu_show_bounds">コントロールの境界を表示</string>
+    <string name="controller_menu_controllers">コントローラー</string>
     <string name="controller_menu_manage">コントローラの管理</string>
     <string name="controller_menu_automap_new_controller">新しいコントローラを自動マップ</string>
     <string name="controller_menu_choose_controller">マップコントローラを選択</string>
