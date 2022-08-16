@@ -3,10 +3,10 @@
     <string name="main_menu_game_actions">Game Actions</string>
     <string name="main_menu_now_playing">Now playing</string>
     <string name="main_menu_load_game">Load Game</string>
-    <string name="main_menu_onscreen_input_setup">On-Screen Input Setup</string>
-    <string name="main_menu_controller_setup">Controller Setup</string>
-    <string name="main_menu_video_setup">Video Setup</string>
-    <string name="main_menu_audio_setup">Audio Setup</string>
+    <string name="main_menu_onscreen_input_setup">On-Screen Input</string>
+    <string name="main_menu_controller_setup">Controller</string>
+    <string name="main_menu_video_setup">Video</string>
+    <string name="main_menu_audio_setup">Audio</string>
     <string name="load_game_from_file">Load From File</string>
     <string name="load_game_from_file_explanation">You can download ROMs of Virtual Boy games, and load them here to play them.\nYou can find free ROMs from Planet Virtual Boy, at https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button">OK</string>
