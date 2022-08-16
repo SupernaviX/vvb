@@ -7,7 +7,7 @@
     <string name="main_menu_video_setup">동영상</string>
     <string name="main_menu_audio_setup">오디오</string>
     <string name="load_game_from_file">파일에서 로드</string>
-    <string name="load_game_from_file_explanation">Virtual Boy 게임의 ROM을 다운로드하고 여기에서 로드하여 플레이할 수 있습니다.\nPlanet Virtual Boy의 무료 ROM은 https://virtual-boy.com/homebrew/에서 찾을 수 있습니다. </문자열>
+    <string name="load_game_from_file_explanation">Virtual Boy 게임의 ROM을 다운로드하고 여기에서 로드하여 플레이할 수 있습니다.\nPlanet Virtual Boy의 무료 ROM은 https://virtual-boy.com/homebrew/에서 찾을 수 있습니다.</string>
     <string name="load_game_recent_games">최근 게임</string>
     <string name="load_game_no_recent_games">아직 게임을 하지 않았습니다. 한 번 시도해 보세요!</string>
     <string name="load_game_bundled_games">번들 게임</string>
