@@ -8,15 +8,15 @@
     <string name="main_menu_audio_setup">Аудио</string>
     <string name="load_game_from_file">Загрузить из файла</string>
     <string name="load_game_from_file_explanation">Вы можете скачать ПЗУ игр Virtual Boy и загрузить их сюда, чтобы играть.\nВы можете найти бесплатные ПЗУ с Planet Virtual Boy, на https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Недавние игры</string>
+    <string name="load_game_recent_games">Недавние</string>
     <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте одну!</string>
     <string name="load_game_bundled_games">Публикованные игры</string>
     <string name="load_game_no_bundled_games">Нет игр в комплекте</string>
     <string name="game_menu_resume_game">Продолжить</string>
-    <string name="game_menu_reset_game">Перезагрузка</string>
+    <string name="game_menu_reset_game">Сброс</string>
     <string name="game_menu_auto_save">Автосохранения</string>
-    <string name="game_menu_save_state">Сохранить состояние</string>
-    <string name="game_menu_load_state">Загрузить состояние</string>
+    <string name="game_menu_save_state">Сохранение</string>
+    <string name="game_menu_load_state">Загрузка</string>
     <string name="game_menu_state_slot">Текущий слот состояния</string>
     <string name="game_menu_state_slot_empty">Пусто</string>
     <string name="game_menu_close_game">Закрыть игру</string>
@@ -25,7 +25,7 @@
     <string name="onscreen_input_menu_haptic_feedback">Тактильная обратная связь</string>
     <string name="onscreen_input_menu_parallax">Параллакс</string>
     <string name="onscreen_input_menu_show_bounds">Показать границы управления</string>
-    <string name="onscreen_input_menu_preview">Предварительный просмотр</string>
+    <string name="onscreen_input_menu_preview">Предпросмотр</string>
     <string name="controller_menu_controllers">Контроллеры</string>
     <string name="controller_menu_manage">Управление контроллерами</string>
     <string name="controller_menu_automap_new_controller">Автоматическое отображение нового контроллера</string>
@@ -63,7 +63,7 @@
     <string name="video_menu_invalid_colors_title">Неправильные цвета</string>
     <string name="video_menu_invalid_colors_message">Цвета левого и правого глаза "перекрываются" по крайней мере на одном цветовом канале. 3D-эффект может работать неправильно.</string>
     <string name="video_menu_switch_viewer">Переключение картонного просмотрщика</string>
-    <string name="video_menu_preview">Предварительный просмотр</string>
+    <string name="video_menu_preview">Предпросмотр</string>
     <string name="audio_menu_volume">Громкость</string>
     <string name="audio_menu_buffer_size">Размер буфера (в кадрах)</string>
     <string name="application_crashed">Извините, приложение потерпело крах. Отчет будет отправлен разработчику.</string>
@@ -71,6 +71,6 @@
     <string name="error_not_power_of_two">Это\ не игра для Virtual Boy! Размер файла должен быть равен двум.</string>
     <string name="error_too_large">Это\ не игра для Virtual Boy! Они могут быть только до 16 Mb.</string>
     <string name="error_zip">Ничто в этом ZIP-файле не похоже на игру для Virtual Boy...</string>
-    <string name="toast_state_saved">Сохраненное состояние</string>
-    <string name="toast_state_loaded">Загруженное состояние</string>
+    <string name="toast_state_saved">Сохранено</string>
+    <string name="toast_state_loaded">Загружено</string>
 </resources>
