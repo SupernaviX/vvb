@@ -14,13 +14,14 @@
     <string name="onscreen_input_menu_toggle_controls">Gâchettes Mode basculement</string>
     <string name="onscreen_input_menu_haptic_feedback">Retour haptique</string>
     <string name="onscreen_input_menu_parallax">Parallaxe</string>
-    <string name="controller_menu_controllers">Manette</string>
+    <string name="controller_menu_controllers">Contrôleurs</string>
     <string name="controller_menu_manage">Gestion des contrôleurs</string>
-    <string name="controller_menu_choose_controller">Réassignation des touches</string>
+    <string name="controller_menu_automap_new_controller">Mapper automatiquement le nouveau contrôleur</string
+    <string name="controller_menu_choose_controller">Choisir le contrôleur à cartographier</string>
     <string name="controller_menu_no_controllers_detected">Pas de contrôleurs détectés...</string>
     <string name="controller_menu_new_controller">Nouveau contrôleur</string>
     <string name="controller_menu_rename_controller">Renommer un contrôleur</string>
-    <string name="controller_menu_delete_controller">Supprimer</string>
+    <string name="controller_menu_delete_controller">Supprimer le contrôleur</string>
     <string name="controller_menu_name">Nom du contrôleur</string>
     <string name="controller_menu_create">Créer</string>
     <string name="controller_menu_cancel">Annuler</string>
