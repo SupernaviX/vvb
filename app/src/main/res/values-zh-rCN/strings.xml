@@ -12,9 +12,9 @@
     <string name="game_menu_load_state">加载状态</string>
     <string name="game_menu_state_slot">本状态槽</string>
     <string name="game_menu_state_slot_empty">空</string>
-    <string name="game_menu_close_game">关闭游戏</string>
+    <string name="game_menu_close_game">关闭</string>
     <string name="onscreen_input_menu_on">使用虚拟游戏手柄</string>
-    <string name="onscreen_input_menu_toggle_controls">将触发器按钮置于切换模式</string>
+    <string name="onscreen_input_menu_toggle_controls">扳机按钮切换模式</string>
     <string name="onscreen_input_menu_haptic_feedback">触觉反馈</string>
     <string name="onscreen_input_menu_parallax">视差</string>
     <string name="onscreen_input_menu_show_bounds">显示控制界线</string>
@@ -28,6 +28,8 @@
     <string name="controller_menu_delete_controller">删除控制器</string>
     <string name="controller_menu_name">控制器名?</string>
     <string name="controller_menu_create">创建</string>
+    <string name="controller_menu_cancel">取消</string>
+    <string name="controller_menu_rename">再名</string>
     <string name="controller_menu_choose_rename">选择再名控制器...</string>
     <string name="controller_menu_choose_delete">选择删除控制器...</string>
     <string name="video_menu_screen_zoom_percent">屏幕缩放（百分比）</string>
