@@ -1,25 +1,28 @@
 <resources>
     <string name="load_game_from_file">Ladda från fil</string>
     <string name="load_game_from_file_explanation">Du kan ladda ner ROMs av Virtual Boy-spel och ladda dem här för att spela dem.\nDu kan hitta gratis ROMs från Planet Virtual Boy, på https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Reksa spel</string>
+    <string name="load_game_recent_games">Senast spelat</string>
     <string name="load_game_no_recent_games">Du har inte spelat några spel ännu. Prova ett!</string>
     <string name="load_game_no_bundled_games">Ingen bundlade spel</string>
     <string name="game_menu_resume_game">Återuppta</string>
-    <string name="game_menu_reset_game">Ladda om</string>
+    <string name="game_menu_reset_game">Återställ</string>
+    <string name="game_menu_save_state">Spara state</string>
+    <string name="game_menu_load_state">Ladda state</string>
     <string name="game_menu_state_slot_empty">Tomt</string>
-    <string name="game_menu_close_game">Slut spelet</string>
+    <string name="game_menu_close_game">Avsluta</string>
     <string name="onscreen_input_menu_on">Använd virtuell gamepad</string>
-    <string name="onscreen_input_menu_toggle_controls">Sätt utlösarknapparna i växelläge</string>
+    <string name="onscreen_input_menu_toggle_controls">triggerknappar Toggle mode</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptisk återkoppling</string>
     <string name="onscreen_input_menu_show_bounds">Visa kontrollgränser</string>
     <string name="controller_menu_controllers">Kontroller</string>
     <string name="controller_menu_manage">Hantera styrenheter</string>
-    <string name="controller_menu_choose_controller">Välj kontrollant att kartlägga</string>
+    <string name="controller_menu_choose_controller">Kontrollmappning</string>
     <string name="controller_menu_no_controllers_detected">Ingen kontrollanter upptäcktes...</string>
     <string name="controller_menu_rename_controller">Byt namn</string>
     <string name="controller_menu_delete_controller">Ta bort</string>
     <string name="controller_menu_name">Namn på styrenhet?</string>
     <string name="controller_menu_create">Skapa</string>
+    <string name="controller_menu_cancel">Avbryt</string>
     <string name="controller_menu_rename">Byt namn</string>
     <string name="controller_menu_choose_rename">Välj kontrollant för att byta namn...</string>
     <string name="controller_menu_choose_delete">Välj kontrollant för att ta bort...</string>
@@ -45,4 +48,6 @@
     <string name="error_not_power_of_two">Det där\ är inte ett Virtual Boy-spel! Filstorleken bör vara en potens av två.</string>
     <string name="error_too_large">Det är inte ett Virtual Boy-spel! De kan bara vara upp till 16 Mb.</string>
     <string name="error_zip">Inget i den ZIP-filen såg ut som ett Virtual Boy-spel...</string>
+    <string name="toast_state_saved">State sparat</string>
+    <string name="toast_state_loaded">State laddat</string>
 </resources>
