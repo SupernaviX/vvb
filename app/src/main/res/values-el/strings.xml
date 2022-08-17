@@ -25,6 +25,8 @@
     <string name="controller_menu_create">Δημιουργία</string>
     <string name="controller_menu_choose_rename">Επιλογή ελεγκτή για μετονομασία...</string>
     <string name="controller_menu_choose_delete">Επιλογή ελεγκτή για διαγραφή...</string>
+    <string name="input_menu_put_mapping">Πιέστε οποιοδήποτε στοιχείο ελέγχου για να το αντιστοιχίσετε σε αυτή την είσοδο. Πατήστε παρατεταμένα για να αντιστοιχίσετε πολλαπλά στοιχεία ελέγχου.</string>
+    <string name="input_menu_add_mapping">Πιέστε οποιοδήποτε στοιχείο ελέγχου για να προσθέσετε άλλη αντιστοίχιση για αυτή την είσοδο.</string>
     <string name="video_menu_screen_zoom_percent">Ζουμ οθόνης (ποσοστό)</string>
     <string name="video_menu_horizontal_offset">Οριζόντια μετατόπιση</string>
     <string name="video_menu_vertical_offset">Κάθετη μετατόπιση</string>
@@ -36,6 +38,7 @@
     <string name="video_mode_mono_right_summary">Μόνο για το δεξί μάτι</string>
     <string name="video_mode_mono_description">Δεν απαιτείται εξοπλισμός, αλλά δεν υπάρχουν τρισδιάστατα εφέ</string>
     <string name="video_mode_stereo_description">Εργάζεται με τρισδιάστατες τηλεοράσεις</string>
+    <string name="aspect_ratio_auto">Αυτόματο</string>
     <string name="video_menu_color_left">Χρώμα αριστερού ματιού</string>
     <string name="video_menu_color_right">Χρώμα δεξιού ματιού</string>
     <string name="video_menu_invalid_colors_title">Άκυρα χρώματα</string>
