@@ -1,39 +1,24 @@
 Indonesian
 
-    <string name="cancel">Batal</string>
-    <string name="delete">Hapus</string>
     <string name="preview">Tinjauan</string>
-    <string name="action_sort_recently_played">Baru dimainkan</string>
-    <string name="reset">Memulai ulang</string>
-    <string name="save_state">Simpan status</string>
-    <string name="load_state">Memuat status</string>
     <string name="save_slot">Simpan slot</string>
     <string name="empty_slot">%1$s. &lt;Kosong&gt;</string>
-    <string name="saved">Tersimpan</string>
-    <string name="loaded">Dimuat</string>ulai ulang</string>
-    <string name="category_audio">Audio</string>
-    <string name="volume">Volume</string>
-    <string name="label_size">Ukuran:</string>
 
 Auto = Otomatis
 HapticFeedback = Umpan balik
-OnScreen = Kontrol sentuh di layar
 Load State = Muat status
 Save State = Simpan status
 Loaded State = Status/keadaan termuat
 Saved State = Status permainan tersimpan
 Reset = Atur ulang
 Recent games = Permainan terbaru
-Playing = Bermain
 Resume = Lanjutkan
 Cancel = Batal
 Delete = Hapus
-Audio = Suara
 Trigger Buttons = Tombol pemicu
 Toggle mode = Mode pengalihan
 Control Mapping = Pemetaan kontrol
 Zoom = Perbesar
 Exit = Keluar
-Load = Muat
 
 no video_mode_stereo_summary
