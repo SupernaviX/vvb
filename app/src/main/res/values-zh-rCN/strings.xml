@@ -32,6 +32,9 @@
     <string name="controller_menu_rename">再名</string>
     <string name="controller_menu_choose_rename">选择再名控制器...</string>
     <string name="controller_menu_choose_delete">选择删除控制器...</string>
+    <string name="input_menu_unmapped">未映射</string>
+    <string name="input_menu_put_mapping">按任一控件可将其映射到此输入。长按可映射多控件。</string>
+    <string name="input_menu_add_mapping">按任何控件可为此输入添加另一映射。</string>
     <string name="video_menu_screen_zoom_percent">屏幕缩放（百分比）</string>
     <string name="video_menu_horizontal_offset">水平偏移</string>
     <string name="video_menu_vertical_offset">垂直偏移</string>
@@ -44,6 +47,8 @@
     <string name="video_mode_mono_description">不需设备，但无3D效果</string>
     <string name="video_mode_stereo_description">与3D电视配合使用</string>
     <string name="video_menu_aspect_ratio">纵横比</string>
+    <string name="aspect_ratio_auto">自动</string>
+    <string name="aspect_ratio_stretch">拉伸以适应</string>
     <string name="video_menu_color">色</string>
     <string name="video_menu_color_left">左眼色</string>
     <string name="video_menu_color_right">右眼色</string>
