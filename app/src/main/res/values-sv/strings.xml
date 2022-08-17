@@ -1,10 +1,4 @@
 <resources>
-    <string name="main_menu_game_actions">Spelåtgärder</string>
-    <string name="main_menu_now_playing">Nu spelar du</string>
-    <string name="main_menu_load_game">Lad spel</string>
-    <string name="main_menu_onscreen_input_setup">Inställning av inmatning på skärmen</string>
-    <string name="main_menu_controller_setup">Inställning av styrenhet</string>
-    <string name="main_menu_audio_setup">Ljud</string>
     <string name="load_game_from_file">Ladda från fil</string>
     <string name="load_game_from_file_explanation">Du kan ladda ner ROMs av Virtual Boy-spel och ladda dem här för att spela dem.\nDu kan hitta gratis ROMs från Planet Virtual Boy, på https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Reksa spel</string>
@@ -29,8 +23,6 @@
     <string name="controller_menu_rename">Byt namn</string>
     <string name="controller_menu_choose_rename">Välj kontrollant för att byta namn...</string>
     <string name="controller_menu_choose_delete">Välj kontrollant för att ta bort...</string>
-    <string name="input_menu_put_mapping">Tryck på någon kontroll för att mappa den till den här ingången. Tryck länge för att koppla flera kontroller.</string>
-    <string name="input_menu_add_mapping">Tryck på valfri kontroll för att lägga till en annan mappning för denna ingång.</string>
     <string name="video_menu_screen_zoom_percent">Skärmzoom (procent)</string>
     <string name="video_menu_horizontal_offset">Horisontell förskjutning</string>
     <string name="video_menu_vertical_offset">Vertikal förskjutning</string>
