@@ -53,7 +53,6 @@
     <string name="video_mode_mono_left_summary">왼쪽 눈만</string>
     <string name="video_mode_mono_right_summary">오른쪽 눈만</string>
     <string name="video_mode_mono_description">장비는 필요하지 않지만 3D 효과는 필요 없습니다.</string>
-    <string name="video_mode_stereo_summary">나란히</string>
     <string name="video_mode_stereo_description">3D TV에서 작동</string>
     <string name="video_menu_aspect_ratio">종횡비</string>
     <string name="aspect_ratio_auto">자동</string>
