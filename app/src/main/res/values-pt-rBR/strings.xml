@@ -1,24 +1,24 @@
 <resources>
     <string name="load_game_from_file">Carregar de</string>
     <string name="load_game_from_file_explanation">Você pode baixar ROMs de jogos Virtual Boy, e carregá-las aqui para jogá-las.\nVocê pode encontrar ROMs grátis do Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Jogado recentemente</string>
+    <string name="load_game_recent_games">Jogos recentes</string>
     <string name="load_game_no_recent_games">Você ainda não jogou nenhum jogo. Experimente um!</string>
     <string name="load_game_bundled_games">Jogos_bundled</string>
     <string name="load_game_no_bundled_games">Sem_game_agrupado</string>
-    <string name="game_menu_resume_game">Resumir jogo</string>
+    <string name="game_menu_resume_game">Resumo</string>
     <string name="game_menu_reset_game">Resetar</string>
     <string name="game_menu_auto_save">Auto-Salvamento</string>
-    <string name="game_menu_save_state">Salvar estado</string>
-    <string name="game_menu_load_state">Carregar estado</string>
+    <string name="game_menu_save_state">Salvar state</string>
+    <string name="game_menu_load_state">Carregar state</string>
     <string name="game_menu_state_slot">Chave do estado atual</string>
     <string name="game_menu_state_slot_empty">Ampty</string>
-    <string name="game_menu_close_game">Fechar jogo</string>
+    <string name="game_menu_close_game">Sair</string>
     <string name="onscreen_input_menu_on">Utilizar Gamepad Virtual</string>
-    <string name="onscreen_input_menu_haptic_feedback">Feedback tátil</string>
-    <string name="onscreen_input_menu_toggle_controls">Botões de acionamento do botão em modo de alternância</string>
+    <string name="onscreen_input_menu_haptic_feedback">Feedback háptico</string>
+    <string name="onscreen_input_menu_toggle_controls">Botões do gatilho alternar modo</string>
     <string name="controller_menu_controllers">Controles</string>
     <string name="controller_menu_automap_new_controller">Auto-Map Novo Controlador</string>
-    <string name="controller_menu_choose_controller">Selecionar Controlador para Mapear</string>
+    <string name="controller_menu_choose_controller">Mapeamento dos controles</string>
     <string name="controller_menu_no_controllers_detected">Nenhum controlador detectado...</string>
     <string name="controller_menu_rename_controller">Renomear</string>
     <string name="controller_menu_delete_controller">Apagar</string>
@@ -50,6 +50,6 @@
     <string name="error_not_power_of_two">Isso não é um jogo do Virtual Boy! O tamanho do arquivo deve ser um poder de dois.</string>
     <string name="error_too_large">Isso não é um jogo do Virtual Boy! Eles só podem ser de até 16Mb.</string>
     <string name="error_zip">Nada naquele arquivo ZIP parecia um jogo do Virtual Boy...</string>
-    <string name="toast_state_saved">Estado salvado</string>
-    <string name="toast_state_loaded">Estado carregado</string>
+    <string name="toast_state_saved">State salvo</string>
+    <string name="toast_state_loaded">State carregado</string>
 </resources>
