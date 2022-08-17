@@ -19,8 +19,6 @@
     <string name="controller_menu_name">Controller neve?</string>
     <string name="controller_menu_cancel">Mégse</string>
     <string name="controller_menu_choose_rename">Vezérlő kiválasztása az átnevezéshez...</string>
-    <string name="input_menu_put_mapping">Nyomja meg bármelyik vezérlőelemet, hogy ehhez a bemenethez rendelje. Több vezérlőelem hozzárendeléséhez nyomja meg hosszan.</string>
-    <string name="input_menu_add_mapping">Nyomjon meg bármelyik vezérlőelemet, hogy újabb hozzárendelést adjon ehhez a bemenethez.</string>
     <string name="video_menu_screen_zoom_percent">Képernyő nagyítása (százalék)</string>
     <string name="video_menu_mode">Kijelzési mód</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (kétszínű)</string>
