@@ -19,6 +19,7 @@
     <string name="onscreen_input_menu_parallax">视差</string>
     <string name="onscreen_input_menu_show_bounds">显示控制界线</string>
     <string name="onscreen_input_menu_preview">预览</string>
+    <string name="controller_menu_controllers">控制器</string>
     <string name="controller_menu_manage">管理控制器</string>
     <string name="controller_menu_automap_new_controller">自动映射新控制器</string>
     <string name="controller_menu_choose_controller">选择映射控制器</string>
