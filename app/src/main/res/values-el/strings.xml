@@ -43,7 +43,6 @@
     <string name="video_mode_mono_left_summary">Μόνο για το αριστερό μάτι</string>
     <string name="video_mode_mono_right_summary">Μόνο για το δεξί μάτι</string>
     <string name="video_mode_mono_description">Δεν απαιτείται εξοπλισμός, αλλά δεν υπάρχουν τρισδιάστατα εφέ</string>
-    <string name="video_mode_stereo_summary">Πλάι-πλάι</string>
     <string name="video_mode_stereo_description">Εργάζεται με τρισδιάστατες τηλεοράσεις</string>
     <string name="aspect_ratio_auto">Αυτόματο</string>
     <string name="video_menu_color_left">Χρώμα αριστερού ματιού</string>
