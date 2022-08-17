@@ -1,11 +1,4 @@
 <resources>
-    <string name="main_menu_game_actions">Actions de jeu</string>
-    <string name="main_menu_now_playing">En jeu</string>
-    <string name="main_menu_load_game">Charger</string>
-    <string name="main_menu_onscreen_input_setup">Commandes tactiles</string>
-    <string name="main_menu_controller_setup">Configuration du contrôleur</string>
-    <string name="main_menu_video_setup">Vidéo</string>
-    <string name="main_menu_audio_setup">Son</string>
     <string name="load_game_from_file">Ouvrir</string>
     <string name="load_game_from_file_explanation">Vous pouvez télécharger des ROMs de jeux Virtual Boy, et les charger ici pour y jouer.\nVous pouvez trouver des ROMs gratuites de Planet Virtual Boy, sur https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Récemment</string>
@@ -47,7 +40,6 @@
     <string name="video_mode_mono_description">Pas besoin d\'équipement, mais pas d\'effets 3D</string>
     <string name="video_mode_stereo_description">Fonctionne avec les téléviseurs 3D</string>
     <string name="video_menu_aspect_ratio">Ratio d\'aspect</string>
-    <string name="aspect_ratio_auto">Automatique</string>
     <string name="video_menu_color_left">Couleur de l\'oeil gauche</string>
     <string name="video_menu_color_right">Couleur de l\'oeil droit</string>
     <string name="video_menu_invalid_colors_title">Couleurs non valides</string>
