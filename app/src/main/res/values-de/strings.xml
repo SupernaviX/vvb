@@ -1,7 +1,7 @@
 <resources>
     <string name="main_menu_game_actions">Spiel-Aktionen</string>
     <string name="main_menu_now_playing">Spiele</string>
-    <string name="main_menu_load_game">Spiel laden</string>
+    <string name="main_menu_load_game">Laden</string>
     <string name="main_menu_onscreen_input_setup">Touch Bildschirmtasten</string>
     <string name="main_menu_controller_setup">Steuerung</string>
     <string name="main_menu_audio_setup">Ton</string>
@@ -18,7 +18,7 @@
     <string name="game_menu_load_state">Stand laden</string>
     <string name="game_menu_state_slot">Aktueller Zustands-Slot</string>
     <string name="game_menu_state_slot_empty">Leer</string>
-    <string name="game_menu_close_game">Spiel schließen</string>
+    <string name="game_menu_close_game">Beenden</string>
     <string name="onscreen_input_menu_on">Virtuelles Gamepad verwenden</string>
     <string name="onscreen_input_menu_toggle_controls">Auslöser-Tasten in den Umschaltmodus versetzen</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptisches Feedback</string>
