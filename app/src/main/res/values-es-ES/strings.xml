@@ -1,7 +1,7 @@
 <resources>
     <string name="main_menu_game_actions">Acciones del juego</string>
     <string name="main_menu_now_playing">Reproduciendo</string>
-    <string name="main_menu_load_game">Cargar juego</string>
+    <string name="main_menu_load_game">Cargar</string>
     <string name="main_menu_onscreen_input_setup">Controles táctiles en pantalla</string>
     <string name="main_menu_controller_setup">Configuración del controlador</string>
     <string name="main_menu_video_setup">Vídeo</string>
@@ -20,7 +20,7 @@
     <string name="game_menu_load_state">Cargar estado</string>
     <string name="game_menu_state_slot">Ranura de estado actual</string>
     <string name="game_menu_state_slot_empty">Vacío</string>
-    <string name="game_menu_close_game">Cerrar juego</string>
+    <string name="game_menu_close_game">Salir</string>
     <string name="onscreen_input_menu_on">Usar Gamepad Virtual</string>
     <string name="onscreen_input_menu_toggle_controls">Trigger botones alternar modo</string>
     <string name="onscreen_input_menu_haptic_feedback">Vibración háptica</string>
