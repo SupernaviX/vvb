@@ -29,6 +29,9 @@
     <string name="controller_menu_rename">Pervadinti</string>
     <string name="controller_menu_choose_rename">Pervadinti valdiklį...</string>
     <string name="controller_menu_choose_delete">Pasirinkite valdiklį, kurį norite ištrinti...</string>
+    <string name="input_menu_unmapped">Nepripažintas</string>
+    <string name="input_menu_put_mapping">Spauskite bet kurį valdiklį, kad jį atvaizduotumėte į šią įvestį. Ilgai paspauskite, jei norite priskirti kelis valdiklius.</string>
+    <string name="input_menu_add_mapping">Spauskite bet kurį valdiklį, kad pridėtumėte kitą šios įvesties atvaizdavimą.</string>
     <string name="video_menu_screen_zoom_percent">Ekrano didinimas (proc.)</string>
     <string name="video_menu_horizontal_offset">Horizontalus poslinkis</string>
     <string name="video_menu_vertical_offset">Vertikalus poslinkis</string>
@@ -41,6 +44,7 @@
     <string name="video_mode_mono_description">Nereikia jokios įrangos, bet nėra 3D efektų</string>
     <string name="video_mode_stereo_description">Dirba su 3D televizoriais</string>
     <string name="video_menu_aspect_ratio">Aspect Ratio</string>
+    <string name="aspect_ratio_stretch">Tempti, kad tilptų</string>
     <string name="video_menu_color">Spalva</string>
     <string name="video_menu_color_left">Kairės akies spalva</string>
     <string name="video_menu_color_right">Dešiniosios akies spalva</string>
