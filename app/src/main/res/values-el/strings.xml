@@ -1,8 +1,4 @@
 <resources>
-    <string name="main_menu_now_playing">Παίζει</string>
-    <string name="main_menu_load_game">Φόρτωση</string>
-    <string name="main_menu_onscreen_input_setup">Χειριστήριο Οθόνης Αφής</string>
-    <string name="main_menu_controller_setup">Ρύθμιση χειριστηρίου</string>
     <string name="load_game_from_file">Φόρτωση από αρχείο</string>
     <string name="load_game_from_file_explanation">Μπορείτε να κατεβάσετε ROMs από παιχνίδια του Virtual Boy, και να τα φορτώσετε εδώ για να τα παίξετε.\nΜπορείτε να βρείτε δωρεάν ROMs από το Planet Virtual Boy, στη διεύθυνση https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Προηγούμενα παιχνίδια</string>
@@ -42,7 +38,6 @@
     <string name="video_mode_mono_right_summary">Μόνο για το δεξί μάτι</string>
     <string name="video_mode_mono_description">Δεν απαιτείται εξοπλισμός, αλλά δεν υπάρχουν τρισδιάστατα εφέ</string>
     <string name="video_mode_stereo_description">Εργάζεται με τρισδιάστατες τηλεοράσεις</string>
-    <string name="aspect_ratio_auto">Αυτόματο</string>
     <string name="video_menu_color_left">Χρώμα αριστερού ματιού</string>
     <string name="video_menu_color_right">Χρώμα δεξιού ματιού</string>
     <string name="video_menu_invalid_colors_title">Άκυρα χρώματα</string>
