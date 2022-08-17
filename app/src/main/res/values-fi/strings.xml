@@ -22,6 +22,8 @@
     <string name="controller_menu_delete_controller">Poista</string>
     <string name="controller_menu_choose_rename">Valitse uudelleen nimettävä ohjain...</string>
     <string name="controller_menu_choose_delete">Valitse poistettava ohjain...</string>
+    <string name="input_menu_put_mapping">Paina mitä tahansa ohjainta, jotta se voidaan liittää tähän syötteeseen. Paina pitkään kartoittaaksesi useita ohjaimia.</string>
+    <string name="input_menu_add_mapping">Paina mitä tahansa ohjainta lisätäksesi toisen kartoituksen tälle syötteelle.</string>
     <string name="video_menu_screen_zoom_percent">Ruudun zoomaus (prosenttia)</string>
     <string name="video_menu_horizontal_offset">Vaakasuora siirtymä</string>
     <string name="video_menu_vertical_offset">Pystysuora siirtymä</string>
