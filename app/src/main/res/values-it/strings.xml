@@ -46,7 +46,6 @@
     <string name="video_mode_mono_left_summary">Solo occhio sinistro</string>
     <string name="video_mode_mono_right_summary">Solo occhio destro</string>
     <string name="video_mode_mono_description">Non è necessaria alcuna attrezzatura, ma non ci sono effetti 3D</string>
-    <string name="video_mode_stereo_summary">Fianco a fianco</string>
     <string name="video_mode_stereo_description">Funziona con TV 3D</string>
     <string name="aspect_ratio_auto">Automatico</string>
     <string name="video_menu_color">Colore</string>
