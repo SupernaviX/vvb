@@ -28,6 +28,9 @@
     <string name="controller_menu_rename">Zmień nazwę</string>
     <string name="controller_menu_choose_rename">Wybierz kontroler do zmiany nazwy...</string>
     <string name="controller_menu_choose_delete">Wybierz kontroler do usunięcia...</string>
+    <string name="input_menu_unmapped">Niezamknięte</string>
+    <string name="input_menu_put_mapping">Naciśnij dowolny element sterujący, aby zmapować go do tego wejścia. Długie naciśnięcie powoduje mapowanie wielu kontrolek.</string>
+    <string name="input_menu_add_mapping">Naciśnij dowolny element sterujący, aby dodać inne mapowanie dla tego wejścia.</string>
     <string name="video_menu_screen_zoom_percent">Powiększenie ekranu (procent)</string>
     <string name="video_menu_horizontal_offset">Przesunięcie poziomie</string>
     <string name="video_menu_vertical_offset">Przesunięcie pionowe</string>
@@ -40,6 +43,7 @@
     <string name="video_mode_mono_description">Nie potrzeba sprzętu, ale brak efektów 3D</string>
     <string name="video_mode_stereo_description">Współpracuje z telewizorami 3D</string>
     <string name="video_menu_aspect_ratio">Współczynnik proporcji</string>
+    <string name="aspect_ratio_stretch">Rozciągnij, aby dopasować</string>
     <string name="video_menu_color_left">Kolor lewego oka</string>
     <string name="video_menu_color_right">Kolor prawego oka</string>
     <string name="video_menu_invalid_colors_title">Nieprawidłowe kolory</string>
