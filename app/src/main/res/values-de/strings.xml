@@ -1,6 +1,4 @@
 <resources>
-    <string name="main_menu_game_actions">Spiel-Aktionen</string>
-    <string name="main_menu_now_playing">Spiele</string>
     <string name="load_game_from_file">Aus Datei laden</string>
     <string name="load_game_from_file_explanation">Sie können ROMs von Virtual Boy-Spielen herunterladen und sie hier laden, um sie zu spielen.\nSie können kostenlose ROMs von Planet Virtual Boy finden, unter https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Zuletzt gespielt</string>
@@ -49,7 +47,6 @@
     <string name="video_mode_mono_description">Keine Ausrüstung erforderlich, aber keine 3D-Effekte</string>
     <string name="video_mode_stereo_description">Arbeitet mit 3D-Fernsehern</string>
     <string name="video_menu_aspect_ratio">Seitenverhältnis</string>
-    <string name="aspect_ratio_stretch">Anpassen an Größe</string>
     <string name="video_menu_color">Farbe</string>
     <string name="video_menu_color_left">Linke Augenfarbe</string>
     <string name="video_menu_color_right">Rechte Augenfarbe</string>
