@@ -33,6 +33,7 @@
     <string name="controller_menu_rename">Переименовать</string>
     <string name="controller_menu_choose_rename">Выберите контроллер для переименования...</string>
     <string name="controller_menu_choose_delete">Выберите контроллер для удаления...</string>
+    <string name="input_menu_unmapped">Не сопоставлено</string>
     <string name="input_menu_put_mapping">Нажмите на любой элемент управления, чтобы сопоставить его с этим входом. Длительное нажатие позволяет сопоставить несколько элементов управления.</string>
     <string name="input_menu_add_mapping">Нажмите на любой элемент управления, чтобы добавить другой элемент управления для этого входа.</string>
     <string name="video_menu_screen_zoom_percent">Масштаб экрана (в процентах)</string>
