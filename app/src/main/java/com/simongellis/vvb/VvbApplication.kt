@@ -214,9 +214,8 @@ class VvbApplication : Application() {
             } else {
                 // throw this save data out, it's unreachable
                 oldSram.delete()
-                oldSaveStates.delete()
             }
-            File(applicationContext.filesDir, it.oldId).delete()
+            File(applicationContext.filesDir, it.oldId).deleteRecursively()
         }
 
         dao.migrate { oldId, value ->
