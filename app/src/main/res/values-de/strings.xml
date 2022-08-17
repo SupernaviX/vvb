@@ -25,7 +25,7 @@
     <string name="onscreen_input_menu_parallax">Parallaxe</string>
     <string name="onscreen_input_menu_show_bounds">Steuerungsgrenzen anzeigen</string>
     <string name="onscreen_input_menu_preview">Vorschau</string>
-    <string name="controller_menu_controllers">Steuerungen</string>
+    <string name="controller_menu_controllers">Bedienung</string>
     <string name="controller_menu_manage">Steuerungen verwalten</string>
     <string name="controller_menu_automap_new_controller">Neue Steuerung automatisch zuordnen</string>
     <string name="controller_menu_choose_controller">Wählen Sie einen Controller für die Zuordnung</string>
