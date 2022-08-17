@@ -1,9 +1,6 @@
 <resources>
     <string name="main_menu_game_actions">Spiel-Aktionen</string>
     <string name="main_menu_now_playing">Spiele</string>
-    <string name="main_menu_load_game">Laden</string>
-    <string name="main_menu_onscreen_input_setup">Touch Bildschirmtasten</string>
-    <string name="main_menu_controller_setup">Steuerung</string>
     <string name="load_game_from_file">Aus Datei laden</string>
     <string name="load_game_from_file_explanation">Sie können ROMs von Virtual Boy-Spielen herunterladen und sie hier laden, um sie zu spielen.\nSie können kostenlose ROMs von Planet Virtual Boy finden, unter https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Zuletzt gespielt</string>
