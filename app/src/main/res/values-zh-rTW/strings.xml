@@ -1,14 +1,7 @@
 <resources>
-    <string name="main_menu_game_actions">遊戲動作</string>
-    <string name="main_menu_now_playing">此時正玩</string>
-    <string name="main_menu_load_game">加載遊戲</string>
-    <string name="main_menu_onscreen_input_setup">屏幕輸入</string>
-    <string name="main_menu_controller_setup">控制器</string>
-    <string name="main_menu_video_setup">視頻</string>
-    <string name="main_menu_audio_setup">音頻</string>
     <string name="load_game_from_file">文件加載</string>
     <string name="load_game_from_file_explanation">你可下載Virtual Boy遊戲ROM，並於此加載它們來玩。\n你可從Planet Virtual Boy找到免費ROM，網址https://virtual-boy.com/homebrew/。</string>
-    <string name="load_game_recent_games">最近遊戲</string>
+    <string name="load_game_recent_games">近日遊戲</string>
     <string name="load_game_no_recent_games">你未玩任何遊戲。試！</string>
     <string name="load_game_bundled_games">捆綁遊戲</string>
     <string name="load_game_no_bundled_games">無捆綁遊戲</string>
@@ -19,13 +12,14 @@
     <string name="game_menu_load_state">加載狀態</string>
     <string name="game_menu_state_slot">本狀態槽</string>
     <string name="game_menu_state_slot_empty">空</string>
-    <string name="game_menu_close_game">關閉遊戲</string>
+    <string name="game_menu_close_game">關閉</string>
     <string name="onscreen_input_menu_on">使用虛擬遊戲手柄</string>
-    <string name="onscreen_input_menu_toggle_controls">將觸發器按鈕置於切換模式</string>
+    <string name="onscreen_input_menu_toggle_controls">扳機按鈕切換模式</string>
     <string name="onscreen_input_menu_haptic_feedback">觸覺反饋</string>
     <string name="onscreen_input_menu_parallax">視差</string>
     <string name="onscreen_input_menu_show_bounds">顯示控制界線</string>
     <string name="onscreen_input_menu_preview">預覽</string>
+    <string name="controller_menu_controllers">控制器</string>
     <string name="controller_menu_manage">管理控制器</string>
     <string name="controller_menu_automap_new_controller">自動映射新控制器</string>
     <string name="controller_menu_choose_controller">選擇映射控制器</string>
@@ -35,6 +29,8 @@
     <string name="controller_menu_delete_controller">刪除控制器</string>
     <string name="controller_menu_name">控制器名?</string>
     <string name="controller_menu_create">創建</string>
+    <string name="controller_menu_cancel">取消</string>
+    <string name="controller_menu_rename">再名</string>
     <string name="controller_menu_choose_rename">選擇再名控制器...</string>
     <string name="controller_menu_choose_delete">選擇刪除控制器...</string>
     <string name="input_menu_unmapped">未映射</string>
@@ -44,7 +40,7 @@
     <string name="video_menu_horizontal_offset">水平偏移</string>
     <string name="video_menu_vertical_offset">垂直偏移</string>
     <string name="video_menu_mode">顯示模式</string>
-    <string name="video_mode_anaglyph_summary">Anaglyph(雙色)</string>
+    <string name="video_mode_anaglyph_summary">立體圖(雙色)</string>
     <string name="video_mode_anaglyph_description">與多數3D眼鏡配合使用</string>
     <string name="video_mode_cardboard_description">適用於Google Cardboard或Daydream</string>
     <string name="video_mode_mono_left_summary">僅左眼</string>
