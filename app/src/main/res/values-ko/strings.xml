@@ -33,6 +33,9 @@
     <string name="controller_menu_rename">이름 변경</string>
     <string name="controller_menu_choose_rename">이름을 바꿀 컨트롤러 선택...</string>
     <string name="controller_menu_choose_delete">삭제할 컨트롤러 선택...</string>
+    <string name="input_menu_unmapped">매핑되지 않음</string>
+    <string name="input_menu_put_mapping">이 입력에 매핑하려면 아무 컨트롤이나 누르십시오. 여러 컨트롤을 매핑하려면 길게 누르세요.</string>
+    <string name="input_menu_add_mapping">이 입력에 대한 다른 매핑을 추가하려면 아무 컨트롤이나 누르십시오.</string>
     <string name="video_menu_screen_zoom_percent">화면 확대/축소(퍼센트)</string>
     <string name="video_menu_horizontal_offset">수평 오프셋</string>
     <string name="video_menu_vertical_offset">수직 오프셋</string>
@@ -45,6 +48,8 @@
     <string name="video_mode_mono_description">장비는 필요하지 않지만 3D 효과는 필요 없습니다.</string>
     <string name="video_mode_stereo_description">3D TV에서 작동</string>
     <string name="video_menu_aspect_ratio">종횡비</string>
+    <string name="aspect_ratio_auto">자동</string>
+    <string name="aspect_ratio_stretch">맞춤에 맞게 늘이기</string>
     <string name="video_menu_color">색상</string>
     <string name="video_menu_color_left">왼쪽 눈 색깔</string>
     <string name="video_menu_color_right">오른쪽 눈 색깔</string>
