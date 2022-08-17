@@ -12,10 +12,14 @@
     <string name="onscreen_input_menu_haptic_feedback">Haptikus visszajelzés</string>
     <string name="onscreen_input_menu_show_bounds">Vezérlési határok megjelenítése</string>
     <string name="onscreen_input_menu_preview">Előnézet</string>
+    <string name="controller_menu_controllers">Vezérlők</string>
     <string name="controller_menu_manage">Vezérlők kezelése</string>
-    <string name="controller_menu_choose_controller">Gombok beállítása</string>
+    <string name="controller_menu_automap_new_controller">Új vezérlő automatikus hozzárendelése</string>
+    <string name="controller_menu_choose_controller">Válassza ki a leképezendő vezérlőt</string>
+    <string name="controller_menu_no_controllers_detected">No controllers detected...</string>
     <string name="controller_menu_new_controller">Új vezérlő</string>
-    <string name="controller_menu_delete_controller">Vezérlő töröl</string>
+    <string name="controller_menu_rename_controller">Vezérlő átnevezése</string>
+    <string name="controller_menu_delete_controller">Vezérlő törlése</string>
     <string name="controller_menu_name">Controller neve?</string>
     <string name="controller_menu_cancel">Mégse</string>
     <string name="controller_menu_choose_rename">Vezérlő kiválasztása az átnevezéshez...</string>
