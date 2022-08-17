@@ -33,6 +33,8 @@
     <string name="controller_menu_rename">Переименовать</string>
     <string name="controller_menu_choose_rename">Выберите контроллер для переименования...</string>
     <string name="controller_menu_choose_delete">Выберите контроллер для удаления...</string>
+    <string name="input_menu_put_mapping">Нажмите на любой элемент управления, чтобы сопоставить его с этим входом. Длительное нажатие позволяет сопоставить несколько элементов управления.</string>
+    <string name="input_menu_add_mapping">Нажмите на любой элемент управления, чтобы добавить другой элемент управления для этого входа.</string>
     <string name="video_menu_screen_zoom_percent">Масштаб экрана (в процентах)</string>
     <string name="video_menu_horizontal_offset">Горизонтальное смещение</string>
     <string name="video_menu_vertical_offset">Вертикальное смещение</string>
@@ -45,6 +47,8 @@
     <string name="video_mode_mono_description">Не требуется оборудование, но нет 3D-эффектов</string>
     <string name="video_mode_stereo_description">Работает с 3D-телевизорами</string>
     <string name="video_menu_aspect_ratio">Соотношение сторон</string>
+    <string name="aspect_ratio_auto">Авто</string>
+    <string name="aspect_ratio_stretch">Растянуть до нужного размера</string>
     <string name="video_menu_color">Цвет</string>
     <string name="video_menu_color_left">Цвет левого глаза</string>
     <string name="video_menu_color_right">Цвет правого глаза</string>
