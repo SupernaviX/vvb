@@ -1,6 +1,6 @@
 <resources>
     <string name="main_menu_game_actions">Pelitoiminnot</string>
-    <string name="main_menu_onscreen_input_setup">Ruudulla olevien syötteiden asetukset</string>
+    <string name="main_menu_onscreen_input_setup">Kosketusnäytön kontrollit</string>
     <string name="main_menu_audio_setup">Ääni</string>
     <string name="load_game_from_file">Lataa tiedostosta</string>
     <string name="load_game_from_file_explanation">Voit ladata Virtual Boy -pelien ROM-muisteja ja ladata ne tänne pelataksesi niitä.\nVoit löytää ilmaisia ROM-muisteja Planet Virtual Boysta, osoitteesta https://virtual-boy.com/homebrew/.</string>
@@ -8,8 +8,8 @@
     <string name="load_game_no_bundled_games">Ei pakattuja pelejä</string>
     <string name="game_menu_resume_game">Jatka</string>
     <string name="game_menu_reset_game">Nollaa</string>
-    <string name="game_menu_save_state">Tallenna tila</string>
-    <string name="game_menu_load_state">Lataa tila</string>
+    <string name="game_menu_save_state">Tallenna tilanne</string>
+    <string name="game_menu_load_state">Lataa tilanne</string>
     <string name="game_menu_state_slot">Virran tilan paikka</string>
     <string name="game_menu_state_slot_empty">Tyhjä</string>
     <string name="game_menu_close_game">Sulje peli</string>
@@ -49,6 +49,6 @@
     <string name="error_not_power_of_two">Tämä\ ei ole Virtual Boy -peli! Tiedoston koon pitäisi olla kahden potenssi.</string>
     <string name="error_too_large">Tämä\ ei ole Virtual Boy -peli! Niiden koko voi olla vain 16 Mb.</string>
     <string name="error_zip">Tässä ZIP-tiedostossa ei näytä mikään Virtual Boy -peliltä...</string>
-    <string name="toast_state_saved">Tallennettu tila</string>
-    <string name="toast_state_loaded">Ladattu tila</string>
+    <string name="toast_state_saved">Tilanne tallennettu</string>
+    <string name="toast_state_loaded">Tilanne ladattu</string>
 </resources>
