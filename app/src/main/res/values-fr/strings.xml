@@ -1,6 +1,7 @@
 <resources>
     <string name="main_menu_game_actions">Actions de jeu</string>
     <string name="main_menu_now_playing">En jeu</string>
+    <string name="main_menu_load_game">Charger</string>
     <string name="main_menu_onscreen_input_setup">Commandes tactiles</string>
     <string name="main_menu_controller_setup">Configuration du contrôleur</string>
     <string name="main_menu_video_setup">Vidéo</string>
@@ -15,7 +16,7 @@
     <string name="game_menu_save_state">Sauvegarder état</string>
     <string name="game_menu_load_state">Charger état</string>
     <string name="game_menu_state_slot">Slot de l\'état actuel</string>
-    <string name="game_menu_close_game">Fermer le jeu</string>
+    <string name="game_menu_close_game">Quitter</string>
     <string name="onscreen_input_menu_on">Utiliser le Gamepad virtuel</string>
     <string name="onscreen_input_menu_toggle_controls">Gâchettes Mode basculement</string>
     <string name="onscreen_input_menu_haptic_feedback">Retour haptique</string>
