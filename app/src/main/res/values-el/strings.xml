@@ -3,8 +3,6 @@
     <string name="main_menu_load_game">Φόρτωση</string>
     <string name="main_menu_onscreen_input_setup">Χειριστήριο Οθόνης Αφής</string>
     <string name="main_menu_controller_setup">Ρύθμιση χειριστηρίου</string>
-    <string name="main_menu_video_setup">Εγκατάσταση βίντεο</string>
-    <string name="main_menu_audio_setup">Ήχος</string>
     <string name="load_game_from_file">Φόρτωση από αρχείο</string>
     <string name="load_game_from_file_explanation">Μπορείτε να κατεβάσετε ROMs από παιχνίδια του Virtual Boy, και να τα φορτώσετε εδώ για να τα παίξετε.\nΜπορείτε να βρείτε δωρεάν ROMs από το Planet Virtual Boy, στη διεύθυνση https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Προηγούμενα παιχνίδια</string>
