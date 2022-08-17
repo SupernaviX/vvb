@@ -1,9 +1,4 @@
 <resources>
-    <string name="main_menu_game_actions">Ações do jogo</string>
-    <string name="main_menu_now_playing">Agora tocando</string>
-    <string name="main_menu_onscreen_input_setup">Entrada na tela</string>
-    <string name="main_menu_video_setup">Vídeo</string>
-    <string name="main_menu_audio_setup">Áudio</string>
     <string name="load_game_from_file">Carregar de</string>
     <string name="load_game_from_file_explanation">Você pode baixar ROMs de jogos Virtual Boy, e carregá-las aqui para jogá-las.\nVocê pode encontrar ROMs grátis do Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Jogado recentemente</string>
@@ -33,8 +28,6 @@
     <string name="controller_menu_rename">Renomear</string>
     <string name="controller_menu_choose_rename">Selecionar controlador para renomear...</string>
     <string name="controller_menu_choose_delete">Selecionar controlador para excluir...</string>
-    <string name="input_menu_put_mapping">Pressione qualquer controle para mapeá-lo para esta entrada. Pressione longo para mapear múltiplos controles.</string>
-    <string name="input_menu_add_mapping">Pressione qualquer controle para adicionar outro mapeamento para esta entrada.</string>
     <string name="video_menu_screen_zoom_percent">Zoom da tela (porcentagem)</string>
     <string name="video_menu_horizontal_offset">Deslocamento horizontal</string>
     <string name="video_menu_vertical_offset">Deslocamento vertical</string>
