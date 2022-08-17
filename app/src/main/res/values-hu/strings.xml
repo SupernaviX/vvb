@@ -1,25 +1,28 @@
 <resources>
-    <string name="main_menu_onscreen_input_setup">Képernyőn történő bevitel beállítása</string>
+    <string name="main_menu_now_playing">Lejátszás</string>
+    <string name="main_menu_onscreen_input_setup">Érintőképernyős irányítás</string>
     <string name="main_menu_controller_setup">Controller beállítása</string>
-    <string name="main_menu_video_setup">Videó beállítása</string>
+    <string name="main_menu_video_setup">Videó</string>
     <string name="main_menu_audio_setup">Hang</string>
     <string name="load_game_from_file">Betöltés fájlból</string>
     <string name="load_game_from_file_explanation">Virtuális Boy játékok ROM-jait töltheti le, és itt töltheti be őket a játékhoz.\nIngyenes ROM-okat talál a Planet Virtual Boy-ról, a https://virtual-boy.com/homebrew/ címen.</string>
     <string name="load_game_no_recent_games">Még nem játszottál semmilyen játékot. Próbálj ki egyet!</string>
     <string name="game_menu_resume_game">Folytatás</string>
     <string name="game_menu_reset_game">Újraindítás</string>
-    <string name="game_menu_save_state">Állapot mentése</string>
-    <string name="game_menu_load_state">Állapot betöltése</string>
+    <string name="game_menu_save_state">Állapotmentés készítése</string>
+    <string name="game_menu_load_state">Állápotmentés betöltése</string>
     <string name="game_menu_state_slot">A jelenlegi állapot slot</string>
     <string name="game_menu_close_game">Játék bezárása</string>
-    <string name="onscreen_input_menu_toggle_controls">Trigger gombok váltó üzemmódba helyezése</string>
-    <string name="onscreen_input_menu_haptic_feedback">Haptic visszajelzés</string>
+    <string name="onscreen_input_menu_toggle_controls">Ravasz gombok Üzemmód váltása</string>
+    <string name="onscreen_input_menu_haptic_feedback">Haptikus visszajelzés</string>
     <string name="onscreen_input_menu_show_bounds">Vezérlési határok megjelenítése</string>
     <string name="onscreen_input_menu_preview">Előnézet</string>
     <string name="controller_menu_manage">Vezérlők kezelése</string>
+    <string name="controller_menu_choose_controller">Gombok beállítása</string>
     <string name="controller_menu_new_controller">Új vezérlő</string>
     <string name="controller_menu_delete_controller">Vezérlő törlése</string>
     <string name="controller_menu_name">Controller neve?</string>
+    <string name="controller_menu_cancel">Mégse</string>
     <string name="controller_menu_choose_rename">Vezérlő kiválasztása az átnevezéshez...</string>
     <string name="input_menu_put_mapping">Nyomja meg bármelyik vezérlőelemet, hogy ehhez a bemenethez rendelje. Több vezérlőelem hozzárendeléséhez nyomja meg hosszan.</string>
     <string name="input_menu_add_mapping">Nyomjon meg bármelyik vezérlőelemet, hogy újabb hozzárendelést adjon ehhez a bemenethez.</string>
@@ -43,6 +46,6 @@
     <string name="error_not_power_of_two">Ez\ nem egy Virtual Boy játék! A fájlméretnek a kettő hatványának kellene lennie.</string>
     <string name="error_too_large">Ez\ nem Virtual Boy játék! Csak 16 Mb lehet.</string>
     <string name="error_zip">A ZIP fájlban semmi sem hasonlít egy Virtual Boy játékra...</string>
-    <string name="toast_state_saved">Mentett állapot</string>
-    <string name="toast_state_loaded">Betöltött állapot</string>
+    <string name="toast_state_saved">Állapotmentés elkészítve</string>
+    <string name="toast_state_loaded">Állapotmentés betöltve</string>
 </resources>
