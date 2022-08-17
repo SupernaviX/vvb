@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">Game Actions</string>
-    <string name="main_menu_now_playing">Now playing</string>
+    <string name="main_menu_now_playing">Playing</string>
     <string name="main_menu_load_game">Load Game</string>
     <string name="main_menu_onscreen_input_setup">On-Screen Input</string>
     <string name="main_menu_controller_setup">Controller</string>
