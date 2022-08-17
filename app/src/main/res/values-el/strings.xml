@@ -17,7 +17,7 @@
     <string name="onscreen_input_menu_haptic_feedback">Απτική Ανάδραση</string>
     <string name="onscreen_input_menu_show_bounds">Εμφάνιση ορίων ελέγχου</string>
     <string name="onscreen_input_menu_preview">Προεπισκόπηση</string>
-    <string name="controller_menu_controllers">Ελεγκτές</string>
+    <string name="controller_menu_controllers">Χειριστήριο</string>
     <string name="controller_menu_manage">Διαχείριση ελεγκτών</string>
     <string name="controller_menu_automap_new_controller">Αυτόματη αντιστοίχιση νέου ελεγκτή</string>
     <string name="controller_menu_choose_controller">Χαρτογράφηση κουμπιών</string>
