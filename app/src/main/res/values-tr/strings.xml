@@ -27,6 +27,8 @@
     <string name="controller_menu_rename">Adı değiştir</string>
     <string name="controller_menu_choose_rename">Yeniden adlandırılacak denetleyiciyi seçin...</string>
     <string name="controller_menu_choose_delete">Silmek için denetleyici seçin...</string>
+    <string name="input_menu_put_mapping">Bu girişe eşlemek için herhangi bir kontrole basın. Birden fazla kontrolü eşlemek için uzun basın.</string>
+    <string name="input_menu_add_mapping">Bu girişe başka bir eşleme eklemek için herhangi bir kontrole basın.</string>
     <string name="video_menu_screen_zoom_percent">Ekran Yakınlaştırma (yüzde)</string>
     <string name="video_menu_horizontal_offset">Yatay Ofset</string>
     <string name="video_menu_vertical_offset">Dikey Ofset</string>
@@ -38,6 +40,7 @@
     <string name="video_mode_mono_right_summary">Sadece sağ göz</string>
     <string name="video_mode_mono_description">Ekipman gerekmez, ancak 3D efektleri yoktur</string>
     <string name="video_mode_stereo_description">3D TV\'lerle çalışır</string>
+    <string name="aspect_ratio_stretch">Sığdırmak için Daralt</string>
     <string name="video_menu_color">Renk</string>
     <string name="video_menu_color_left">Sol Göz Rengi</string>
     <string name="video_menu_color_right">Sağ Göz Rengi</string>
