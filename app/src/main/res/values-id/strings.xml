@@ -14,3 +14,22 @@ Indonesian
     <string name="category_audio">Audio</string>
     <string name="volume">Volume</string>
     <string name="label_size">Ukuran:</string>
+
+Auto = Otomatis
+HapticFeedback = Umpan balik
+OnScreen = Kontrol sentuh di layar
+Load State = Muat status
+Save State = Simpan status
+Loaded State = Status/keadaan termuat
+Saved State = Status permainan tersimpan
+Reset = Atur ulang
+Recent games = Permainan terbaru
+Playing = Bermain
+Resume = Lanjutkan
+Cancel = Batal
+Delete = Hapus
+Audio = Suara
+Trigger Buttons = Tombol pemicu
+Toggle mode = Mode pengalihan
+Control Mapping = Pemetaan kontrol
+Zoom = Perbesar
