@@ -13,6 +13,11 @@
     <string name="game_menu_state_slot">Standard dello Stato corrente</string>
     <string name="game_menu_state_slot_empty">Vuoto</string>
     <string name="game_menu_close_game">Esci</string>
+    <string name="onscreen_input_menu_on">Usa il Gamepad virtuale</string>
+    <string name="onscreen_input_menu_toggle_controls">Pulsanti grilletto Scambia modalità</string>
+    <string name="onscreen_input_menu_haptic_feedback">Risposta Tattile</string>
+    <string name="onscreen_input_menu_show_bounds">Mostra i limiti di controllo</string>
+    <string name="onscreen_input_menu_preview">Anteprima</string>
     <string name="controller_menu_manage">Gestione dei controllori</string>
     <string name="controller_menu_choose_controller">Mappatura dei Controlli</string>
     <string name="controller_menu_no_controllers_detected">Nessun controllore rilevato...</string>
@@ -25,8 +30,6 @@
     <string name="controller_menu_rename">Rinomina</string>
     <string name="controller_menu_choose_rename">Scegliere il controller da rinominare...</string>
     <string name="controller_menu_choose_delete">Scegliere il controllore da eliminare...</string>
-    <string name="input_menu_put_mapping">Premere un qualsiasi controllo per mapparlo a questo ingresso. Premere a lungo per mappare più controlli.</string>
-    <string name="input_menu_add_mapping">Premere un controllo qualsiasi per aggiungere un\'altra mappatura per questo ingresso.</string>
     <string name="video_menu_screen_zoom_percent">Screen Zoom (percentuale)</string>
     <string name="video_menu_horizontal_offset">Offset orizzontale</string>
     <string name="video_menu_vertical_offset">Offset verticale</string>
