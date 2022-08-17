@@ -53,7 +53,6 @@
     <string name="video_mode_mono_left_summary">Sólo ojo izquierdo</string>
     <string name="video_mode_mono_right_summary">Sólo ojo derecho</string>
     <string name="video_mode_mono_description">No se necesita equipo, pero no hay efectos 3D</string>
-    <string name="video_mode_stereo_summary">Lado a lado</string>
     <string name="video_mode_stereo_description">Funciona con televisores 3D</string>
     <string name="video_menu_aspect_ratio">Relación de aspecto</string>
     <string name="aspect_ratio_auto">Automática</string>
