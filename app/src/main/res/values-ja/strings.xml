@@ -30,6 +30,9 @@
     <string name="controller_menu_rename">名前の変更</string>
     <string name="controller_menu_choose_rename">名前を変更コントローラを選択...</string>
     <string name="controller_menu_choose_delete">削除コントローラを選択...</string>
+    <string name="input_menu_unmapped">未対応</string>
+    <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップ。複数のコントロールをマッピング、長押しし</string>
+    <string name="input_menu_add_mapping">任意のコントロールを押して、この入力に別のマッピングを追加</string>
     <string name="video_menu_screen_zoom_percent">画面の拡大（パーセント）</string>
     <string name="video_menu_horizontal_offset">水平オフセット</string>
     <string name="video_menu_vertical_offset">垂直オフセット</string>
@@ -42,6 +45,8 @@
     <string name="video_mode_mono_description">機材は不要だが、3D効果はない</string>
     <string name="video_mode_stereo_description">3Dテレビで動作</string>
     <string name="video_menu_aspect_ratio">アスペクト比</string>
+    <string name="aspect_ratio_auto">自動</string>
+    <string name="aspect_ratio_stretch">フィットように引き伸</string>
     <string name="video_menu_color">色</string>
     <string name="video_menu_color_left">左目の色</string>
     <string name="video_menu_color_right">右目の色</string>
