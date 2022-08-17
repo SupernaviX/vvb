@@ -45,7 +45,6 @@
     <string name="video_mode_mono_left_summary">Apenas olho esquerdo</string>
     <string name="video_mode_mono_right_summary">Apenas olho direito</string>
     <string name="video_mode_stereo_description">Sem equipamento necessário, mas sem efeitos 3D</string>
-    <string name="video_mode_stereo_summary">Lado-a-lado</string>
     <string name="video_menu_aspect_ratio">Razão de aspecto</string>
     <string name="video_menu_color">Cor</string>
     <string name="video_menu_color_left">Cor do olho esquerdo</string>
