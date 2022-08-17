@@ -25,6 +25,8 @@
     <string name="controller_menu_rename">Hernoem</string>
     <string name="controller_menu_choose_rename">Kies controller om te hernoemen...</string>
     <string name="controller_menu_choose_delete">Kies controller om te verwijderen...</string>
+    <string name="input_menu_put_mapping">Druk op een willekeurig besturingselement om het aan deze invoer toe te wijzen. Druk lang om meerdere besturingselementen toe te wijzen.</string>
+    <string name="input_menu_add_mapping">Druk op een willekeurig besturingselement om een andere toewijzing voor deze ingang toe te voegen.</string>
     <string name="video_menu_screen_zoom_percent">Vergroten (percentage)</string>
     <string name="video_menu_horizontal_offset">Horizontale Offset</string>
     <string name="video_menu_vertical_offset">Verticale Offset</string>
@@ -36,6 +38,7 @@
     <string name="video_mode_mono_description">Geen apparatuur nodig, maar geen 3D-effecten</string>
     <string name="video_mode_stereo_description">Werkt met 3D-TV\'s</string>
     <string name="video_menu_aspect_ratio">Schermverhouding</string>
+    <string name="aspect_ratio_stretch">Recht uit om aan te passen</string>
     <string name="video_menu_color">Kleur</string>
     <string name="video_menu_color_left">Kleur linkeroog</string>
     <string name="video_menu_color_right">Kleur rechteroog</string>
