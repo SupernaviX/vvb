@@ -16,7 +16,7 @@
     <string name="controller_menu_controllers">Χειριστήριο</string>
     <string name="controller_menu_manage">Διαχείριση ελεγκτών</string>
     <string name="controller_menu_automap_new_controller">Αυτόματη αντιστοίχιση νέου ελεγκτή</string>
-    <string name="controller_menu_choose_controller">Χαρτογράφηση κουμπιών</string>
+    <string name="controller_menu_choose_controller">Επιλογή ελεγκτή για χαρτογράφηση</string>
     <string name="controller_menu_no_controllers_detected">Δεν εντοπίστηκαν ελεγκτές...</string>
     <string name="controller_menu_new_controller">Νέος ελεγκτής</string>
     <string name="controller_menu_rename_controller">Μετονομασία ελεγκτή</string>
