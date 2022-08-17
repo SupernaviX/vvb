@@ -19,7 +19,7 @@
     <string name="onscreen_input_menu_parallax">Parallaxe</string>
     <string name="onscreen_input_menu_show_bounds">Steuerungsgrenzen anzeigen</string>
     <string name="onscreen_input_menu_preview">Vorschau</string>
-    <string name="controller_menu_controllers">Bedienung</string>
+    <string name="controller_menu_controllers">Steuerungen</string>
     <string name="controller_menu_manage">Steuerungen verwalten</string>
     <string name="controller_menu_automap_new_controller">Neue Steuerung automatisch zuordnen</string>
     <string name="controller_menu_choose_controller">Wählen Sie einen Controller für die Zuordnung</string>
@@ -33,6 +33,7 @@
     <string name="controller_menu_rename">Umbenennen</string>
     <string name="controller_menu_choose_rename">Wählen Sie einen Controller zum Umbenennen...</string>
     <string name="controller_menu_choose_delete">Wählen Sie einen Controller zum Löschen...</string>
+    <string name="input_menu_unmapped">Nicht zugeordnet</string>
     <string name="input_menu_put_mapping">Drücken Sie ein beliebiges Steuerelement, um es dieser Eingabe zuzuordnen. Langes Drücken, um mehrere Steuerelemente zuzuordnen.</string>
     <string name="input_menu_add_mapping">Drücken Sie ein beliebiges Steuerelement, um ein weiteres Mapping für diese Eingabe hinzuzufügen.</string>
     <string name="video_menu_screen_zoom_percent">Bildschirmzoom (Prozent)</string>
