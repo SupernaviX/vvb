@@ -1,7 +1,8 @@
 <resources>
     <string name="main_menu_now_playing">Παίζει</string>
-    <string name="main_menu_controller_setup">Ρύθμιση χειριστηρίου</string>
+    <string name="main_menu_load_game">Φόρτωση</string>
     <string name="main_menu_onscreen_input_setup">Χειριστήριο Οθόνης Αφής</string>
+    <string name="main_menu_controller_setup">Ρύθμιση χειριστηρίου</string>
     <string name="main_menu_video_setup">Εγκατάσταση βίντεο</string>
     <string name="main_menu_audio_setup">Ήχος</string>
     <string name="load_game_from_file">Φόρτωση από αρχείο</string>
@@ -13,6 +14,7 @@
     <string name="game_menu_save_state">Γρήγορη Αποθήκευση</string>
     <string name="game_menu_load_state">Γρήγορη Φόρτωση</string>
     <string name="game_menu_state_slot">Κατάσταση τρέχουσας κατάστασης</string>
+    <string name="game_menu_close_game">Έξοδος</string>
     <string name="onscreen_input_menu_toggle_controls">Προσθήκη κουμπιών ενεργοποίησης σε λειτουργία εναλλαγής</string>
     <string name="onscreen_input_menu_haptic_feedback">Απτική Ανάδραση</string>
     <string name="onscreen_input_menu_show_bounds">Εμφάνιση ορίων ελέγχου</string>
