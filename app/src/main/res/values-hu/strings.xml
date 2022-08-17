@@ -1,10 +1,4 @@
 <resources>
-    <string name="main_menu_now_playing">Lejátszás</string>
-    <string name="main_menu_load_game">Betöltés</string>
-    <string name="main_menu_onscreen_input_setup">Érintőképernyős irányítás</string>
-    <string name="main_menu_controller_setup">Controller beállítása</string>
-    <string name="main_menu_video_setup">Videó</string>
-    <string name="main_menu_audio_setup">Hang</string>
     <string name="load_game_from_file">Betöltés fájlból</string>
     <string name="load_game_from_file_explanation">Virtuális Boy játékok ROM-jait töltheti le, és itt töltheti be őket a játékhoz.\nIngyenes ROM-okat talál a Planet Virtual Boy-ról, a https://virtual-boy.com/homebrew/ címen.</string>
     <string name="load_game_no_recent_games">Még nem játszottál semmilyen játékot. Próbálj ki egyet!</string>
