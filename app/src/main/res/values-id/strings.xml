@@ -4,7 +4,7 @@
     <string name="load_game_recent_games">Permainan terbaru</string>
     <string name="load_game_no_recent_games">Anda belum memainkan game apa pun. Cobalah satu!</string>
     <string name="load_game_bundled_games">Game yang Dibundel</string>
-     <string name="load_game_no_bundled_games">Tidak Ada Game yang Dibundel</string>
+    <string name="load_game_no_bundled_games">Tidak Ada Game yang Dibundel</string>
     <string name="game_menu_resume_game">Lanjutkan</string>
     <string name="game_menu_reset_game">Atur ulang</string>
     <string name="game_menu_auto_save">Simpan Otomatis</string>
