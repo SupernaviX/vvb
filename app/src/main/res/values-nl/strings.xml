@@ -1,6 +1,7 @@
 <resources>
     <string name="load_game_from_file">Laden van bestand</string>
     <string name="load_game_from_file_explanation">U kunt ROM\'s van Virtual Boy-spellen downloaden en ze hier laden om ze te spelen.\nU kunt gratis ROM\'s van Planet Virtual Boy vinden op https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_recent_games">Recente games</string>
     <string name="load_game_no_recent_games">Je hebt nog geen spelletjes gespeeld. Probeer er een uit!</string>
     <string name="load_game_bundled_games">Gebundelde spellen</string>
     <string name="load_game_no_bundled_games">Geen gebundelde spellen</string>
@@ -8,6 +9,7 @@
     <string name="game_menu_reset_game">Herstellen</string>
     <string name="game_menu_save_state">State opslaan</string>
     <string name="game_menu_load_state">State laden</string>
+    <string name="game_menu_state_slot">Huidige status slot</string>
     <string name="game_menu_state_slot_empty">Leeg</string>
     <string name="game_menu_close_game">Afsluiten</string>
     <string name="onscreen_input_menu_on">Virtuele gamepad</string>
