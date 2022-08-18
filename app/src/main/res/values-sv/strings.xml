@@ -57,7 +57,7 @@
     <string name="application_crashed">Tyvärr, programmet kraschade. En rapport kommer att skickas till utvecklaren.</string>
     <string name="error_file_not_found">Den filen kunde inte hittas. Den kanske har flyttats?</string>
     <string name="error_not_power_of_two">Det är inte ett Virtual Boy-spel! Filstorleken ska vara en potens av två.</string>
-    <string name="error_too_large">Det är inte ett Virtual Boy-spel! De kan bara vara upp till 16 Mb.</string>
+    <string name="error_too_large">Det är inte ett Virtual Boy-spel! De kan bara vara upp till 16Mb.</string>
     <string name="error_zip">Ingenting i den ZIP-filen såg ut som ett Virtual Boy-spel...</string>
     <string name="toast_state_saved">State sparat</string>
     <string name="toast_state_loaded">State laddat</string>
