@@ -15,9 +15,9 @@
     <string name="game_menu_close_game">Zamknij</string>
     <string name="onscreen_input_menu_on">Użyj wirtualnego gamepada</string>
     <string name="onscreen_input_menu_toggle_controls">Przyciski wyzwalania przełączania trybu</string>
-    <string name="onscreen_input_menu_haptic_feedback">Wibracje</string>
+    <string name="onscreen_input_menu_haptic_feedback">Dotykowe informacje zwrotne</string>
     <string name="onscreen_input_menu_parallax">Paralaksa</string>
-    <string name="onscreen_input_menu_show_bounds">Pokaż granice sterowania</string>
+    <string name="onscreen_input_menu_show_bounds">Pokaż granice kontrolne</string>
     <string name="onscreen_input_menu_preview">Podgląd</string>
     <string name="controller_menu_controllers">Kontrolery</string>
     <string name="controller_menu_manage">Zarządzaj kontrolerami</string>
