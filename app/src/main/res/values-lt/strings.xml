@@ -13,7 +13,7 @@
     <string name="game_menu_state_slot">Šiuo metu esamos būsenos lizdas</string>
     <string name="game_menu_state_slot_empty">Tuščias</string>
     <string name="game_menu_close_game">Išeiti</string>
-    <string name="onscreen_input_menu_on">Naudokite virtualų žaidimų pultą</string>
+    <string name="onscreen_input_menu_on">Virtuali žaidimų pultelis</string>
     <string name="onscreen_input_menu_toggle_controls">Suaktyvinimo mygtukų perjungimo režimas</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptic atsiliepimai</string>
     <string name="onscreen_input_menu_parallax">Paralaksas</string>
@@ -30,12 +30,12 @@
     <string name="controller_menu_name">Valdiklio pavadinimas?</string>
     <string name="controller_menu_create">Sukurti</string>
     <string name="controller_menu_cancel">Atšaukti</string>
-    <string name="controller_menu_rename">Pervadinti</string>
-    <string name="controller_menu_choose_rename">Pervadinti valdiklį...</string>
+    <string name="controller_menu_rename">Pervardyti</string>
+    <string name="controller_menu_choose_rename">Pasirinkite valdiklį, kurį norite pervardyti...</string>
     <string name="controller_menu_choose_delete">Pasirinkite valdiklį, kurį norite ištrinti...</string>
-    <string name="input_menu_unmapped">Nepripažintas</string>
-    <string name="input_menu_put_mapping">Spauskite bet kurį valdiklį, kad jį atvaizduotumėte į šią įvestį. Ilgai paspauskite, jei norite priskirti kelis valdiklius.</string>
-    <string name="input_menu_add_mapping">Spauskite bet kurį valdiklį, kad pridėtumėte kitą šios įvesties atvaizdavimą.</string>
+    <string name="input_menu_unmapped">Nepriskirtas</string>
+    <string name="input_menu_put_mapping">Paspauskite bet kurį valdiklį, kad susietumėte jį su šia įvestimi. Ilgai paspauskite, kad susietumėte kelis valdiklius.</string>
+    <string name="input_menu_add_mapping">Paspauskite bet kurį valdiklį, kad pridėtumėte kitą šios įvesties susiejimą.</string>
     <string name="video_menu_screen_zoom_percent">Ekrano mastelis (procentais)</string>
     <string name="video_menu_horizontal_offset">Horizontalus poslinkis</string>
     <string name="video_menu_vertical_offset">Vertikalus poslinkis</string>
