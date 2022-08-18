@@ -1,19 +1,18 @@
 <resources>
     <string name="load_game_from_file">Cargar desde archivo</string>
-    <string name="load_game_from_file_explanation">Puedes descargar ROMs de juegos de Virtual Boy, y cargarlos aquí para jugarlos.\nPuedes encontrar ROMs gratis de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_from_file_explanation_button">Aceptar</string>
+    <string name="load_game_from_file_explanation">Puede descargar ROM de juegos de Virtual Boy y cargarlos aquí para jugarlos.\nPuede encontrar ROM gratuitos de Planet Virtual Boy, en https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Juegos recientes</string>
-    <string name="load_game_no_recent_games">Todavía no has jugado a ningún juego. Prueba uno!</string>
+    <string name="load_game_no_recent_games">Todavía no has jugado ningún juego. ¡Prueba uno!</string>
     <string name="load_game_bundled_games">Juegos incluidos</string>
     <string name="load_game_no_bundled_games">Sin juegos incluidos</string>
     <string name="game_menu_resume_game">Reanudar</string>
-    <string name="game_menu_reset_game">Reiniciar</string>
-    <string name="game_menu_auto_save">Autoguardado</string>
+    <string name="game_menu_reset_game">Restablecer</string>
+    <string name="game_menu_auto_save">Guardado automático</string>
     <string name="game_menu_save_state">Guardar estado</string>
     <string name="game_menu_load_state">Cargar estado</string>
     <string name="game_menu_state_slot">Ranura de estado actual</string>
     <string name="game_menu_state_slot_empty">Vacío</string>
-    <string name="game_menu_close_game">Salir</string>
+    <string name="game_menu_close_game">Cerrar</string>
     <string name="onscreen_input_menu_on">Controlador virtual</string>
     <string name="onscreen_input_menu_toggle_controls">Modo de alternancia de botones de activación</string>
     <string name="onscreen_input_menu_haptic_feedback">Vibración háptica</string>
