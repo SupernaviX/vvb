@@ -57,11 +57,11 @@
     <string name="video_menu_preview">Vorschau</string>
     <string name="audio_menu_volume">Lautstärke</string>
     <string name="audio_menu_buffer_size">Puffergröße (in Frames)</string>
-    <string name="application_crashed">Sorry, die Anwendung ist abgestürzt. Ein Bericht wird an den Entwickler gesendet.</string>
-    <string name="error_file_not_found">Die Datei konnte nicht gefunden werden. Vielleicht wurde sie verschoben?</string>
-    <string name="error_not_power_of_two">Das ist kein Virtual Boy Spiel! Die Dateigröße sollte eine Potenz von zwei sein.</string>
-    <string name="error_too_large">Das\ ist kein Virtual Boy Spiel! Sie können nur bis zu 16Mb groß sein.</string>
-    <string name="error_zip">Nichts in dieser ZIP-Datei sah wie ein Virtual Boy-Spiel aus...</string>
+    <string name="application_crashed">Entschuldigung, die Anwendung ist abgestürzt. Ein Bericht wird an den Entwickler gesendet.</string>
+    <string name="error_file_not_found">Diese Datei konnte nicht gefunden werden. Vielleicht wurde es verschoben?</string>
+    <string name="error_not_power_of_two">Das ist kein Virtual Boy-Spiel! Die Dateigröße sollte eine Zweierpotenz sein.</string>
+    <string name="error_too_large">Das ist kein Virtual Boy-Spiel! Sie können nur bis zu 16Mb groß sein.</string>
+    <string name="error_zip">Nichts in dieser ZIP-Datei sah aus wie ein Virtual-Boy-Spiel …</string>
     <string name="toast_state_saved">Spielstand gespeichert</string>
     <string name="toast_state_loaded">Spielstand geladen</string>
 </resources>
