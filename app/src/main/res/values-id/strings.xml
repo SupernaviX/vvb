@@ -1,18 +1,18 @@
 <resources>
     <string name="load_game_from_file">Muat Dari File</string>
-    <string name="load_game_from_file_explanation">Anda dapat mendownload ROM dari game Virtual Boy, dan memuatnya di sini untuk memainkannya.\nAnda dapat menemukan ROM gratis dari Planet Virtual Boy, di https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Permainan terbaru</string>
+    <string name="load_game_from_file_explanation">Anda dapat mengunduh ROM game Virtual Boy, dan memuatnya di sini untuk memainkannya.\nAnda dapat menemukan ROM gratis dari Planet Virtual Boy, di https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_recent_games">Game Terbaru</string>
     <string name="load_game_no_recent_games">Anda belum memainkan game apa pun. Cobalah satu!</string>
     <string name="load_game_bundled_games">Game yang Dibundel</string>
     <string name="load_game_no_bundled_games">Tidak Ada Game yang Dibundel</string>
     <string name="game_menu_resume_game">Lanjutkan</string>
-    <string name="game_menu_reset_game">Atur ulang</string>
+    <string name="game_menu_reset_game">Setel Ulang</string>
     <string name="game_menu_auto_save">Simpan Otomatis</string>
     <string name="game_menu_save_state">Simpan status</string>
     <string name="game_menu_load_state">Muat status</string>
-    <string name="game_menu_state_slot">Slot State Saat Ini</string>
+    <string name="game_menu_state_slot">Slot Status Saat Ini</string>
     <string name="game_menu_state_slot_empty">Kosong</string>
-    <string name="game_menu_close_game">Keluar</string>
+    <string name="game_menu_close_game">Tutup</string>
     <string name="onscreen_input_menu_toggle_controls">Mode Beralih Tombol Pemicu</string>
     <string name="onscreen_input_menu_haptic_feedback">Umpan Balik Haptik</string>
     <string name="onscreen_input_menu_parallax">Paralaks</string>
