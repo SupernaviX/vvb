@@ -6,7 +6,7 @@
     <string name="load_game_bundled_games">Jeux groupés</string>
     <string name="load_game_no_bundled_games">Aucun jeu groupé</string>
     <string name="game_menu_resume_game">Reprendre</string>
-    <string name="game_menu_reset_game">Réinitialiser</string>
+    <string name="game_menu_reset_game">Redémarrer</string>
     <string name="game_menu_auto_save">Enregistrement automatique</string>
     <string name="game_menu_save_state">Sauvegarder état</string>
     <string name="game_menu_load_state">Charger état</string>
