@@ -1,3 +1,73 @@
+<resources>
+    <string name="load_game_from_file">Muat Dari File</string>
+    <string name="load_game_from_file_explanation">Anda dapat mendownload ROM dari game Virtual Boy, dan memuatnya di sini untuk memainkannya.\nAnda dapat menemukan ROM gratis dari Planet Virtual Boy, di https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_recent_games">Game Terbaru</string>
+    <string name="load_game_no_recent_games">Anda belum memainkan game apa pun. Cobalah satu!</string>
+    <string name="load_game_bundled_games">Bundled Games</string>
+    <string name="load_game_no_bundled_games">Tidak ada Bundled Games</string>
+    <string name="game_menu_resume_game">Lanjutkan</string>
+    <string name="game_menu_reset_game">Reset</string>
+    <string name="game_menu_auto_save">Simpan Otomatis</string>
+    <string name="game_menu_save_state">Save State</string>
+    <string name="game_menu_load_state">Load State</string>
+    <string name="game_menu_state_slot">Slot State Saat Ini</string>
+    <string name="game_menu_state_slot_empty">Kosong</string>
+    <string name="game_menu_close_game">Tutup</string>
+    <string name="onscreen_input_menu_on">Gunakan Gamepad Virtual</string>
+    <string name="onscreen_input_menu_toggle_controls">Mode Toggle Tombol Pemicu</string>
+    <string name="onscreen_input_menu_haptic_feedback">Haptic Feedback</string>
+    <string name="onscreen_input_menu_parallax">Parallax</string>
+    <string name="onscreen_input_menu_show_bounds">Show Control Bounds</string>
+    <string name="onscreen_input_menu_preview">Preview</string>
+    <string name="controller_menu_controllers">Pengontrol</string>
+    <string name="controller_menu_manage">Mengelola Pengontrol</string>
+    <string name="controller_menu_automap_new_controller">Auto-Map Pengendali Baru</string>
+    <string name="controller_menu_choose_controller">Pilih Pengendali untuk Dipetakan</string>
+    <string name="controller_menu_no_controllers_detected">Tidak ada pengendali yang terdeteksi...</string>
+    <string name="controller_menu_new_controller">Pengontrol Baru</string>
+    <string name="controller_menu_rename_controller">Rename Controller</string>
+    <string name="controller_menu_delete_controller">Hapus Controller</string>
+    <string name="controller_menu_name">Nama Controller?</string>
+    <string name="controller_menu_create">Buat</string>
+    <string name="controller_menu_cancel">Batalkan</string>
+    <string name="controller_menu_rename">Rename</string>
+    <string name="controller_menu_choose_rename">Pilih controller untuk mengganti nama...</string>
+    <string name="controller_menu_choose_delete">Pilih kontroler untuk dihapus...</string>
+    <string name="input_menu_unmapped">Unmapped</string>
+    <string name="input_menu_put_mapping">Tekan kontrol apapun untuk memetakannya ke input ini. Tekan lama untuk memetakan beberapa kontrol.</string>
+    <string name="input_menu_add_mapping">Tekan kontrol apa saja untuk menambahkan pemetaan lain untuk input ini.</string>
+    <string name="video_menu_screen_zoom_percent">Pembesaran Layar (persen)</string>
+    <string name="video_menu_horizontal_offset">Horizontal Offset</string>
+    <string name="video_menu_vertical_offset">Offset Vertikal</string>
+    <string name="video_menu_mode">Mode Tampilan</string>
+    <string name="video_mode_anaglyph_summary">Anaglyph (dua warna)</string>
+    <string name="video_mode_anaglyph_description">Bekerja dengan sebagian besar pasang kacamata 3D</string>
+    <string name="video_mode_cardboard_description">Bekerja dengan Google Cardboard atau Daydream</string>
+    <string name="video_mode_mono_left_summary">Hanya mata kiri</string>
+    <string name="video_mode_mono_right_summary">Hanya mata kanan</string>
+    <string name="video_mode_mono_description">Tidak diperlukan peralatan, tetapi tidak ada efek 3D</string>
+    <string name="video_mode_stereo_description">Bekerja dengan TV 3D</string>
+    <string name="video_menu_aspect_ratio">Aspect Ratio</string>
+    <string name="aspect_ratio_auto">Auto</string>
+    <string name="aspect_ratio_stretch">Stretch to Fit</string>
+    <string name="video_menu_color">Warna</string>
+    <string name="video_menu_color_left">Warna Mata Kiri</string>
+    <string name="video_menu_color_right">Warna Mata Kanan</string>
+    <string name="video_menu_invalid_colors_title">Warna Tidak Valid</string>
+    <string name="video_menu_invalid_colors_message">Warna mata kiri dan kanan "tumpang tindih" pada setidaknya satu saluran warna. Efek 3D mungkin tidak berfungsi dengan baik.</string>
+    <string name="video_menu_switch_viewer">Pindah Cardboard Viewer</string>
+    <string name="video_menu_preview">Preview</string>
+    <string name="audio_menu_volume">Volume</string>
+    <string name="audio_menu_buffer_size">Ukuran Buffer (dalam frame)</string>
+    <string name="application_crashed">Maaf, aplikasi mengalami crash. Laporan akan dikirim ke pengembang.</string>
+    <string name="error_file_not_found">File tersebut tidak dapat ditemukan. Mungkin sudah dipindahkan?</string>
+    <string name="error_not_power_of_two">Itu bukan game Virtual Boy! Ukuran file seharusnya merupakan pangkat dua.</string>
+    <string name="error_too_large">Itu bukan game Virtual Boy! Ukuran file hanya boleh sampai 16Mb.</string>
+    <string name="error_zip">Tidak ada dalam file ZIP itu yang tampak seperti game Virtual Boy...</string>
+    <string name="toast_state_saved">Keadaan tersimpan</string>
+    <string name="toast_state_loaded">Keadaan dimuat</string>
+</resources>
+
 Indonesian
 
     <string name="preview">Tinjauan</string>
@@ -22,3 +92,5 @@ Zoom = Perbesar
 Exit = Keluar
 
 no video_mode_stereo_summary
+
+
