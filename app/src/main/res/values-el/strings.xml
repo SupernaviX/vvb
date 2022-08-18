@@ -3,6 +3,8 @@
     <string name="load_game_from_file_explanation">Μπορείτε να κατεβάσετε ROMs από παιχνίδια του Virtual Boy, και να τα φορτώσετε εδώ για να τα παίξετε.\nΜπορείτε να βρείτε δωρεάν ROMs από το Planet Virtual Boy, στη διεύθυνση https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Προηγούμενα παιχνίδια</string>
     <string name="load_game_no_recent_games">Δεν έχετε παίξει ακόμα κανένα παιχνίδι. Δοκιμάστε ένα!</string>
+    <string name="load_game_bundled_games">πακέτα παιχνίδια</string>
+    <string name="load_game_no_bundled_games">Όχι πακέτα παιχνίδια</string>
     <string name="game_menu_resume_game">Συνέχιση</string>
     <string name="game_menu_reset_game">Επανεκκίνηση</string>
     <string name="game_menu_save_state">Γρήγορη Αποθήκευση</string>
