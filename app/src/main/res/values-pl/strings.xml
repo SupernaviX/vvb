@@ -17,10 +17,13 @@
     <string name="onscreen_input_menu_parallax">Paralaksa</string>
     <string name="onscreen_input_menu_show_bounds">Pokaż granice sterowania</string>
     <string name="onscreen_input_menu_preview">Podgląd</string>
+    <string name="controller_menu_controllers">Kontrolery</string>
     <string name="controller_menu_manage">Zarządzaj kontrolerami</string>
-    <string name="controller_menu_choose_controller">Mapowanie przycisków</string>
+    <string name="controller_menu_automap_new_controller">Automatycznie mapuj nowy kontroler</string>
+    <string name="controller_menu_choose_controller">Wybierz kontroler do mapowania</string>
+    <string name="controller_menu_no_controllers_detected">Geen controllers gevonden...</string>
     <string name="controller_menu_new_controller">Nowy kontroler</string>
-    <string name="controller_menu_rename_controller">Zmień nazwę</string>
+    <string name="controller_menu_rename_controller">Zmień nazwę kontrolera</string>
     <string name="controller_menu_delete_controller">Usuń kontroler</string>
     <string name="controller_menu_name">Nazwa kontrolera?</string>
     <string name="controller_menu_create">Utwórz</string>
