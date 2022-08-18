@@ -1,15 +1,16 @@
 <resources>
     <string name="load_game_from_file">Lataa tiedostosta</string>
-    <string name="load_game_from_file_explanation">Voit ladata Virtual Boy -pelien ROM-muisteja ja ladata ne tänne pelataksesi niitä.\nVoit löytää ilmaisia ROM-muisteja Planet Virtual Boysta, osoitteesta https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Voit ladata Virtual Boy -pelien ROM-levyjä ja ladata ne täältä pelataksesi niitä.\nLöydät ilmaisia ​​ROM-levyjä Planet Virtual Boysta osoitteessa https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Viimeaikaiset pelit</string>
     <string name="load_game_no_recent_games">Et ole vielä pelannut yhtään peliä. Kokeile yhtä!</string>
-    <string name="load_game_bundled_games">Paketoidut pelit</string>
-    <string name="load_game_no_bundled_games">Ei pakattuja pelejä</string>
+    <string name="load_game_bundled_games">Pelipaketit</string>
+    <string name="load_game_no_bundled_games">Ei mukana olevia pelejä</string>
     <string name="game_menu_resume_game">Jatka</string>
     <string name="game_menu_reset_game">Nollaa</string>
+    <string name="game_menu_auto_save">Automaattinen tallennus</string>
     <string name="game_menu_save_state">Tallenna tilanne</string>
     <string name="game_menu_load_state">Lataa tilanne</string>
-    <string name="game_menu_state_slot">Virran tilan paikka</string>
+    <string name="game_menu_state_slot">Nykyinen tila</string>
     <string name="game_menu_state_slot_empty">Tyhjä</string>
     <string name="game_menu_close_game">Sulje</string>
     <string name="onscreen_input_menu_on">Virtuaalinen peliohjain</string>
