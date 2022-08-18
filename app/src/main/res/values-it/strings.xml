@@ -1,18 +1,18 @@
 <resources>
     <string name="load_game_from_file">Carica da file</string>
-    <string name="load_game_from_file_explanation">Puoi scaricare ROM di giochi per Virtual Boy e caricarle qui per giocarci.\nPuoi trovare ROM gratuite da Planet Virtual Boy, all\'indirizzo https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Puoi scaricare le ROM dei giochi Virtual Boy e caricarle qui per giocarci.\nPuoi trovare ROM gratuite da Planet Virtual Boy, su https://virtual-boy.com/homebrew/.</stringa>
     <string name="load_game_recent_games">Giochi recenti</string>
     <string name="load_game_no_recent_games">Non hai ancora giocato a nessun gioco. Provane uno!</string>
-    <string name="load_game_bundled_games">Giochi in blocco</string>
+    <string name="load_game_bundled_games">Giochi in bundle</string>
     <string name="load_game_no_bundled_games">Nessun gioco in bundle</string>
-    <string name="game_menu_resume_game">Ripristina</string>
-    <string name="game_menu_reset_game">Resetta</string>
+    <string name="game_menu_resume_game">Riprendi</string>
+    <string name="game_menu_reset_game">Ripristina</string>
     <string name="game_menu_auto_save">Salvataggio automatico</string>
-    <string name="game_menu_save_state">Salva Stato</string>
-    <string name="game_menu_load_state">Carica Stato</string>
-    <string name="game_menu_state_slot">Standard dello Stato corrente</string>
+    <string name="game_menu_save_state">Salva stato</string>
+    <string name="game_menu_load_state">Carica stato</string>
+    <string name="game_menu_state_slot">Slot stato attuale</string>
     <string name="game_menu_state_slot_empty">Vuoto</string>
-    <string name="game_menu_close_game">Esci</string>
+    <string name="game_menu_close_game">Chiudi</string>
     <string name="onscreen_input_menu_on">Gamepad virtuale</string>
     <string name="onscreen_input_menu_toggle_controls">Modalità di commutazione dei pulsanti di attivazione</string>
     <string name="onscreen_input_menu_haptic_feedback">Feedback aptico</string>
