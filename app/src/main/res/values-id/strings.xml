@@ -6,7 +6,7 @@
     <string name="load_game_bundled_games">Game yang Dibundel</string>
     <string name="load_game_no_bundled_games">Tidak Ada Game yang Dibundel</string>
     <string name="game_menu_resume_game">Lanjutkan</string>
-    <string name="game_menu_reset_game">Setel Ulang</string>
+    <string name="game_menu_reset_game">Atur ulang</string>
     <string name="game_menu_auto_save">Simpan Otomatis</string>
     <string name="game_menu_save_state">Simpan status</string>
     <string name="game_menu_load_state">Muat status</string>
