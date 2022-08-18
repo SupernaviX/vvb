@@ -43,12 +43,15 @@
     <string name="video_mode_mono_right_summary">Apenas olho direito</string>
     <string name="video_mode_stereo_description">Sem equipamento necessário, mas sem efeitos 3D</string>
     <string name="video_menu_aspect_ratio">Razão de aspecto</string>
+    <string name="aspect_ratio_stretch">Esticar para caber</string>
     <string name="video_menu_color">Cor</string>
     <string name="video_menu_color_left">Cor do olho esquerdo</string>
     <string name="video_menu_color_right">Cor do olho direito</string>
     <string name="video_menu_invalid_colors_title">Cores inválidas</string>
     <string name="video_menu_invalid_colors_message">As cores dos olhos esquerdo e direito "se sobrepõem" em pelo menos um canal de cor. O efeito 3D pode não funcionar corretamente.</string>
-    <string name="video_menu_switch_viewer">Visualizador de cartão de comutação</string>
+    <string name="video_menu_switch_viewer">Visualizador de Cardboard de comutação</string>
+    <string name="video_menu_preview">Visualização</string>
+    <string name="audio_menu_buffer_size">Tamanho do buffer (em quadros)</string>
     <string name="application_crashed">Desculpe, a aplicação falhou. Um relatório será enviado para o desenvolvedor.</string>
     <string name="error_file_not_found">Esse arquivo não pôde ser encontrado. Talvez ele tenha sido movido?</string>
     <string name="error_not_power_of_two">Isso não é um jogo do Virtual Boy! O tamanho do arquivo deve ser um poder de dois.</string>
