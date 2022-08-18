@@ -1,17 +1,18 @@
 <resources>
     <string name="load_game_from_file">Betöltés fájlból</string>
-    <string name="load_game_from_file_explanation">Virtuális Boy játékok ROM-jait töltheti le, és itt töltheti be őket a játékhoz.\nIngyenes ROM-okat talál a Planet Virtual Boy-ról, a https://virtual-boy.com/homebrew/ címen.</string>
+    <string name="load_game_from_file_explanation">Töltsd le a Virtual Boy játékok ROM-ját, és töltsd be ide, hogy lejátszhasd őket.\nA Planet Virtual Boy ingyenes ROM-jai a https://virtual-boy.com/homebrew/ címen találhatók.</string>
     <string name="load_game_recent_games">Legutóbbi játékok</string>
-    <string name="load_game_no_recent_games">Még nem játszottál semmilyen játékot. Próbálj ki egyet!</string>
+    <string name="load_game_no_recent_games">Még nem játszottál egyetlen játékkal sem. Próbáljon ki egyet!</string>
     <string name="load_game_bundled_games">Csomagolt játékok</string>
-    <string name="load_game_no_bundled_games">Nincs csomagolt játék</string>
+    <string name="load_game_no_bundled_games">Nincsenek játékcsomagok</string>
     <string name="game_menu_resume_game">Folytatás</string>
-    <string name="game_menu_reset_game">Újraindítás</string>
+    <string name="game_menu_reset_game">Visszaállítás</string>
+    <string name="game_menu_auto_save">Automatikus mentés</string>
     <string name="game_menu_save_state">Állapotmentés készítése</string>
     <string name="game_menu_load_state">Állápotmentés betöltése</string>
-    <string name="game_menu_state_slot">A jelenlegi állapot slot</string>
+    <string name="game_menu_state_slot">Aktuális állapotú hely</string>
     <string name="game_menu_state_slot_empty">Üres</string>
-    <string name="game_menu_close_game">Kilépés</string>
+    <string name="game_menu_close_game">Bezárás</string>
     <string name="onscreen_input_menu_on">Virtuális játékvezérlő</string>
     <string name="onscreen_input_menu_toggle_controls">Indítógombok kapcsolómódja</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptikus visszajelzés</string>
