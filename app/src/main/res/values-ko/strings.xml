@@ -22,7 +22,7 @@
     <string name="controller_menu_controllers">컨트롤러</string>
     <string name="controller_menu_manage">컨트롤러 관리</string>
     <string name="controller_menu_automap_new_controller">새 컨트롤러 자동 매핑</string>
-    <string name="controller_menu_choose_controller">컨트롤 맵핑</string>
+    <string name="controller_menu_choose_controller">매핑할 컨트롤러 선택</string>
     <string name="controller_menu_no_controllers_detected">컨트롤러가 감지되지 않았습니다...</string>
     <string name="controller_menu_new_controller">새 컨트롤러</string>
     <string name="controller_menu_rename_controller">컨트롤러 이름 바꾸기</string>
