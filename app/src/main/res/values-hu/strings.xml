@@ -6,7 +6,7 @@
     <string name="load_game_bundled_games">Csomagolt játékok</string>
     <string name="load_game_no_bundled_games">Nincsenek játékcsomagok</string>
     <string name="game_menu_resume_game">Folytatás</string>
-    <string name="game_menu_reset_game">Visszaállítás</string>
+    <string name="game_menu_reset_game">Újraindítás</string>
     <string name="game_menu_auto_save">Automatikus mentés</string>
     <string name="game_menu_save_state">Állapotmentés készítése</string>
     <string name="game_menu_load_state">Állápotmentés betöltése</string>
