@@ -1,17 +1,18 @@
 <resources>
     <string name="load_game_from_file">Ladda från fil</string>
-    <string name="load_game_from_file_explanation">Du kan ladda ner ROMs av Virtual Boy-spel och ladda dem här för att spela dem.\nDu kan hitta gratis ROMs från Planet Virtual Boy, på https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Senast spelat</string>
-    <string name="load_game_no_recent_games">Du har inte spelat några spel ännu. Prova ett!</string>
-    <string name="load_game_bundled_games">Paketerade spel</string>
-    <string name="load_game_no_bundled_games">Ingen bundlade spel</string>
+    <string name="load_game_from_file_explanation">Du kan ladda ner ROM-skivor med Virtual Boy-spel och ladda dem här för att spela dem.\nDu kan hitta gratis ROM-skivor från Planet Virtual Boy, på https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_recent_games">Senaste spelen</string>
+    <string name="load_game_no_recent_games">Du har inte spelat några spel än. Prova en!</string>
+    <string name="load_game_bundled_games">paketerade spel</string>
+    <string name="load_game_no_bundled_games">Inga paketerade spel</string>
     <string name="game_menu_resume_game">Återuppta</string>
     <string name="game_menu_reset_game">Återställ</string>
     <string name="game_menu_auto_save">Spara automatiskt</string>
     <string name="game_menu_save_state">Spara state</string>
     <string name="game_menu_load_state">Ladda state</string>
-    <string name="game_menu_state_slot_empty">Tomt</string>
-    <string name="game_menu_close_game">Avsluta</string>
+    <string name="game_menu_state_slot">Current State Slot</string>
+    <string name="game_menu_state_slot_empty">Tom</string>
+    <string name="game_menu_close_game">Stäng</string>
     <string name="onscreen_input_menu_on">Virtuell spelkontroll</string>
     <string name="onscreen_input_menu_toggle_controls">Triggerknappar Växla läge</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptisk feedback</string>
