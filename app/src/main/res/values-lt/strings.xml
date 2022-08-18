@@ -1,18 +1,18 @@
 <resources>
     <string name="load_game_from_file">Įkelti iš failo</string>
-    <string name="load_game_from_file_explanation">Galite atsisiųsti "Virtual Boy" žaidimų ROM ir įkelti juos čia, kad galėtumėte juos žaisti.\nBe to, galite rasti nemokamų ROM iš "Planet Virtual Boy", adresu https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Paskutiniai žaidimai</string>
-    <string name="load_game_no_recent_games">Jūs dar nežaidėte jokių žaidimų. Išbandykite vieną iš jų!</string>
+    <string name="load_game_from_file_explanation">Galite atsisiųsti „Virtual Boy“ žaidimų ROM ir įkelti juos čia, kad galėtumėte juos žaisti.\nNemokamų ROM galite rasti iš „Planet Virtual Boy“ adresu https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_recent_games">Naujausi žaidimai</string>
+    <string name="load_game_no_recent_games">Dar nežaidėte jokių žaidimų. Išbandykite!</string>
     <string name="load_game_bundled_games">Supakuoti žaidimai</string>
     <string name="load_game_no_bundled_games">Jokių žaidimų paketų</string>
     <string name="game_menu_resume_game">Tęsti</string>
-    <string name="game_menu_reset_game">Perkrauti</string>
+    <string name="game_menu_reset_game">Nustatyti iš naujo</string>
     <string name="game_menu_auto_save">Automatinis išsaugojimas</string>
     <string name="game_menu_save_state">Išsaugoti statusą</string>
     <string name="game_menu_load_state">Krauti statusą</string>
-    <string name="game_menu_state_slot">Šiuo metu esamos būsenos lizdas</string>
-    <string name="game_menu_state_slot_empty">Tuščias</string>
-    <string name="game_menu_close_game">Išeiti</string>
+    <string name="game_menu_state_slot">Dabartinės būsenos lizdas</string>
+    <string name="game_menu_state_slot_empty">Tuščia</string>
+    <string name="game_menu_close_game">Uždaryti</string>
     <string name="onscreen_input_menu_on">Virtuali žaidimų pultelis</string>
     <string name="onscreen_input_menu_toggle_controls">Suaktyvinimo mygtukų perjungimo režimas</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptic atsiliepimai</string>
