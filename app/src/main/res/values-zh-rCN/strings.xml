@@ -5,7 +5,7 @@
     <string name="load_game_no_recent_games">你未玩任何游戏。试！</string>
     <string name="load_game_bundled_games">捆绑游戏</string>
     <string name="load_game_no_bundled_games">无捆绑游戏</string>
-    <string name="game_menu_resume_game">继续游戏</string>
+    <string name="game_menu_resume_game">继续</string>
     <string name="game_menu_reset_game">重置</string>
     <string name="game_menu_auto_save">自动保存</string>
     <string name="game_menu_save_state">保存状态</string>
