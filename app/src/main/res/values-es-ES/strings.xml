@@ -54,7 +54,7 @@
     <string name="video_menu_color_right">Color de ojos derecho</string>
     <string name="video_menu_invalid_colors_title">Colores no válidos</string>
     <string name="video_menu_invalid_colors_message">Los colores de los ojos izquierdo y derecho se "superponen" en al menos un canal de color. Es posible que el efecto 3D no funcione correctamente.</string>
-    <string name="video_menu_switch_viewer">Cambiar visor de cartón</string>
+    <string name="video_menu_switch_viewer">Cambiar visor de Cardboard</string>
     <string name="video_menu_preview">Vista previa</string>
     <string name="audio_menu_volume">Volumen</string>
     <string name="audio_menu_buffer_size">Tamaño de búfer (en fotogramas)</string>
