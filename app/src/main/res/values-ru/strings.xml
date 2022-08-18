@@ -59,11 +59,11 @@
     <string name="video_menu_preview">Предпросмотр</string>
     <string name="audio_menu_volume">Громкость</string>
     <string name="audio_menu_buffer_size">Размер буфера (в кадрах)</string>
-    <string name="application_crashed">Извините, приложение потерпело крах. Отчет будет отправлен разработчику.</string>
-    <string name="error_file_not_found">Этот файл не может быть найден. Возможно, он был перемещен?</string>
-    <string name="error_not_power_of_two">Это\ не игра для Virtual Boy! Размер файла должен быть равен двум.</string>
-    <string name="error_too_large">Это\ не игра для Virtual Boy! Они могут быть только до 16 Mb.</string>
-    <string name="error_zip">Ничто в этом ZIP-файле не похоже на игру для Virtual Boy...</string>
+    <string name="application_crashed">К сожалению, произошел сбой приложения. Отчет будет отправлен разработчику.</string>
+    <string name="error_file_not_found">Этот файл не найден. Может быть, он был перемещен?</string>
+    <string name="error_not_power_of_two">Это\ не игра Virtual Boy! Размер файла должен быть степенью двойки.</string>
+    <string name="error_too_large">Это\ не игра Virtual Boy! Их размер не может превышать 16 Mb.</string>
+    <string name="error_zip">Ничто в этом ZIP-файле не было похоже на игру Virtual Boy…</string>
     <string name="toast_state_saved">Состояние сохранено</string>
     <string name="toast_state_loaded">Состояние загружено</string>
 </resources>
