@@ -35,7 +35,7 @@
     <string name="video_menu_mode">Näyttötila</string>
     <string name="video_mode_anaglyph_summary">Anaglyfi (kaksivärinen)</string>
     <string name="video_mode_anaglyph_description">Toimii useimpien 3D-lasien kanssa</string>
-    <string name="video_mode_cardboard_description">Toimii Google Cardboardin tai Daydreamin kanssa</string>
+    <string name="video_mode_cardboard_description">Toimii Google Cardboard tai Daydream kanssa</string>
     <string name="video_mode_mono_left_summary">Vain vasen silmä</string>
     <string name="video_mode_mono_right_summary">Vain oikea silmä</string>
     <string name="video_mode_mono_description">Ei laitteita, mutta ei 3D-tehosteita</string>
