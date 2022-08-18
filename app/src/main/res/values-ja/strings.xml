@@ -1,18 +1,18 @@
 <resources>
-    <string name="load_game_from_file">ファイルからのロード</string>
-    <string name="load_game_from_file_explanation">バーチャルボーイのゲームのROMをダウンロードして、ここにロードしてプレイすることができます。\nPlanet Virtual Boyの無料ROMは、https://virtual-boy.com/homebrew/。</string>
+    <string name="load_game_from_file">ファイルからロード</string>
+    <string name="load_game_from_file_explanation">Virtual BoyゲームのROMをダウンロードし、ここにロードしてプレイできます。\nPlanet Virtual Boyの無料ROMはhttps://virtual-boy.com/homebrew/にあります。</string>
     <string name="load_game_recent_games">最近のゲーム</string>
-    <string name="load_game_no_recent_games">あなたはまだゲームをプレイしていません。試してみてください！</string>
-    <string name="load_game_bundled_games">バンドルされているゲーム</string>
-    <string name="load_game_no_bundled_games">バンドルされているゲームはありません</string>
-    <string name="game_menu_resume_game">レジューム</string>
+    <string name="load_game_no_recent_games">まだゲームをプレイしていません。試してみてください!</string>
+    <string name="load_game_bundled_games">バンドルされたゲーム</string>
+    <string name="load_game_no_bundled_games">バンドルされたゲームはありません</string>
+    <string name="game_menu_resume_game">再開</string>
     <string name="game_menu_reset_game">リセット</string>
     <string name="game_menu_auto_save">自動セーブ</string>
     <string name="game_menu_save_state">ステートをセーブ</string>
     <string name="game_menu_load_state">ステートをロード</string>
     <string name="game_menu_state_slot">現在のステートスロット</string>
     <string name="game_menu_state_slot_empty">空</string>
-    <string name="game_menu_close_game">終了</string>
+    <string name="game_menu_close_game">閉</string>
     <string name="onscreen_input_menu_on">仮想ゲームパッド</string>
     <string name="onscreen_input_menu_toggle_controls">トリガーボタントグルモード</string>
     <string name="onscreen_input_menu_haptic_feedback">触覚フィードバック</string>
