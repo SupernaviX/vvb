@@ -59,11 +59,11 @@
     <string name="video_menu_preview">Podgląd</string>
     <string name="audio_menu_volume">Głośność</string>
     <string name="audio_menu_buffer_size">Rozmiar bufora (w ramkach)</string>
-    <string name="application_crashed">Przepraszamy, aplikacja uległa awarii. Raport zostanie wysłany do dewelopera.</string>
-    <string name="error_file_not_found">Tego pliku nie można było znaleźć. Może został przeniesiony?</string>
-    <string name="error_not_power_of_two">To nie jest gra na Virtual Boy\'a! Rozmiar pliku powinien być potęgą dwóch.</string>
-    <string name="error_too_large">Ta gra nie jest grą Virtual Boy! Mogą mieć tylko do 16Mb.</string>
-    <string name="error_zip">Nic w tym pliku ZIP nie wyglądało jak gra Virtual Boy...</string>
+    <string name="application_crashed">Przepraszamy, aplikacja uległa awarii. Raport zostanie wysłany do programisty.</string>
+    <string name="error_file_not_found">Nie można znaleźć tego pliku. Może został przeniesiony?</string>
+    <string name="error_not_power_of_two">To nie jest gra Virtual Boy! Rozmiar pliku powinien być potęgą dwójki.</string>
+    <string name="error_too_large">To nie jest gra Virtual Boy! Mogą mieć maksymalnie 16Mb.</string>
+    <string name="error_zip">Nic w tym pliku ZIP nie wyglądało jak gra Virtual Boy…</string>
     <string name="toast_state_saved">Stan zapisany</string>
     <string name="toast_state_loaded">Wczytano stan gry</string>
 </resources>
