@@ -21,9 +21,9 @@
     <string name="onscreen_input_menu_preview">Предпросмотр</string>
     <string name="controller_menu_controllers">Контроллеры</string>
     <string name="controller_menu_manage">Управление контроллерами</string>
-    <string name="controller_menu_automap_new_controller">Автоматическое отображение нового контроллера</string>
-    <string name="controller_menu_choose_controller">Выбор контроллера для отображения</string>
-    <string name="controller_menu_no_controllers_detected">Не обнаружено контроллеров...</string>
+    <string name="controller_menu_automap_new_controller">Автоматическое сопоставление нового контроллера</string>
+    <string name="controller_menu_choose_controller">Выберите контроллер для сопоставления</string>
+    <string name="controller_menu_no_controllers_detected">Контроллеры не обнаружены…</string>
     <string name="controller_menu_new_controller">Новый контроллер</string>
     <string name="controller_menu_rename_controller">Переименовать контроллер</string>
     <string name="controller_menu_delete_controller">Удалить контроллер</string>
