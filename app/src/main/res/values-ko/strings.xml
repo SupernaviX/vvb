@@ -6,7 +6,7 @@
     <string name="load_game_bundled_games">번들 게임</string>
     <string name="load_game_no_bundled_games">번들 게임 없음</string>
     <string name="game_menu_resume_game">이력서</string>
-    <string name="game_menu_reset_game">재설정</string>
+    <string name="game_menu_reset_game">리셋</string>
     <string name="game_menu_auto_save">자동 저장</string>
     <string name="game_menu_save_state">상태 저장하기</string>
     <string name="game_menu_load_state">상태 불러오기</string>
