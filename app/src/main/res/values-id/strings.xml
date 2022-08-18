@@ -57,11 +57,11 @@
     <string name="video_menu_switch_viewer">Ganti Penampil Cardboard</string>
     <string name="video_menu_preview">Tinjauan</string>
     <string name="audio_menu_buffer_size">Ukuran Penyangga (dalam bingkai)</string>
-    <string name="application_crashed">Maaf, aplikasi mengalami crash. Laporan akan dikirim ke pengembang.</string>
-    <string name="error_file_not_found">File tersebut tidak dapat ditemukan. Mungkin sudah dipindahkan?</string>
-    <string name="error_not_power_of_two">Itu bukan game Virtual Boy! Ukuran file seharusnya merupakan pangkat dua.</string>
-    <string name="error_too_large">Itu bukan game Virtual Boy! Ukuran file hanya boleh sampai 16Mb.</string>
-    <string name="error_zip">Tidak ada dalam file ZIP itu yang tampak seperti game Virtual Boy...</string>
+    <string name="application_crashed">Maaf, aplikasi mogok. Laporan akan dikirim ke pengembang.</string>
+    <string name="error_file_not_found">File itu tidak dapat ditemukan. Mungkin dipindahkan?</string>
+    <string name="error_not_power_of_two">Itu bukan game Virtual Boy! Ukuran file harus pangkat dua.</string>
+    <string name="error_too_large">Itu bukan game Virtual Boy! Mereka hanya bisa sampai 16Mb.</string>
+    <string name="error_zip">Tidak ada dalam file ZIP yang tampak seperti game Virtual Boy…</string>
     <string name="toast_state_saved">Status permainan tersimpan</string>
     <string name="toast_state_loaded">Status/keadaan termuat</string>
 </resources>
