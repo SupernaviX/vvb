@@ -4,6 +4,8 @@
     <string name="load_game_recent_games">Récemment</string>
     <string name="load_game_no_recent_games">Vous n\'avez encore joué à aucun jeu. Essayez-en un !</string>
     <string name="load_game_bundled_games">Jeux groupés</string>
+    <string name="load_game_no_bundled_games">Pas de jeux groupés</string>
+    <string name="game_menu_state_slot_empty">Vide</string>
     <string name="game_menu_resume_game">Reprendre</string>
     <string name="game_menu_reset_game">Redémarrer</string>
     <string name="game_menu_save_state">Sauvegarder état</string>
