@@ -1,5 +1,5 @@
 <resources>
-    <string name="load_game_from_file">Charger à partir du fichier</string>
+    <string name="load_game_from_file">Ouvrir</string>
     <string name="load_game_from_file_explanation">Vous pouvez télécharger les ROM des jeux Virtual Boy et les charger ici pour y jouer.\nVous pouvez trouver des ROM gratuites sur Planet Virtual Boy, à l\'adresse https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Jeux récents</string>
     <string name="load_game_no_recent_games">Vous n\'avez encore joué à aucun jeu. Essayez-en un !</string>
