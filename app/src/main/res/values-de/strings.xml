@@ -13,7 +13,7 @@
     <string name="game_menu_state_slot">Aktueller Zustands-Slot</string>
     <string name="game_menu_state_slot_empty">Leer</string>
     <string name="game_menu_close_game">Beenden</string>
-    <string name="onscreen_input_menu_on">Virtuelles Gamepad verwenden</string>
+    <string name="onscreen_input_menu_on">Virtuelles Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Auslöser-Tasten in den Umschaltmodus versetzen</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptisches Feedback</string>
     <string name="onscreen_input_menu_parallax">Parallaxe</string>
