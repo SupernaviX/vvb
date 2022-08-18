@@ -1,18 +1,18 @@
 <resources>
     <string name="load_game_from_file">Загрузить из файла</string>
-    <string name="load_game_from_file_explanation">Вы можете скачать ПЗУ игр Virtual Boy и загрузить их сюда, чтобы играть.\nВы можете найти бесплатные ПЗУ с Planet Virtual Boy, на https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Вы можете загрузить ПЗУ игр Virtual Boy и загрузить их здесь, чтобы играть в них.\nВы можете найти бесплатные ПЗУ от Planet Virtual Boy по адресу https://virtual-boy.com/homebrew/. </строка>
     <string name="load_game_recent_games">Последние игры</string>
-    <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте одну!</string>
-    <string name="load_game_bundled_games">Публикованные игры</string>
-    <string name="load_game_no_bundled_games">Нет игр в комплекте</string>
+    <string name="load_game_no_recent_games">Вы еще не играли ни в одну игру. Попробуйте!</string>
+    <string name="load_game_bundled_games">Игры в комплекте</string>
+    <string name="load_game_no_bundled_games">Нет наборов игр</string>
     <string name="game_menu_resume_game">Продолжить</string>
     <string name="game_menu_reset_game">Сбросить</string>
-    <string name="game_menu_auto_save">Автосохранения</string>
+    <string name="game_menu_auto_save">Автосохранение</string>
     <string name="game_menu_save_state">Сохранить состояние</string>
     <string name="game_menu_load_state">Загрузить состояние</string>
-    <string name="game_menu_state_slot">Текущий слот состояния</string>
+    <string name="game_menu_state_slot">Ячейка текущего состояния</string>
     <string name="game_menu_state_slot_empty">Пусто</string>
-    <string name="game_menu_close_game">Выход</string>
+    <string name="game_menu_close_game">Закрыть</string>
     <string name="onscreen_input_menu_on">Виртуальный геймпад</string>
     <string name="onscreen_input_menu_toggle_controls">Кнопки переключения режимов</string>
     <string name="onscreen_input_menu_haptic_feedback">Тактильная обратная связь</string>
