@@ -44,7 +44,7 @@
     <string name="video_mode_anaglyph_description">Veikia su dauguma 3D akinių porų</string>
     <string name="video_mode_cardboard_description">Veikia su Google Cardboard arba Daydream</string>
     <string name="video_mode_mono_left_summary">Tik kairioji akis</string>
-    <string name="video_mode_mono_right_summary">Tik dešinė akis</string>
+    <string name="video_mode_mono_right_summary">Tik dešinioji akis</string>
     <string name="video_mode_mono_description">Nereikia jokios įrangos, bet nereikia 3D efektų</string>
     <string name="video_mode_stereo_description">Veikia su 3D televizoriais</string>
     <string name="video_menu_aspect_ratio">Krašto santykis</string>
