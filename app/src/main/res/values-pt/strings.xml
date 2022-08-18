@@ -7,6 +7,7 @@
     <string name="load_game_no_bundled_games">Nenhum jogo empacotado</string>
     <string name="game_menu_resume_game">Resumir</string>
     <string name="game_menu_reset_game">Reiniciar</string>
+    <string name="game_menu_auto_save">Salvamento automático</string>
     <string name="game_menu_save_state">Salvar estado</string>
     <string name="game_menu_load_state">Carregar estado</string>
     <string name="game_menu_state_slot">Chave de Estado actual</string>
