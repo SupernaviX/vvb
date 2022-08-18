@@ -1,18 +1,18 @@
 <resources>
     <string name="load_game_from_file">Dosyadan yükle</string>
-    <string name="load_game_from_file_explanation">Sanal Boy oyunlarının ROM\'larını indirebilir ve oynamak için buraya yükleyebilirsiniz.\nPlanet Virtual Boy\'dan ücretsiz ROM\'ları https://virtual-boy.com/homebrew/ adresinde bulabilirsiniz.</string>
+    <string name="load_game_from_file_explanation">Virtual Boy oyunlarının ROM'larını indirebilir ve oynamak için buraya yükleyebilirsiniz.\nPlanet Virtual Boy'dan ücretsiz ROM'ları https://virtual-boy.com/homebrew/ adresinde bulabilirsiniz.</string>
     <string name="load_game_recent_games">Son Oyunlar</string>
-    <string name="load_game_no_recent_games">Henüz hiç oyun oynamadınız. Bir tane deneyin!</string>
+    <string name="load_game_no_recent_games">Henüz oyun oynamadınız. Bir deneyin!</string>
     <string name="load_game_bundled_games">Paketli Oyunlar</string>
-    <string name="load_game_no_bundled_games">Paketlenmiş Oyun Yok</string>
+    <string name="load_game_no_bundled_games">Paketli Oyun Yok</string>
     <string name="game_menu_resume_game">Devam Et</string>
     <string name="game_menu_reset_game">Sıfırla</string>
     <string name="game_menu_auto_save">Otomatik Kaydet</string>
     <string name="game_menu_save_state">Kaydet Durumu</string>
     <string name="game_menu_load_state">Yükleme Durumu</string>
-    <string name="game_menu_state_slot">Geçerli Durum Yuvası</string>
+    <string name="game_menu_state_slot">Mevcut Durum Yuvası</string>
     <string name="game_menu_state_slot_empty">Boş</string>
-    <string name="game_menu_close_game">Oyunu Kapat</string>
+    <string name="game_menu_close_game">Kapat</string>
     <string name="onscreen_input_menu_on">Sanal Oyun Kumandası</string>
     <string name="onscreen_input_menu_toggle_controls">Tetik Düğmeleri Modunu Değiştir</string>
     <string name="onscreen_input_menu_haptic_feedback">Dokunsal Geri Bildirim</string>
