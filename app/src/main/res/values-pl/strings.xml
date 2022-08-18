@@ -4,6 +4,7 @@
     <string name="load_game_recent_games">Ostatnio grane</string>
     <string name="load_game_no_recent_games">Nie grałeś jeszcze w żadną grę. Wypróbuj jedną z nich!</string>
     <string name="load_game_bundled_games">Gry w pakiecie</string>
+    <string name="load_game_no_bundled_games">Brak gier w pakietach</string>
     <string name="game_menu_resume_game">Wznów grę</string>
     <string name="game_menu_reset_game">Resetuj</string>
     <string name="game_menu_auto_save">Automatycznego zapisu</string>
@@ -12,7 +13,8 @@
     <string name="game_menu_state_slot">Slot stanu bieżącego</string>
     <string name="game_menu_state_slot_empty">Puste</string>
     <string name="game_menu_close_game">Zamknij</string>
-    <string name="onscreen_input_menu_toggle_controls">Przyciski Toggle mode</string>
+    <string name="onscreen_input_menu_on">Użyj wirtualnego gamepada</string>
+    <string name="onscreen_input_menu_toggle_controls">Przyciski wyzwalania przełączania trybu</string>
     <string name="onscreen_input_menu_haptic_feedback">Wibracje</string>
     <string name="onscreen_input_menu_parallax">Paralaksa</string>
     <string name="onscreen_input_menu_show_bounds">Pokaż granice sterowania</string>
@@ -47,6 +49,7 @@
     <string name="video_mode_stereo_description">Współpracuje z telewizorami 3D</string>
     <string name="video_menu_aspect_ratio">Współczynnik proporcji</string>
     <string name="aspect_ratio_stretch">Rozciągnij, aby dopasować</string>
+    <string name="video_menu_color">Kolor</string>
     <string name="video_menu_color_left">Kolor lewego oka</string>
     <string name="video_menu_color_right">Kolor prawego oka</string>
     <string name="video_menu_invalid_colors_title">Nieprawidłowe kolory</string>
@@ -54,7 +57,7 @@
     <string name="video_menu_switch_viewer">Przełącz Cardboard Viewer</string>
     <string name="video_menu_preview">Podgląd</string>
     <string name="audio_menu_volume">Głośność</string>
-    <string name="audio_menu_buffer_size">Rozmiar bufora (w klatkach)</string>
+    <string name="audio_menu_buffer_size">Rozmiar bufora (w ramkach)</string>
     <string name="application_crashed">Przepraszamy, aplikacja uległa awarii. Raport zostanie wysłany do dewelopera.</string>
     <string name="error_file_not_found">Tego pliku nie można było znaleźć. Może został przeniesiony?</string>
     <string name="error_not_power_of_two">To nie jest gra na Virtual Boy\'a! Rozmiar pliku powinien być potęgą dwóch.</string>
