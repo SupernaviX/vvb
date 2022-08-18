@@ -54,11 +54,11 @@
     <string name="video_menu_preview">Förhandsgranska</string>
     <string name="audio_menu_volume">Volym</string>
     <string name="audio_menu_buffer_size">Buffertstorlek (i ramar)</string>
-    <string name="application_crashed">Ledsen, programmet kraschade. En rapport kommer att skickas till utvecklaren.</string>
-    <string name="error_file_not_found">Denna fil kunde inte hittas. Den kanske har flyttats?</string>
-    <string name="error_not_power_of_two">Det där\ är inte ett Virtual Boy-spel! Filstorleken bör vara en potens av två.</string>
+    <string name="application_crashed">Tyvärr, programmet kraschade. En rapport kommer att skickas till utvecklaren.</string>
+    <string name="error_file_not_found">Den filen kunde inte hittas. Den kanske har flyttats?</string>
+    <string name="error_not_power_of_two">Det är inte ett Virtual Boy-spel! Filstorleken ska vara en potens av två.</string>
     <string name="error_too_large">Det är inte ett Virtual Boy-spel! De kan bara vara upp till 16 Mb.</string>
-    <string name="error_zip">Inget i den ZIP-filen såg ut som ett Virtual Boy-spel...</string>
+    <string name="error_zip">Ingenting i den ZIP-filen såg ut som ett Virtual Boy-spel...</string>
     <string name="toast_state_saved">State sparat</string>
     <string name="toast_state_loaded">State laddat</string>
 </resources>
