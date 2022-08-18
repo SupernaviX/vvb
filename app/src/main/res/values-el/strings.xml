@@ -9,7 +9,7 @@
     <string name="game_menu_load_state">Γρήγορη Φόρτωση</string>
     <string name="game_menu_state_slot">Κατάσταση τρέχουσας κατάστασης</string>
     <string name="game_menu_close_game">Έξοδος</string>
-    <string name="onscreen_input_menu_on">Χρήση εικονικού gamepad</string>
+    <string name="onscreen_input_menu_on">Εικονικό Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Λειτουργία εναλλαγής κουμπιών ενεργοποίησης</string>
     <string name="onscreen_input_menu_haptic_feedback">Απτική Ανάδραση</string>
     <string name="onscreen_input_menu_parallax">Παραλλάξ</string>
