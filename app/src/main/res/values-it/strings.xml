@@ -57,11 +57,11 @@
     <string name="video_menu_switch_viewer">Cambia visualizzatore Cardboard</string>
     <string name="video_menu_preview">Anteprima</string>
     <string name="audio_menu_buffer_size">Dimensioni buffer (in frame)</string>
-    <string name="application_crashed">Spiacente, l\'applicazione si è bloccata. Verrà inviato un rapporto allo sviluppatore.</string>
-    <string name="error_file_not_found">Il file non è stato trovato. Forse è stato spostato?</string>
-    <string name="error_not_power_of_two">Quello non è un gioco per Virtual Boy! La dimensione del file dovrebbe essere una potenza di due.</string>
-    <string name="error_too_large">Questo non è un gioco per Virtual Boy! Possono essere solo fino a 16Mb.</string>
-    <string name="error_zip">Niente in quel file ZIP sembrava un gioco per Virtual Boy...</string>
+    <string name="application_crashed">Spiacenti, l\'applicazione si è arrestata in modo anomalo. Verrà inviato un rapporto allo sviluppatore.</string>
+    <string name="error_file_not_found">Non è stato possibile trovare quel file. Forse è stato spostato?</string>
+    <string name="error_not_power_of_two">Quello non è un gioco Virtual Boy! La dimensione del file dovrebbe essere una potenza di due.</string>
+    <string name="error_too_large">Quello non è un gioco Virtual Boy! Possono essere solo fino a 16Mb.</string>
+    <string name="error_zip">Nulla in quel file ZIP sembrava un gioco di Virtual Boy...</string>
     <string name="toast_state_saved">Stato Salvato</string>
     <string name="toast_state_loaded">Stato Caricato</string>
 </resources>
