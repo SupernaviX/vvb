@@ -6,7 +6,7 @@
     <string name="load_game_bundled_games">Παιχνίδια σε πακέτο</string>
     <string name="load_game_no_bundled_games">Δεν υπάρχουν παιχνίδια σε πακέτο</string>
     <string name="game_menu_resume_game">Συνέχιση</string>
-    <string name="game_menu_reset_game">Επαναφορά</string>
+    <string name="game_menu_reset_game">Επανεκκίνηση</string>
     <string name="game_menu_auto_save">Αυτόματη αποθήκευση</string>
     <string name="game_menu_save_state">Γρήγορη Αποθήκευση</string>
     <string name="game_menu_load_state">Γρήγορη Φόρτωση</string>
