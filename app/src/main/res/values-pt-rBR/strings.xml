@@ -3,8 +3,8 @@
     <string name="load_game_from_file_explanation">Você pode baixar ROMs de jogos Virtual Boy, e carregá-las aqui para jogá-las.\nVocê pode encontrar ROMs grátis do Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Jogos recentes</string>
     <string name="load_game_no_recent_games">Você ainda não jogou nenhum jogo. Experimente um!</string>
-    <string name="load_game_bundled_games">Jogos_bundled</string>
-    <string name="load_game_no_bundled_games">Sem_game_agrupado</string>
+    <string name="load_game_bundled_games">Jogos empacotados</string>
+    <string name="load_game_no_bundled_games">Nenhum jogo empacotado</string>
     <string name="game_menu_resume_game">Resumo</string>
     <string name="game_menu_reset_game">Resetar</string>
     <string name="game_menu_auto_save">Auto-Salvamento</string>
