@@ -5,7 +5,7 @@
     <string name="load_game_no_recent_games">Non hai ancora giocato a nessun gioco. Provane uno!</string>
     <string name="load_game_bundled_games">Giochi in bundle</string>
     <string name="load_game_no_bundled_games">Nessun gioco in bundle</string>
-    <string name="game_menu_resume_game">Riprendi</string>
+    <string name="game_menu_resume_game">Ripristina</string>
     <string name="game_menu_reset_game">Resetta</string>
     <string name="game_menu_auto_save">Salvataggio automatico</string>
     <string name="game_menu_save_state">Salva stato</string>
