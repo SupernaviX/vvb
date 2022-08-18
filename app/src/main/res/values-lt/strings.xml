@@ -59,11 +59,11 @@
     <string name="video_menu_preview">Peržiūra</string>
     <string name="audio_menu_volume">Garsumas</string>
     <string name="audio_menu_buffer_size">Buferio dydis (kadrais)</string>
-    <string name="application_crashed">Atleiskite, programa sugedo. Pranešimas bus išsiųstas kūrėjui.</string>
-    <string name="error_file_not_found">To failo nepavyko rasti. Galbūt jis buvo perkeltas?</string>
-    <string name="error_not_power_of_two">Tai nėra "Virtual Boy" žaidimas! Failo dydis turėtų būti lygus dviejų galiai.</string>
-    <string name="error_too_large">Tai nėra "Virtual Boy" žaidimas! Jie gali būti tik iki 16 Mb.</string>
-    <string name="error_zip">Tame ZIP faile niekas nepanašu į "Virtual Boy" žaidimą...</string>
+    <string name="application_crashed">Atsiprašome, programa užstrigo. Ataskaita bus išsiųsta kūrėjui.</string>
+    <string name="error_file_not_found">To failo rasti nepavyko. Galbūt jis buvo perkeltas?</string>
+    <string name="error_not_power_of_two">Tai ne virtualaus berniuko žaidimas! Failo dydis turi būti dviejų laipsniai.</string>
+    <string name="error_too_large">Tai ne virtualaus berniuko žaidimas! Jie gali būti tik iki 16Mb.</string>
+    <string name="error_zip">Niekas tame ZIP faile neatrodė kaip virtualaus berniuko žaidimo...</string>
     <string name="toast_state_saved">Statusas išsaugotas</string>
     <string name="toast_state_loaded">Statusas pakrautas</string>
 </resources>
