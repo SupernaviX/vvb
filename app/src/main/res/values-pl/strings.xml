@@ -1,11 +1,11 @@
 <resources>
-    <string name="load_game_from_file">Wczytaj z pliku</string>
+    <string name="load_game_from_file">Załaduj z pliku</string>
     <string name="load_game_from_file_explanation">Możesz pobrać ROM-y z grami Virtual Boy i załadować je tutaj, aby w nie grać.\nDarmowe ROM-y można znaleźć w Planet Virtual Boy na https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Ostatnie gry</string>
     <string name="load_game_no_recent_games">Nie grałeś jeszcze w żadne gry. Wypróbuj!</string>
     <string name="load_game_bundled_games">Gry w pakiecie</string>
     <string name="load_game_no_bundled_games">Brak dołączonych gier</string>
-    <string name="game_menu_resume_game">Wznów</string>
+    <string name="game_menu_resume_game">Wznów grę</string>
     <string name="game_menu_reset_game">Resetuj</string>
     <string name="game_menu_auto_save">Automatyczne zapisywanie</string>
     <string name="game_menu_save_state">Zapisz stan</string>
