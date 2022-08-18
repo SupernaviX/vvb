@@ -34,7 +34,7 @@
     <string name="controller_menu_choose_delete">Scegli il controller da eliminare...</string>
     <string name="input_menu_unmapped">Non mappato</string>
     <string name="input_menu_put_mapping">Premi un controllo qualsiasi per mapparlo su questo input. Premi a lungo per mappare più controlli.</string>
-    <string name="input_menu_add_mapping">Premi un controllo qualsiasi per aggiungere un'altra mappatura per questo input.</string>
+    <string name="input_menu_add_mapping">Premi un controllo qualsiasi per aggiungere un\'altra mappatura per questo input.</string>
     <string name="video_menu_screen_zoom_percent">Zoom schermo (percentuale)</string>
     <string name="video_menu_horizontal_offset">Offset orizzontale</string>
     <string name="video_menu_vertical_offset">Offset verticale</string>
