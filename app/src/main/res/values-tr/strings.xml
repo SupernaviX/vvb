@@ -17,11 +17,13 @@
     <string name="onscreen_input_menu_show_bounds">Kontrol Sınırlarını Göster</string>
     <string name="onscreen_input_menu_preview">Önizleme</string>
     <string name="controller_menu_controllers">Kontrolörler</string>
-    <string name="controller_menu_choose_controller">Haritalanacak Denetleyiciyi Seç</string>
-    <string name="controller_menu_no_controllers_detected">Hiçbir denetleyici algılanmadı...</string>
+    <string name="controller_menu_manage">Denetleyicileri Yönet</string>
+    <string name="controller_menu_automap_new_controller">Yeni Denetleyiciyi Otomatik Eşle</string>
+    <string name="controller_menu_choose_controller">Eşlenecek Denetleyiciyi Seçin</string>
+    <string name="controller_menu_no_controllers_detected">Denetleyici algılanmadı…</string>
     <string name="controller_menu_new_controller">Yeni Denetleyici</string>
     <string name="controller_menu_rename_controller">Denetleyiciyi Yeniden Adlandır</string>
-    <string name="controller_menu_delete_controller">Sil</string>
+    <string name="controller_menu_delete_controller">Denetleyiciyi Sil</string>
     <string name="controller_menu_name">Denetleyici Adı?</string>
     <string name="controller_menu_cancel">İptal</string>
     <string name="controller_menu_rename">Adı değiştir</string>
