@@ -6,7 +6,7 @@
     <string name="load_game_bundled_games">Juegos incluidos</string>
     <string name="load_game_no_bundled_games">Sin juegos incluidos</string>
     <string name="game_menu_resume_game">Reanudar</string>
-    <string name="game_menu_reset_game">Restablecer</string>
+    <string name="game_menu_reset_game">Reiniciar</string>
     <string name="game_menu_auto_save">Guardado automático</string>
     <string name="game_menu_save_state">Guardar estado</string>
     <string name="game_menu_load_state">Cargar estado</string>
