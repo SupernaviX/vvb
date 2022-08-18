@@ -52,10 +52,10 @@
     <string name="video_menu_switch_viewer">Schakel Cardboard Kijker</string>
     <string name="video_menu_preview">Voorbeeld</string>
     <string name="audio_menu_buffer_size">Buffergrootte (in frames)</string>
-    <string name="application_crashed">Sorry, de applicatie is gecrasht. Een rapport zal naar de ontwikkelaar worden gestuurd.</string>
+    <string name="application_crashed">Sorry, de applicatie is gecrasht. Er wordt een rapport naar de ontwikkelaar gestuurd.</string>
     <string name="error_file_not_found">Dat bestand kon niet worden gevonden. Misschien is het verplaatst?</string>
-    <string name="error_not_power_of_two">Dat is geen Virtual Boy spel! De bestandsgrootte moet een macht van twee zijn.</string>
-    <string name="error_too_large">Dat is geen Virtual Boy spel! Ze mogen maar 16Mb groot zijn.</string>
+    <string name="error_not_power_of_two">Dat is geen Virtual Boy-spel! De bestandsgrootte moet een macht van twee zijn.</string>
+    <string name="error_too_large">Dat is geen Virtual Boy-spel! Ze kunnen maximaal 16Mb zijn.</string>
     <string name="error_zip">Niets in dat ZIP-bestand leek op een Virtual Boy-spel...</string>
     <string name="toast_state_saved">Savestate opgeslagen</string>
     <string name="toast_state_loaded">Savestate geladen</string>
