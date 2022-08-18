@@ -6,7 +6,7 @@
     <string name="load_game_bundled_games">Supakuoti žaidimai</string>
     <string name="load_game_no_bundled_games">Jokių žaidimų paketų</string>
     <string name="game_menu_resume_game">Tęsti</string>
-    <string name="game_menu_reset_game">Nustatyti iš naujo</string>
+    <string name="game_menu_reset_game">Perkrauti</string>
     <string name="game_menu_auto_save">Automatinis išsaugojimas</string>
     <string name="game_menu_save_state">Išsaugoti statusą</string>
     <string name="game_menu_load_state">Krauti statusą</string>
