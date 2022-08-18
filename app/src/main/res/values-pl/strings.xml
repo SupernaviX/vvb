@@ -21,7 +21,7 @@
     <string name="controller_menu_manage">Zarządzaj kontrolerami</string>
     <string name="controller_menu_automap_new_controller">Automatycznie mapuj nowy kontroler</string>
     <string name="controller_menu_choose_controller">Wybierz kontroler do mapowania</string>
-    <string name="controller_menu_no_controllers_detected">Geen controllers gevonden...</string>
+    <string name="controller_menu_no_controllers_detected">Nie wykryto kontrolerów…</string>
     <string name="controller_menu_new_controller">Nowy kontroler</string>
     <string name="controller_menu_rename_controller">Zmień nazwę kontrolera</string>
     <string name="controller_menu_delete_controller">Usuń kontroler</string>
