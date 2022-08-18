@@ -54,11 +54,11 @@
     <string name="video_menu_preview">Előnézet</string>
     <string name="audio_menu_volume">Hangerő</string>
     <string name="audio_menu_buffer_size">Puffer mérete (kockákban)</string>
-    <string name="application_crashed">Sorry, az alkalmazás lezuhant. Jelentést küldünk a fejlesztőnek.</string>
-    <string name="error_file_not_found">Azt a fájlt nem találtuk meg. Talán áthelyezték?</string>
-    <string name="error_not_power_of_two">Ez\ nem egy Virtual Boy játék! A fájlméretnek a kettő hatványának kellene lennie.</string>
-    <string name="error_too_large">Ez\ nem Virtual Boy játék! Csak 16 Mb lehet.</string>
-    <string name="error_zip">A ZIP fájlban semmi sem hasonlít egy Virtual Boy játékra...</string>
+    <string name="application_crashed">Sajnáljuk, az alkalmazás összeomlott. A jelentést elküldjük a fejlesztőnek.</string>
+    <string name="error_file_not_found">A fájl nem található. Talán áthelyezték?</string>
+    <string name="error_not_power_of_two">Ez nem egy Virtual Boy játék! A fájl méretének kettős hatványnak kell lennie.</string>
+    <string name="error_too_large">Ez nem egy Virtual Boy játék! Legfeljebb 16Mb lehet.</string>
+    <string name="error_zip">A ZIP-fájlban semmi sem hasonlított egy Virtual Boy játékhoz…</string>
     <string name="toast_state_saved">Állapotmentés elkészítve</string>
     <string name="toast_state_loaded">Állapotmentés betöltve</string>
 </resources>
