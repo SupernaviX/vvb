@@ -3,6 +3,7 @@
     <string name="load_game_from_file_explanation">Sanal Boy oyunlarının ROM\'larını indirebilir ve oynamak için buraya yükleyebilirsiniz.\nPlanet Virtual Boy\'dan ücretsiz ROM\'ları https://virtual-boy.com/homebrew/ adresinde bulabilirsiniz.</string>
     <string name="load_game_recent_games">Son Oyunlar</string>
     <string name="load_game_no_recent_games">Henüz hiç oyun oynamadınız. Bir tane deneyin!</string>
+    <string name="load_game_bundled_games">Paketli Oyunlar</string>
     <string name="load_game_no_bundled_games">Paketlenmiş Oyun Yok</string>
     <string name="game_menu_resume_game">Devam Et</string>
     <string name="game_menu_reset_game">Sıfırla</string>
