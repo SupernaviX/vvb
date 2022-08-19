@@ -61,7 +61,7 @@
     <string name="error_file_not_found">Diese Datei konnte nicht gefunden werden. Vielleicht wurde es verschoben?</string>
     <string name="error_not_power_of_two">Das ist kein Virtual Boy-Spiel! Die Dateigröße sollte eine Zweierpotenz sein.</string>
     <string name="error_too_large">Das ist kein Virtual Boy-Spiel! Sie können nur bis zu 16Mb groß sein.</string>
-    <string name="error_zip">Nichts in dieser ZIP-Datei sah aus wie ein Virtual-Boy-Spiel …</string>
+    <string name="error_zip">Nichts in dieser ZIP-Datei sah aus wie ein Virtual Boy-Spiel …</string>
     <string name="toast_state_saved">Spielstand gespeichert</string>
     <string name="toast_state_loaded">Spielstand geladen</string>
 </resources>
