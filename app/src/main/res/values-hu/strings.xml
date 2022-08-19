@@ -48,7 +48,6 @@
     <string name="video_mode_mono_description">Nincs szükség felszerelésre, de 3D effektusok sem</string>
     <string name="video_mode_stereo_description">3D tévékkel működik</string>
     <string name="video_menu_aspect_ratio">Képarány</string>
-    <string name="aspect_ratio_auto">Automatikus</string>
     <string name="aspect_ratio_stretch">Nyújtás, hogy illeszkedjen</string>
     <string name="video_menu_color">Szín</string>
     <string name="video_menu_color_left">Bal szemszín</string>
