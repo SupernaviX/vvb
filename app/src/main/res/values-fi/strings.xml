@@ -48,7 +48,6 @@
     <string name="video_mode_mono_description">Ei laitteita, mutta ei 3D-tehosteita</string>
     <string name="video_mode_stereo_description">Toimii 3D-televisioiden kanssa</string>
     <string name="video_menu_aspect_ratio">Kuvasuhde</string>
-    <string name="aspect_ratio_auto">Automaattinen</string>
     <string name="aspect_ratio_stretch">Vennyt sopivaksi</string>
     <string name="video_menu_color">Väri</string>
     <string name="video_menu_color_left">Vasen silmien väri</string>
