@@ -61,9 +61,9 @@
     <string name="audio_menu_buffer_size">Buferio dydis (kadrais)</string>
     <string name="application_crashed">Atsiprašome, programa užstrigo. Ataskaita bus išsiųsta kūrėjui.</string>
     <string name="error_file_not_found">To failo rasti nepavyko. Galbūt jis buvo perkeltas?</string>
-    <string name="error_not_power_of_two">Tai ne virtualaus berniuko žaidimas! Failo dydis turi būti dviejų laipsniai.</string>
-    <string name="error_too_large">Tai ne virtualaus berniuko žaidimas! Jie gali būti tik iki 16Mb.</string>
-    <string name="error_zip">Niekas tame ZIP faile neatrodė kaip virtualaus berniuko žaidimo...</string>
+    <string name="error_not_power_of_two">Tai ne Virtual Boy žaidimas! Failo dydis turi būti dviejų laipsniai.</string>
+    <string name="error_too_large">Tai ne Virtual Boy žaidimas! Jie gali būti tik iki 16Mb.</string>
+    <string name="error_zip">Niekas tame ZIP faile neatrodė kaip Virtual Boy žaidimo...</string>
     <string name="toast_state_saved">Statusas išsaugotas</string>
     <string name="toast_state_loaded">Statusas pakrautas</string>
 </resources>
