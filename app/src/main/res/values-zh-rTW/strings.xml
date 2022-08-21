@@ -58,7 +58,7 @@
     <string name="video_menu_switch_viewer">切換Cardboard查看器</string>
     <string name="video_menu_preview">預覽</string>
     <string name="audio_menu_volume">音量</string>
-    <string name="audio_menu_buffer_size">緩衝區大小（以幀為單位）</string>
+    <string name="audio_menu_buffer_size">緩衝器大小（幀）</string>
     <string name="application_crashed">ಠ_ಠ，應用程序崩潰。將向開發者發送報告。</string>
     <string name="error_file_not_found">找不到那文件。也許它被移動了？</string>
     <string name="error_not_power_of_two">那不是Virtual Boy遊戲！文件大小應為2的冪。</string>
