@@ -1,5 +1,5 @@
 <resources>
-    <string name="load_game_from_file">文件加载</string>
+    <string name="load_game_from_file">文件载入</string>
     <string name="load_game_from_file_explanation">你可下载Virtual Boy游戏ROM，并于此加载它们以玩。\n你可从Planet Virtual Boy找到免费ROM，网址https://virtual-boy.com/homebrew/。</string>
     <string name="load_game_recent_games">近日游戏</string>
     <string name="load_game_no_recent_games">你未玩任何游戏。试！</string>
@@ -7,9 +7,9 @@
     <string name="load_game_no_bundled_games">无捆绑游戏</string>
     <string name="game_menu_resume_game">继续</string>
     <string name="game_menu_reset_game">重置</string>
-    <string name="game_menu_auto_save">自动保存</string>
-    <string name="game_menu_save_state">保存状态</string>
-    <string name="game_menu_load_state">加载状态</string>
+    <string name="game_menu_auto_save">自动存</string>
+    <string name="game_menu_save_state">存状态</string>
+    <string name="game_menu_load_state">载状态</string>
     <string name="game_menu_state_slot">本状态槽</string>
     <string name="game_menu_state_slot_empty">空</string>
     <string name="game_menu_close_game">关闭</string>
@@ -64,6 +64,6 @@
     <string name="error_not_power_of_two">那不是Virtual Boy游戏！文件大小应为2的幂。</string>
     <string name="error_too_large">那不是Virtual Boy游戏！它们至多16Mb。</string>
     <string name="error_zip">该ZIP文件中任何内容都不像Virtual Boy游戏……</string>
-    <string name="toast_state_saved">保存状态</string>
-    <string name="toast_state_loaded">加载状态</string>
+    <string name="toast_state_saved">已存状态</string>
+    <string name="toast_state_loaded">已载状态</string>
 </resources>
