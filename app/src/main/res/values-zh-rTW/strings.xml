@@ -64,6 +64,6 @@
     <string name="error_not_power_of_two">那不是Virtual Boy遊戲！文件大小應為2的冪。</string>
     <string name="error_too_large">那不是Virtual Boy遊戲！它們至多16Mb。</string>
     <string name="error_zip">該ZIP文件中任何內容都不像Virtual Boy遊戲……</string>
-    <string name="toast_state_saved">保存狀態</string>
-    <string name="toast_state_loaded">加載狀態</string>
+    <string name="toast_state_saved">已存狀態</string>
+    <string name="toast_state_loaded">已載狀態</string>
 </resources>
