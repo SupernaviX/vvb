@@ -37,7 +37,7 @@
     <string name="input_menu_put_mapping">按任意控件将其映射至此输入。长按映射多控件。</string>
     <string name="input_menu_add_mapping">按任意控件为此输入添加另映射。</string>
     <string name="video_menu_screen_zoom_percent">屏幕缩放（百分比）</string>
-    <string name="video_menu_horizo​​ntal_offset">水平偏移</string>
+    <string name="video_menu_horizontal_offset">水平偏移</string>
     <string name="video_menu_vertical_offset">垂直偏移</string>
     <string name="video_menu_mode">显示模式</string>
     <string name="video_mode_anaglyph_summary">立体图（双色）</string>

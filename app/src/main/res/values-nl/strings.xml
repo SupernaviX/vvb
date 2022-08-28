@@ -33,7 +33,7 @@
     <string name="controller_menu_choose_delete">Kies de controller om te verwijderen...</string>
     <string name="input_menu_unmapped">Niet toegewezen</string>
     <string name="input_menu_put_mapping">Druk op een willekeurige knop om deze aan deze ingang toe te wijzen. Lang indrukken om meerdere bedieningselementen toe te wijzen.</string>
-    <string name="input_menu_add_mapping">Druk op een willekeurige knop om een ​​andere toewijzing voor deze invoer toe te voegen.</string>
+    <string name="input_menu_add_mapping">Druk op een willekeurige knop om een andere toewijzing voor deze invoer toe te voegen.</string>
     <string name="video_menu_screen_zoom_percent">Schermzoom (procent)</string>
     <string name="video_menu_mode">Weergavemodus</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (tweekleurig)</string>

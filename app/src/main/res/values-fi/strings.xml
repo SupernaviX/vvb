@@ -1,6 +1,6 @@
 <resources>
     <string name="load_game_from_file">Lataa tiedostosta</string>
-    <string name="load_game_from_file_explanation">Voit ladata Virtual Boy -pelien ROM-levyjä ja ladata ne täältä pelataksesi niitä.\nLöydät ilmaisia ​​ROM-levyjä Planet Virtual Boysta osoitteessa https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Voit ladata Virtual Boy -pelien ROM-levyjä ja ladata ne täältä pelataksesi niitä.\nLöydät ilmaisia ROM-levyjä Planet Virtual Boysta osoitteessa https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_recent_games">Viimeaikaiset pelit</string>
     <string name="load_game_no_recent_games">Et ole vielä pelannut yhtään peliä. Kokeile yhtä!</string>
     <string name="load_game_bundled_games">Pelipaketit</string>
