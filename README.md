@@ -51,6 +51,6 @@ Several features are not implemented:
  - The instruction cache
 
 ## Credits
-- Guy Perfect for writing the extremely helpful [Virtual Boy Sacred Tech Scroll](https://www.virtual-boy.com/documents/virtual-boy-sacred-tech-scroll/)
+- Guy Perfect for writing the extremely helpful [Virtual Boy Sacred Tech Scroll](https://virtual-boy.com/documents/virtual-boy-sacred-tech-scroll)
 - [Pi Lanningham](https://github.com/Quantumplation) and [Robert Kellett](https://github.com/Splagoon) for rubber ducking
-- [AngelofMe](https://github.com/AngelofMe) for the Chinese (PRC), Dutch, Finnish, French, German, Greek, Hungarian, Italian, Japanese, Lithuanian, Polish, Portuguese (plus Brazilian Portuguese), Russian, Spanish, Swedish, Turkish translations
+- [AngelofMe](https://github.com/AngelofMe) for the Chinese, Dutch, Finnish, French, German, Greek, Hungarian, Indonesian, Italian, Japanese, Korean, Lithuanian, Polish, Portuguese, Russian, Spanish, Swedish, Turkish translations
