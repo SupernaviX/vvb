@@ -1,12 +1,12 @@
 <resources>
     <string name="app_name">Virtual Virtual Boy</string>
     <string name="main_menu_game_actions">Game Actions</string>
-    <string name="main_menu_now_playing">Playing</string>
-    <string name="main_menu_load_game">Load</string>
-    <string name="main_menu_onscreen_input_setup">On-Screen Input</string>
-    <string name="main_menu_controller_setup">Controller</string>
-    <string name="main_menu_video_setup">Video</string>
-    <string name="main_menu_audio_setup">Audio</string>
+    <string name="main_menu_now_playing">Now Playing</string>
+    <string name="main_menu_load_game">Load Game</string>
+    <string name="main_menu_onscreen_input_setup">On-Screen Input Setup</string>
+    <string name="main_menu_controller_setup">Controller Setup</string>
+    <string name="main_menu_video_setup">Video Setup</string>
+    <string name="main_menu_audio_setup">Audio Setup</string>
     <string name="load_game_from_file">Load From File</string>
     <string name="load_game_from_file_explanation">You can download ROMs of Virtual Boy games, and load them here to play them.\nYou can find free ROMs from Planet Virtual Boy, at https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button">OK</string>
@@ -15,7 +15,7 @@
     <string name="load_game_bundled_games">Bundled Games</string>
     <string name="load_game_no_bundled_games">No Bundled Games</string>
     <string name="load_game_created_by">Created by %1$s</string>
-    <string name="game_menu_resume_game">Resume</string>
+    <string name="game_menu_resume_game">Resume Game</string>
     <string name="game_menu_reset_game">Reset</string>
     <string name="game_menu_auto_save">Auto-Save</string>
     <string name="game_menu_save_state">Save State</string>
@@ -24,7 +24,7 @@
     <string name="game_menu_state_slot_name">Slot %1$s</string>
     <string name="game_menu_state_slot_empty">Empty</string>
     <string name="game_menu_state_slot_saved">Saved: %1$s</string>
-    <string name="game_menu_close_game">Close</string>
+    <string name="game_menu_close_game">Close Game</string>
     <string name="onscreen_input_menu_on">Virtual Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Trigger Buttons Toggle Mode</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptic Feedback</string>
