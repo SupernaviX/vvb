@@ -8,8 +8,8 @@
     <string name="game_menu_resume_game">Συνέχιση</string>
     <string name="game_menu_reset_game">Επανεκκίνηση</string>
     <string name="game_menu_auto_save">Αυτόματη αποθήκευση</string>
-    <string name="game_menu_save_state">Αποθήκευση κατάστασης</string>
-    <string name="game_menu_load_state">Φόρτωση κατάστασης</string>
+    <string name="game_menu_save_state">Γρήγορη Αποθήκευση</string>
+    <string name="game_menu_load_state">Γρήγορη Φόρτωση</string>
     <string name="game_menu_state_slot">Θέση Κατάστασης</string>
     <string name="game_menu_state_slot_empty">Κενό</string>
     <string name="game_menu_close_game">Κλείσιμο</string>
