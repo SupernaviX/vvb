@@ -1,18 +1,18 @@
 <resources>
-    <string name="load_game_from_file">Laden van bestand</string>
+    <string name="load_game_from_file">Laad content</string>
     <string name="load_game_from_file_explanation">Je kunt ROM\'s van Virtual Boy-spellen downloaden en ze hier laden om ze te spelen.\nJe kunt gratis ROM\'s van Planet Virtual Boy vinden op https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Recente games</string>
+    <string name="load_game_recent_games">Geschiedenis</string>
     <string name="load_game_no_recent_games">Je hebt nog geen games gespeeld. Probeer er een uit!</string>
     <string name="load_game_bundled_games">Gebundelde spellen</string>
     <string name="load_game_no_bundled_games">Geen gebundelde spellen</string>
-    <string name="game_menu_resume_game">Hervat spel</string>
+    <string name="game_menu_resume_game">Hervatten</string>
     <string name="game_menu_reset_game">Herstellen</string>
     <string name="game_menu_auto_save">Automatisch opslaan</string>
     <string name="game_menu_save_state">State opslaan</string>
     <string name="game_menu_load_state">State laden</string>
     <string name="game_menu_state_slot">Huidige staat-slot</string>
     <string name="game_menu_state_slot_empty">Leeg</string>
-    <string name="game_menu_close_game">Sluiten</string>
+    <string name="game_menu_close_game">Afsluiten</string>
     <string name="onscreen_input_menu_on">Virtuele gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Triggerknoppen wisselmodus</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptische feedback</string>
@@ -35,6 +35,8 @@
     <string name="input_menu_put_mapping">Druk op een willekeurige knop om deze aan deze ingang toe te wijzen. Lang indrukken om meerdere bedieningselementen toe te wijzen.</string>
     <string name="input_menu_add_mapping">Druk op een willekeurige knop om een andere toewijzing voor deze invoer toe te voegen.</string>
     <string name="video_menu_screen_zoom_percent">Schermzoom (procent)</string>
+    <string name="video_menu_horizontal_offset">Horizontale Offset</string>
+    <string name="video_menu_vertical_offset">Verticale Offset</string>
     <string name="video_menu_mode">Weergavemodus</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (tweekleurig)</string>
     <string name="video_mode_anaglyph_description">Werkt met de meeste 3D-brillen</string>
@@ -44,6 +46,7 @@
     <string name="video_mode_mono_description">Geen apparatuur nodig, maar geen 3D-effecten</string>
     <string name="video_mode_stereo_description">Werkt met 3D-TV\'s</string>
     <string name="video_menu_aspect_ratio">Beeldverhouding</string>
+    <string name="aspect_ratio_auto">Automatisch</string>
     <string name="aspect_ratio_stretch">Uitrekken om te passen</string>
     <string name="video_menu_color">Kleur</string>
     <string name="video_menu_color_left">Kleur linkeroog</string>
