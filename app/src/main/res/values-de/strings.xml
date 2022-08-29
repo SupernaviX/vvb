@@ -56,7 +56,7 @@
     <string name="video_menu_switch_viewer">Cardboard Viewer wechseln</string>
     <string name="video_menu_preview">Vorschau</string>
     <string name="audio_menu_volume">Lautstärke</string>
-    <string name="audio_menu_buffer_size">Puffergröße</string>
+    <string name="audio_menu_buffer_size">Puffergröße (in Frames)</string>
     <string name="application_crashed">Entschuldigung, die Anwendung ist abgestürzt. Ein Bericht wird an den Entwickler gesendet.</string>
     <string name="error_file_not_found">Diese Datei konnte nicht gefunden werden. Vielleicht wurde es verschoben?</string>
     <string name="error_not_power_of_two">Das ist kein Virtual Boy-Spiel! Die Dateigröße sollte eine Zweierpotenz sein.</string>
