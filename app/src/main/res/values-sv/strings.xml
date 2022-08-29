@@ -1,7 +1,7 @@
 <resources>
-    <string name="load_game_from_file">Ladda från fil</string>
+    <string name="load_game_from_file">Ladda in innehåll</string>
     <string name="load_game_from_file_explanation">Du kan ladda ner ROM-skivor med Virtual Boy-spel och ladda dem här för att spela dem.\nDu kan hitta gratis ROM-skivor från Planet Virtual Boy, på https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Senaste spelen</string>
+    <string name="load_game_recent_games">Historik</string>
     <string name="load_game_no_recent_games">Du har inte spelat några spel än. Prova en!</string>
     <string name="load_game_bundled_games">paketerade spel</string>
     <string name="load_game_no_bundled_games">Inga paketerade spel</string>
@@ -36,8 +36,8 @@
     <string name="input_menu_put_mapping">Tryck på valfri kontroll för att mappa den till denna ingång. Tryck länge för att mappa flera kontroller.</string>
     <string name="input_menu_add_mapping">Tryck på valfri kontroll för att lägga till ytterligare en mappning för denna ingång.</string>
     <string name="video_menu_screen_zoom_percent">Skärmzoom (procent)</string>
-    <string name="video_menu_horizontal_offset">Horisontell offset</string>
-    <string name="video_menu_vertical_offset">Vertikal offset</string>
+    <string name="video_menu_horizontal_offset">Horisontell förskjutning</string>
+    <string name="video_menu_vertical_offset">Vertikal förskjutning</string>
     <string name="video_menu_mode">Visningsläge</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (tvåfärgad)</string>
     <string name="video_mode_anaglyph_description">Fungerar med de flesta par 3D-glasögon</string>
@@ -47,6 +47,7 @@
     <string name="video_mode_mono_description">Ingen utrustning behövs, men inga 3D-effekter</string>
     <string name="video_mode_stereo_description">Fungerar med 3D-TV</string>
     <string name="video_menu_aspect_ratio">Bildförhållande</string>
+    <string name="aspect_ratio_auto">Automatiskt</string>
     <string name="aspect_ratio_stretch">Sträck ut för att passa</string>
     <string name="video_menu_color">Färg</string>
     <string name="video_menu_color_left">Vänster ögonfärg</string>
