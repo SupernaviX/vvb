@@ -8,8 +8,8 @@
     <string name="game_menu_resume_game">Jatka</string>
     <string name="game_menu_reset_game">Nollaa</string>
     <string name="game_menu_auto_save">Automaattinen tallennus</string>
-    <string name="game_menu_save_state">Tallenna pelitila</string>
-    <string name="game_menu_load_state">Lataa pelitila</string>
+    <string name="game_menu_save_state">Tallenna tilanne</string>
+    <string name="game_menu_load_state">Lataa tilanne</string>
     <string name="game_menu_state_slot">Pelitilan lohko</string>
     <string name="game_menu_state_slot_empty">Tyhjä</string>
     <string name="game_menu_close_game">Sulje</string>
