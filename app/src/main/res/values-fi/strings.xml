@@ -1,16 +1,16 @@
 <resources>
-    <string name="load_game_from_file">Lataa tiedostosta</string>
+    <string name="load_game_from_file">Lataa sisältöä</string>
     <string name="load_game_from_file_explanation">Voit ladata Virtual Boy -pelien ROM-levyjä ja ladata ne täältä pelataksesi niitä.\nLöydät ilmaisia ROM-levyjä Planet Virtual Boysta osoitteessa https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Viimeaikaiset pelit</string>
+    <string name="load_game_recent_games">Historia</string>
     <string name="load_game_no_recent_games">Et ole vielä pelannut yhtään peliä. Kokeile yhtä!</string>
     <string name="load_game_bundled_games">Pelipaketit</string>
     <string name="load_game_no_bundled_games">Ei mukana olevia pelejä</string>
     <string name="game_menu_resume_game">Jatka</string>
     <string name="game_menu_reset_game">Nollaa</string>
     <string name="game_menu_auto_save">Automaattinen tallennus</string>
-    <string name="game_menu_save_state">Tallenna tilanne</string>
-    <string name="game_menu_load_state">Lataa tilanne</string>
-    <string name="game_menu_state_slot">Nykyinen tila</string>
+    <string name="game_menu_save_state">Tallenna pelitila</string>
+    <string name="game_menu_load_state">Lataa pelitila</string>
+    <string name="game_menu_state_slot">Pelitilan lohko</string>
     <string name="game_menu_state_slot_empty">Tyhjä</string>
     <string name="game_menu_close_game">Sulje</string>
     <string name="onscreen_input_menu_on">Virtuaalinen peliohjain</string>
@@ -36,9 +36,9 @@
     <string name="input_menu_unmapped">Karttaamaton</string>
     <string name="input_menu_put_mapping">Paina mitä tahansa säädintä yhdistääksesi se tähän tuloon. Paina pitkään yhdistääksesi useita säätimiä.</string>
     <string name="input_menu_add_mapping">Paina mitä tahansa säädintä lisätäksesi toisen yhdistämisen tälle syötteelle.</string>
-    <string name="video_menu_screen_zoom_percent">Näytön zoomaus (prosentti)</string>
-    <string name="video_menu_horizontal_offset">Vaakasuora siirtymä</string>
-    <string name="video_menu_vertical_offset">Pystysuora siirtymä</string>
+    <string name="video_menu_screen_zoom_percent">Zoomaus (prosentti)</string>
+    <string name="video_menu_horizontal_offset">Vaakasiirtymä</string>
+    <string name="video_menu_vertical_offset">Pystysiirtymä</string>
     <string name="video_menu_mode">Näyttötila</string>
     <string name="video_mode_anaglyph_summary">Anaglyfi (kaksivärinen)</string>
     <string name="video_mode_anaglyph_description">Toimii useimpien 3D-lasien kanssa</string>
@@ -48,6 +48,7 @@
     <string name="video_mode_mono_description">Ei laitteita, mutta ei 3D-tehosteita</string>
     <string name="video_mode_stereo_description">Toimii 3D-televisioiden kanssa</string>
     <string name="video_menu_aspect_ratio">Kuvasuhde</string>
+    <string name="aspect_ratio_auto">Automaattinen</string>
     <string name="aspect_ratio_stretch">Vennyt sopivaksi</string>
     <string name="video_menu_color">Väri</string>
     <string name="video_menu_color_left">Vasen silmien väri</string>
