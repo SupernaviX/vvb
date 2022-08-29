@@ -7,7 +7,7 @@
     <string name="load_game_no_bundled_games">無捆綁遊戲</string>
     <string name="game_menu_resume_game">繼續</string>
     <string name="game_menu_reset_game">重置</string>
-    <string name="game_menu_auto_save">自動儲存狀態</string>
+    <string name="game_menu_auto_save">自動儲存</string>
     <string name="game_menu_save_state">儲存狀態</string>
     <string name="game_menu_load_state">載入狀態</string>
     <string name="game_menu_state_slot">狀態槽</string>
@@ -15,7 +15,7 @@
     <string name="game_menu_close_game">關閉</string>
     <string name="onscreen_input_menu_on">虛擬遊戲手柄</string>
     <string name="onscreen_input_menu_toggle_controls">扳機按鈕切換模式</string>
-    <string name="onscreen_input_menu_haptic_feedback">觸覺反饋/震動</string>
+    <string name="onscreen_input_menu_haptic_feedback">觸覺反饋</string>
     <string name="onscreen_input_menu_parallax">視差</string>
     <string name="onscreen_input_menu_show_bounds">顯示控制邊界</string>
     <string name="onscreen_input_menu_preview">預覽</string>
@@ -37,8 +37,8 @@
     <string name="input_menu_put_mapping">按任意控件將其映射至此輸入。長按映射多控件。</string>
     <string name="input_menu_add_mapping">按任意控件為此輸入添加另映射。</string>
     <string name="video_menu_screen_zoom_percent">縮放</string>
-    <string name="video_menu_horizontal_offset">螢幕水平位移</string>
-    <string name="video_menu_vertical_offset">螢幕垂直位移</string>
+    <string name="video_menu_horizontal_offset">水平位移</string>
+    <string name="video_menu_vertical_offset">垂直位移</string>
     <string name="video_menu_mode">顯示模式</string>
     <string name="video_mode_anaglyph_summary">立體圖（雙色）</string>
     <string name="video_mode_anaglyph_description">適用於多數3D眼鏡</string>
