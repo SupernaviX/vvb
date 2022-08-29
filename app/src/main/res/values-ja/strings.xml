@@ -36,7 +36,7 @@
     <string name="input_menu_unmapped">マッピングされていません</string>
     <string name="input_menu_put_mapping">任意のコントロールを押して、この入力にマップします。複数のコントロールをマップするには長押しします。</string>
     <string name="input_menu_add_mapping">任意のコントロールを押して、この入力に別のマッピングを追加してください。</string>
-    <string name="video_menu_screen_zoom_percent">ズーム</string>
+    <string name="video_menu_screen_zoom_percent">ズーム(パーセント)</string>
     <string name="video_menu_horizontal_offset">水平オフセット</string>
     <string name="video_menu_vertical_offset">垂直オフセット</string>
     <string name="video_menu_mode">ディスプレイモード</string>
@@ -58,7 +58,7 @@
     <string name="video_menu_switch_viewer">Cardboardビューアの切り替え</string>
     <string name="video_menu_preview">プレビュー</string>
     <string name="audio_menu_volume">音量</string>
-    <string name="audio_menu_buffer_size">バッファサイズ</string>
+    <string name="audio_menu_buffer_size">バッファサイズ(フレーム)</string>
     <string name="application_crashed">(｡ŏ﹏ŏ)、アプリケーションがクラッシュしました。レポートが開発者に送信されます。</string>
     <string name="error_file_not_found">そのファイルが見つかりませんでした。もしかして移動した？</string>
     <string name="error_not_power_of_two">これはバーチャルボーイゲームではありません!ファイルサイズは2の累乗でなければなりません。</string>
