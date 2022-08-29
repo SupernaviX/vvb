@@ -7,7 +7,7 @@
     <string name="load_game_no_bundled_games">バンドルされたゲームはありません</string>
     <string name="game_menu_resume_game">再開</string>
     <string name="game_menu_reset_game">リセット</string>
-    <string name="game_menu_auto_save">自動ステートセーブ</string>
+    <string name="game_menu_auto_save">自動セーブ</string>
     <string name="game_menu_save_state">ステートセーブ</string>
     <string name="game_menu_load_state">ステートロード</string>
     <string name="game_menu_state_slot">ステートスロット</string>
