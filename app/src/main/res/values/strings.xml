@@ -20,7 +20,7 @@
     <string name="game_menu_auto_save">Auto-Save</string>
     <string name="game_menu_save_state">Save State</string>
     <string name="game_menu_load_state">Load State</string>
-    <string name="game_menu_state_slot">Current State Slot</string>
+    <string name="game_menu_state_slot">State Slot</string>
     <string name="game_menu_state_slot_name">Slot %1$s</string>
     <string name="game_menu_state_slot_empty">Empty</string>
     <string name="game_menu_state_slot_saved">Saved: %1$s</string>
