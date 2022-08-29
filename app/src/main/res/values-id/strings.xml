@@ -1,7 +1,7 @@
 <resources>
-    <string name="load_game_from_file">Muat Dari File</string>
+    <string name="load_game_from_file">Muat konten</string>
     <string name="load_game_from_file_explanation">Anda dapat mengunduh ROM game Virtual Boy, dan memuatnya di sini untuk memainkannya.\nAnda dapat menemukan ROM gratis dari Planet Virtual Boy, di https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Game Terbaru</string>
+    <string name="load_game_recent_games">Riwayat</string>
     <string name="load_game_no_recent_games">Anda belum memainkan game apa pun. Cobalah satu!</string>
     <string name="load_game_bundled_games">Game yang Dibundel</string>
     <string name="load_game_no_bundled_games">Tidak Ada Game yang Dibundel</string>
@@ -36,8 +36,8 @@
     <string name="input_menu_put_mapping">Tekan sembarang kontrol untuk memetakannya ke input ini. Tekan lama untuk memetakan beberapa kontrol.</string>
     <string name="input_menu_add_mapping">Tekan sembarang kontrol untuk menambahkan pemetaan lain untuk input ini.</string>
     <string name="video_menu_screen_zoom_percent">Zoom Layar (persen)</string>
-    <string name="video_menu_horizontal_offset">Offset Horizontal</string>
-    <string name="video_menu_vertical_offset">Offset Vertikal</string>
+    <string name="video_menu_horizontal_offset">Pengaturan Horisontal</string>
+    <string name="video_menu_vertical_offset">Pengaturan Vertikal</string>
     <string name="video_menu_mode">Mode Tampilan</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (dua warna)</string>
     <string name="video_mode_anaglyph_description">Berfungsi dengan sebagian besar pasangan kacamata 3D</string>
