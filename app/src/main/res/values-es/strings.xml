@@ -57,7 +57,7 @@
     <string name="video_menu_switch_viewer">Cambiar visor de Cardboard</string>
     <string name="video_menu_preview">Vista previa</string>
     <string name="audio_menu_volume">Volumen</string>
-    <string name="audio_menu_buffer_size">Tamaño del búfer</string>
+    <string name="audio_menu_buffer_size">Tamaño del búfer (en fotogramas)</string>
     <string name="application_crashed">Lo sentimos, la aplicación se bloqueó. Se enviará un informe al desarrollador.</string>
     <string name="error_file_not_found">No se pudo encontrar ese archivo. ¿Quizás se movió?</string>
     <string name="error_not_power_of_two">¡Eso no es un juego de Virtual Boy! El tamaño del archivo debe ser una potencia de dos.</string>
