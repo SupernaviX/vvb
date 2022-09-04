@@ -163,22 +163,25 @@ class VvbApplication : Application() {
         if (!prefs.contains("recent_games")) {
             return
         }
+        fun computeOriginalFormatId(uri: Uri) = uri.lastPathSegment!!
+            .substringAfterLast('/')
+            .substringBeforeLast('.')
+
         val rawRecentGames = prefs.getStringSet("recent_games", setOf())!!
         val dao = PreferencesDao.forClass<GameData>(applicationContext)
         rawRecentGames.forEach {
             val (rawLastPlayed, rawUri) = it.split("::")
-            val uri = Uri.parse(rawUri)
             val lastPlayed = Date(rawLastPlayed.toLong())
-            // Passing rawUri as id because at this point of the migration, it is guaranteed unique.
-            // It's not the same as the "real" id, but uniqueness is all that matters right now.
-            val game = GameData(rawUri, uri, lastPlayed, 0, true)
+            val uri = Uri.parse(rawUri)
+            val id = computeOriginalFormatId(uri)
+            val game = GameData(id, uri, lastPlayed, 0, true)
             dao.put(game)
         }
         editor.remove("recent_games")
     }
 
     /**
-     * Add two new settings to any games which were missing them
+     * Add an "active state slot" index and "auto save enabled" flag to any games missing them
      */
     @Suppress("UNUSED_PARAMETER")
     private fun addStateFieldsToGames(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
@@ -215,7 +218,7 @@ class VvbApplication : Application() {
             .mapNotNull { records -> records.maxByOrNull { it.lastPlayed } }
             .associateBy { it.oldId }
 
-        val gameDataDir = File(applicationContext.filesDir, "GameData")
+        val gameDataDir = File(applicationContext.filesDir, "game_data")
         gameDataDir.mkdir()
 
         allGameData.forEach {
