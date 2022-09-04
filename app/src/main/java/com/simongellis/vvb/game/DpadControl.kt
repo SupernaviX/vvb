@@ -161,6 +161,7 @@ class DpadControl: Control {
         }
     }
 
+    @Suppress("DEPRECATION")
     override fun onRestoreInstanceState(state: Parcelable?) {
         val realState: Parcelable?
         if (state is Bundle) {

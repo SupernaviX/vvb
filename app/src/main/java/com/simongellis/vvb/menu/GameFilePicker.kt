@@ -46,7 +46,7 @@ class GameFilePicker(fragment: Fragment, loadGame: (uri: Uri?) -> Unit) {
     }
 
     private companion object OpenPersistentDocument : ActivityResultContracts.OpenDocument() {
-        override fun createIntent(context: Context, input: Array<out String>): Intent {
+        override fun createIntent(context: Context, input: Array<String>): Intent {
             return super.createIntent(context, input)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
@@ -54,7 +54,7 @@ class GameFilePicker(fragment: Fragment, loadGame: (uri: Uri?) -> Unit) {
     }
 
     private class OpenFilePicker : ActivityResultContract<Unit, Uri?>() {
-        override fun createIntent(context: Context, input: Unit?): Intent {
+        override fun createIntent(context: Context, input: Unit): Intent {
             return Intent(context, FilePickerActivity::class.java)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
