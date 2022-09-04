@@ -215,12 +215,15 @@ class VvbApplication : Application() {
             .mapNotNull { records -> records.maxByOrNull { it.lastPlayed } }
             .associateBy { it.oldId }
 
+        val gameDataDir = File(applicationContext.filesDir, "GameData")
+        gameDataDir.mkdir()
+
         allGameData.forEach {
             val oldSram = File(applicationContext.filesDir, "${it.oldId}.srm")
             val oldSaveStates = File(applicationContext.filesDir, "${it.oldId}/save_states")
             if (idsToMove.containsKey(it.oldId)) {
                 // copy the save data over to the new location
-                val romParent = File(applicationContext.filesDir, it.hash!!)
+                val romParent = File(gameDataDir, it.hash!!)
                 romParent.mkdir()
                 oldSram.renameTo(romParent.resolve(".srm"))
                 oldSaveStates.renameTo(romParent.resolve("save_states"))

@@ -100,5 +100,5 @@ class GameRepository(scope: CoroutineScope, val context: Context) {
     private fun watchStateSlot(id: String, slot: String) =
         _fileDao.watch(getStatePath(id, slot)).map { StateSlot(it, slot) }
 
-    private fun getStatePath(id: String, name: String) = "$id/save_states/${name}.sav"
+    private fun getStatePath(id: String, name: String) = "GameData/$id/save_states/${name}.sav"
 }

@@ -28,7 +28,7 @@ class GamePakLoader(private val context: Context) {
             throw error(R.string.error_file_not_found)
         }
         val hash = hashRom(rom)
-        val sram = File(context.filesDir, "${hash}/.srm")
+        val sram = File(context.filesDir, "GameData/${hash}/.srm")
         return GamePak(rom, hash, sram)
     }
 
