@@ -1,7 +1,7 @@
 <resources>
-    <string name="load_game_from_file">Φόρτωση από αρχείο</string>
+    <string name="load_game_from_file">Φόρτωση Περιεχομένου</string>
     <string name="load_game_from_file_explanation">Μπορείτε να κάνετε λήψη ROM παιχνιδιών Virtual Boy και να τα φορτώσετε εδώ για να τα παίξετε.\nΜπορείτε να βρείτε δωρεάν ROM από το Planet Virtual Boy, στη διεύθυνση https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Προηγούμενα παιχνίδια</string>
+    <string name="load_game_recent_games">Ιστορικό</string>
     <string name="load_game_no_recent_games">Δεν έχετε παίξει ακόμα κανένα παιχνίδι. Δοκιμάστε ένα!</string>
     <string name="load_game_bundled_games">Παιχνίδια σε πακέτο</string>
     <string name="load_game_no_bundled_games">Δεν υπάρχουν παιχνίδια σε πακέτο</string>
@@ -10,7 +10,7 @@
     <string name="game_menu_auto_save">Αυτόματη αποθήκευση</string>
     <string name="game_menu_save_state">Γρήγορη Αποθήκευση</string>
     <string name="game_menu_load_state">Γρήγορη Φόρτωση</string>
-    <string name="game_menu_state_slot">Κουλοχέρης τρέχουσας κατάστασης</string>
+    <string name="game_menu_state_slot">Θέση Κατάστασης</string>
     <string name="game_menu_state_slot_empty">Κενό</string>
     <string name="game_menu_close_game">Κλείσιμο</string>
     <string name="onscreen_input_menu_on">Εικονικό Gamepad</string>
@@ -47,7 +47,7 @@
     <string name="video_mode_mono_right_summary">Μόνο δεξί μάτι</string>
     <string name="video_mode_mono_description">Δεν απαιτείται εξοπλισμός, αλλά δεν χρειάζονται εφέ 3D</string>
     <string name="video_mode_stereo_description">Λειτουργεί με τηλεοράσεις 3D</string>
-    <string name="video_menu_aspect_ratio">Λόγος διαστάσεων</string>
+    <string name="video_menu_aspect_ratio">Αναλογία Οθόνης</string>
     <string name="aspect_ratio_auto">Αυτόματο</string>
     <string name="aspect_ratio_stretch">Εκτάσεις ώστε να ταιριάζει</string>
     <string name="video_menu_color">Χρώμα</string>
@@ -57,7 +57,7 @@
     <string name="video_menu_invalid_colors_message">Το αριστερό και το δεξί χρώμα των ματιών "επικαλύπτονται" σε τουλάχιστον ένα έγχρωμο κανάλι. Το εφέ 3D ενδέχεται να μην λειτουργεί σωστά.</string>
     <string name="video_menu_switch_viewer">Εναλλαγή προγράμματος προβολής Cardboard</string>
     <string name="video_menu_preview">Προεπισκόπηση</string>
-    <string name="audio_menu_volume">Τόμος</string>
+    <string name="audio_menu_volume">Ένταση</string>
     <string name="audio_menu_buffer_size">Μέγεθος buffer (σε καρέ)</string>
     <string name="application_crashed">Λυπούμαστε, η εφαρμογή διακόπηκε. Μια αναφορά θα σταλεί στον προγραμματιστή.</string>
     <string name="error_file_not_found">Δεν ήταν δυνατή η εύρεση αυτού του αρχείου. Ίσως μεταφέρθηκε;</string>

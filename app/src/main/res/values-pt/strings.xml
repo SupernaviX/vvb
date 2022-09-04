@@ -1,16 +1,16 @@
 <resources>
-    <string name="load_game_from_file">Carregar do arquivo</string>
+    <string name="load_game_from_file">Carregar conteúdo</string>
     <string name="load_game_from_file_explanation">Você pode baixar ROMs de jogos do Virtual Boy e carregá-los aqui para jogá-los.\nVocê pode encontrar ROMs gratuitas do Planet Virtual Boy, em https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Jogos recentes</string>
+    <string name="load_game_recent_games">Histórico</string>
     <string name="load_game_no_recent_games">Você ainda não jogou nenhum jogo. Experimente um!</string>
     <string name="load_game_bundled_games">Jogos empacotados</string>
     <string name="load_game_no_bundled_games">Nenhum jogo empacotado</string>
-    <string name="game_menu_resume_game">Resumir</string>
+    <string name="game_menu_resume_game">Retomar</string>
     <string name="game_menu_reset_game">Reiniciar</string>
     <string name="game_menu_auto_save">Salvar automaticamente</string>
     <string name="game_menu_save_state">Salvar estado</string>
     <string name="game_menu_load_state">Carregar estado</string>
-    <string name="game_menu_state_slot">Slot de estado atual</string>
+    <string name="game_menu_state_slot">Posição de estado</string>
     <string name="game_menu_state_slot_empty">Ampty</string>
     <string name="game_menu_close_game">Fechar</string>
     <string name="onscreen_input_menu_toggle_controls">Modo de alternância dos botões de acionamento</string>
@@ -46,7 +46,8 @@
     <string name="video_mode_mono_right_summary">Somente olho direito</string>
     <string name="video_mode_mono_description">Nenhum equipamento necessário, mas sem efeitos 3D</string>
     <string name="video_mode_stereo_description">Funciona com TVs 3D</string>
-    <string name="video_menu_aspect_ratio">Proporção de aspecto</string>
+    <string name="video_menu_aspect_ratio">Proporção do ecrã</string>
+    <string name="aspect_ratio_auto">Automático</string>
     <string name="aspect_ratio_stretch">Esticar para caber</string>
     <string name="video_menu_color">Cor</string>
     <string name="video_menu_color_left">Cor do olho esquerdo</string>

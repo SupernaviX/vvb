@@ -1,12 +1,12 @@
 <resources>
-    <string name="load_game_from_file">Betöltés fájlból</string>
+    <string name="load_game_from_file">Tartalom betöltése</string>
     <string name="load_game_from_file_explanation">Töltsd le a Virtual Boy játékok ROM-ját, és töltsd be ide, hogy lejátszhasd őket.\nA Planet Virtual Boy ingyenes ROM-jai a https://virtual-boy.com/homebrew/ címen találhatók.</string>
-    <string name="load_game_recent_games">Legutóbbi játékok</string>
+    <string name="load_game_recent_games">Elözmény</string>
     <string name="load_game_no_recent_games">Még nem játszottál egyetlen játékkal sem. Próbáljon ki egyet!</string>
     <string name="load_game_bundled_games">Csomagolt játékok</string>
     <string name="load_game_no_bundled_games">Nincsenek játékcsomagok</string>
     <string name="game_menu_resume_game">Folytatás</string>
-    <string name="game_menu_reset_game">Újraindítás</string>
+    <string name="game_menu_reset_game">Visszaállítás</string>
     <string name="game_menu_auto_save">Automatikus mentés</string>
     <string name="game_menu_save_state">Állapotmentés készítése</string>
     <string name="game_menu_load_state">Állápotmentés betöltése</string>
@@ -36,7 +36,7 @@
     <string name="input_menu_unmapped">Nincs leképezés</string>
     <string name="input_menu_put_mapping">Nyomja meg bármelyik vezérlőt, hogy leképezze ezt a bemenetet. Tartsa lenyomva több vezérlőelemet.</string>
     <string name="input_menu_add_mapping">Nyomja meg bármelyik vezérlőt, ha másik leképezést szeretne hozzáadni ehhez a bemenethez.</string>
-    <string name="video_menu_screen_zoom_percent">Képernyőnagyítás (százalék)</string>
+    <string name="video_menu_screen_zoom_percent">Nagyítás (százalék)</string>
     <string name="video_menu_horizontal_offset">Vízszintes eltolás</string>
     <string name="video_menu_vertical_offset">Függőleges eltolás</string>
     <string name="video_menu_mode">Megjelenítési mód</string>

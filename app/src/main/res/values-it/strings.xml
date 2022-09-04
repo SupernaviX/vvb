@@ -1,16 +1,16 @@
 <resources>
-    <string name="load_game_from_file">Carica da file</string>
+    <string name="load_game_from_file">Carica Contenuto</string>
     <string name="load_game_from_file_explanation">Puoi scaricare le ROM dei giochi Virtual Boy e caricarle qui per giocarci.\nPuoi trovare ROM gratuite da Planet Virtual Boy, su https://virtual-boy.com/homebrew/.</string>
-    <string name="load_game_recent_games">Giochi recenti</string>
+    <string name="load_game_recent_games">Cronologia</string>
     <string name="load_game_no_recent_games">Non hai ancora giocato a nessun gioco. Provane uno!</string>
     <string name="load_game_bundled_games">Giochi in bundle</string>
     <string name="load_game_no_bundled_games">Nessun gioco in bundle</string>
-    <string name="game_menu_resume_game">Ripristina</string>
+    <string name="game_menu_resume_game">Riprendi</string>
     <string name="game_menu_reset_game">Resetta</string>
     <string name="game_menu_auto_save">Salvataggio automatico</string>
     <string name="game_menu_save_state">Salva stato</string>
     <string name="game_menu_load_state">Carica stato</string>
-    <string name="game_menu_state_slot">Slot stato attuale</string>
+    <string name="game_menu_state_slot">Slot dello stato</string>
     <string name="game_menu_state_slot_empty">Vuoto</string>
     <string name="game_menu_close_game">Chiudi</string>
     <string name="onscreen_input_menu_on">Gamepad virtuale</string>
@@ -35,7 +35,7 @@
     <string name="input_menu_unmapped">Non mappato</string>
     <string name="input_menu_put_mapping">Premi un controllo qualsiasi per mapparlo su questo input. Premi a lungo per mappare più controlli.</string>
     <string name="input_menu_add_mapping">Premi un controllo qualsiasi per aggiungere un\'altra mappatura per questo input.</string>
-    <string name="video_menu_screen_zoom_percent">Zoom schermo (percentuale)</string>
+    <string name="video_menu_screen_zoom_percent">Ingrandisci (percentuale)</string>
     <string name="video_menu_horizontal_offset">Offset orizzontale</string>
     <string name="video_menu_vertical_offset">Offset verticale</string>
     <string name="video_menu_mode">Modalità di visualizzazione</string>
