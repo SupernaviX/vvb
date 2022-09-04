@@ -11,7 +11,7 @@ class Emulator {
     private var _thread: Thread? = null
     private var _running = false
     private var _gamePak: GamePak? = null
-    private var _autoSave: File? = null
+    private var _autoSaveEnabled = false
 
     private val _sramBuffer = ByteBuffer.allocateDirect(GamePak.sramSize)
 
@@ -29,7 +29,7 @@ class Emulator {
         }
     }
 
-    fun loadGamePak(gamePak: GamePak) {
+    fun loadGamePak(gamePak: GamePak, autoSaveEnabled: Boolean) {
         pause()
 
         val rom = ByteBuffer.allocateDirect(gamePak.rom.size)
@@ -43,18 +43,17 @@ class Emulator {
         nativeLoadGamePak(rom, _sramBuffer)
 
         _gamePak = gamePak
-        _autoSave = null
+        _autoSaveEnabled = autoSaveEnabled
     }
 
-    fun setAutoSaveFile(file: File?) {
-        _autoSave = file
+    fun setAutoSaveEnabled(enabled: Boolean) {
+        _autoSaveEnabled = enabled
     }
 
     fun unloadGamePak() {
         pause()
         nativeUnloadGamePak()
         _gamePak = null
-        _autoSave = null
     }
 
     fun saveState(state: File) {
@@ -83,8 +82,10 @@ class Emulator {
     }
 
     fun performAutoSave(): Boolean {
-        _autoSave?.also(this::saveState)
-        return _autoSave != null
+        if (_autoSaveEnabled) {
+            _gamePak?.autoStateSlot?.file?.also(this::saveState)
+        }
+        return _autoSaveEnabled
     }
 
     fun pause() {

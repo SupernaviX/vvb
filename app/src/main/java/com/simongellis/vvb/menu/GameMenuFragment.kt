@@ -10,7 +10,7 @@ import androidx.preference.SwitchPreferenceCompat
 import com.simongellis.vvb.MainActivity
 import com.simongellis.vvb.MainViewModel
 import com.simongellis.vvb.R
-import com.simongellis.vvb.data.StateSlot
+import com.simongellis.vvb.emulator.StateSlot
 import com.simongellis.vvb.game.GameActivity
 import com.simongellis.vvb.utils.observeNow
 import java.util.*

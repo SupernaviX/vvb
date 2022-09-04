@@ -6,10 +6,11 @@ import java.util.*
 
 class GamePak(val rom: ByteArray, val hash: String, private val gameDataDir: File) {
     private val sram = gameDataDir.resolve(".sram")
+    private val saveStatesDir = gameDataDir.resolve("save_states")
 
     fun initFilesystem() {
         gameDataDir.mkdirs()
-        gameDataDir.resolve("save_states").mkdir()
+        saveStatesDir.mkdir()
     }
 
     fun loadSram(target: ByteBuffer) {
@@ -21,6 +22,13 @@ class GamePak(val rom: ByteArray, val hash: String, private val gameDataDir: Fil
     }
     fun saveSram(source: ByteBuffer) {
         sram.outputStream().channel.use { it.write(source) }
+    }
+
+    val autoStateSlot = getStateSlot("auto")
+    fun getStateSlot(index: Int) = getStateSlot(index.toString())
+    private fun getStateSlot(name: String): StateSlot {
+        val file = saveStatesDir.resolve("$name.sav")
+        return StateSlot(file, name)
     }
 
     companion object {
