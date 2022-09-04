@@ -38,6 +38,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     fun loadGame(uri: Uri): Boolean {
         return try {
             val gamePak = _gamePakLoader.load(uri)
+            gamePak.initFilesystem()
             val data = _gameRepo.getGameData(gamePak.hash, uri)
             val autoSave = _gameRepo.getAutoSave(data.id)
 
