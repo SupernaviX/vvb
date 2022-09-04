@@ -117,6 +117,10 @@ class VvbApplication : Application() {
         }
     }
 
+    /**
+     * Originally, controller key bindings were stored as ::-delimited strings in the main prefs file.
+     * Switch to storing them as JSON in a dedicated file, to majorly clean up the code.
+     */
     private fun moveControllersToJson(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         if (!prefs.contains("controllers")) {
             return
@@ -151,6 +155,10 @@ class VvbApplication : Application() {
         editor.remove("controllers")
     }
 
+    /**
+     * Originally, the game list was stored as ::-delimited strings in a "recent_games" preference.
+     * Switch to storing them as JSON in a dedicated file, to make it more extensible.
+     */
     private fun moveGamesToJson(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         if (!prefs.contains("recent_games")) {
             return
@@ -161,12 +169,17 @@ class VvbApplication : Application() {
             val (rawLastPlayed, rawUri) = it.split("::")
             val uri = Uri.parse(rawUri)
             val lastPlayed = Date(rawLastPlayed.toLong())
+            // Passing rawUri as id because at this point of the migration, it is guaranteed unique.
+            // It's not the same as the "real" id, but uniqueness is all that matters right now.
             val game = GameData(rawUri, uri, lastPlayed, 0, true)
             dao.put(game)
         }
         editor.remove("recent_games")
     }
 
+    /**
+     * Add two new settings to any games which were missing them
+     */
     @Suppress("UNUSED_PARAMETER")
     private fun addStateFieldsToGames(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         val dao = PreferencesDao.forClass<GameData>(applicationContext)

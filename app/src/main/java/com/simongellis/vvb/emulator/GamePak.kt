@@ -1,9 +1,7 @@
 package com.simongellis.vvb.emulator
 
 import java.io.File
-import java.math.BigInteger
 import java.nio.ByteBuffer
-import java.security.MessageDigest
 import java.util.*
 
 class GamePak(val rom: ByteArray, val hash: String, private val sram: File) {
