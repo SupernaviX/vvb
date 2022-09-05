@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import java.util.*
 
 class GamePak(val rom: ByteArray, val hash: String, private val gameDataDir: File) {
-    private val sram = gameDataDir.resolve(".sram")
+    private val sram = gameDataDir.resolve(".srm")
     private val saveStatesDir = gameDataDir.resolve("save_states")
 
     fun initFilesystem() {
