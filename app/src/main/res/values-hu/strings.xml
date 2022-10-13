@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Állapotmentés készítése</string>
     <string name="game_menu_load_state">Állápotmentés betöltése</string>
     <string name="game_menu_state_slot">Aktuális állapotú hely</string>
-    <string name="game_menu_state_slot_empty">Üres</string>
     <string name="game_menu_close_game">Bezárás</string>
     <string name="onscreen_input_menu_on">Virtuális játékvezérlő</string>
     <string name="onscreen_input_menu_toggle_controls">Indítógombok kapcsolómódja</string>
