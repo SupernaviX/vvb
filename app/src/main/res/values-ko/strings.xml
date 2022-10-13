@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">상태 저장하기</string>
     <string name="game_menu_load_state">상태 불러오기</string>
     <string name="game_menu_state_slot">현재 상태 슬롯</string>
-    <string name="game_menu_state_slot_empty">비어 있음</string>
     <string name="game_menu_close_game">종료</string>
     <string name="onscreen_input_menu_on">가상 게임패드</string>
     <string name="onscreen_input_menu_toggle_controls">트리거 버튼 토글 모드</string>
