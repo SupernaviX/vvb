@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Sauvegarder état</string>
     <string name="game_menu_load_state">Charger état</string>
     <string name="game_menu_state_slot">Emplacement de la état</string>
-    <string name="game_menu_state_slot_empty">Vide</string>
     <string name="game_menu_close_game">Fermer</string>
     <string name="onscreen_input_menu_on">Manette de jeu virtuelle</string>
     <string name="onscreen_input_menu_haptic_feedback">Retour haptique</string>
