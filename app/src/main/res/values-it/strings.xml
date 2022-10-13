@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Salva stato</string>
     <string name="game_menu_load_state">Carica stato</string>
     <string name="game_menu_state_slot">Slot dello stato</string>
-    <string name="game_menu_state_slot_empty">Vuoto</string>
     <string name="game_menu_close_game">Chiudi</string>
     <string name="onscreen_input_menu_on">Gamepad virtuale</string>
     <string name="onscreen_input_menu_toggle_controls">Modalità di commutazione dei pulsanti di attivazione</string>
