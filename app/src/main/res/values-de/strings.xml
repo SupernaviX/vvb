@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Stand speichern</string>
     <string name="game_menu_load_state">Stand laden</string>
     <string name="game_menu_state_slot">Stand-Speicherplatz</string>
-    <string name="game_menu_state_slot_empty">Leer</string>
     <string name="game_menu_close_game">Schließen</string>
     <string name="onscreen_input_menu_on">Virtuelles Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Auslöser-Tasten in den Umschaltmodus versetzen</string>
