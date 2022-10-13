@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Γρήγορη Αποθήκευση</string>
     <string name="game_menu_load_state">Γρήγορη Φόρτωση</string>
     <string name="game_menu_state_slot">Θέση Κατάστασης</string>
-    <string name="game_menu_state_slot_empty">Κενό</string>
     <string name="game_menu_close_game">Κλείσιμο</string>
     <string name="onscreen_input_menu_on">Εικονικό Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Λειτουργία εναλλαγής κουμπιών ενεργοποίησης</string>
