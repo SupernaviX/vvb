@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Zapisz stan</string>
     <string name="game_menu_load_state">Wczytaj stan</string>
     <string name="game_menu_state_slot">Stan gniazda</string>
-    <string name="game_menu_state_slot_empty">Pusty</string>
     <string name="game_menu_close_game">Zamknij</string>
     <string name="onscreen_input_menu_on">Wirtualny gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Przyciski wyzwalania przełączania trybu</string>
