@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">保存状态</string>
     <string name="game_menu_load_state">加载状态</string>
     <string name="game_menu_state_slot">状态槽</string>
-    <string name="game_menu_state_slot_empty">空</string>
     <string name="game_menu_close_game">关闭</string>
     <string name="onscreen_input_menu_on">虚拟游戏手柄</string>
     <string name="onscreen_input_menu_toggle_controls">扳机按钮切换模式</string>
