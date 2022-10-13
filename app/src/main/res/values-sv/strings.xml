@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Spara state</string>
     <string name="game_menu_load_state">Ladda state</string>
     <string name="game_menu_state_slot">Current State Slot</string>
-    <string name="game_menu_state_slot_empty">Tom</string>
     <string name="game_menu_close_game">Stäng</string>
     <string name="onscreen_input_menu_on">Virtuell spelkontroll</string>
     <string name="onscreen_input_menu_toggle_controls">Triggerknappar Växla läge</string>
