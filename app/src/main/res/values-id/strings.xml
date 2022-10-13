@@ -11,7 +11,6 @@
     <string name="game_menu_save_state">Simpan status</string>
     <string name="game_menu_load_state">Muat status</string>
     <string name="game_menu_state_slot">Slot Status Saat Ini</string>
-    <string name="game_menu_state_slot_empty">Kosong</string>
     <string name="game_menu_close_game">Tutup</string>
     <string name="onscreen_input_menu_toggle_controls">Mode Beralih Tombol Pemicu</string>
     <string name="onscreen_input_menu_haptic_feedback">Umpan Balik Haptik</string>
