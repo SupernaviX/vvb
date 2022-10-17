@@ -781,7 +781,7 @@ impl<'a> CpuProcess<'a> {
             4 => s,
             5 => true,
             6 => ov != s,
-            7 => ((ov != s) || z),
+            7 => (ov != s) || z,
             _ => unreachable!("impossible"),
         };
         result != negate
