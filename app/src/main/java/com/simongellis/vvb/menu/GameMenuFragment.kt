@@ -109,9 +109,7 @@ class GameMenuFragment : PreferenceFragmentCompat() {
             return context.getString(R.string.game_menu_state_slot_empty)
         }
         val lastSaved = Date(slot.lastModified)
-        val dateStr = DateFormat.getMediumDateFormat(context).format(lastSaved)
-        val timeStr = DateFormat.getTimeFormat(context).format(lastSaved)
-        val dateTimeStr = "$dateStr $timeStr"
+        val dateTimeStr = DateFormat.format("yyyy-MM-dd HH:mm:ss", lastSaved)
         return context.getString(R.string.game_menu_state_slot_saved, dateTimeStr)
     }
 }
