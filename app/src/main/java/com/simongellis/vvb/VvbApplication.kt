@@ -10,11 +10,13 @@ import androidx.preference.PreferenceManager
 import com.getkeepsafe.relinker.ReLinker
 import com.simongellis.vvb.data.*
 import com.simongellis.vvb.emulator.Input
+import com.simongellis.vvb.game.GamePakLoader
 import org.acra.ACRA
 import org.acra.config.httpSender
 import org.acra.config.toast
 import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
+import java.io.File
 import java.util.*
 
 class VvbApplication : Application() {
@@ -57,7 +59,8 @@ class VvbApplication : Application() {
         ::updateMappingSchema,
         ::moveControllersToJson,
         ::moveGamesToJson,
-        ::addStateFieldsToGames
+        ::addStateFieldsToGames,
+        ::useHashAsGameDataId,
     )
 
     override fun onCreate() {
@@ -114,6 +117,10 @@ class VvbApplication : Application() {
         }
     }
 
+    /**
+     * Originally, controller key bindings were stored as ::-delimited strings in the main prefs file.
+     * Switch to storing them as JSON in a dedicated file, to majorly clean up the code.
+     */
     private fun moveControllersToJson(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         if (!prefs.contains("controllers")) {
             return
@@ -148,28 +155,98 @@ class VvbApplication : Application() {
         editor.remove("controllers")
     }
 
+    /**
+     * Originally, the game list was stored as ::-delimited strings in a "recent_games" preference.
+     * Switch to storing them as JSON in a dedicated file, to make it more extensible.
+     */
     private fun moveGamesToJson(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         if (!prefs.contains("recent_games")) {
             return
         }
+        fun computeOriginalFormatId(uri: Uri) = uri.lastPathSegment!!
+            .substringAfterLast('/')
+            .substringBeforeLast('.')
+
         val rawRecentGames = prefs.getStringSet("recent_games", setOf())!!
         val dao = PreferencesDao.forClass<GameData>(applicationContext)
         rawRecentGames.forEach {
             val (rawLastPlayed, rawUri) = it.split("::")
-            val uri = Uri.parse(rawUri)
             val lastPlayed = Date(rawLastPlayed.toLong())
-            val game = GameData(uri, lastPlayed, 0, true)
+            val uri = Uri.parse(rawUri)
+            val id = computeOriginalFormatId(uri)
+            val game = GameData(id, uri, lastPlayed, 0, true)
             dao.put(game)
         }
         editor.remove("recent_games")
     }
 
+    /**
+     * Add an "active state slot" index and "auto save enabled" flag to any games missing them
+     */
     @Suppress("UNUSED_PARAMETER")
     private fun addStateFieldsToGames(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
         val dao = PreferencesDao.forClass<GameData>(applicationContext)
-        dao.migrate {
+        dao.migrateValues {
             it.put("stateSlot", 0)
             it.put("autoSaveEnabled", true)
+        }
+    }
+
+    /**
+     * Originally, this app used a ROM's filename (sans file extension) as an "id" when saving data.
+     * Switch to using the ROM's MD5 hash, for more robust game identification.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    private fun useHashAsGameDataId(prefs: SharedPreferences, editor: SharedPreferences.Editor) {
+        val dao = PreferencesDao.forClass<GameData>(applicationContext)
+        val gamePakLoader = GamePakLoader(applicationContext)
+
+        data class GameData(val oldId: String, val hash: String?, val lastPlayed: Date)
+
+        val allGameData = dao.mapRaw { oldId, raw ->
+            val uri = Uri.parse(raw.getString("uri"))
+            val hash = gamePakLoader.tryLoad(uri).map { it.hash }.getOrNull()
+            val lastPlayed = Date(raw.getLong("lastPlayed"))
+            GameData(oldId, hash, lastPlayed)
+        }
+
+        // Changing the id means we have to start enforcing uniqueness where we didn't before.
+        // For each hash, pick the game data which was most recently played; that's the one to keep.
+        val idsToMove = allGameData.groupBy { it.hash }
+            .filter { it.key != null }
+            .values
+            .mapNotNull { records -> records.maxByOrNull { it.lastPlayed } }
+            .associateBy { it.oldId }
+
+        val gameDataDir = File(applicationContext.filesDir, "game_data")
+        gameDataDir.mkdir()
+
+        allGameData.forEach {
+            val oldSram = File(applicationContext.filesDir, "${it.oldId}.srm")
+            val oldSaveStates = File(applicationContext.filesDir, "${it.oldId}/save_states")
+            if (idsToMove.containsKey(it.oldId)) {
+                // copy the save data over to the new location
+                val romParent = File(gameDataDir, it.hash!!)
+                romParent.mkdir()
+                oldSram.renameTo(romParent.resolve(".srm"))
+                oldSaveStates.renameTo(romParent.resolve("save_states"))
+            } else {
+                // throw this save data out, it's unreachable
+                oldSram.delete()
+            }
+            File(applicationContext.filesDir, it.oldId).deleteRecursively()
+        }
+
+        dao.migrate { oldId, value ->
+            val dataToMove = idsToMove[oldId]
+            if (dataToMove != null) {
+                // keep this record, and store the hash as the record's new ID
+                value.put("id", dataToMove.hash)
+                dataToMove.hash // hash is now the id in our database as well
+            } else {
+                // delete the record, we don't need it anymore
+                null
+            }
         }
     }
 }
