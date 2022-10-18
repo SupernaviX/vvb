@@ -111,7 +111,7 @@ class LoadGameMenuFragment : Fragment() {
     private fun showLoadGameExplanation(onConfirm: () -> Unit) {
         val context = requireContext()
         val message = SpannableString(context.getString(R.string.load_game_from_file_explanation))
-        Linkify.addLinks(message, Linkify.ALL)
+        Linkify.addLinks(message, Linkify.WEB_URLS)
 
         _dialog = AlertDialog.Builder(requireContext())
             .setTitle(R.string.load_game_from_file)

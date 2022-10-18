@@ -8,8 +8,9 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.simongellis.vvb.data.BundledGameRepository
 import com.simongellis.vvb.data.GameRepository
-import com.simongellis.vvb.data.StateSlot
 import com.simongellis.vvb.emulator.Emulator
+import com.simongellis.vvb.emulator.GamePak
+import com.simongellis.vvb.emulator.StateSlot
 import com.simongellis.vvb.game.GamePakLoader
 import kotlinx.coroutines.flow.*
 import org.acra.ACRA
@@ -22,8 +23,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     private val _emulator = Emulator.instance
     private val _gamePakLoader = GamePakLoader(application)
 
-    private val _loadedGameId = MutableStateFlow<String?>(null)
-    val loadedGame = forCurrentGame { _gameRepo.watchGame(it) }
+    private val _loadedGamePak = MutableStateFlow<GamePak?>(null)
+    val loadedGame = forCurrentGame { _gameRepo.watchGame(it.hash) }
     val stateSlots = forCurrentGame { _gameRepo.watchStateSlots(it) }
     val currentStateSlot = loadedGame.combine(stateSlots) { game, states ->
         game?.let { states?.get(it.stateSlot) }
@@ -37,20 +38,18 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun loadGame(uri: Uri): Boolean {
         return try {
-            val game = _gameRepo.getGame(uri) ?: return false
-            val gamePak = _gamePakLoader.tryLoad(game.id, uri)
-            val autoSave = _gameRepo.getAutoSave(game.id)
+            val gamePak = _gamePakLoader.load(uri)
+            gamePak.initFilesystem()
+            val data = _gameRepo.getGameData(gamePak.hash, uri)
+            val autoSave = gamePak.autoStateSlot
 
-            _emulator.loadGamePak(gamePak)
-            if (game.autoSaveEnabled) {
-                _emulator.setAutoSaveFile(autoSave.file)
-                if (autoSave.exists) {
-                    loadState(autoSave)
-                }
+            _emulator.loadGamePak(gamePak, data.autoSaveEnabled)
+            if (data.autoSaveEnabled && autoSave.exists) {
+                loadState(autoSave)
             }
 
-            _gameRepo.markAsPlayed(game.id, uri)
-            _loadedGameId.value = game.id
+            _gameRepo.markAsPlayed(data.id, uri)
+            _loadedGamePak.value = gamePak
             lastEvent.value = GameEvent.Opened
 
             true
@@ -70,7 +69,7 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
 
     fun closeGame() {
         _emulator.unloadGamePak()
-        _loadedGameId.value = null
+        _loadedGamePak.value = null
         lastEvent.value = GameEvent.Closed
     }
 
@@ -84,14 +83,9 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun configureAutoSave(enabled: Boolean) {
-        _loadedGameId.value?.also {
-            _gameRepo.setAutoSaveEnabled(it, enabled)
-            if (enabled) {
-                val autoSave = _gameRepo.getAutoSave(it)
-                _emulator.setAutoSaveFile(autoSave.file)
-            } else {
-                _emulator.setAutoSaveFile(null)
-            }
+        _loadedGamePak.value?.also {
+            _gameRepo.setAutoSaveEnabled(it.hash, enabled)
+            _emulator.setAutoSaveEnabled(enabled)
         }
     }
 
@@ -114,8 +108,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
     }
 
     fun selectStateSlot(slot: Int) {
-        _loadedGameId.value?.also {
-            _gameRepo.selectStateSlot(it, slot)
+        _loadedGamePak.value?.also {
+            _gameRepo.selectStateSlot(it.hash, slot)
         }
     }
 
@@ -124,8 +118,8 @@ class MainViewModel(application: Application): AndroidViewModel(application) {
         get() = _gameRepo.hasRecentGames()
     val bundledGames by _bundledGameRepo::bundledGames
 
-    private fun <T> forCurrentGame(getter: (String) -> Flow<T>): Flow<T?> {
-        return _loadedGameId
-            .flatMapLatest { id -> id?.let(getter) ?: emptyFlow() }
+    private fun <T> forCurrentGame(getter: (GamePak) -> Flow<T>): Flow<T?> {
+        return _loadedGamePak
+            .flatMapLatest { pak -> pak?.let(getter) ?: emptyFlow() }
     }
 }

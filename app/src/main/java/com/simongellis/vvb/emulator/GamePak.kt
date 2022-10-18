@@ -4,7 +4,15 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.util.*
 
-class GamePak(val rom: ByteArray, private val sram: File) {
+class GamePak(val rom: ByteArray, val hash: String, private val gameDataDir: File) {
+    private val sram = gameDataDir.resolve(".srm")
+    private val saveStatesDir = gameDataDir.resolve("save_states")
+
+    fun initFilesystem() {
+        gameDataDir.mkdirs()
+        saveStatesDir.mkdir()
+    }
+
     fun loadSram(target: ByteBuffer) {
         when {
             sram.exists() -> target.put(sram.readBytes())
@@ -14,6 +22,13 @@ class GamePak(val rom: ByteArray, private val sram: File) {
     }
     fun saveSram(source: ByteBuffer) {
         sram.outputStream().channel.use { it.write(source) }
+    }
+
+    val autoStateSlot = getStateSlot("auto")
+    fun getStateSlot(index: Int) = getStateSlot(index.toString())
+    private fun getStateSlot(name: String): StateSlot {
+        val file = saveStatesDir.resolve("$name.sav")
+        return StateSlot(file, name)
     }
 
     companion object {

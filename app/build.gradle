@@ -43,7 +43,7 @@ repositories {
 }
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
     buildToolsVersion "30.0.3"
 
     compileOptions {
@@ -87,9 +87,9 @@ android {
     defaultConfig {
         applicationId "com.simongellis.vvb"
         minSdkVersion 21
-        targetSdkVersion 32
-        versionCode 31
-        versionName "1.9.0"
+        targetSdkVersion 33
+        versionCode 35
+        versionName "1.12.0"
 
         buildConfigField("String", "ACRA_URI", generatedString("https://vvb-notifications.simongellis.com/report"))
 
@@ -196,8 +196,8 @@ tasks.whenTaskAdded { task ->
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation project(':cardboard-sdk')
-    implementation 'androidx.core:core-ktx:1.8.0'
-    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation "androidx.preference:preference-ktx:1.2.0"
     implementation "androidx.recyclerview:recyclerview:1.2.1"
@@ -206,7 +206,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
     // lifecycle things
-    def lifecycleVersion = '2.4.1'
+    def lifecycleVersion = '2.5.1'
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion"

@@ -7,10 +7,15 @@ import com.simongellis.vvb.R
 import com.simongellis.vvb.emulator.GamePak
 import java.io.File
 import java.io.FileNotFoundException
+import java.math.BigInteger
+import java.security.MessageDigest
 import java.util.zip.ZipInputStream
 
 class GamePakLoader(private val context: Context) {
-    fun tryLoad(id: String, uri: Uri): GamePak {
+    fun tryLoad(uri: Uri): Result<GamePak> {
+        return Result.runCatching { load(uri) }
+    }
+    fun load(uri: Uri): GamePak {
         val ext = tryGetExtension(uri)
         val rom = try {
             when {
@@ -22,8 +27,9 @@ class GamePakLoader(private val context: Context) {
         } catch (ex: FileNotFoundException) {
             throw error(R.string.error_file_not_found)
         }
-        val sram = File(context.filesDir, "${id}.srm")
-        return GamePak(rom, sram)
+        val hash = hashRom(rom)
+        val gameDataDir = File(context.filesDir, "game_data/${hash}")
+        return GamePak(rom, hash, gameDataDir)
     }
 
     private fun loadVbFile(uri: Uri): ByteArray {
@@ -90,5 +96,13 @@ class GamePakLoader(private val context: Context) {
 
     private fun isVbFileExt(ext: String?): Boolean {
         return ext == "vb" || ext == "vboy" || ext == "bin"
+    }
+
+    private fun hashRom(rom: ByteArray): String {
+        return MessageDigest.getInstance("MD5").digest(rom).toHexString()
+    }
+
+    private fun ByteArray.toHexString(): String {
+        return BigInteger(1, this).toString(16).padStart(32, '0')
     }
 }

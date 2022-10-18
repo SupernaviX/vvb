@@ -40,8 +40,12 @@ class PreferencesDao<T: Entity>(className: String, private val serializer: KSeri
     }
 
     fun put(value: T) {
-        getPreference(value.id).set(serialize(value))
-        _ids.set(_ids.get() + value.id)
+        putRaw(value.id, serialize(value))
+    }
+
+    private fun putRaw(id: String, raw: String) {
+        getPreference(id).set(raw)
+        _ids.set(_ids.get() + id)
     }
 
     fun delete(id: String) {
@@ -51,17 +55,36 @@ class PreferencesDao<T: Entity>(className: String, private val serializer: KSeri
         _prefs.remove(id)
     }
 
-    fun migrate(transform: (value: JSONObject) -> Unit) {
-        val originals = _ids.get()
-            .mapNotNull { id -> getRaw(id)?.let { id to it } }
-            .toMap()
-        val migrated = originals.mapValues {
-            val parsed = JSONObject(it.value)
-            transform(parsed)
-            parsed.toString()
+    fun <T> mapRaw(transform: (id: String, value: JSONObject) -> T): List<T> {
+        return _ids.get()
+            .mapNotNull { id -> getRaw(id)?.let { id to JSONObject(it) }}
+            .map { (id, value) -> transform(id, value) }
+    }
+
+    /**
+     * The given function should return the new id to use for the record,
+     * or null to delete the record
+     */
+    fun migrate(transform: (id: String, value: JSONObject) -> String?) {
+        val allValues = _ids.get()
+            .mapNotNull { id -> getRaw(id)?.let { id to JSONObject(it) } }
+        allValues.forEach { (oldId, value) ->
+            val newId = transform(oldId, value)
+            if (oldId == newId) {
+                getPreference(newId).set(value.toString())
+            } else {
+                delete(oldId)
+                if (newId != null) {
+                    putRaw(newId, value.toString())
+                }
+            }
         }
-        migrated.forEach{
-            getPreference(it.key).set(it.value)
+    }
+
+    fun migrateValues(transform: (value: JSONObject) -> Unit) {
+        migrate { id, value ->
+            transform(value)
+            id
         }
     }
 
