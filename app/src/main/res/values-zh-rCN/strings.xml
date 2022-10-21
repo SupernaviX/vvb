@@ -40,13 +40,13 @@
     <string name="video_menu_horizontal_offset">水平偏移</string>
     <string name="video_menu_vertical_offset">垂直偏移</string>
     <string name="video_menu_mode">显示模式</string>
-    <string name="video_mode_anaglyph_summary">立体图（双色）</string>
+    <string name="video_mode_anaglyph_summary">立体图（二色）</string>
     <string name="video_mode_anaglyph_description">适用于多数3D眼镜</string>
     <string name="video_mode_cardboard_description">适用于Google Cardboard或Daydream</string>
     <string name="video_mode_mono_left_summary">仅左眼</string>
     <string name="video_mode_mono_right_summary">仅右眼</string>
     <string name="video_mode_mono_description">不需设备，但无3D效果</string>
-    <string name="video_mode_stereo_description">适用于3D电视</string>
+    <string name="video_mode_stereo_description">适用于3D TV</string>
     <string name="video_menu_aspect_ratio">宽高比</string>
     <string name="aspect_ratio_auto">自动</string>
     <string name="aspect_ratio_stretch">拉伸适应</string>
@@ -59,7 +59,7 @@
     <string name="video_menu_preview">预览</string>
     <string name="audio_menu_volume">音量</string>
     <string name="audio_menu_buffer_size">缓冲器大小（帧）</string>
-    <string name="application_crashed">ಠ_ಠ，应用程序崩溃。将向开发者发送报告。</string>
+    <string name="application_crashed">ಠ_ಠ，应用崩溃。将向开发者发送报告。</string>
     <string name="error_file_not_found">找不到那文件。也许它被移动了？</string>
     <string name="error_not_power_of_two">那不是Virtual Boy游戏！文件大小应为2的幂。</string>
     <string name="error_too_large">那不是Virtual Boy游戏！它们至多16Mb。</string>
