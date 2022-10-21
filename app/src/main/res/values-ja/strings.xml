@@ -59,7 +59,7 @@
     <string name="video_menu_preview">プレビュー</string>
     <string name="audio_menu_volume">音量</string>
     <string name="audio_menu_buffer_size">バッファサイズ(フレーム)</string>
-    <string name="application_crashed">(｡ŏ﹏ŏ)、アプリケーションがクラッシュしました。レポートが開発者に送信されます。</string>
+    <string name="application_crashed">ಠಿ_ಠ、アプリケーションがクラッシュしました。レポートが開発者に送信されます。</string>
     <string name="error_file_not_found">そのファイルが見つかりませんでした。もしかして移動した？</string>
     <string name="error_not_power_of_two">これはバーチャルボーイゲームではありません!ファイルサイズは2の累乗でなければなりません。</string>
     <string name="error_too_large">これはバーチャルボーイゲームではありません!最大16Mbまでです。</string>
