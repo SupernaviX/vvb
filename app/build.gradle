@@ -51,21 +51,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    signingConfigs {
-        debug {
-            storeFile file('C:\\Users\\mail\\Documents\\android-debug-key-store.jks')
-            storePassword 'jakedowns'
-            keyAlias 'jakedownskeystore'
-            keyPassword 'jakedowns'
-        }
-        release {
-            storeFile file('C:\\Users\\mail\\Documents\\android-debug-key-store.jks')
-            storePassword 'jakedowns'
-            keyAlias 'jakedownskeystore'
-            keyPassword 'jakedowns'
-        }
-    }
-
     kotlinOptions {
         jvmTarget = "1.8"
         freeCompilerArgs += [
