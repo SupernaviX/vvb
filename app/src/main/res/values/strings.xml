@@ -26,11 +26,10 @@
     <string name="game_menu_state_slot_empty">Empty</string>
     <string name="game_menu_state_slot_saved">Saved: %1$s</string>
     <string name="game_menu_close_game">Close Game</string>
-    <string name="onscreen_input_menu_on">Virtual Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Trigger Buttons Toggle Mode</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptic Feedback</string>
     <string name="sustained_performance_mode">Sustained Performance Mode</string>
-    <string name="sustained_performance_mode_summary">Delivers more consistent performance. May run more slowly.</string>
+    <string name="sustained_performance_mode_summary">May run more slowly. Attempts to avoid thermal throttling by reducing cpu speed</string>
     <string name="onscreen_input_menu_on">Use Virtual Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Put Trigger Buttons in Toggle Mode</string>
     <string name="onscreen_input_menu_haptic_feedback">Enable Haptic Feedback</string>
