@@ -22,13 +22,10 @@ import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_3D
 
 class GameView : ConstraintLayout, BacklightModeListener {
     private val _binding: GameViewBinding
-    private val _renderer: Renderer
+    private var _renderer: RendererWrapper
     private val _preferences: GamePreferences
 
     // LitByLeia
-    private var prev_desired_backlight_state = false
-    private val mExpectedBacklightMode: BacklightMode? = null
-    private var mBacklightHasShutDown = false
     private var mDisplayManager: LeiaDisplayManager? = null
 
     var controller: Controller? = null
@@ -48,7 +45,7 @@ class GameView : ConstraintLayout, BacklightModeListener {
     init {
         val emulator = Emulator.instance
         _preferences = GamePreferences(context)
-        _renderer = when(_preferences.videoMode) {
+        val innerRenderer = when(_preferences.videoMode) {
             VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, _preferences.anaglyphSettings)
             VideoMode.CARDBOARD -> CardboardRenderer(emulator, _preferences.cardboardSettings)
             VideoMode.MONO_LEFT -> MonoRenderer(emulator, _preferences.monoSettings(Eye.LEFT))
@@ -56,6 +53,7 @@ class GameView : ConstraintLayout, BacklightModeListener {
             VideoMode.STEREO -> StereoRenderer(emulator, _preferences.stereoSettings)
             VideoMode.LEIA -> LeiaRenderer(emulator, _preferences.leiaSettings)
         }
+        _renderer = RendererWrapper(innerRenderer)
 
         val layoutInflater = LayoutInflater.from(context)
         _binding = GameViewBinding.inflate(layoutInflater, this)
@@ -81,8 +79,8 @@ class GameView : ConstraintLayout, BacklightModeListener {
         setBackgroundColor(Color.BLACK)
 
         mDisplayManager = LeiaSDK.getDisplayManager(context)
-        if(mDisplayManager !== null){
-            mDisplayManager?.registerBacklightModeListener(this)
+        mDisplayManager?.apply {
+            registerBacklightModeListener(this@GameView)
             checkShouldToggle3D(true)
         }
     }
@@ -103,36 +101,40 @@ class GameView : ConstraintLayout, BacklightModeListener {
         _renderer.destroy()
     }
 
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+        checkShouldToggle3D(_preferences.isLeia && hasWindowFocus)
+    }
+
     /** BacklightModeListener Interface requirement  */
     override fun onBacklightModeChanged(backlightMode: BacklightMode) {
-        //Log.e("EmulationActivity", "onBacklightModeChanged: callback received");
-        // Do something to remember the backlight is no longer on
-        // Later, we have to let the native side know this occurred.
-        if (mExpectedBacklightMode == MODE_3D &&
-                mExpectedBacklightMode != backlightMode
-        ) {
-            //Log.e("EmulationActivity", "onBacklightModeChanged: mBacklightHasShutDown = true;");
-            mBacklightHasShutDown = true
+        if (_preferences.isLeia) {
+            val emulator = Emulator.instance
+            if (backlightMode == MODE_2D) {
+                // in 2D mode, just display one eye
+                _renderer.swapRenderer(MonoRenderer(emulator, _preferences.monoSettings(Eye.LEFT)))
+            } else {
+                _renderer.swapRenderer(LeiaRenderer(emulator, _preferences.leiaSettings))
+            }
         }
     }
 
-    fun checkShouldToggle3D(desired_state: Boolean) {
+    private fun checkShouldToggle3D(desiredState: Boolean) {
         if(mDisplayManager === null) {
             return
         }
-        if (desired_state && _preferences.isLeia) {
-            Enable3D()
+        if (desiredState && _preferences.isLeia) {
+            enable3D()
         } else {
-            Disable3D()
+            disable3D()
         }
-        prev_desired_backlight_state = desired_state
     }
 
-    fun Enable3D() {
+    private fun enable3D() {
         mDisplayManager?.requestBacklightMode(MODE_3D)
     }
 
-    fun Disable3D() {
+    private fun disable3D() {
         mDisplayManager?.requestBacklightMode(MODE_2D)
     }
 }
