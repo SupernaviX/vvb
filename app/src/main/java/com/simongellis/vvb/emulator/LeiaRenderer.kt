@@ -34,7 +34,9 @@ class LeiaRenderer(emulator: Emulator, settings: Settings) : Renderer {
     }
 
     override fun onModeChanged(enable3d: Boolean) {
-        nativeOnModeChanged(enable3d)
+        if (_pointer != 0L) { // leia listener fires after this has "died"
+            nativeOnModeChanged(enable3d)
+        }
     }
 
     class Settings(
