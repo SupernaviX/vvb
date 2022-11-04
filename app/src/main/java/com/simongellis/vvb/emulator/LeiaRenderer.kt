@@ -33,6 +33,10 @@ class LeiaRenderer(emulator: Emulator, settings: Settings) : Renderer {
         nativeOnDrawFrame()
     }
 
+    override fun onModeChanged(enable3d: Boolean) {
+        nativeOnModeChanged(enable3d)
+    }
+
     class Settings(
         val screenZoom: Float,
         val aspectRatio: Int,
@@ -45,4 +49,5 @@ class LeiaRenderer(emulator: Emulator, settings: Settings) : Renderer {
     private external fun nativeOnSurfaceCreated()
     private external fun nativeOnSurfaceChanged(width: Int, height: Int)
     private external fun nativeOnDrawFrame()
+    private external fun nativeOnModeChanged(enable3d: Boolean)
 }

@@ -57,6 +57,8 @@ pub struct LeiaRenderLogic {
     texture_colors: [[GLfloat; 4]; 2],
     aspect_ratio: AspectRatio,
     transform: Matrix4<GLfloat>,
+
+    enable_3d: bool,
 }
 impl LeiaRenderLogic {
     pub fn new(settings: &Settings) -> Self {
@@ -79,6 +81,8 @@ impl LeiaRenderLogic {
             aspect_ratio: settings.aspect_ratio,
             transform: Matrix4::from_translation(vec3(0.0, offset, 0.0))
                 * Matrix4::from_scale(scale),
+
+            enable_3d: true,
         }
     }
 }
@@ -94,8 +98,6 @@ impl RenderLogic for LeiaRenderLogic {
         self.colors_location = self.program.get_uniform_location("u_Colors");
 
         // textures and colors don't change, set them here
-        self.program
-            .set_uniform_texture_array(self.textures_location, &self.textures.ids);
         self.program
             .set_uniform_vector_array(self.colors_location, &self.texture_colors);
 
@@ -122,6 +124,13 @@ impl RenderLogic for LeiaRenderLogic {
         self.textures.update(eye as usize, buffer)
     }
     fn draw(&self) -> Result<()> {
+        let texture_ids = [
+            self.textures.ids[0],
+            self.textures.ids[if self.enable_3d { 1 } else { 0 }],
+        ];
+        self.program
+            .set_uniform_texture_array(self.textures_location, &texture_ids);
+
         self.program.start_render()?;
         self.program
             .draw_square(self.position_location, self.tex_coord_location)
@@ -143,7 +152,7 @@ pub mod jni {
     use crate::video::renderers::common::Renderer;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
-    use jni::sys::{jint, jobject};
+    use jni::sys::{jboolean, jint, jobject};
     use jni::JNIEnv;
 
     type LeiaRenderer = Renderer<LeiaRenderLogic>;
@@ -178,8 +187,8 @@ pub mod jni {
         emulator: jobject,
         settings: jobject,
     ) -> Result<()> {
-        let mut emulator = jni_helpers::java_get::<Emulator>(&env, emulator)?;
-        let settings = get_settings(&env, settings)?;
+        let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+        let settings = get_settings(env, settings)?;
         let renderer = Renderer::new(
             emulator.claim_frame_buffer_consumers(),
             LeiaRenderLogic::new(&settings),
@@ -208,5 +217,12 @@ pub mod jni {
     fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()
+    }
+
+    jni_func!(LeiaRenderer_nativeOnModeChanged, on_mode_changed, jboolean);
+    fn on_mode_changed(env: &JNIEnv, this: jobject, enable_3d: jboolean) -> Result<()> {
+        let mut this = get_renderer(env, this)?;
+        this.logic.enable_3d = enable_3d != 0;
+        Ok(())
     }
 }

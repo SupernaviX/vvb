@@ -26,9 +26,6 @@ class GameView : ConstraintLayout, BacklightModeListener {
     private val _preferences: GamePreferences
 
     // LitByLeia
-    private var prev_desired_backlight_state = false
-    private val mExpectedBacklightMode: BacklightMode? = null
-    private var mBacklightHasShutDown = false
     private var mDisplayManager: LeiaDisplayManager? = null
 
     var controller: Controller? = null
@@ -81,8 +78,8 @@ class GameView : ConstraintLayout, BacklightModeListener {
         setBackgroundColor(Color.BLACK)
 
         mDisplayManager = LeiaSDK.getDisplayManager(context)
-        if(mDisplayManager !== null){
-            mDisplayManager?.registerBacklightModeListener(this)
+        mDisplayManager?.apply {
+            registerBacklightModeListener(this@GameView)
             checkShouldToggle3D(true)
         }
     }
@@ -103,36 +100,34 @@ class GameView : ConstraintLayout, BacklightModeListener {
         _renderer.destroy()
     }
 
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+        checkShouldToggle3D(_preferences.isLeia && hasWindowFocus)
+    }
+
     /** BacklightModeListener Interface requirement  */
     override fun onBacklightModeChanged(backlightMode: BacklightMode) {
-        //Log.e("EmulationActivity", "onBacklightModeChanged: callback received");
-        // Do something to remember the backlight is no longer on
-        // Later, we have to let the native side know this occurred.
-        if (mExpectedBacklightMode == MODE_3D &&
-                mExpectedBacklightMode != backlightMode
-        ) {
-            //Log.e("EmulationActivity", "onBacklightModeChanged: mBacklightHasShutDown = true;");
-            mBacklightHasShutDown = true
+        if (_preferences.isLeia) {
+            _renderer.onModeChanged(backlightMode == MODE_3D)
         }
     }
 
-    fun checkShouldToggle3D(desired_state: Boolean) {
+    private fun checkShouldToggle3D(desiredState: Boolean) {
         if(mDisplayManager === null) {
             return
         }
-        if (desired_state && _preferences.isLeia) {
-            Enable3D()
+        if (desiredState && _preferences.isLeia) {
+            enable3D()
         } else {
-            Disable3D()
+            disable3D()
         }
-        prev_desired_backlight_state = desired_state
     }
 
-    fun Enable3D() {
+    private fun enable3D() {
         mDisplayManager?.requestBacklightMode(MODE_3D)
     }
 
-    fun Disable3D() {
+    private fun disable3D() {
         mDisplayManager?.requestBacklightMode(MODE_2D)
     }
 }
