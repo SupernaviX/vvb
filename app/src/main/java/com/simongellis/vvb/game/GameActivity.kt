@@ -2,18 +2,20 @@ package com.simongellis.vvb.game
 
 import android.content.res.Configuration
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Handler
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import com.simongellis.vvb.emulator.*
+import com.simongellis.vvb.emulator.Audio
+import com.simongellis.vvb.emulator.Controller
+import com.simongellis.vvb.emulator.Emulator
+import com.simongellis.vvb.emulator.VvbLibrary
 
 class GameActivity : AppCompatActivity() {
     private val viewModel: GameViewModel by viewModels()
@@ -22,7 +24,6 @@ class GameActivity : AppCompatActivity() {
     private lateinit var _audio: Audio
     private lateinit var _controller: Controller
     private lateinit var _preferences: GamePreferences
-    private lateinit var mDecorView: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -119,30 +120,28 @@ class GameActivity : AppCompatActivity() {
     // fires onCreate, onResume
     private fun toggleImmersiveView(immersive: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            if(_preferences.sustainedPerformanceModeOn){
+            if (_preferences.sustainedPerformanceModeOn) {
                 window.setSustainedPerformanceMode(immersive)
             }
         }
-        if(immersive) {
+        if (immersive) {
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        }else{
+        } else {
             window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
-        if(immersive){
+        if (immersive) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 window.attributes.layoutInDisplayCutoutMode =
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
             }
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                @Suppress("DEPRECATION")
-                window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                        or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
-            }
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or View.SYSTEM_UI_FLAG_IMMERSIVE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
         }
     }
 }

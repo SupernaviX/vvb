@@ -5,13 +5,11 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.util.DisplayMetrics
-import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.*
 import com.leia.android.lights.LeiaSDK
-import com.leia.android.lights.LeiaDisplayManager
 import com.simongellis.vvb.R
 
 class GamePreferences(context: Context) {
