@@ -13,11 +13,13 @@ class PreviewActivity: AppCompatActivity() {
     private val viewModel: GameViewModel by viewModels()
 
     private lateinit var _view: GameView
+    private lateinit var _preferences: GamePreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         VvbLibrary.instance.initialize(this)
         _view = GameView(baseContext)
+        _preferences = GamePreferences(baseContext)
         requestedOrientation = _view.requestedOrientation
         setContentView(_view)
 

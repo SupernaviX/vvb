@@ -12,9 +12,21 @@ import androidx.core.view.updateLayoutParams
 import com.simongellis.vvb.databinding.GameViewBinding
 import com.simongellis.vvb.emulator.*
 
-class GameView : ConstraintLayout {
+// Leia SDK Includes
+import com.leia.android.lights.LeiaDisplayManager
+import com.leia.android.lights.LeiaDisplayManager.BacklightMode
+import com.leia.android.lights.LeiaSDK
+import com.leia.android.lights.BacklightModeListener
+import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_2D
+import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_3D
+
+class GameView : ConstraintLayout, BacklightModeListener {
     private val _binding: GameViewBinding
     private val _renderer: Renderer
+    private val _preferences: GamePreferences
+
+    // LitByLeia
+    private var mDisplayManager: LeiaDisplayManager? = null
 
     var controller: Controller? = null
         set(value) {
@@ -32,50 +44,90 @@ class GameView : ConstraintLayout {
 
     init {
         val emulator = Emulator.instance
-        val preferences = GamePreferences(context)
-        _renderer = when(preferences.videoMode) {
-            VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, preferences.anaglyphSettings)
-            VideoMode.CARDBOARD -> CardboardRenderer(emulator, preferences.cardboardSettings)
-            VideoMode.MONO_LEFT -> MonoRenderer(emulator, preferences.monoSettings(Eye.LEFT))
-            VideoMode.MONO_RIGHT -> MonoRenderer(emulator, preferences.monoSettings(Eye.RIGHT))
-            VideoMode.STEREO -> StereoRenderer(emulator, preferences.stereoSettings)
+        _preferences = GamePreferences(context)
+        _renderer = when(_preferences.videoMode) {
+            VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, _preferences.anaglyphSettings)
+            VideoMode.CARDBOARD -> CardboardRenderer(emulator, _preferences.cardboardSettings)
+            VideoMode.MONO_LEFT -> MonoRenderer(emulator, _preferences.monoSettings(Eye.LEFT))
+            VideoMode.MONO_RIGHT -> MonoRenderer(emulator, _preferences.monoSettings(Eye.RIGHT))
+            VideoMode.STEREO -> StereoRenderer(emulator, _preferences.stereoSettings)
+            VideoMode.LEIA -> LeiaRenderer(emulator, _preferences.leiaSettings)
         }
 
         val layoutInflater = LayoutInflater.from(context)
         _binding = GameViewBinding.inflate(layoutInflater, this)
         _binding.apply {
             startGuideline?.updateLayoutParams<LayoutParams> {
-                guidePercent = preferences.horizontalOffset
+                guidePercent = _preferences.horizontalOffset
             }
 
             surfaceView.setEGLContextClientVersion(2)
             surfaceView.setRenderer(_renderer)
             surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
 
-            gamepadView.setPreferences(preferences)
+            gamepadView.setPreferences(_preferences)
 
-            uiAlignmentMarker?.isVisible = preferences.videoMode === VideoMode.CARDBOARD
+            uiAlignmentMarker?.isVisible = _preferences.videoMode === VideoMode.CARDBOARD
         }
 
-        requestedOrientation = when(preferences.videoMode.supportsPortrait) {
+        requestedOrientation = when(_preferences.videoMode.supportsPortrait) {
             true -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             false -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
         }
 
         setBackgroundColor(Color.BLACK)
+
+        mDisplayManager = LeiaSDK.getDisplayManager(context)
+        mDisplayManager?.apply {
+            registerBacklightModeListener(this@GameView)
+            checkShouldToggle3D(true)
+        }
     }
 
     fun onPause() {
         _binding.surfaceView.onPause()
+        checkShouldToggle3D(false)
     }
 
     fun onResume() {
         _binding.surfaceView.onResume()
         _renderer.onResume()
+        checkShouldToggle3D(true)
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         _renderer.destroy()
+    }
+
+    override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
+        super.onWindowFocusChanged(hasWindowFocus)
+        checkShouldToggle3D(_preferences.isLeia && hasWindowFocus)
+    }
+
+    /** BacklightModeListener Interface requirement  */
+    override fun onBacklightModeChanged(backlightMode: BacklightMode) {
+        if (_preferences.isLeia) {
+            _renderer.onModeChanged(backlightMode == MODE_3D)
+        }
+    }
+
+    private fun checkShouldToggle3D(desiredState: Boolean) {
+        if(mDisplayManager === null) {
+            return
+        }
+        if (desiredState && _preferences.isLeia) {
+            enable3D()
+        } else {
+            disable3D()
+        }
+    }
+
+    private fun enable3D() {
+        mDisplayManager?.requestBacklightMode(MODE_3D)
+    }
+
+    private fun disable3D() {
+        mDisplayManager?.requestBacklightMode(MODE_2D)
     }
 }

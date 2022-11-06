@@ -5,14 +5,20 @@ import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.util.DisplayMetrics
+import android.util.Log
 import androidx.annotation.ColorInt
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.*
+import com.leia.android.lights.LeiaSDK
+import com.leia.android.lights.LeiaDisplayManager
 
 class GamePreferences(context: Context) {
     val videoMode: VideoMode
     private val isAnaglyph
         get() = videoMode == VideoMode.ANAGLYPH
+
+    val isLeia
+        get() = videoMode == VideoMode.LEIA
 
     private val supportsPortrait
         get() = videoMode.supportsPortrait
@@ -33,6 +39,8 @@ class GamePreferences(context: Context) {
         get() = if (isPortrait && supportsPortrait) { 0f } else { field }
 
     @ColorInt val color: Int
+
+    @ColorInt val colorBG: Int
 
     @ColorInt val colorLeft: Int
         get() = if (isAnaglyph) { field } else { color }
@@ -66,19 +74,38 @@ class GamePreferences(context: Context) {
     val stereoSettings
         get() = StereoRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color)
 
+    val leiaSettings
+        get() = LeiaRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color, colorBG)
+
+    val sustainedPerformanceModeOn: Boolean
+
     init {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-        videoMode = VideoMode.valueOf(prefs.getString("video_mode", VideoMode.ANAGLYPH.name)!!)
+        val displayManager = LeiaSDK.getDisplayManager(context)
+        var defaultMode = VideoMode.ANAGLYPH.name
+        var defaultScreenZoom = 100
+        if(displayManager !== null){
+            defaultMode = VideoMode.LEIA.name
+            defaultScreenZoom = 65
+        }
 
-        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", 100)
+        videoMode = VideoMode.valueOf(prefs.getString("video_mode", defaultMode)!!)
+
+        screenZoom = prefs.getIntPercent("video_screen_zoom_percent", defaultScreenZoom)
         aspectRatio = AspectRatio.valueOf(prefs.getString("video_aspect_ratio", "AUTO")!!)
         horizontalOffset = prefs.getIntPercent("video_horizontal_offset", 0)
         verticalOffset = prefs.getIntPercent("video_vertical_offset", 0)
 
         colorLeft = prefs.getInt("video_color_left", Color.RED)
         colorRight = prefs.getInt("video_color_right", Color.BLUE)
+
+        var defaultBGColor = Color.BLACK
+        if(displayManager !== null){
+            defaultBGColor = Color.parseColor("#434343")
+        }
+        colorBG = prefs.getInt("video_color_bg", defaultBGColor)
 
         color = prefs.getInt("video_color", Color.RED)
 
@@ -91,6 +118,8 @@ class GamePreferences(context: Context) {
         controlParallax = convertDpToPixels(context,
             prefs.getInt("onscreen_input_parallax", 8).toFloat())
         showControlBounds = prefs.getBoolean("onscreen_input_show_bounds", false)
+
+        sustainedPerformanceModeOn = prefs.getBoolean("sustained_performance_mode_on", false)
     }
 
     private fun convertDpToPixels(context: Context, dp: Float): Float {

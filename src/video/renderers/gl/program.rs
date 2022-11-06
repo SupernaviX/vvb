@@ -147,7 +147,6 @@ impl Program {
             );
         }
     }
-
     pub fn set_uniform_matrix(&self, location: GLint, value: &[GLfloat; 16]) {
         unsafe {
             gl::UniformMatrix4fv(location, 1, GL_FALSE, value.as_ptr());

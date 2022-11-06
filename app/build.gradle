@@ -4,6 +4,16 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
 }
 
+// Create a variable called keystorePropertiesFile, and initialize it to your
+// keystore.properties file, in the rootProject folder.
+//def keystorePropertiesFile = rootProject.file("keystore.properties")
+
+// Initialize a new Properties() object called keystoreProperties.
+//def keystoreProperties = new Properties()
+
+// Load your keystore.properties file into the keystoreProperties object.
+//keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+
 static def generatedString(value) {
     if (value == null) {
         return "null"
@@ -26,6 +36,12 @@ def tryReadConfig(filename) {
     return config
 }
 
+repositories {
+    maven {
+        url 'https://leiainc.jfrog.io/leiainc/gradle-release'
+    }
+}
+
 android {
     compileSdkVersion 33
     buildToolsVersion "30.0.3"
@@ -34,6 +50,7 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
         freeCompilerArgs += [
@@ -42,6 +59,14 @@ android {
     }
     buildFeatures {
         viewBinding true
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['./../distribution/leia_sdk/lib']
+        }
+    }
+    packagingOptions {
+        pickFirst "**/lib/**"
     }
 
     defaultConfig {
@@ -54,6 +79,7 @@ android {
         buildConfigField("String", "ACRA_URI", generatedString("https://vvb-notifications.simongellis.com/report"))
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+//        signingConfig signingConfigs.release
     }
 
     buildTypes {
@@ -61,15 +87,19 @@ android {
             buildConfigField("boolean", "ACRA_ENABLED", "false")
             buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", "null")
             buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", "null")
+            signingConfig signingConfigs.debug
         }
         release {
-            buildConfigField("boolean", "ACRA_ENABLED", "true")
+            buildConfigField("boolean", "ACRA_ENABLED", "false")
             def config = tryReadConfig("release.env")
+
+            buildConfigField("boolean", "ACRA_ENABLED", "true")
             buildConfigField("String", "ACRA_BASIC_AUTH_LOGIN", generatedString(config.login))
             buildConfigField("String", "ACRA_BASIC_AUTH_PASSWORD", generatedString(config.password))
 
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
         }
     }
 
@@ -87,6 +117,15 @@ android {
 
     ndkVersion = "22.1.7171670"
     namespace 'com.simongellis.vvb'
+
+//    signingConfigs {
+//        config {
+//            keyAlias keystoreProperties['keyAlias']
+//            keyPassword keystoreProperties['keyPassword']
+//            storeFile file(keystoreProperties['storeFile'])
+//            storePassword keystoreProperties['storePassword']
+//        }
+//    }
 }
 
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
@@ -168,6 +207,7 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-javalite:3.19.4'
 
     // color picker
+    implementation 'com.github.kizitonwose.colorpreference:core:1.1.0'
     implementation 'com.github.kizitonwose.colorpreference:support:1.1.0'
 
     // file picker
@@ -180,4 +220,9 @@ dependencies {
     def acraVersion = '5.8.3'
     implementation("ch.acra:acra-http:$acraVersion")
     implementation("ch.acra:acra-toast:$acraVersion")
+
+    implementation 'com.leia:leiasdk:4.5.3'
+
+    // custom color picker
+    implementation 'com.github.yukuku:ambilwarna:2.0.1'
 }
