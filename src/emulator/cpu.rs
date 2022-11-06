@@ -761,7 +761,7 @@ impl<'a> CpuProcess<'a> {
 
     fn setf(&mut self, instr: u16) {
         let (reg2, cond) = self.parse_format_ii_opcode(instr);
-        let result = if self._condition(cond) { 1 } else { 0 };
+        let result = u32::from(self._condition(cond));
         self.registers[reg2] = result;
         self.cycle += 1;
     }

@@ -126,7 +126,7 @@ impl RenderLogic for LeiaRenderLogic {
     fn draw(&self) -> Result<()> {
         let texture_ids = [
             self.textures.ids[0],
-            self.textures.ids[if self.enable_3d { 1 } else { 0 }],
+            self.textures.ids[usize::from(self.enable_3d)],
         ];
         self.program
             .set_uniform_texture_array(self.textures_location, &texture_ids);
