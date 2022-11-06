@@ -7,10 +7,12 @@ import android.graphics.Color
 import android.util.DisplayMetrics
 import android.util.Log
 import androidx.annotation.ColorInt
+import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.*
 import com.leia.android.lights.LeiaSDK
 import com.leia.android.lights.LeiaDisplayManager
+import com.simongellis.vvb.R
 
 class GamePreferences(context: Context) {
     val videoMode: VideoMode
@@ -103,7 +105,7 @@ class GamePreferences(context: Context) {
 
         var defaultBGColor = Color.BLACK
         if(displayManager !== null){
-            defaultBGColor = Color.parseColor("#434343")
+            defaultBGColor = ContextCompat.getColor(context, R.color.leia_grey)
         }
         colorBG = prefs.getInt("video_color_bg", defaultBGColor)
 

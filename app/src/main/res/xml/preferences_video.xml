@@ -57,7 +57,6 @@
     <com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
         app:key="video_color_bg"
         app:title="@string/video_menu_color_bg"
-        app:defaultValue="@color/black"
         app:colorShape="square"
         app:colorChoices="@array/cardboard_color_choices"
         app:numColumns="7"/>
