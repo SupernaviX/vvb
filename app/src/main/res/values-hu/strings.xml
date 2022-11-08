@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Aktuális állapotú hely</string>
     <string name="game_menu_state_slot_empty">Üres</string>
     <string name="game_menu_close_game">Bezárás</string>
+    <string name="sustained_performance_mode">Fenntartott teljesítményű mód</string>
+    <string name="sustained_performance_mode_summary">Lassabban futhat. Megpróbálja elkerülni a hőszabályozást a CPU sebességének csökkentésével</string>
     <string name="onscreen_input_menu_on">Virtuális játékvezérlő</string>
     <string name="onscreen_input_menu_toggle_controls">Indítógombok kapcsolómódja</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptikus visszajelzés</string>
@@ -47,11 +49,14 @@
     <string name="video_mode_mono_right_summary">Csak a jobb szem</string>
     <string name="video_mode_mono_description">Nincs szükség felszerelésre, de 3D effektusok sem</string>
     <string name="video_mode_stereo_description">3D tévékkel működik</string>
+    <string name="video_mode_leia_description">Működik Lume Pad &amp; RED Hydrogen One termékkel</string>
     <string name="video_menu_aspect_ratio">Képarány</string>
     <string name="aspect_ratio_stretch">Nyújtás, hogy illeszkedjen</string>
     <string name="video_menu_color">Szín</string>
     <string name="video_menu_color_left">Bal szemszín</string>
     <string name="video_menu_color_right">Jobb szemszín</string>
+    <string name="video_menu_color_fg">Előtér színe</string>
+    <string name="video_menu_color_bg">Háttérszín</string>
     <string name="video_menu_invalid_colors_title">Érvénytelen színek</string>
     <string name="video_menu_invalid_colors_message">A bal és a jobb szemszín legalább egy színcsatornán átfedi egymást. Előfordulhat, hogy a 3D effektus nem működik megfelelően.</string>
     <string name="video_menu_switch_viewer">Váltás a Cardboard Viewerre</string>
