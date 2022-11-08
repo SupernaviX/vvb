@@ -14,7 +14,7 @@
     <string name="game_menu_state_slot_empty">Tyhjä</string>
     <string name="game_menu_close_game">Sulje</string>
     <string name="sustained_performance_mode">Jatkuva suorituskyky -tila</string>
-    <string name="sustained_performance_mode_summary">Voi toimia hitaammin. Yritetään välttää lämpökuristusta vähentämällä suorittimen nopeutta</string>
+    <string name="sustained_performance_mode_summary">Voi toimia hitaammin. Yritetään välttää lämpökuristusta vähentämällä CPU nopeutta</string>
     <string name="onscreen_input_menu_on">Virtuaalinen peliohjain</string>
     <string name="onscreen_input_menu_toggle_controls">Liipaisinpainikkeiden vaihtotila</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptinen palaute</string>
