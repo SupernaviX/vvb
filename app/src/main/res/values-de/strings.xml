@@ -13,6 +13,7 @@
     <string name="game_menu_state_slot">Stand-Speicherplatz</string>
     <string name="game_menu_state_slot_empty">Leer</string>
     <string name="game_menu_close_game">Schließen</string>
+    <string name="sustained_performance_mode">Modus für nachhaltige Leistung</string>
     <string name="sustained_performance_mode_summary">Läuft möglicherweise langsamer. Versucht, thermisches Throttling zu vermeiden, indem die CPU-Geschwindigkeit reduziert wird</string>
     <string name="onscreen_input_menu_on">Virtuelles Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Auslöser-Tasten in den Umschaltmodus versetzen</string>
