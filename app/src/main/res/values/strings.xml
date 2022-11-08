@@ -27,10 +27,10 @@
     <string name="game_menu_state_slot_saved" translatable="false">Saved: %1$s</string>
     <string name="game_menu_close_game">Close Game</string>
     <string name="sustained_performance_mode">Sustained Performance Mode</string>
-    <string name="sustained_performance_mode_summary" translatable="false">May run more slowly. Attempts to avoid thermal throttling by reducing cpu speed</string>
-    <string name="onscreen_input_menu_on">Use Virtual Gamepad</string>
-    <string name="onscreen_input_menu_toggle_controls">Put Trigger Buttons in Toggle Mode</string>
-    <string name="onscreen_input_menu_haptic_feedback">Enable Haptic Feedback</string>
+    <string name="sustained_performance_mode_summary">May run more slowly. Attempts to avoid thermal throttling by reducing cpu speed</string>
+    <string name="onscreen_input_menu_on">Virtual Gamepad</string>
+    <string name="onscreen_input_menu_toggle_controls">Trigger Buttons Toggle Mode</string>
+    <string name="onscreen_input_menu_haptic_feedback">Haptic Feedback</string>
     <string name="onscreen_input_menu_parallax">Parallax</string>
     <string name="onscreen_input_menu_show_bounds">Show Control Bounds</string>
     <string name="onscreen_input_menu_preview">Preview</string>
@@ -48,19 +48,19 @@
     <string name="controller_menu_rename">Rename</string>
     <string name="controller_menu_choose_rename">Choose controller to rename…</string>
     <string name="controller_menu_choose_delete">Choose controller to delete…</string>
-    <string name="controller_menu_default_name">Controller %1$d</string>
-    <string name="input_menu_dpad_left">Left D-Pad</string>
-    <string name="input_menu_dpad_right">Right D-Pad</string>
-    <string name="input_menu_button_left">Left</string>
-    <string name="input_menu_button_right">Right</string>
-    <string name="input_menu_button_up">Up</string>
-    <string name="input_menu_button_down">Down</string>
-    <string name="input_menu_button_a">A</string>
-    <string name="input_menu_button_b">B</string>
-    <string name="input_menu_button_lt">L Trigger</string>
-    <string name="input_menu_button_rt">R Trigger</string>
-    <string name="input_menu_button_start">Start</string>
-    <string name="input_menu_button_select">Select</string>
+    <string name="controller_menu_default_name" translatable="false">Controller %1$d</string>
+    <string name="input_menu_dpad_left" translatable="false">Left D-Pad</string>
+    <string name="input_menu_dpad_right" translatable="false">Right D-Pad</string>
+    <string name="input_menu_button_left" translatable="false">Left</string>
+    <string name="input_menu_button_right" translatable="false">Right</string>
+    <string name="input_menu_button_up" translatable="false">Up</string>
+    <string name="input_menu_button_down" translatable="false">Down</string>
+    <string name="input_menu_button_a" translatable="false">A</string>
+    <string name="input_menu_button_b" translatable="false">B</string>
+    <string name="input_menu_button_lt" translatable="false">L</string>
+    <string name="input_menu_button_rt" translatable="false">R</string>
+    <string name="input_menu_button_start" translatable="false">Start</string>
+    <string name="input_menu_button_select" translatable="false">Select</string>
     <string name="input_menu_unmapped">Unmapped</string>
     <string name="input_menu_put_mapping">Press any control to map it to this input. Long press to map multiple controls.</string>
     <string name="input_menu_add_mapping">Press any control to add another mapping for this input.</string>
@@ -70,14 +70,14 @@
     <string name="video_menu_mode">Display Mode</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (two-color)</string>
     <string name="video_mode_anaglyph_description">Works with most pairs of 3D glasses</string>
-    <string name="video_mode_cardboard_summary">Google Cardboard</string>
+    <string name="video_mode_cardboard_summary" translatable="false">Google Cardboard</string>
     <string name="video_mode_cardboard_description">Works with Google Cardboard or Daydream</string>
     <string name="video_mode_mono_left_summary">Left eye only</string>
     <string name="video_mode_mono_right_summary">Right eye only</string>
     <string name="video_mode_mono_description">No equipment needed, but no 3D effects</string>
     <string name="video_mode_stereo_summary">Side-by-side</string>
     <string name="video_mode_stereo_description">Works with 3D TVs</string>
-    <string name="video_mode_leia_summary">LitByLeia</string>
+    <string name="video_mode_leia_summary" translatable="false">LitByLeia</string>
     <string name="video_mode_leia_description">Works with Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Aspect Ratio</string>
     <string name="aspect_ratio_auto">Auto</string>
@@ -89,7 +89,7 @@
     <string name="video_menu_color_bg">Background Color</string>
     <string name="video_menu_invalid_colors_title">Invalid Colors</string>
     <string name="video_menu_invalid_colors_message">The left and right eye colors "overlap" on at least one color channel. The 3D effect may not work properly.</string>
-    <string name="video_menu_invalid_colors_button">OK</string>
+    <string name="video_menu_invalid_colors_button" translatable="false">OK</string>
     <string name="video_menu_switch_viewer">Switch Cardboard Viewer</string>
     <string name="video_menu_preview">Preview</string>
     <string name="audio_menu_volume">Volume</string>
