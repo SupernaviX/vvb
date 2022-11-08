@@ -51,6 +51,7 @@ Several features are not implemented:
  - The instruction cache
 
 ## Credits
+- [Planet Virtual Boy](https://virtual-boy.com) developers for bundled games
 - Guy Perfect for writing the extremely helpful [Virtual Boy Sacred Tech Scroll](https://virtual-boy.com/documents/virtual-boy-sacred-tech-scroll)
 - [Pi Lanningham](https://github.com/Quantumplation) and [Robert Kellett](https://github.com/Splagoon) for rubber ducking
 - [JakeDowns](https://github.com/jakedowns) for adding support for [RED Hydrogen One](https://wikipedia.org/wiki/Red_Hydrogen_One) Phones and [Leia](https://wikipedia.org/wiki/Leia_(company)) Lume Pad Tablets
