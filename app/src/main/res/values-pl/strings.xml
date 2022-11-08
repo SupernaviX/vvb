@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Stan gniazda</string>
     <string name="game_menu_state_slot_empty">Pusty</string>
     <string name="game_menu_close_game">Zamknij</string>
+    <string name="sustained_performance_mode">Tryb długotrwałej wydajności</string>
+    <string name="sustained_performance_mode_summary">Może działać wolniej. Próby uniknięcia dławienia termicznego poprzez zmniejszenie szybkości CPU</string>
     <string name="onscreen_input_menu_on">Wirtualny gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Przyciski wyzwalania przełączania trybu</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptyczne sprzężenie zwrotne</string>
@@ -47,12 +49,15 @@
     <string name="video_mode_mono_right_summary">Tylko prawe oko</string>
     <string name="video_mode_mono_description">Nie jest potrzebny sprzęt, ale bez efektów 3D</string>
     <string name="video_mode_stereo_description">Działa z telewizorami 3D</string>
+    <string name="video_mode_leia_description">Działa z Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Współczynnik proporcji</string>
     <string name="aspect_ratio_auto">Automatyczny</string>
     <string name="aspect_ratio_stretch">Rozciągnij, aby dopasować</string>
     <string name="video_menu_color">Kolor</string>
     <string name="video_menu_color_left">Kolor lewego oka</string>
     <string name="video_menu_color_right">Kolor prawego oka</string>
+    <string name="video_menu_color_fg">Kolor pierwszego planu</string>
+    <string name="video_menu_color_bg">Kolor tła</string>
     <string name="video_menu_invalid_colors_title">Nieprawidłowe kolory</string>
     <string name="video_menu_invalid_colors_message">Kolory lewego i prawego oka „nakładają się” na co najmniej jeden kanał kolorów. Efekt 3D może nie działać prawidłowo.</string>
     <string name="video_menu_switch_viewer">Przełącz przeglądarkę Cardboard</string>
