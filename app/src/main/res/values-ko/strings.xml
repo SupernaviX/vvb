@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">현재 상태 슬롯</string>
     <string name="game_menu_state_slot_empty">비어 있음</string>
     <string name="game_menu_close_game">종료</string>
+    <string name="sustained_performance_mode">지속적인 성능 모드</string>
+    <string name="sustained_performance_mode_summary">더 느리게 실행될 수 있습니다. CPU 속도를 줄여 열 조절을 방지하려고 시도합니다.</string>
     <string name="onscreen_input_menu_on">가상 게임패드</string>
     <string name="onscreen_input_menu_toggle_controls">트리거 버튼 토글 모드</string>
     <string name="onscreen_input_menu_haptic_feedback">햅틱 피드백</string>
@@ -47,12 +49,15 @@
     <string name="video_mode_mono_right_summary">오른쪽 눈만</string>
     <string name="video_mode_mono_description">장비는 필요하지 않지만 3D 효과는 필요 없습니다.</string>
     <string name="video_mode_stereo_description">3D TV에서 작동</string>
+    <string name="video_mode_leia_description">Lume Pad &amp; RED Hydrogen One과 함께 작동</string>
     <string name="video_menu_aspect_ratio">화면비</string>
     <string name="aspect_ratio_auto">자동</string>
     <string name="aspect_ratio_stretch">맞춤에 맞게 늘이기</string>
     <string name="video_menu_color">색상</string>
     <string name="video_menu_color_left">왼쪽 눈 색깔</string>
     <string name="video_menu_color_right">오른쪽 눈 색깔</string>
+    <string name="video_menu_color_fg">전경 색상</string>
+    <string name="video_menu_color_bg">배경 색상</string>
     <string name="video_menu_invalid_colors_title">잘못된 색상</string>
     <string name="video_menu_invalid_colors_message">왼쪽 및 오른쪽 눈 색상은 하나 이상의 색상 채널에서 "겹칩니다". 3D 효과가 제대로 작동하지 않을 수 있습니다.</string>
     <string name="video_menu_switch_viewer">Cardboard 뷰어 전환</string>
