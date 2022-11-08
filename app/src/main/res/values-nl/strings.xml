@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Huidige staat-slot</string>
     <string name="game_menu_state_slot_empty">Leeg</string>
     <string name="game_menu_close_game">Afsluiten</string>
+    <string name="sustained_performance_mode">Aanhoudende prestatiemodus</string>
+    <string name="sustained_performance_mode_summary">Kan langzamer werken. Pogingen om thermische beperking te voorkomen door de CPU-snelheid te verlagen</string>
     <string name="onscreen_input_menu_on">Virtuele gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Triggerknoppen wisselmodus</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptische feedback</string>
@@ -45,12 +47,15 @@
     <string name="video_mode_mono_right_summary">Alleen rechteroog</string>
     <string name="video_mode_mono_description">Geen apparatuur nodig, maar geen 3D-effecten</string>
     <string name="video_mode_stereo_description">Werkt met 3D-TV\'s</string>
+    <string name="video_mode_leia_description">Werkt met Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Beeldverhouding</string>
     <string name="aspect_ratio_auto">Automatisch</string>
     <string name="aspect_ratio_stretch">Uitrekken om te passen</string>
     <string name="video_menu_color">Kleur</string>
     <string name="video_menu_color_left">Kleur linkeroog</string>
     <string name="video_menu_color_right">Kleur rechteroog</string>
+    <string name="video_menu_color_fg">Voorgrondkleur</string>
+    <string name="video_menu_color_bg">Achtergrondkleur</string>
     <string name="video_menu_invalid_colors_title">Ongeldige kleuren</string>
     <string name="video_menu_invalid_colors_message">De linker- en rechteroogkleuren "overlappen" op ten minste één kleurkanaal. Het 3D-effect werkt mogelijk niet goed.</string>
     <string name="video_menu_switch_viewer">Schakel Cardboard Kijker</string>
