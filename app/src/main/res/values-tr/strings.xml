@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Durum yuvası</string>
     <string name="game_menu_state_slot_empty">Boş</string>
     <string name="game_menu_close_game">Kapat</string>
+    <string name="sustained_performance_mode">Sürekli Performans Modu</string>
+    <string name="sustained_performance_mode_summary">Daha yavaş çalışabilir. CPU hızını azaltarak termal kısıtlamayı önlemeye çalışır</string>
     <string name="onscreen_input_menu_on">Sanal Oyun Kumandası</string>
     <string name="onscreen_input_menu_toggle_controls">Tetik Düğmeleri Modunu Değiştir</string>
     <string name="onscreen_input_menu_haptic_feedback">Dokunsal Geribildirim</string>
@@ -47,12 +49,15 @@
     <string name="video_mode_mono_right_summary">Yalnızca sağ göz</string>
     <string name="video_mode_mono_description">Ekipman gerekmez, ancak 3D efekt yok</string>
     <string name="video_mode_stereo_description">3D TV\'lerle çalışır</string>
+    <string name="video_mode_leia_description">Lume Pad &amp; RED Hydrogen One ile çalışır</string>
     <string name="video_menu_aspect_ratio">En Boy Oranı</string>
     <string name="aspect_ratio_auto">Otomatik</string>
     <string name="aspect_ratio_stretch">Sığdırmak İçin Uzat</string>
     <string name="video_menu_color">Renk</string>
     <string name="video_menu_color_left">Sol Göz Rengi</string>
     <string name="video_menu_color_right">Sağ Göz Rengi</string>
+    <string name="video_menu_color_fg">Ön Plan Rengi</string>
+    <string name="video_menu_color_bg">Arka Plan Rengi</string>
     <string name="video_menu_invalid_colors_title">Geçersiz Renkler</string>
     <string name="video_menu_invalid_colors_message">Sol ve sağ göz renkleri en az bir renk kanalında "örtüşüyor". 3D efekti düzgün çalışmayabilir.</string>
     <string name="video_menu_switch_viewer">Cardboard Görüntüleyiciyi Değiştir</string>
