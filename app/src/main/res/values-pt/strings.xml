@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Posição de estado</string>
     <string name="game_menu_state_slot_empty">Ampty</string>
     <string name="game_menu_close_game">Fechar</string>
+    <string name="sustained_performance_mode">Modo de desempenho sustentado</string>
+    <string name="sustained_performance_mode_summary">Pode ser executado mais lentamente. Tenta evitar o estrangulamento térmico reduzindo a velocidade da CPU</string>
     <string name="onscreen_input_menu_toggle_controls">Modo de alternância dos botões de acionamento</string>
     <string name="onscreen_input_menu_haptic_feedback">Resposta háptica</string>
     <string name="onscreen_input_menu_parallax">Paralaxe</string>
@@ -46,12 +48,15 @@
     <string name="video_mode_mono_right_summary">Somente olho direito</string>
     <string name="video_mode_mono_description">Nenhum equipamento necessário, mas sem efeitos 3D</string>
     <string name="video_mode_stereo_description">Funciona com TVs 3D</string>
+    <string name="video_mode_leia_description">Funciona com Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Proporção do ecrã</string>
     <string name="aspect_ratio_auto">Automático</string>
     <string name="aspect_ratio_stretch">Esticar para caber</string>
     <string name="video_menu_color">Cor</string>
     <string name="video_menu_color_left">Cor do olho esquerdo</string>
     <string name="video_menu_color_right">Cor do olho direito</string>
+    <string name="video_menu_color_fg">Cor do primeiro plano</string>
+    <string name="video_menu_color_bg">Cor de fundo</string>
     <string name="video_menu_invalid_colors_title">Cores inválidas</string>
     <string name="video_menu_invalid_colors_message">As cores dos olhos esquerdo e direito "se sobrepõem" em pelo menos um canal de cores. O efeito 3D pode não funcionar corretamente.</string>
     <string name="video_menu_switch_viewer">Alternar Visualizador do Cardboard</string>
