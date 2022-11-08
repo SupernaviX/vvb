@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Current State Slot</string>
     <string name="game_menu_state_slot_empty">Tom</string>
     <string name="game_menu_close_game">Stäng</string>
+    <string name="sustained_performance_mode">Läge för uthålligt prestanda</string>
+    <string name="sustained_performance_mode_summary">Kan gå långsammare. Försöker att undvika termisk strypning genom att minska CPU-hastigheten</string>
     <string name="onscreen_input_menu_on">Virtuell spelkontroll</string>
     <string name="onscreen_input_menu_toggle_controls">Triggerknappar Växla läge</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptisk feedback</string>
@@ -46,12 +48,15 @@
     <string name="video_mode_mono_right_summary">Endast höger öga</string>
     <string name="video_mode_mono_description">Ingen utrustning behövs, men inga 3D-effekter</string>
     <string name="video_mode_stereo_description">Fungerar med 3D-TV</string>
+    <string name="video_mode_leia_description">Fungerar med Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Bildförhållande</string>
     <string name="aspect_ratio_auto">Automatiskt</string>
     <string name="aspect_ratio_stretch">Sträck ut för att passa</string>
     <string name="video_menu_color">Färg</string>
     <string name="video_menu_color_left">Vänster ögonfärg</string>
     <string name="video_menu_color_right">Höger ögonfärg</string>
+    <string name="video_menu_color_fg">Förgrundsfärg</string>
+    <string name="video_menu_color_bg">Bakgrundsfärg</string>
     <string name="video_menu_invalid_colors_title">Ogiltiga färger</string>
     <string name="video_menu_invalid_colors_message">Vänster och höger ögonfärger "överlappar" på minst en färgkanal. 3D-effekten kanske inte fungerar korrekt.</string>
     <string name="video_menu_switch_viewer">Byt Cardboard Viewer</string>
