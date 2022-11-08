@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Dabartinės būsenos lizdas</string>
     <string name="game_menu_state_slot_empty">Tuščia</string>
     <string name="game_menu_close_game">Uždaryti</string>
+    <string name="sustained_performance_mode">Palaikančio našumo režimas</string>
+    <string name="sustained_performance_mode_summary">Gali veikti lėčiau. Bandoma išvengti terminio droselio sumažinant CPU greitį</string>
     <string name="onscreen_input_menu_on">Virtuali žaidimų pultelis</string>
     <string name="onscreen_input_menu_toggle_controls">Suaktyvinimo mygtukų perjungimo režimas</string>
     <string name="onscreen_input_menu_haptic_feedback">Haptic atsiliepimai</string>
@@ -47,11 +49,14 @@
     <string name="video_mode_mono_right_summary">Tik dešinioji akis</string>
     <string name="video_mode_mono_description">Nereikia jokios įrangos, bet nereikia 3D efektų</string>
     <string name="video_mode_stereo_description">Veikia su 3D televizoriais</string>
+    <string name="video_mode_leia_description">Veikia su Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Krašto santykis</string>
     <string name="aspect_ratio_stretch">Ištempkite, kad tilptų</string>
     <string name="video_menu_color">Spalva</string>
     <string name="video_menu_color_left">Kairių akių spalva</string>
     <string name="video_menu_color_right">Dešiniųjų akių spalva</string>
+    <string name="video_menu_color_fg">Priekinio plano spalva</string>
+    <string name="video_menu_color_bg">Fono spalva</string>
     <string name="video_menu_invalid_colors_title">Netinkamos spalvos</string>
     <string name="video_menu_invalid_colors_message">Kairė ir dešinė akių spalvos „persidengia“ bent viename spalvų kanale. 3D efektas gali veikti netinkamai.</string>
     <string name="video_menu_switch_viewer">Perjunkite Cardboard Viewer</string>
