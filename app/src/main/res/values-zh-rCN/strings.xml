@@ -65,10 +65,10 @@
     <string name="audio_menu_volume">音量</string>
     <string name="audio_menu_buffer_size">缓冲器大小（帧）</string>
     <string name="application_crashed">ಠ_ಠ，应用崩溃。将向开发者发送报告。</string>
-    <string name="error_file_not_found">找不到那文件。也许它被移动了？</string>
-    <string name="error_not_power_of_two">那不是Virtual Boy游戏！文件大小应为2的幂。</string>
-    <string name="error_too_large">那不是Virtual Boy游戏！它们至多16Mb。</string>
-    <string name="error_zip">该ZIP文件中任何内容都不像Virtual Boy游戏……</string>
+    <string name="error_file_not_found">找不到文件。也许它被移动了？</string>
+    <string name="error_not_power_of_two">非Virtual Boy游戏！文件大小应为2的幂。</string>
+    <string name="error_too_large">非Virtual Boy游戏！它们至多16Mb。</string>
+    <string name="error_zip">ZIP文件中任何内容都非Virtual Boy游戏……</string>
     <string name="toast_state_saved">已存状态</string>
     <string name="toast_state_loaded">已载状态</string>
 </resources>
