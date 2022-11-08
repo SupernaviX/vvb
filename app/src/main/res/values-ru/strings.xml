@@ -13,6 +13,8 @@
     <string name="game_menu_state_slot">Слот сохранения</string>
     <string name="game_menu_state_slot_empty">Пусто</string>
     <string name="game_menu_close_game">Закрыть</string>
+    <string name="sustained_performance_mode">Режим стабильной производительности</string>
+    <string name="sustained_performance_mode_summary">Может работать медленнее. Попытки избежать теплового дросселирования за счет снижения скорости CPU</string>
     <string name="onscreen_input_menu_on">Виртуальный геймпад</string>
     <string name="onscreen_input_menu_toggle_controls">Кнопки переключения режимов</string>
     <string name="onscreen_input_menu_haptic_feedback">Тактильная отдача</string>
@@ -47,12 +49,15 @@
     <string name="video_mode_mono_right_summary">Только для правого глаза</string>
     <string name="video_mode_mono_description">Оборудование не требуется, но нет 3D-эффектов</string>
     <string name="video_mode_stereo_description">Работает с 3D-телевизорами</string>
+    <string name="video_mode_leia_description">Работает с Lume Pad &amp; RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Соотношение сторон</string>
     <string name="aspect_ratio_auto">Авто</string>
     <string name="aspect_ratio_stretch">Растянуть по размеру</string>
     <string name="video_menu_color">Цвет</string>
     <string name="video_menu_color_left">Цвет левого глаза</string>
     <string name="video_menu_color_right">Цвет правого глаза</string>
+    <string name="video_menu_color_fg">Цвет переднего плана</string>
+    <string name="video_menu_color_bg">Цвет фона</string>
     <string name="video_menu_invalid_colors_title">Недопустимые цвета</string>
     <string name="video_menu_invalid_colors_message">Цвета левого и правого глаза "перекрываются" по крайней мере в одном цветовом канале. 3D-эффект может работать неправильно.</string>
     <string name="video_menu_switch_viewer">Переключить средство просмотра Cardboard</string>
