@@ -88,6 +88,18 @@ android {
         }
     }
 
+    flavorDimensions 'version'
+
+    productFlavors {
+        playStore {
+            dimension 'version'
+        }
+        leia {
+            dimension 'version'
+            applicationIdSuffix '.leia'
+        }
+    }
+
     aaptOptions {
         noCompress "vb"
     }
