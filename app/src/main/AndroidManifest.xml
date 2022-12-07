@@ -27,7 +27,7 @@
                 android:resource="@xml/nnf_provider_paths" />
         </provider>
         <provider
-            android:authorities="com.simongellis.vvb.assets"
+            android:authorities="${applicationId}.assets"
             android:name="com.simongellis.vvb.AssetsProvider"
             android:exported="false" />
 
