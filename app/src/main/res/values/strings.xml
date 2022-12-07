@@ -94,6 +94,7 @@
     <string name="video_menu_preview">Preview</string>
     <string name="audio_menu_volume">Volume</string>
     <string name="audio_menu_buffer_size">Buffer Size (in frames)</string>
+    <string name="audio_menu_buffer_size_description">Lowering this will reduce audio delay, but may cause crackling sounds.</string>
     <string name="application_crashed">Sorry, the application crashed. A report will be sent to the developer.</string>
     <string name="error_file_not_found">That file could not be found. Maybe it was moved?</string>
     <string name="error_not_power_of_two">That\'s not a Virtual Boy game! The file size should be a power of two.</string>

@@ -12,6 +12,7 @@
     <SeekBarPreference
         app:key="audio_buffer_size"
         app:title="@string/audio_menu_buffer_size"
+        app:summary="@string/audio_menu_buffer_size_description"
         app:min="2"
         android:max="8"
         app:showSeekBarValue="true"
