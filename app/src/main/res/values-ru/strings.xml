@@ -27,8 +27,8 @@
     <string name="controller_menu_choose_controller">Выберите контроллер для сопоставления</string>
     <string name="controller_menu_no_controllers_detected">Контроллеры не обнаружены…</string>
     <string name="controller_menu_new_controller">Новый контроллер</string>
-    <string name="controller_menu_rename_controller">Переименовать контроллер</string>
-    <string name="controller_menu_delete_controller">Удалить контроллер</string>
+    <string name="controller_menu_rename_controller">Переименовать</string>
+    <string name="controller_menu_delete_controller">Удалить</string>
     <string name="controller_menu_name">Имя контроллера?</string>
     <string name="controller_menu_create">Создать</string>
     <string name="controller_menu_cancel">Отмена</string>
