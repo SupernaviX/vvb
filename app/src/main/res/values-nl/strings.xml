@@ -12,7 +12,7 @@
     <string name="game_menu_load_state">State laden</string>
     <string name="game_menu_state_slot">Huidige staat-slot</string>
     <string name="game_menu_state_slot_empty">Leeg</string>
-    <string name="game_menu_close_game">Afsluiten</string>
+    <string name="game_menu_close_game">Sluiten</string>
     <string name="sustained_performance_mode">Aanhoudende prestatiemodus</string>
     <string name="sustained_performance_mode_summary">Kan langzamer werken. Pogingen om thermische beperking te voorkomen door de CPU-snelheid te verlagen</string>
     <string name="onscreen_input_menu_on">Virtuele gamepad</string>
@@ -26,12 +26,13 @@
     <string name="controller_menu_choose_controller">Kies Controller om toe te wijzen</string>
     <string name="controller_menu_no_controllers_detected">Geen controllers gedetecteerd...</string>
     <string name="controller_menu_new_controller">Nieuwe controller</string>
-    <string name="controller_menu_delete_controller">Controller verwijderen</string>
+    <string name="controller_menu_rename_controller">Hernoemen</string>
+    <string name="controller_menu_delete_controller">Verwijder</string>
     <string name="controller_menu_name">Controllernaam?</string>
     <string name="controller_menu_create">Maken</string>
     <string name="controller_menu_cancel">Annuleren</string>
-    <string name="controller_menu_rename">Naam wijzigen</string>
-    <string name="controller_menu_choose_rename">Kies de controller om de naam te wijzigen...</string>
+    <string name="controller_menu_rename">Hernoemen</string>
+    <string name="controller_menu_choose_rename">Kies de controller om te hernoemen...</string>
     <string name="controller_menu_choose_delete">Kies de controller om te verwijderen...</string>
     <string name="input_menu_unmapped">Niet toegewezen</string>
     <string name="input_menu_put_mapping">Druk op een willekeurige knop om deze aan deze ingang toe te wijzen. Lang indrukken om meerdere bedieningselementen toe te wijzen.</string>
