@@ -27,8 +27,8 @@
     <string name="controller_menu_choose_controller">选择映射控制器</string>
     <string name="controller_menu_no_controllers_detected">未检测到控制器...</string>
     <string name="controller_menu_new_controller">新控制器</string>
-    <string name="controller_menu_rename_controller">再名控制器</string>
-    <string name="controller_menu_delete_controller">删除控制器</string>
+    <string name="controller_menu_rename_controller">再名</string>
+    <string name="controller_menu_delete_controller">删除</string>
     <string name="controller_menu_name">控制器名？</string>
     <string name="controller_menu_create">创建</string>
     <string name="controller_menu_cancel">取消</string>
