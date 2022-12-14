@@ -27,14 +27,14 @@
     <string name="controller_menu_choose_controller">Elegir controlador para asignar</string>
     <string name="controller_menu_no_controllers_detected">No se detectaron controladores...</string>
     <string name="controller_menu_new_controller">Nuevo controlador</string>
-    <string name="controller_menu_rename_controller">Renombrar controlador</string>
-    <string name="controller_menu_delete_controller">Eliminar controlador</string>
+    <string name="controller_menu_rename_controller">Renombrar</string>
+    <string name="controller_menu_delete_controller">Eliminar</string>
     <string name="controller_menu_name">¿Nombre del controlador?</string>
     <string name="controller_menu_create">Crear</string>
     <string name="controller_menu_cancel">Cancelar</string>
     <string name="controller_menu_rename">Renombrar</string>
     <string name="controller_menu_choose_rename">Elegir controlador para renombrar...</string>
-    <string name="controller_menu_choose_delete">Elegir controlador para borrar...</string>
+    <string name="controller_menu_choose_delete">Elegir controlador para eliminar...</string>
     <string name="input_menu_unmapped">Sin mapear</string>
     <string name="input_menu_put_mapping">Presione cualquier control para asignarlo a esta entrada. Mantenga presionado para mapear múltiples controles.</string>
     <string name="input_menu_add_mapping">Presione cualquier control para agregar otra asignación para esta entrada.</string>
