@@ -27,8 +27,8 @@
     <string name="controller_menu_choose_controller">Eşlenecek Denetleyiciyi Seçin</string>
     <string name="controller_menu_no_controllers_detected">Denetleyici algılanmadı…</string>
     <string name="controller_menu_new_controller">Yeni Denetleyici</string>
-    <string name="controller_menu_rename_controller">Denetleyiciyi Yeniden Adlandır</string>
-    <string name="controller_menu_delete_controller">Denetleyiciyi Sil</string>
+    <string name="controller_menu_rename_controller">Yeniden Adlandır</string>
+    <string name="controller_menu_delete_controller">Sil</string>
     <string name="controller_menu_name">Denetleyici Adı?</string>
     <string name="controller_menu_create">Oluştur</string>
     <string name="controller_menu_cancel">İptal</string>
