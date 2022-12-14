@@ -27,8 +27,8 @@
     <string name="controller_menu_choose_controller">Pasirinkite valdiklį, kurį norite susieti</string>
     <string name="controller_menu_no_controllers_detected">Neaptikta jokių valdiklių...</string>
     <string name="controller_menu_new_controller">Naujas valdiklis</string>
-    <string name="controller_menu_rename_controller">Pervardyti valdiklį</string>
-    <string name="controller_menu_delete_controller">Ištrinti valdiklį</string>
+    <string name="controller_menu_rename_controller">Pervardyti</string>
+    <string name="controller_menu_delete_controller">Ištrinti</string>
     <string name="controller_menu_name">Valdiklio pavadinimas?</string>
     <string name="controller_menu_create">Sukurti</string>
     <string name="controller_menu_cancel">Atšaukti</string>
