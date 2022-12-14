@@ -27,12 +27,12 @@
     <string name="controller_menu_choose_controller">Valitse yhdistettävä ohjain</string>
     <string name="controller_menu_no_controllers_detected">Ohjaimia ei havaittu…</string>
     <string name="controller_menu_new_controller">Uusi ohjain</string>
-    <string name="controller_menu_rename_controller">Nimeä ohjain uudelleen</string>
-    <string name="controller_menu_delete_controller">Poista ohjain</string>
+    <string name="controller_menu_rename_controller">Nimeä uudelleen</string>
+    <string name="controller_menu_delete_controller">Poista</string>
     <string name="controller_menu_name">Ohjaajan nimi?</string>
     <string name="controller_menu_create">Luo</string>
     <string name="controller_menu_cancel">Peruuta</string>
-    <string name="controller_menu_rename">Uudelleennimeä</string>
+    <string name="controller_menu_rename">Nimeä uudelleen</string>
     <string name="controller_menu_choose_rename">Valitse uudelleennimettävä ohjain…</string>
     <string name="controller_menu_choose_delete">Valitse poistettava ohjain…</string>
     <string name="input_menu_unmapped">Karttaamaton</string>
