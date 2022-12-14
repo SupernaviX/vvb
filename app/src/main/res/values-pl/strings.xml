@@ -27,8 +27,8 @@
     <string name="controller_menu_choose_controller">Wybierz kontroler do mapowania</string>
     <string name="controller_menu_no_controllers_detected">Nie wykryto kontrolerów…</string>
     <string name="controller_menu_new_controller">Nowy kontroler</string>
-    <string name="controller_menu_rename_controller">Zmień nazwę kontrolera</string>
-    <string name="controller_menu_delete_controller">Usuń kontroler</string>
+    <string name="controller_menu_rename_controller">Zmień nazwę</string>
+    <string name="controller_menu_delete_controller">Usuń</string>
     <string name="controller_menu_name">Nazwa kontrolera?</string>
     <string name="controller_menu_create">Utwórz</string>
     <string name="controller_menu_cancel">Anuluj</string>
