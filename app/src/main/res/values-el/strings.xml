@@ -27,8 +27,8 @@
     <string name="controller_menu_choose_controller">Επιλογή ελεγκτή για χαρτογράφηση</string>
     <string name="controller_menu_no_controllers_detected">Δεν εντοπίστηκαν ελεγκτές…</string>
     <string name="controller_menu_new_controller">Νέος ελεγκτής</string>
-    <string name="controller_menu_rename_controller">Μετονομασία ελεγκτή</string>
-    <string name="controller_menu_delete_controller">Διαγραφή ελεγκτή</string>
+    <string name="controller_menu_rename_controller">Μετονομασία</string>
+    <string name="controller_menu_delete_controller">Διαγραφή</string>
     <string name="controller_menu_name">Όνομα ελεγκτή;</string>
     <string name="controller_menu_create">Δημιουργία</string>
     <string name="controller_menu_cancel">Ακύρωση</string>
