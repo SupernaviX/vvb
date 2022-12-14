@@ -12,7 +12,7 @@
     <string name="game_menu_load_state">Charger état</string>
     <string name="game_menu_state_slot">Emplacement de la état</string>
     <string name="game_menu_state_slot_empty">Vide</string>
-    <string name="game_menu_close_game">Fermer</string>
+    <string name="game_menu_close_game">Terminer</string>
     <string name="sustained_performance_mode">Mode Performances soutenues</string>
     <string name="sustained_performance_mode_summary">Peut fonctionner plus lentement. Tente d\'éviter la limitation thermique en réduisant la vitesse du CPU</string>
     <string name="onscreen_input_menu_on">Manette de jeu virtuelle</string>
@@ -26,8 +26,8 @@
     <string name="controller_menu_choose_controller">Choisir le contrôleur à mapper</string>
     <string name="controller_menu_no_controllers_detected">Aucun contrôleur détecté…</string>
     <string name="controller_menu_new_controller">Nouveau contrôleur</string>
-    <string name="controller_menu_rename_controller">Renommer le contrôleur</string>
-    <string name="controller_menu_delete_controller">Supprimer le contrôleur</string>
+    <string name="controller_menu_rename_controller">Renommer</string>
+    <string name="controller_menu_delete_controller">Supprimer</string>
     <string name="controller_menu_name">Nom du contrôleur ?</string>
     <string name="controller_menu_create">Créer</string>
     <string name="controller_menu_cancel">Annuler</string>
