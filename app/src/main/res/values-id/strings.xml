@@ -26,8 +26,8 @@
     <string name="controller_menu_choose_controller">Pilih Pengontrol untuk Memetakan</string>
     <string name="controller_menu_no_controllers_detected">Tidak ada pengontrol yang terdeteksi…</string>
     <string name="controller_menu_new_controller">Pengontrol Baru</string>
-    <string name="controller_menu_rename_controller">Ganti Nama Pengontrol</string>
-    <string name="controller_menu_delete_controller">Hapus Pengontrol</string>
+    <string name="controller_menu_rename_controller">Ganti Nama</string>
+    <string name="controller_menu_delete_controller">Hapus</string>
     <string name="controller_menu_name">Nama Pengontrol?</string>
     <string name="controller_menu_create">Buat</string>
     <string name="controller_menu_cancel">Batal</string>
