@@ -1,5 +1,7 @@
 package com.simongellis.vvb
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -10,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.emulator.VvbLibrary
+import com.simongellis.vvb.game.GameActivity
 import com.simongellis.vvb.menu.DetailedListPreference
 import com.simongellis.vvb.menu.DetailedListPreferenceDialogFragment
 import com.simongellis.vvb.menu.MainMenuFragment
@@ -32,6 +35,13 @@ class MainActivity : AppCompatActivity(R.layout.main_activity),
                 .replace(R.id.fragment_container, MainMenuFragment())
                 .setReorderingAllowed(true)
                 .commit()
+        }
+
+        getRequestedUri()?.also {
+            if (viewModel.loadGame(it)) {
+                val intent = Intent(this, GameActivity::class.java)
+                startActivity(intent)
+            }
         }
     }
 
@@ -111,5 +121,13 @@ class MainActivity : AppCompatActivity(R.layout.main_activity),
             }
         }
         return super.dispatchGenericMotionEvent(event)
+    }
+
+    private fun getRequestedUri(): Uri? {
+        return if (intent?.action == Intent.ACTION_VIEW) {
+            intent.data
+        } else {
+            null
+        }
     }
 }
