@@ -34,13 +34,16 @@ pub mod jni {
     use jni::objects::JObject;
     use jni::JNIEnv;
 
-    fn get_audio<'a>(env: &'a JNIEnv, this: JObject<'a>) -> jni_helpers::JavaGetResult<'a, Audio> {
+    fn get_audio<'a>(
+        env: &'a mut JNIEnv,
+        this: JObject<'a>,
+    ) -> jni_helpers::JavaGetResult<'a, Audio> {
         jni_helpers::java_get(env, this)
     }
 
-    fn get_settings(env: &JNIEnv, this: JObject) -> Result<Settings> {
-        let volume = env.get_percent(this, "volume")?;
-        let buffer_size = env.get_int(this, "bufferSize")?;
+    fn get_settings<'a>(env: &mut JNIEnv<'a>, this: JObject<'a>) -> Result<Settings> {
+        let volume = env.get_percent(&this, "volume")?;
+        let buffer_size = env.get_int(&this, "bufferSize")?;
 
         Ok(Settings {
             volume,
@@ -48,32 +51,34 @@ pub mod jni {
         })
     }
 
-    jni_func!(Audio_nativeConstructor, constructor, JObject, JObject);
-    fn constructor(
-        env: &JNIEnv,
-        this: JObject,
-        emulator: JObject,
-        settings: JObject,
+    jni_func!(Audio_nativeConstructor, constructor, JObject<'a>, JObject<'a>);
+    fn constructor<'a>(
+        env: &mut JNIEnv<'a>,
+        this: JObject<'a>,
+        emulator: JObject<'a>,
+        settings: JObject<'a>,
     ) -> Result<()> {
-        let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
         let settings = get_settings(env, settings)?;
-        let audio = Audio::new(emulator.claim_audio_player(settings.buffer_size, settings.volume))?;
+        let audio = {
+            let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+            Audio::new(emulator.claim_audio_player(settings.buffer_size, settings.volume))?
+        };
         jni_helpers::java_init(env, this, audio)
     }
 
     jni_func!(Audio_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn destructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_take::<Audio>(env, this)
     }
 
     jni_func!(Audio_nativeStart, start);
-    fn start(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn start(env: &mut JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_audio(env, this)?;
         this.start()
     }
 
     jni_func!(Audio_nativeStop, stop);
-    fn stop(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn stop(env: &mut JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_audio(env, this)?;
         this.stop()
     }

@@ -135,13 +135,13 @@ pub mod jni {
 
     type AnaglyphRenderer = Renderer<AnaglyphRenderLogic>;
 
-    fn get_settings(env: &JNIEnv, this: JObject) -> Result<Settings> {
-        let screen_zoom = env.get_percent(this, "screenZoom")?;
-        let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
-        let vertical_offset = env.get_percent(this, "verticalOffset")?;
+    fn get_settings<'a>(env: &mut JNIEnv<'a>, this: JObject<'a>) -> Result<Settings> {
+        let screen_zoom = env.get_percent(&this, "screenZoom")?;
+        let aspect_ratio = env.get_int(&this, "aspectRatio")?.try_into()?;
+        let vertical_offset = env.get_percent(&this, "verticalOffset")?;
         let colors = [
-            env.get_color(this, "colorLeft")?,
-            env.get_color(this, "colorRight")?,
+            env.get_color(&this, "colorLeft")?,
+            env.get_color(&this, "colorRight")?,
         ];
         Ok(Settings {
             screen_zoom,
@@ -152,47 +152,54 @@ pub mod jni {
     }
 
     fn get_renderer<'a>(
-        env: &'a JNIEnv,
+        env: &'a mut JNIEnv,
         this: JObject<'a>,
     ) -> jni_helpers::JavaGetResult<'a, AnaglyphRenderer> {
         jni_helpers::java_get(env, this)
     }
 
-    jni_func!(AnaglyphRenderer_nativeConstructor, constructor, JObject, JObject);
-    fn constructor(
-        env: &JNIEnv,
-        this: JObject,
-        emulator: JObject,
-        settings: JObject,
+    jni_func!(AnaglyphRenderer_nativeConstructor, constructor, JObject<'a>, JObject<'a>);
+    fn constructor<'a>(
+        env: &mut JNIEnv<'a>,
+        this: JObject<'a>,
+        emulator: JObject<'a>,
+        settings: JObject<'a>,
     ) -> Result<()> {
-        let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
         let settings = get_settings(env, settings)?;
-        let renderer = Renderer::new(
-            emulator.claim_frame_buffer_consumers(),
-            AnaglyphRenderLogic::new(&settings),
-        );
+        let renderer = {
+            let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+            Renderer::new(
+                emulator.claim_frame_buffer_consumers(),
+                AnaglyphRenderLogic::new(&settings),
+            )
+        };
         jni_helpers::java_init(env, this, renderer)
     }
 
     jni_func!(AnaglyphRenderer_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn destructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_take::<AnaglyphRenderer>(env, this)
     }
 
     jni_func!(AnaglyphRenderer_nativeOnSurfaceCreated, on_surface_created);
-    fn on_surface_created(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn on_surface_created(env: &mut JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
     jni_func!(AnaglyphRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
-    fn on_surface_changed(env: &JNIEnv, this: JObject, width: jint, height: jint) -> Result<()> {
+    fn on_surface_changed(
+        env: &mut JNIEnv,
+        this: JObject,
+        width: jint,
+        height: jint,
+    ) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height)
     }
 
     jni_func!(AnaglyphRenderer_nativeOnDrawFrame, on_draw_frame);
-    fn on_draw_frame(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn on_draw_frame(env: &mut JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()
     }

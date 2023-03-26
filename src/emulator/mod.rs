@@ -261,26 +261,26 @@ pub mod jni {
     use std::convert::TryInto;
 
     fn get_emulator<'a>(
-        env: &'a JNIEnv,
+        env: &'a mut JNIEnv,
         this: JObject<'a>,
     ) -> jni_helpers::JavaGetResult<'a, Emulator> {
         jni_helpers::java_get(env, this)
     }
 
     jni_func!(Emulator_nativeConstructor, constructor);
-    fn constructor(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn constructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_init(env, this, Emulator::new())
     }
 
     jni_func!(Emulator_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn destructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_take::<Emulator>(env, this)
     }
 
     jni_func!(Emulator_nativeLoadGamePak, load_game_pak, JByteBuffer, JByteBuffer);
-    fn load_game_pak(
-        env: &JNIEnv,
-        this: JObject,
+    fn load_game_pak<'a>(
+        env: &'a mut JNIEnv,
+        this: JObject<'a>,
         rom: JByteBuffer,
         sram: JByteBuffer,
     ) -> Result<()> {
@@ -295,7 +295,7 @@ pub mod jni {
     }
 
     jni_func!(Emulator_nativeUnloadGamePak, unload_game_pak);
-    fn unload_game_pak(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn unload_game_pak(env: &mut JNIEnv, this: JObject) -> Result<()> {
         info!("Unloading game pak");
         let mut this = get_emulator(env, this)?;
         this.unload_game_pak();
@@ -303,7 +303,7 @@ pub mod jni {
     }
 
     jni_func!(Emulator_nativeReset, reset);
-    fn reset(env: &JNIEnv, this: JObject) -> Result<()> {
+    fn reset(env: &mut JNIEnv, this: JObject) -> Result<()> {
         info!("Resetting game");
         let mut this = get_emulator(env, this)?;
         this.reset();
@@ -311,22 +311,22 @@ pub mod jni {
     }
 
     jni_func!(Emulator_nativeTick, tick, jint);
-    fn tick(env: &JNIEnv, this: JObject, nanoseconds: jint) -> Result<()> {
+    fn tick(env: &mut JNIEnv, this: JObject, nanoseconds: jint) -> Result<()> {
         let mut this = get_emulator(env, this)?;
         this.tick(nanoseconds as u64)
     }
 
     jni_func!(Emulator_nativeReadSRAM, read_sram, JByteBuffer);
-    fn read_sram(env: &JNIEnv, this: JObject, buffer: JByteBuffer) -> Result<()> {
-        let this = get_emulator(env, this)?;
+    fn read_sram(env: &mut JNIEnv, this: JObject, buffer: JByteBuffer) -> Result<()> {
         let buffer = env.get_direct_buffer(buffer)?;
+        let this = get_emulator(env, this)?;
         this.read_sram(buffer)
     }
 
     jni_func!(Emulator_nativeSaveState, save_state, JString);
-    fn save_state(env: &JNIEnv, this: JObject, filename: JString) -> Result<()> {
+    fn save_state(env: &mut JNIEnv, this: JObject, filename: JString) -> Result<()> {
         info!("Saving...");
-        let filename: String = env.get_string(filename)?.try_into()?;
+        let filename: String = env.get_string(&filename)?.try_into()?;
         let this = get_emulator(env, this)?;
         this.save_state(&filename)?;
         info!("Saved!");
@@ -334,9 +334,9 @@ pub mod jni {
     }
 
     jni_func!(Emulator_nativeLoadState, load_state, JString);
-    fn load_state(env: &JNIEnv, this: JObject, filename: JString) -> Result<()> {
+    fn load_state(env: &mut JNIEnv, this: JObject, filename: JString) -> Result<()> {
         info!("Loading...");
-        let filename: String = env.get_string(filename)?.try_into()?;
+        let filename: String = env.get_string(&filename)?.try_into()?;
         let mut this = get_emulator(env, this)?;
         this.load_state(&filename)?;
         info!("Loaded!");
@@ -345,7 +345,7 @@ pub mod jni {
 
     jni_func!(Emulator_nativeLoadImage, load_image, JByteBuffer, JByteBuffer);
     fn load_image(
-        env: &JNIEnv,
+        env: &mut JNIEnv,
         this: JObject,
         left_eye: JByteBuffer,
         right_eye: JByteBuffer,
