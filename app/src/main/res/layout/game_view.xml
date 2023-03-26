@@ -13,7 +13,7 @@
         app:layout_constraintGuide_percent="0.3"
         android:orientation="vertical" />
 
-    <android.opengl.GLSurfaceView
+    <com.simongellis.vvb.game.WrapperSurfaceViewAdapter
         android:id="@+id/surface_view"
         app:layout_constraintStart_toStartOf="@id/start_guideline"
         app:layout_constraintWidth_default="percent"

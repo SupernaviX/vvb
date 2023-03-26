@@ -2,8 +2,6 @@ package com.simongellis.vvb.emulator
 
 import androidx.annotation.ColorInt
 import androidx.annotation.IntRange
-import javax.microedition.khronos.egl.EGLConfig
-import javax.microedition.khronos.opengles.GL10
 
 class MonoRenderer(emulator: Emulator, settings: Settings): Renderer {
     private var _pointer = 0L
@@ -22,15 +20,15 @@ class MonoRenderer(emulator: Emulator, settings: Settings): Renderer {
         }
     }
 
-    override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
+    override fun onSurfaceCreated() {
         nativeOnSurfaceCreated()
     }
 
-    override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
+    override fun onSurfaceChanged(width: Int, height: Int) {
         nativeOnSurfaceChanged(width, height)
     }
 
-    override fun onDrawFrame(gl: GL10?) {
+    override fun onDrawFrame() {
         nativeOnDrawFrame()
     }
 

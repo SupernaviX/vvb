@@ -3,7 +3,6 @@ package com.simongellis.vvb.game
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
-import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -36,6 +35,9 @@ class GameView : ConstraintLayout, BacklightModeListener {
 
     val requestedOrientation: Int
 
+    private val _surfaceView: SurfaceViewAdapter
+        get() = _binding.surfaceView as SurfaceViewAdapter
+
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
@@ -61,9 +63,7 @@ class GameView : ConstraintLayout, BacklightModeListener {
                 guidePercent = _preferences.horizontalOffset
             }
 
-            surfaceView.setEGLContextClientVersion(2)
-            surfaceView.setRenderer(_renderer)
-            surfaceView.renderMode = GLSurfaceView.RENDERMODE_CONTINUOUSLY
+            _surfaceView.setRenderer(_renderer)
 
             gamepadView.setPreferences(_preferences)
 
@@ -85,12 +85,12 @@ class GameView : ConstraintLayout, BacklightModeListener {
     }
 
     fun onPause() {
-        _binding.surfaceView.onPause()
+        _surfaceView.onPause()
         checkShouldToggle3D(false)
     }
 
     fun onResume() {
-        _binding.surfaceView.onResume()
+        _surfaceView.onResume()
         _renderer.onResume()
         checkShouldToggle3D(true)
     }
