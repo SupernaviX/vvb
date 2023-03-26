@@ -31,14 +31,14 @@ pub mod jni {
     use crate::jni_helpers::EnvExtensions;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
-    use jni::sys::jobject;
+    use jni::objects::JObject;
     use jni::JNIEnv;
 
-    fn get_audio<'a>(env: &'a JNIEnv, this: jobject) -> jni_helpers::JavaGetResult<'a, Audio> {
+    fn get_audio<'a>(env: &'a JNIEnv, this: JObject<'a>) -> jni_helpers::JavaGetResult<'a, Audio> {
         jni_helpers::java_get(env, this)
     }
 
-    fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+    fn get_settings(env: &JNIEnv, this: JObject) -> Result<Settings> {
         let volume = env.get_percent(this, "volume")?;
         let buffer_size = env.get_int(this, "bufferSize")?;
 
@@ -48,12 +48,12 @@ pub mod jni {
         })
     }
 
-    jni_func!(Audio_nativeConstructor, constructor, jobject, jobject);
+    jni_func!(Audio_nativeConstructor, constructor, JObject, JObject);
     fn constructor(
         env: &JNIEnv,
-        this: jobject,
-        emulator: jobject,
-        settings: jobject,
+        this: JObject,
+        emulator: JObject,
+        settings: JObject,
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
         let settings = get_settings(env, settings)?;
@@ -62,18 +62,18 @@ pub mod jni {
     }
 
     jni_func!(Audio_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn destructor(env: &JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_take::<Audio>(env, this)
     }
 
     jni_func!(Audio_nativeStart, start);
-    fn start(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn start(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_audio(env, this)?;
         this.start()
     }
 
     jni_func!(Audio_nativeStop, stop);
-    fn stop(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn stop(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_audio(env, this)?;
         this.stop()
     }

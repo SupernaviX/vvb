@@ -105,13 +105,14 @@ pub mod jni {
     use crate::video::renderers::common::Renderer;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
-    use jni::sys::{jint, jobject};
+    use jni::objects::JObject;
+    use jni::sys::jint;
     use jni::JNIEnv;
     use std::convert::TryInto;
 
     type CardboardRenderer = Renderer<CardboardRenderLogic>;
 
-    pub fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+    pub fn get_settings(env: &JNIEnv, this: JObject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
         let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
@@ -127,17 +128,17 @@ pub mod jni {
 
     fn get_renderer<'a>(
         env: &'a JNIEnv,
-        this: jobject,
+        this: JObject<'a>,
     ) -> jni_helpers::JavaGetResult<'a, CardboardRenderer> {
         jni_helpers::java_get(env, this)
     }
 
-    jni_func!(CardboardRenderer_nativeConstructor, constructor, jobject, jobject);
+    jni_func!(CardboardRenderer_nativeConstructor, constructor, JObject, JObject);
     fn constructor(
         env: &JNIEnv,
-        this: jobject,
-        emulator: jobject,
-        settings: jobject,
+        this: JObject,
+        emulator: JObject,
+        settings: JObject,
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
         let settings = get_settings(env, settings)?;
@@ -149,30 +150,30 @@ pub mod jni {
     }
 
     jni_func!(CardboardRenderer_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn destructor(env: &JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_take::<CardboardRenderer>(env, this)
     }
 
     jni_func!(CardboardRenderer_nativeOnSurfaceCreated, on_surface_created);
-    fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn on_surface_created(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
     jni_func!(CardboardRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
-    fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
+    fn on_surface_changed(env: &JNIEnv, this: JObject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height)
     }
 
     jni_func!(CardboardRenderer_nativeOnDrawFrame, on_draw_frame);
-    fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn on_draw_frame(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()
     }
 
     jni_func!(CardboardRenderer_nativeEnsureDeviceParams, ensure_device_params);
-    fn ensure_device_params(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn ensure_device_params(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.logic.ensure_device_params();
         Ok(())

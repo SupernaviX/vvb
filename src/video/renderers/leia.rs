@@ -152,12 +152,13 @@ pub mod jni {
     use crate::video::renderers::common::Renderer;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
-    use jni::sys::{jboolean, jint, jobject};
+    use jni::objects::JObject;
+    use jni::sys::{jboolean, jint};
     use jni::JNIEnv;
 
     type LeiaRenderer = Renderer<LeiaRenderLogic>;
 
-    fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+    fn get_settings(env: &JNIEnv, this: JObject) -> Result<Settings> {
         let screen_zoom = env.get_percent(this, "screenZoom")?;
         let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(this, "verticalOffset")?;
@@ -175,17 +176,17 @@ pub mod jni {
 
     fn get_renderer<'a>(
         env: &'a JNIEnv,
-        this: jobject,
+        this: JObject<'a>,
     ) -> jni_helpers::JavaGetResult<'a, LeiaRenderer> {
         jni_helpers::java_get(env, this)
     }
 
-    jni_func!(LeiaRenderer_nativeConstructor, constructor, jobject, jobject);
+    jni_func!(LeiaRenderer_nativeConstructor, constructor, JObject, JObject);
     fn constructor(
         env: &JNIEnv,
-        this: jobject,
-        emulator: jobject,
-        settings: jobject,
+        this: JObject,
+        emulator: JObject,
+        settings: JObject,
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
         let settings = get_settings(env, settings)?;
@@ -197,30 +198,30 @@ pub mod jni {
     }
 
     jni_func!(LeiaRenderer_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn destructor(env: &JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_take::<LeiaRenderer>(env, this)
     }
 
     jni_func!(LeiaRenderer_nativeOnSurfaceCreated, on_surface_created);
-    fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn on_surface_created(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
     jni_func!(LeiaRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
-    fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
+    fn on_surface_changed(env: &JNIEnv, this: JObject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height)
     }
 
     jni_func!(LeiaRenderer_nativeOnDrawFrame, on_draw_frame);
-    fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn on_draw_frame(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()
     }
 
     jni_func!(LeiaRenderer_nativeOnModeChanged, on_mode_changed, jboolean);
-    fn on_mode_changed(env: &JNIEnv, this: jobject, enable_3d: jboolean) -> Result<()> {
+    fn on_mode_changed(env: &JNIEnv, this: JObject, enable_3d: jboolean) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.logic.enable_3d = enable_3d != 0;
         Ok(())

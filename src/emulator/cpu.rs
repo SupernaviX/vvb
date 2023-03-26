@@ -320,7 +320,7 @@ impl<'a> CpuProcess<'a> {
         {
             let instr = self.read_pc();
             let opcode = (instr >> 10) & 0x003F;
-            if (instr as u16) & 0xe000 == 0x8000 {
+            if instr & 0xe000 == 0x8000 {
                 self.bcond(instr);
                 continue;
             }

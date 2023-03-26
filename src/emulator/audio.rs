@@ -1,9 +1,13 @@
 use crate::emulator::memory::Memory;
 use log::debug;
-use ringbuf::{Consumer, Producer, RingBuffer};
+use ringbuf::HeapRb;
 use serde_derive::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::Arc;
+
+type Producer<T> = ringbuf::Producer<T, Arc<HeapRb<T>>>;
+type Consumer<T> = ringbuf::Consumer<T, Arc<HeapRb<T>>>;
 
 const CPU_CYCLES_PER_FRAME: u64 = 480;
 const FRAMES_PER_SECOND: f32 = 20_000_000. / (CPU_CYCLES_PER_FRAME as f32);
@@ -19,15 +23,11 @@ const ANALOG_FILTER_RC_CONSTANT: f32 = 0.022;
 const ANALOG_FILTER_DECAY_RATE: f32 =
     ANALOG_FILTER_RC_CONSTANT / (ANALOG_FILTER_RC_CONSTANT + 1. / FRAMES_PER_SECOND);
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, Default)]
 enum Direction {
+    #[default]
     Decay,
     Grow,
-}
-impl Default for Direction {
-    fn default() -> Self {
-        Direction::Decay
-    }
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize)]
@@ -127,15 +127,11 @@ impl Envelope {
     }
 }
 
-#[derive(Copy, Clone, Serialize, Deserialize, Debug)]
+#[derive(Copy, Clone, Serialize, Deserialize, Debug, Default)]
 enum ModFunction {
+    #[default]
     Sweep,
     Modulation,
-}
-impl Default for ModFunction {
-    fn default() -> Self {
-        ModFunction::Sweep
-    }
 }
 
 #[derive(Copy, Clone, Serialize, Deserialize, Default)]
@@ -500,7 +496,7 @@ impl AudioController {
 
     pub fn claim_player(&mut self, volume: f32, buffer_size: usize) -> AudioPlayer {
         let capacity = buffer_size * 833;
-        let buffer = RingBuffer::new(capacity);
+        let buffer = HeapRb::new(capacity);
         let (producer, consumer) = buffer.split();
         self.buffer = Some(producer);
         AudioPlayer {

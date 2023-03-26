@@ -9,7 +9,7 @@ mod video;
 
 use android_logger::{self, Config};
 use anyhow::Result;
-use jni::sys::jobject;
+use jni::objects::JObject;
 use jni::JNIEnv;
 use log::{info, Level};
 use video::{Cardboard, QrCode};
@@ -20,13 +20,13 @@ pub use controller::jni::*;
 pub use emulator::jni::*;
 pub use video::jni::*;
 
-jni_func!(VvbLibrary_nativeInitialize, init, jobject, jobject, jobject);
+jni_func!(VvbLibrary_nativeInitialize, init, JObject, JObject, JObject);
 fn init(
     env: &JNIEnv,
-    _this: jobject,
-    context: jobject,
-    sample_rate: jobject,
-    frames_per_burst: jobject,
+    _this: JObject,
+    context: JObject,
+    sample_rate: JObject,
+    frames_per_burst: JObject,
 ) -> Result<()> {
     android_logger::init_once(Config::default().with_min_level(Level::Info));
     info!("Hello from vvb");
@@ -34,8 +34,8 @@ fn init(
     let vm = env.get_java_vm()?;
     Cardboard::initialize(vm.get_java_vm_pointer(), context);
 
-    let sample_rate = env.get_integet_value(sample_rate)?;
-    let frames_per_burst = env.get_integet_value(frames_per_burst)?;
+    let sample_rate = env.get_integer_value(sample_rate)?;
+    let frames_per_burst = env.get_integer_value(frames_per_burst)?;
 
     audio::init(sample_rate, frames_per_burst);
 
@@ -43,7 +43,7 @@ fn init(
 }
 
 jni_func!(VvbLibrary_nativeChangeDeviceParams, change_device_params);
-fn change_device_params(_env: &JNIEnv, _this: jobject) -> Result<()> {
+fn change_device_params(_env: &JNIEnv, _this: JObject) -> Result<()> {
     QrCode::scan_qr_code_and_save_device_params();
     Ok(())
 }

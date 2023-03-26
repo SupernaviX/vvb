@@ -129,13 +129,14 @@ pub mod jni {
     use crate::video::renderers::common::Renderer;
     use crate::{jni_func, jni_helpers};
     use anyhow::Result;
-    use jni::sys::{jint, jobject};
+    use jni::objects::JObject;
+    use jni::sys::jint;
     use jni::JNIEnv;
     use std::convert::TryInto;
 
     type MonoRenderer = Renderer<MonoRenderLogic>;
 
-    fn get_settings(env: &JNIEnv, this: jobject) -> Result<Settings> {
+    fn get_settings(env: &JNIEnv, this: JObject) -> Result<Settings> {
         let eye = env.get_int(this, "eye")?.try_into()?;
         let screen_zoom = env.get_percent(this, "screenZoom")?;
         let aspect_ratio = env.get_int(this, "aspectRatio")?.try_into()?;
@@ -152,17 +153,17 @@ pub mod jni {
 
     fn get_renderer<'a>(
         env: &'a JNIEnv,
-        this: jobject,
+        this: JObject<'a>,
     ) -> jni_helpers::JavaGetResult<'a, MonoRenderer> {
         jni_helpers::java_get(env, this)
     }
 
-    jni_func!(MonoRenderer_nativeConstructor, constructor, jobject, jobject);
+    jni_func!(MonoRenderer_nativeConstructor, constructor, JObject, JObject);
     fn constructor(
         env: &JNIEnv,
-        this: jobject,
-        emulator: jobject,
-        settings: jobject,
+        this: JObject,
+        emulator: JObject,
+        settings: JObject,
     ) -> Result<()> {
         let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
         let settings = get_settings(env, settings)?;
@@ -174,24 +175,24 @@ pub mod jni {
     }
 
     jni_func!(MonoRenderer_nativeDestructor, destructor);
-    fn destructor(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn destructor(env: &JNIEnv, this: JObject) -> Result<()> {
         jni_helpers::java_take::<MonoRenderer>(env, this)
     }
 
     jni_func!(MonoRenderer_nativeOnSurfaceCreated, on_surface_created);
-    fn on_surface_created(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn on_surface_created(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_created()
     }
 
     jni_func!(MonoRenderer_nativeOnSurfaceChanged, on_surface_changed, jint, jint);
-    fn on_surface_changed(env: &JNIEnv, this: jobject, width: jint, height: jint) -> Result<()> {
+    fn on_surface_changed(env: &JNIEnv, this: JObject, width: jint, height: jint) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_surface_changed(width, height)
     }
 
     jni_func!(MonoRenderer_nativeOnDrawFrame, on_draw_frame);
-    fn on_draw_frame(env: &JNIEnv, this: jobject) -> Result<()> {
+    fn on_draw_frame(env: &JNIEnv, this: JObject) -> Result<()> {
         let mut this = get_renderer(env, this)?;
         this.on_draw_frame()
     }

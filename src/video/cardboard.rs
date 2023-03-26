@@ -2,7 +2,8 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-use jni::sys::{jobject, JavaVM};
+use jni::objects::JObject;
+use jni::sys::JavaVM;
 use std::os::raw::*;
 
 mod sys {
@@ -49,7 +50,7 @@ pub use sys::{CardboardEye, CardboardMesh};
 #[link(name = "GfxPluginCardboard")]
 extern "C" {
     #[link_name = "Cardboard_initializeAndroid"]
-    pub fn Cardboard_initializeAndroid(vm: *const JavaVM, context: jobject);
+    pub fn Cardboard_initializeAndroid(vm: *const JavaVM, context: JObject);
 
     #[link_name = "CardboardLensDistortion_create"]
     pub fn CardboardLensDistortion_create(
@@ -102,7 +103,7 @@ extern "C" {
 
 pub struct Cardboard;
 impl Cardboard {
-    pub fn initialize(vm: *const JavaVM, context: jobject) {
+    pub fn initialize(vm: *const JavaVM, context: JObject) {
         #[cfg(target_os = "android")]
         unsafe {
             Cardboard_initializeAndroid(vm, context);
