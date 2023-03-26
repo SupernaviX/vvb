@@ -39,3 +39,4 @@ path = "src/emulator/main.rs"
 
 [profile.release]
 debug = true
+panic = 'abort'
