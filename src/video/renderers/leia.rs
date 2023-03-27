@@ -147,16 +147,18 @@ pub struct Settings {
 #[rustfmt::skip::macros(jni_func)]
 pub mod jni {
     use super::{LeiaRenderLogic, Settings};
-    use crate::emulator::Emulator;
-    use crate::jni_helpers::EnvExtensions;
+    use crate::emulator::jni::get_emulator;
+    use crate::jni_helpers::{JavaBinding, JavaGetResult};
     use crate::video::renderers::common::Renderer;
-    use crate::{jni_func, jni_helpers};
+    use crate::{jni_func, EnvExtensions};
     use anyhow::Result;
     use jni::objects::JObject;
     use jni::sys::{jboolean, jint};
     use jni::JNIEnv;
 
     type LeiaRenderer = Renderer<LeiaRenderLogic>;
+
+    static LEIA_BINDING: JavaBinding<LeiaRenderer> = JavaBinding::new();
 
     fn get_settings<'a>(env: &mut JNIEnv<'a>, this: JObject<'a>) -> Result<Settings> {
         let screen_zoom = env.get_percent(&this, "screenZoom")?;
@@ -174,11 +176,8 @@ pub mod jni {
         })
     }
 
-    fn get_renderer<'a>(
-        env: &'a mut JNIEnv,
-        this: JObject<'a>,
-    ) -> jni_helpers::JavaGetResult<'a, LeiaRenderer> {
-        jni_helpers::java_get(env, this)
+    fn get_renderer<'a>(env: &'a mut JNIEnv, this: JObject<'a>) -> JavaGetResult<'a, LeiaRenderer> {
+        LEIA_BINDING.get_value(env, this)
     }
 
     jni_func!(LeiaRenderer_nativeConstructor, constructor, JObject<'a>, JObject<'a>);
@@ -190,18 +189,18 @@ pub mod jni {
     ) -> Result<()> {
         let settings = get_settings(env, settings)?;
         let renderer = {
-            let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+            let mut emulator = get_emulator(env, emulator)?;
             Renderer::new(
                 emulator.claim_frame_buffer_consumers(),
                 LeiaRenderLogic::new(&settings),
             )
         };
-        jni_helpers::java_init(env, this, renderer)
+        LEIA_BINDING.init_value(env, this, renderer)
     }
 
     jni_func!(LeiaRenderer_nativeDestructor, destructor);
     fn destructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
-        jni_helpers::java_take::<LeiaRenderer>(env, this)
+        LEIA_BINDING.drop_value(env, this)
     }
 
     jni_func!(LeiaRenderer_nativeOnSurfaceCreated, on_surface_created);

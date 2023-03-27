@@ -252,7 +252,8 @@ impl EventHandler for EmulatorEventHandler {
 #[rustfmt::skip::macros(jni_func)]
 pub mod jni {
     use super::Emulator;
-    use crate::{jni_func, jni_helpers, EnvExtensions};
+    use crate::jni_helpers::{JavaBinding, JavaGetResult};
+    use crate::{jni_func, EnvExtensions};
     use anyhow::Result;
     use jni::objects::{JByteBuffer, JObject, JString};
     use jni::sys::jint;
@@ -260,21 +261,20 @@ pub mod jni {
     use log::info;
     use std::convert::TryInto;
 
-    fn get_emulator<'a>(
-        env: &'a mut JNIEnv,
-        this: JObject<'a>,
-    ) -> jni_helpers::JavaGetResult<'a, Emulator> {
-        jni_helpers::java_get(env, this)
+    static EMULATOR_BINDING: JavaBinding<Emulator> = JavaBinding::new();
+
+    pub fn get_emulator<'a>(env: &'a mut JNIEnv, this: JObject<'a>) -> JavaGetResult<'a, Emulator> {
+        EMULATOR_BINDING.get_value(env, this)
     }
 
     jni_func!(Emulator_nativeConstructor, constructor);
     fn constructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
-        jni_helpers::java_init(env, this, Emulator::new())
+        EMULATOR_BINDING.init_value(env, this, Emulator::new())
     }
 
     jni_func!(Emulator_nativeDestructor, destructor);
     fn destructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
-        jni_helpers::java_take::<Emulator>(env, this)
+        EMULATOR_BINDING.drop_value(env, this)
     }
 
     jni_func!(Emulator_nativeLoadGamePak, load_game_pak, JByteBuffer, JByteBuffer);

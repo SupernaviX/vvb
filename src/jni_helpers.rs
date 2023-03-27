@@ -1,10 +1,13 @@
+mod java_binding;
+
 use anyhow::Result;
 use jni::objects::{JByteBuffer, JObject};
 use jni::JNIEnv;
 use log::error;
 use std::fmt::Display;
 use std::slice;
-use std::sync::MutexGuard;
+
+pub use java_binding::{JavaBinding, JavaGetResult};
 
 pub fn to_java_exception<T, E>(env: &mut JNIEnv, res: Result<T, E>)
 where
@@ -25,28 +28,6 @@ where
     }
 }
 
-const POINTER_FIELD: &str = "_pointer";
-pub type JavaGetResult<'a, T> = Result<MutexGuard<'a, T>>;
-
-pub fn java_init<T: 'static + Send>(env: &mut JNIEnv, this: JObject, value: T) -> Result<()> {
-    unsafe {
-        env.set_rust_field(this, POINTER_FIELD, value)?;
-    }
-    Ok(())
-}
-pub fn java_get<'a, T: 'static + Send>(
-    env: &'a mut JNIEnv,
-    this: JObject<'a>,
-) -> JavaGetResult<'a, T> {
-    let res: MutexGuard<T> = unsafe { env.get_rust_field(this, POINTER_FIELD)? };
-    Ok(res)
-}
-pub fn java_take<T: 'static + Send>(env: &mut JNIEnv, this: JObject) -> Result<()> {
-    unsafe {
-        env.take_rust_field(this, POINTER_FIELD)?;
-    }
-    Ok(())
-}
 pub trait EnvExtensions<'a> {
     fn get_integer_value<O: AsRef<JObject<'a>>>(&mut self, integer: O) -> Result<Option<i32>>;
     fn get_int<O: AsRef<JObject<'a>>>(&mut self, this: O, field: &str) -> Result<i32>;

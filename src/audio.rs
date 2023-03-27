@@ -27,18 +27,17 @@ pub struct Settings {
 #[rustfmt::skip::macros(jni_func)]
 pub mod jni {
     use super::{Audio, Settings};
-    use crate::emulator::Emulator;
-    use crate::jni_helpers::EnvExtensions;
-    use crate::{jni_func, jni_helpers};
+    use crate::emulator::jni::get_emulator;
+    use crate::jni_helpers::{JavaBinding, JavaGetResult};
+    use crate::{jni_func, EnvExtensions};
     use anyhow::Result;
     use jni::objects::JObject;
     use jni::JNIEnv;
 
-    fn get_audio<'a>(
-        env: &'a mut JNIEnv,
-        this: JObject<'a>,
-    ) -> jni_helpers::JavaGetResult<'a, Audio> {
-        jni_helpers::java_get(env, this)
+    static AUDIO_BINDING: JavaBinding<Audio> = JavaBinding::new();
+
+    fn get_audio<'a>(env: &'a mut JNIEnv, this: JObject<'a>) -> JavaGetResult<'a, Audio> {
+        AUDIO_BINDING.get_value(env, this)
     }
 
     fn get_settings<'a>(env: &mut JNIEnv<'a>, this: JObject<'a>) -> Result<Settings> {
@@ -60,15 +59,15 @@ pub mod jni {
     ) -> Result<()> {
         let settings = get_settings(env, settings)?;
         let audio = {
-            let mut emulator = jni_helpers::java_get::<Emulator>(env, emulator)?;
+            let mut emulator = get_emulator(env, emulator)?;
             Audio::new(emulator.claim_audio_player(settings.buffer_size, settings.volume))?
         };
-        jni_helpers::java_init(env, this, audio)
+        AUDIO_BINDING.init_value(env, this, audio)
     }
 
     jni_func!(Audio_nativeDestructor, destructor);
     fn destructor(env: &mut JNIEnv, this: JObject) -> Result<()> {
-        jni_helpers::java_take::<Audio>(env, this)
+        AUDIO_BINDING.drop_value(env, this)
     }
 
     jni_func!(Audio_nativeStart, start);
