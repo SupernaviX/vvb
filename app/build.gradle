@@ -162,11 +162,24 @@ build.dependsOn(extractNdk)
 clean.dependsOn(deleteNdk)
 
 tasks.whenTaskAdded { task ->
-    if (task.name.startsWith('javaPreCompile')) {
+    if (task.name.endsWith('JniLibFolders')) {
         task.dependsOn 'cargoBuild'
     }
     if (task.name.startsWith('cargoBuild')) {
         task.dependsOn 'extractNdk'
+    }
+}
+
+project.afterEvaluate {
+    // collect all the target dirs we compile to
+    def jniTargetDirs = []
+    tasks.withType(com.nishtahir.CargoBuildTask).forEach {
+        jniTargetDirs += new File("$buildDir/rustJniLibs", it.toolchain.folder)
+    }
+
+    // make sure we rerun the "merge jni lib folders" tasks any time they change
+    tasks.matching { it.name.matches(/merge.*JniLibFolders/) }.forEach {
+        jniTargetDirs.forEach { dir -> it.inputs.dir(dir) }
     }
 }
 
