@@ -93,9 +93,12 @@ android {
         leia {
             dimension 'version'
             applicationIdSuffix '.leia'
+            minSdkVersion 30
+            dependencies {
+                implementation files("../leia-cnsdk/cnsdk.aar")
+            }
         }
     }
-
 
     packagingOptions {
         jniLibs {
