@@ -34,7 +34,6 @@ repositories {
 
 android {
     compileSdkVersion 33
-    buildToolsVersion "30.0.3"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -109,7 +108,7 @@ android {
         }
     }
 
-    ndkVersion = "22.1.7171670"
+    ndkVersion = "25.2.9519653"
     namespace 'com.simongellis.vvb'
     androidResources {
         noCompress 'vb'
@@ -141,7 +140,6 @@ cargo {
     prebuiltToolchains = true
     rustupChannel = 'nightly'
     exec { spec, target ->
-        spec.args('-Zbuild-std=std,panic_abort', "-Zbuild-std-features=panic_immediate_abort")
         includeCardboardSdk(spec, target)
     }
 }
