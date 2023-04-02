@@ -57,7 +57,7 @@ impl DistortionWrapper {
         }
         check_error("prepare a texture for cardboard")?;
 
-        let framebuffer = unsafe { temp_array(|ptr| gl::GenTextures(1, ptr)) };
+        let framebuffer = unsafe { temp_array(|ptr| gl::GenFramebuffers(1, ptr)) };
         check_error("create a framebuffer for cardboard")?;
         unsafe {
             gl::BindFramebuffer(gl::FRAMEBUFFER, framebuffer);
