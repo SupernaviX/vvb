@@ -35,7 +35,7 @@ class GameActivity : AppCompatActivity() {
         _audio = Audio(emulator, _preferences.audioSettings)
         _controller = Controller(emulator)
 
-        _view = GameView(baseContext)
+        _view = GameView(this)
         requestedOrientation = _view.requestedOrientation
         _view.controller = _controller
         setContentView(_view)

@@ -74,6 +74,9 @@ class GamePreferences(context: Context) {
     val stereoSettings
         get() = StereoRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color)
 
+    val cnsdkSettings
+        get() = CNSDKRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color)
+
     val leiaSettings
         get() = LeiaRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color, colorBG)
 
@@ -83,7 +86,7 @@ class GamePreferences(context: Context) {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-        val displayManager = LeiaSDK.getDisplayManager(context)
+        val displayManager = true//LeiaSDK.getDisplayManager(context)
         var defaultMode = VideoMode.ANAGLYPH.name
         var defaultScreenZoom = 100
         if(displayManager !== null){

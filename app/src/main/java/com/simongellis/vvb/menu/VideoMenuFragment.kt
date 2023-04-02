@@ -60,7 +60,7 @@ class VideoMenuFragment: PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences_video, rootKey)
         var defaultModeName = VideoMode.ANAGLYPH.name
-        val leiaDisplayManager = LeiaSDK.getDisplayManager(context)
+        val leiaDisplayManager = true//LeiaSDK.getDisplayManager(context)
         var defaultBGColor = ContextCompat.getColor(requireContext(), R.color.black)
         var defaultScreenZoom = 100
         if(leiaDisplayManager !== null){

@@ -1,9 +1,9 @@
 package com.simongellis.vvb.game
 
+import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
-import android.util.AttributeSet
 import android.view.LayoutInflater
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
@@ -19,7 +19,7 @@ import com.leia.android.lights.BacklightModeListener
 import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_2D
 import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_3D
 
-class GameView : ConstraintLayout, BacklightModeListener {
+class GameView(context: Context) : ConstraintLayout(context), BacklightModeListener {
     private val _binding: GameViewBinding
     private val _renderer: Renderer
     private val _preferences: GamePreferences
@@ -38,12 +38,6 @@ class GameView : ConstraintLayout, BacklightModeListener {
     private val _surfaceView: SurfaceViewAdapter
         get() = _binding.surfaceView as SurfaceViewAdapter
 
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
-    @Suppress("unused")
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
-
     init {
         val emulator = Emulator.instance
         _preferences = GamePreferences(context)
@@ -53,7 +47,7 @@ class GameView : ConstraintLayout, BacklightModeListener {
             VideoMode.MONO_LEFT -> MonoRenderer(emulator, _preferences.monoSettings(Eye.LEFT))
             VideoMode.MONO_RIGHT -> MonoRenderer(emulator, _preferences.monoSettings(Eye.RIGHT))
             VideoMode.STEREO -> StereoRenderer(emulator, _preferences.stereoSettings)
-            VideoMode.LEIA -> LeiaRenderer(emulator, _preferences.leiaSettings)
+            VideoMode.LEIA -> CNSDKRenderer(emulator, _preferences.cnsdkSettings)
         }
 
         val layoutInflater = LayoutInflater.from(context)
@@ -77,11 +71,14 @@ class GameView : ConstraintLayout, BacklightModeListener {
 
         setBackgroundColor(Color.BLACK)
 
+        /*
         mDisplayManager = LeiaSDK.getDisplayManager(context)
         mDisplayManager?.apply {
             registerBacklightModeListener(this@GameView)
             checkShouldToggle3D(true)
         }
+
+         */
     }
 
     fun onPause() {
@@ -124,10 +121,10 @@ class GameView : ConstraintLayout, BacklightModeListener {
     }
 
     private fun enable3D() {
-        mDisplayManager?.requestBacklightMode(MODE_3D)
+        //mDisplayManager?.requestBacklightMode(MODE_3D)
     }
 
     private fun disable3D() {
-        mDisplayManager?.requestBacklightMode(MODE_2D)
+        //mDisplayManager?.requestBacklightMode(MODE_2D)
     }
 }

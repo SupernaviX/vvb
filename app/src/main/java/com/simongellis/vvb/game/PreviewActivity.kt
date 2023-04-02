@@ -18,7 +18,7 @@ class PreviewActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         VvbLibrary.instance.initialize(this)
-        _view = GameView(baseContext)
+        _view = GameView(this)
         _preferences = GamePreferences(baseContext)
         requestedOrientation = _view.requestedOrientation
         setContentView(_view)

@@ -23,7 +23,6 @@ class LeiaSurfaceViewAdapter : InterlacedSurfaceView, SurfaceViewAdapter, LeiaSD
         initArgs.platform.context = context.applicationContext
         initArgs.platform.activity = getActivity(context)
         initArgs.enableFaceTracking = true
-        initArgs.requiresFaceTrackingPermissionCheck = false
         LeiaSDK.createSDK(initArgs)
     }
 
@@ -82,7 +81,7 @@ class LeiaSurfaceViewAdapter : InterlacedSurfaceView, SurfaceViewAdapter, LeiaSD
             Log.i("LeiaSurfaceViewAdapter", "setting up $textureId (error 0x${GLES20.glGetError().toString(16)})")
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureId)
             Log.i("LeiaSurfaceViewAdapter", "bound $textureId (error 0x${GLES20.glGetError().toString(16)})")
-            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB, width * 2, height, 0, GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null)
+            GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGB, width, height, 0, GLES20.GL_RGB, GLES20.GL_UNSIGNED_BYTE, null)
             Log.i("LeiaSurfaceViewAdapter", "initialized $textureId (error 0x${GLES20.glGetError().toString(16)})")
 
             val framebuffers = IntArray(1)
@@ -103,6 +102,7 @@ class LeiaSurfaceViewAdapter : InterlacedSurfaceView, SurfaceViewAdapter, LeiaSD
 
     override fun didInitialize(sdk: LeiaSDK) {
         Log.i("LeiaSurfaceViewAdapter", "didInitialize")
+        sdk.enableBacklight(true)
     }
 
     override fun onFaceTrackingFatalError(sdk: LeiaSDK) {

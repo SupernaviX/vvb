@@ -13,6 +13,7 @@
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/cardboard-sdk" />
+            <option value="$PROJECT_DIR$/leia-cnsdk" />
           </set>
         </option>
       </GradleProjectSettings>

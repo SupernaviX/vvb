@@ -1,3 +1,4 @@
 include ':cardboard-sdk'
+include ':leia-cnsdk'
 include ':app'
 rootProject.name = "Virtual Virtual Boy"

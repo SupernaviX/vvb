@@ -95,7 +95,7 @@ android {
             applicationIdSuffix '.leia'
             minSdkVersion 30
             dependencies {
-                implementation files("../leia-cnsdk/cnsdk.aar")
+                implementation project(":leia-cnsdk")
             }
         }
     }
