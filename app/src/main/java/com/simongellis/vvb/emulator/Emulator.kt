@@ -103,7 +103,17 @@ class Emulator {
             val start = SystemClock.elapsedRealtimeNanos()
             nativeTick(lastDuration.toInt())
             val duration = SystemClock.elapsedRealtimeNanos() - start
-            lastDuration = duration.coerceAtMost(MAX_TICK_DURATION)
+            if (duration < DEFAULT_TICK_DURATION) {
+                val durationToSleep = DEFAULT_TICK_DURATION - duration
+                val millis = durationToSleep / 1_000_000
+                val nanos = (durationToSleep % 1_000_000).toInt()
+                try {
+                    Thread.sleep(millis, nanos)
+                } catch (ex: InterruptedException) {
+                    // don't care, try again
+                }
+            }
+            lastDuration = duration.coerceIn(DEFAULT_TICK_DURATION, MAX_TICK_DURATION)
         }
     }
 
