@@ -200,7 +200,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion"
 
     // relinker
-    implementation "com.getkeepsafe.relinker:relinker:1.4.3"
+    implementation "com.getkeepsafe.relinker:relinker:1.4.5"
 
     // serializer
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2"
@@ -220,7 +220,7 @@ dependencies {
     implementation 'com.fredporciuncula:flow-preferences:1.5.0'
 
     // error instrumentation
-    def acraVersion = '5.8.3'
+    def acraVersion = '5.9.7'
     implementation("ch.acra:acra-http:$acraVersion")
     implementation("ch.acra:acra-toast:$acraVersion")
 
