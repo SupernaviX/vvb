@@ -20,19 +20,10 @@ class LeiaRendererAdapter(private val leiaRenderer: LeiaGLSurfaceView.Renderer) 
     private var surfaceTextureId: Int? = null
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
-        // If this is called a second time, surfaceTexture was (probably) invalidated.
-        // We'll get a new one later, throw out the old one for now
-        if (!asset.IsSurfaceValid()) {
-            surfaceTexture = null
-            surfaceTextureId = null
-        }
-
         // Set the surface width/height to anything nonzero.
         // We will get the real size in onSurfaceChanged before they're used for real.
         val (width, height) = size ?: (768 to 224)
         updateSurfaceSize(width, height)
-
-        stale = true
 
         // create new framebuffer
         val fbIds = IntArray(1)
@@ -47,7 +38,6 @@ class LeiaRendererAdapter(private val leiaRenderer: LeiaGLSurfaceView.Renderer) 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
         size = width to height
         updateSurfaceSize(width, height)
-        stale = true
 
         innerRenderer.onSurfaceChanged(width, height)
         leiaRenderer.onSurfaceChanged(gl, width, height)
@@ -65,6 +55,7 @@ class LeiaRendererAdapter(private val leiaRenderer: LeiaGLSurfaceView.Renderer) 
     private fun updateSurfaceSize(width: Int, height: Int) {
         val surface = surfaceTexture
         if (surface == null || !asset.IsSurfaceValid()) {
+            // surface is no longer usable, recreate it
             surfaceTexture = null
             surfaceTextureId = null
             asset.CreateEmptySurfaceForPicture(width, height) {
@@ -72,10 +63,13 @@ class LeiaRendererAdapter(private val leiaRenderer: LeiaGLSurfaceView.Renderer) 
                 // any time assets are recreated
                 surfaceTexture = it
                 surfaceTextureId = asset.GetSurfaceId()
+                stale = true
             }
         } else {
             surface.setDefaultBufferSize(width, height)
         }
+
+        stale = true
     }
 
     private fun getPreparedFramebuffer(): Int? {
