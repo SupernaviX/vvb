@@ -12,7 +12,7 @@ import com.simongellis.vvb.emulator.*
 import com.simongellis.vvb.R
 import com.simongellis.vvb.leia.LeiaAdapter
 
-class GamePreferences(context: Context, leiaAdapter: LeiaAdapter) {
+class GamePreferences(context: Context) {
     val videoMode: VideoMode
     private val isAnaglyph
         get() = videoMode == VideoMode.ANAGLYPH
@@ -85,11 +85,12 @@ class GamePreferences(context: Context, leiaAdapter: LeiaAdapter) {
     init {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val supportsLeia = LeiaAdapter.instance(context).leiaVersion != null
 
         var defaultMode = VideoMode.ANAGLYPH.name
         var defaultScreenZoom = 100
 
-        if (leiaAdapter.leiaVersion != null) {
+        if (supportsLeia) {
             defaultMode = VideoMode.LEIA.name
             defaultScreenZoom = 65
         }
@@ -105,7 +106,7 @@ class GamePreferences(context: Context, leiaAdapter: LeiaAdapter) {
         colorRight = prefs.getInt("video_color_right", Color.BLUE)
 
         var defaultBGColor = Color.BLACK
-        if (leiaAdapter.leiaVersion != null) {
+        if (supportsLeia) {
             defaultBGColor = ContextCompat.getColor(context, R.color.leia_grey)
         }
         colorBG = prefs.getInt("video_color_bg", defaultBGColor)

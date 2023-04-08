@@ -1,17 +1,17 @@
 package com.simongellis.vvb.leia
 
-import android.app.Activity
+import android.content.Context
 import com.leia.sdk.LeiaSDK
 
 @Suppress("unused")
-class CNSDKLeiaAdapter(activity: Activity) : LeiaAdapter {
+class CNSDKLeiaAdapter(context: Context) : LeiaAdapter {
     override val leiaVersion = LeiaVersion.CNSDK
 
     private val sdk by lazy {
         val initArgs = LeiaSDK.InitArgs()
-        initArgs.platform.context = activity.applicationContext
-        initArgs.platform.activity = activity
+        initArgs.platform.context = context
         initArgs.enableFaceTracking = true
+        initArgs.requiresFaceTrackingPermissionCheck = false
         LeiaSDK.createSDK(initArgs)
     }
 
@@ -24,6 +24,7 @@ class CNSDKLeiaAdapter(activity: Activity) : LeiaAdapter {
     }
 
     override fun registerBacklightListener(listener: LeiaAdapter.BacklightListener) {
-        // This SDK doesn't let you listen for this. It also doesn't require you to.
+        // This SDK doesn't let you listen for backlight mode changes.
+        // It also doesn't require you to; it handles falling back to 2D itself.
     }
 }

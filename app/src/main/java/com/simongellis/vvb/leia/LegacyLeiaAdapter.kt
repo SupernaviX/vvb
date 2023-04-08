@@ -1,11 +1,11 @@
 package com.simongellis.vvb.leia
 
-import android.app.Activity
+import android.content.Context
 import com.leia.android.lights.LeiaDisplayManager
 import com.leia.android.lights.LeiaSDK
 
-class LegacyLeiaAdapter(activity: Activity) : LeiaAdapter {
-    private val manager = LeiaSDK.getDisplayManager(activity)
+class LegacyLeiaAdapter(context: Context) : LeiaAdapter {
+    private val manager = LeiaSDK.getDisplayManager(context)
     private val listeners = mutableSetOf<LeiaAdapter.BacklightListener>()
 
     init {

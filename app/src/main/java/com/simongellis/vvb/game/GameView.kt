@@ -1,6 +1,5 @@
 package com.simongellis.vvb.game
 
-import android.app.Activity
 import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
@@ -14,7 +13,6 @@ import com.simongellis.vvb.emulator.*
 // Leia SDK Includes
 import com.simongellis.vvb.leia.LeiaAdapter
 import com.simongellis.vvb.leia.LeiaVersion
-import com.simongellis.vvb.leia.LeiaViewModel.Companion.leiaAdapter
 
 class GameView(context: Context) : ConstraintLayout(context), LeiaAdapter.BacklightListener {
     private val _binding: GameViewBinding
@@ -22,7 +20,7 @@ class GameView(context: Context) : ConstraintLayout(context), LeiaAdapter.Backli
     private val _preferences: GamePreferences
 
     // LitByLeia
-    private val _leiaAdapter: LeiaAdapter
+    private val _leiaAdapter = LeiaAdapter.instance(context)
 
     var controller: Controller? = null
         set(value) {
@@ -34,8 +32,7 @@ class GameView(context: Context) : ConstraintLayout(context), LeiaAdapter.Backli
 
     init {
         val emulator = Emulator.instance
-        _leiaAdapter = (context as Activity).leiaAdapter
-        _preferences = GamePreferences(context, _leiaAdapter)
+        _preferences = GamePreferences(context)
         _renderer = when(_preferences.videoMode) {
             VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, _preferences.anaglyphSettings)
             VideoMode.CARDBOARD -> CardboardRenderer(emulator, _preferences.cardboardSettings)

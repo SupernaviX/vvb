@@ -13,7 +13,7 @@ import com.simongellis.vvb.emulator.VvbLibrary
 import com.simongellis.vvb.game.PreviewActivity
 import com.simongellis.vvb.game.VideoMode
 import com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
-import com.simongellis.vvb.leia.LeiaViewModel.Companion.leiaAdapter
+import com.simongellis.vvb.leia.LeiaAdapter
 import yuku.ambilwarna.AmbilWarnaDialog
 import yuku.ambilwarna.AmbilWarnaDialog.OnAmbilWarnaListener
 
@@ -59,7 +59,7 @@ class VideoMenuFragment : PreferenceFragmentCompat() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.preferences_video, rootKey)
 
-        val supportsLeia = leiaAdapter.leiaVersion != null
+        val supportsLeia = LeiaAdapter.instance(requireContext()).leiaVersion != null
 
         var defaultModeName = VideoMode.ANAGLYPH.name
         var defaultBGColor = ContextCompat.getColor(requireContext(), R.color.black)
