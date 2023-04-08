@@ -35,7 +35,8 @@ class CNSDKRenderer(emulator: Emulator, settings: Settings): Renderer {
         val screenZoom: Float,
         val aspectRatio: Int,
         val verticalOffset: Float,
-        @ColorInt val color: Int)
+        @ColorInt val color: Int,
+        @ColorInt val colorBG: Int)
 
     private external fun nativeConstructor(emulator: Emulator, settings: Settings)
     private external fun nativeDestructor()

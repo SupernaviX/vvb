@@ -24,9 +24,10 @@ const FRAGMENT_SHADER: &str = "\
 precision mediump float;
 varying vec2 v_TexCoord;
 uniform sampler2D u_Texture;
-uniform vec4 u_Color;
+uniform vec4 u_Colors[2];
 void main() {
-    gl_FragColor = u_Color * texture2D(u_Texture, v_TexCoord).r;
+    gl_FragColor = texture2D(u_Texture, v_TexCoord);
+    gl_FragColor = mix(u_Colors[1], u_Colors[0], gl_FragColor.g);
 }
 ";
 
@@ -38,9 +39,9 @@ pub struct CNSDKRenderLogic {
     tex_coord_location: GLuint,
     modelview_location: GLint,
     texture_location: GLint,
-    color_location: GLint,
+    colors_location: GLint,
 
-    texture_color: [GLfloat; 4],
+    texture_colors: [[GLfloat; 4]; 2],
     aspect_ratio: AspectRatio,
     transforms: [Matrix4<GLfloat>; 2],
     model_views: [[GLfloat; 16]; 2],
@@ -57,9 +58,12 @@ impl CNSDKRenderLogic {
             tex_coord_location: 0,
             modelview_location: -1,
             texture_location: -1,
-            color_location: -1,
+            colors_location: -1,
 
-            texture_color: utils::color_as_vector(settings.color),
+            texture_colors: [
+                utils::color_as_vector(settings.colors[0]),
+                utils::color_as_vector(settings.colors[1]),
+            ],
             aspect_ratio: settings.aspect_ratio,
             transforms: [
                 Matrix4::from_translation(vec3(-0.5, offset, 0.0)) * Matrix4::from_scale(zoom),
@@ -79,11 +83,11 @@ impl RenderLogic for CNSDKRenderLogic {
         self.tex_coord_location = self.program.get_attribute_location("a_TexCoord");
         self.modelview_location = self.program.get_uniform_location("u_MV");
         self.texture_location = self.program.get_uniform_location("u_Texture");
-        self.color_location = self.program.get_uniform_location("u_Color");
+        self.colors_location = self.program.get_uniform_location("u_Colors");
 
-        // Set color here, because it's the same for the entire life of the program
+        // Set colors here, because they're the same for the entire life of the program
         self.program
-            .set_uniform_vector(self.color_location, &self.texture_color);
+            .set_uniform_vector_array(self.colors_location, &self.texture_colors);
 
         Ok(())
     }
@@ -129,7 +133,7 @@ pub struct Settings {
     pub screen_zoom: f32,
     pub aspect_ratio: AspectRatio,
     pub vertical_offset: f32,
-    pub color: (u8, u8, u8),
+    pub colors: [(u8, u8, u8); 2],
 }
 
 #[rustfmt::skip::macros(jni_func)]
@@ -153,13 +157,16 @@ pub mod jni {
         let screen_zoom = env.get_percent(&this, "screenZoom")?;
         let aspect_ratio = env.get_int(&this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(&this, "verticalOffset")?;
-        let color = env.get_color(&this, "color")?;
+        let colors = [
+            env.get_color(&this, "color")?,
+            env.get_color(&this, "colorBG")?,
+        ];
 
         Ok(Settings {
             screen_zoom,
             aspect_ratio,
             vertical_offset,
-            color,
+            colors,
         })
     }
 
