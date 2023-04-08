@@ -95,9 +95,13 @@ impl RenderLogic for CNSDKRenderLogic {
     fn resize(&mut self, screen_size: (i32, i32)) -> Result<()> {
         self.program.set_viewport(screen_size)?;
 
+        // Pretend the screen is twice as wide as it actually is.
+        // This ensures we use the right proportions when it gets interlaced.
+        let xl_screen_size = (screen_size.0 * 2, screen_size.1);
+
         let base_mv = self
             .aspect_ratio
-            .compute_mvp_matrix(screen_size, (VB_WIDTH * 2, VB_HEIGHT));
+            .compute_mvp_matrix(xl_screen_size, (VB_WIDTH * 2, VB_HEIGHT));
         self.model_views = [
             utils::to_matrix(base_mv * self.transforms[0]),
             utils::to_matrix(base_mv * self.transforms[1]),
