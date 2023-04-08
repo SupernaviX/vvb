@@ -16,7 +16,7 @@ uniform mat4 u_MV;
 varying vec2 v_TexCoord;
 void main() {
     gl_Position = u_MV * a_Pos;
-    v_TexCoord = vec2(a_TexCoord.x, 1.0 - a_TexCoord.y);
+    v_TexCoord = a_TexCoord;
 }
 ";
 
@@ -28,9 +28,10 @@ varying vec2 v_TexCoord;
 
 void main()
 {
-    float view_id = mod(floor(gl_FragCoord.x), 2.0);
-    float other_id = mod(floor(gl_FragCoord.y), 2.0);
-    if ((view_id < 0.5) == (other_id < 0.5)) { gl_FragColor = texture2D(u_Textures[0], v_TexCoord); }
+    float view_id = mod(floor(gl_FragCoord.x), 4.0);
+    if (view_id < 0.5) { gl_FragColor = texture2D(u_Textures[0], v_TexCoord); }
+    else if (view_id < 1.5) { gl_FragColor = texture2D(u_Textures[0], v_TexCoord); }
+    else if (view_id < 2.5) { gl_FragColor = texture2D(u_Textures[1], v_TexCoord); }
     else { gl_FragColor = texture2D(u_Textures[1], v_TexCoord); }
     gl_FragColor = mix(u_Colors[1], u_Colors[0], gl_FragColor.g);
 }
