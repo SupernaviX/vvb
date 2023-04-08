@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application android:name=".VvbApplication">
+        <meta-data
+            android:name="com.simongellis.vvb.leia.LeiaAdapter"
+            android:value="com.simongellis.vvb.leia.CNSDKLeiaAdapter"
+            tools:replace="android:value" />
+    </application>
+</manifest>

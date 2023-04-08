@@ -9,10 +9,10 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.*
-import com.leia.android.lights.LeiaSDK
 import com.simongellis.vvb.R
+import com.simongellis.vvb.leia.LeiaAdapter
 
-class GamePreferences(context: Context) {
+class GamePreferences(context: Context, leiaAdapter: LeiaAdapter) {
     val videoMode: VideoMode
     private val isAnaglyph
         get() = videoMode == VideoMode.ANAGLYPH
@@ -86,10 +86,10 @@ class GamePreferences(context: Context) {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
 
-        val displayManager = true//LeiaSDK.getDisplayManager(context)
         var defaultMode = VideoMode.ANAGLYPH.name
         var defaultScreenZoom = 100
-        if(displayManager !== null){
+
+        if (leiaAdapter.leiaVersion != null) {
             defaultMode = VideoMode.LEIA.name
             defaultScreenZoom = 65
         }
@@ -105,7 +105,7 @@ class GamePreferences(context: Context) {
         colorRight = prefs.getInt("video_color_right", Color.BLUE)
 
         var defaultBGColor = Color.BLACK
-        if(displayManager !== null){
+        if (leiaAdapter.leiaVersion != null) {
             defaultBGColor = ContextCompat.getColor(context, R.color.leia_grey)
         }
         colorBG = prefs.getInt("video_color_bg", defaultBGColor)

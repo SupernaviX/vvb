@@ -6,7 +6,7 @@
     android:configChanges="navigation|keyboard|keyboardHidden|screenSize"
     android:keepScreenOn="true">
 
-    <android.opengl.GLSurfaceView
+    <com.simongellis.vvb.game.WrapperSurfaceViewAdapter
         android:id="@+id/surface_view"
         android:layout_width="match_parent"
         android:layout_height="0dp"

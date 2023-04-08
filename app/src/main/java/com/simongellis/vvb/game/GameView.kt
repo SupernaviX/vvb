@@ -12,20 +12,17 @@ import com.simongellis.vvb.databinding.GameViewBinding
 import com.simongellis.vvb.emulator.*
 
 // Leia SDK Includes
-import com.leia.android.lights.LeiaDisplayManager
-import com.leia.android.lights.LeiaDisplayManager.BacklightMode
-import com.leia.android.lights.LeiaSDK
-import com.leia.android.lights.BacklightModeListener
-import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_2D
-import com.leia.android.lights.LeiaDisplayManager.BacklightMode.MODE_3D
+import com.simongellis.vvb.leia.LeiaAdapter
+import com.simongellis.vvb.leia.LeiaVersion
+import com.simongellis.vvb.leia.LeiaViewModel.Companion.leiaAdapter
 
-class GameView(context: Context) : ConstraintLayout(context), BacklightModeListener {
+class GameView(context: Context) : ConstraintLayout(context), LeiaAdapter.BacklightListener {
     private val _binding: GameViewBinding
     private val _renderer: Renderer
     private val _preferences: GamePreferences
 
     // LitByLeia
-    private var mDisplayManager: LeiaDisplayManager? = null
+    private val _leiaAdapter: LeiaAdapter
 
     var controller: Controller? = null
         set(value) {
@@ -35,19 +32,21 @@ class GameView(context: Context) : ConstraintLayout(context), BacklightModeListe
 
     val requestedOrientation: Int
 
-    private val _surfaceView: SurfaceViewAdapter
-        get() = _binding.surfaceView as SurfaceViewAdapter
-
     init {
         val emulator = Emulator.instance
-        _preferences = GamePreferences(context)
+        _leiaAdapter = (context as Activity).leiaAdapter
+        _preferences = GamePreferences(context, _leiaAdapter)
         _renderer = when(_preferences.videoMode) {
             VideoMode.ANAGLYPH -> AnaglyphRenderer(emulator, _preferences.anaglyphSettings)
             VideoMode.CARDBOARD -> CardboardRenderer(emulator, _preferences.cardboardSettings)
             VideoMode.MONO_LEFT -> MonoRenderer(emulator, _preferences.monoSettings(Eye.LEFT))
             VideoMode.MONO_RIGHT -> MonoRenderer(emulator, _preferences.monoSettings(Eye.RIGHT))
             VideoMode.STEREO -> StereoRenderer(emulator, _preferences.stereoSettings)
-            VideoMode.LEIA -> CNSDKRenderer(emulator, _preferences.cnsdkSettings)
+            VideoMode.LEIA -> when(_leiaAdapter.leiaVersion) {
+                LeiaVersion.Legacy -> LeiaRenderer(emulator, _preferences.leiaSettings)
+                LeiaVersion.CNSDK -> CNSDKRenderer(emulator, _preferences.cnsdkSettings)
+                null -> throw Exception("Device does not support leia")
+            }
         }
 
         val layoutInflater = LayoutInflater.from(context)
@@ -57,7 +56,7 @@ class GameView(context: Context) : ConstraintLayout(context), BacklightModeListe
                 guidePercent = _preferences.horizontalOffset
             }
 
-            _surfaceView.setRenderer(_renderer)
+            surfaceView.setRenderer(_renderer)
 
             gamepadView.setPreferences(_preferences)
 
@@ -71,23 +70,17 @@ class GameView(context: Context) : ConstraintLayout(context), BacklightModeListe
 
         setBackgroundColor(Color.BLACK)
 
-        /*
-        mDisplayManager = LeiaSDK.getDisplayManager(context)
-        mDisplayManager?.apply {
-            registerBacklightModeListener(this@GameView)
-            checkShouldToggle3D(true)
-        }
-
-         */
+        _leiaAdapter.registerBacklightListener(this@GameView)
+        checkShouldToggle3D(true)
     }
 
     fun onPause() {
-        _surfaceView.onPause()
+        _binding.surfaceView.onPause()
         checkShouldToggle3D(false)
     }
 
     fun onResume() {
-        _surfaceView.onResume()
+        _binding.surfaceView.onResume()
         _renderer.onResume()
         checkShouldToggle3D(true)
     }
@@ -102,15 +95,14 @@ class GameView(context: Context) : ConstraintLayout(context), BacklightModeListe
         checkShouldToggle3D(_preferences.isLeia && hasWindowFocus)
     }
 
-    /** BacklightModeListener Interface requirement  */
-    override fun onBacklightModeChanged(backlightMode: BacklightMode) {
+    override fun onBacklightChanged(enabled: Boolean) {
         if (_preferences.isLeia) {
-            _renderer.onModeChanged(backlightMode == MODE_3D)
+            _renderer.onModeChanged(enabled)
         }
     }
 
     private fun checkShouldToggle3D(desiredState: Boolean) {
-        if(mDisplayManager === null) {
+        if(_leiaAdapter.leiaVersion == null) {
             return
         }
         if (desiredState && _preferences.isLeia) {
@@ -121,10 +113,10 @@ class GameView(context: Context) : ConstraintLayout(context), BacklightModeListe
     }
 
     private fun enable3D() {
-        //mDisplayManager?.requestBacklightMode(MODE_3D)
+        _leiaAdapter.enableBacklight()
     }
 
     private fun disable3D() {
-        //mDisplayManager?.requestBacklightMode(MODE_2D)
+        _leiaAdapter.disableBacklight()
     }
 }

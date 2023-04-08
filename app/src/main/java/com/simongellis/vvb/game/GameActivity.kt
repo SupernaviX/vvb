@@ -16,6 +16,7 @@ import com.simongellis.vvb.emulator.Audio
 import com.simongellis.vvb.emulator.Controller
 import com.simongellis.vvb.emulator.Emulator
 import com.simongellis.vvb.emulator.VvbLibrary
+import com.simongellis.vvb.leia.LeiaViewModel.Companion.leiaAdapter
 
 class GameActivity : AppCompatActivity() {
     private val viewModel: GameViewModel by viewModels()
@@ -30,7 +31,7 @@ class GameActivity : AppCompatActivity() {
         VvbLibrary.instance.initialize(this)
 
         val emulator = Emulator.instance
-        _preferences = GamePreferences(baseContext)
+        _preferences = GamePreferences(baseContext, leiaAdapter)
 
         _audio = Audio(emulator, _preferences.audioSettings)
         _controller = Controller(emulator)

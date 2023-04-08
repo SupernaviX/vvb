@@ -8,6 +8,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.simongellis.vvb.emulator.VvbLibrary
+import com.simongellis.vvb.leia.LeiaViewModel.Companion.leiaAdapter
 
 class PreviewActivity: AppCompatActivity() {
     private val viewModel: GameViewModel by viewModels()
@@ -19,7 +20,7 @@ class PreviewActivity: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         VvbLibrary.instance.initialize(this)
         _view = GameView(this)
-        _preferences = GamePreferences(baseContext)
+        _preferences = GamePreferences(baseContext, leiaAdapter)
         requestedOrientation = _view.requestedOrientation
         setContentView(_view)
 
