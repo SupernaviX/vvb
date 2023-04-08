@@ -64,7 +64,9 @@ class LeiaRendererAdapter(private val leiaRenderer: LeiaGLSurfaceView.Renderer) 
 
     private fun updateSurfaceSize(width: Int, height: Int) {
         val surface = surfaceTexture
-        if (surface == null) {
+        if (surface == null || !asset.IsSurfaceValid()) {
+            surfaceTexture = null
+            surfaceTextureId = null
             asset.CreateEmptySurfaceForPicture(width, height) {
                 // NB: this block gets called during InterlacedRenderer.onDrawFrame
                 // any time assets are recreated
