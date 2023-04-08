@@ -1,36 +1,38 @@
 <resources>
     <string name="app_name" translatable="false">Virtual Virtual Boy</string>
-    <string name="main_menu_game_actions" translatable="false">Game Actions</string>
-    <string name="main_menu_now_playing" translatable="false">Now Playing</string>
-    <string name="main_menu_load_game" translatable="false">Load Game</string>
-    <string name="main_menu_onscreen_input_setup" translatable="false">On-Screen Input Setup</string>
-    <string name="main_menu_controller_setup" translatable="false">Controller Setup</string>
-    <string name="main_menu_video_setup" translatable="false">Video Setup</string>
-    <string name="main_menu_audio_setup" translatable="false">Audio Setup</string>
-    <string name="main_menu_general_setup" translatable="false">General Setup</string>
+<!--translatable="false"-->
+    <string name="main_menu_game_actions">Game Actions</string>
+    <string name="main_menu_now_playing">Now Playing</string>
+    <string name="main_menu_load_game">Load Game</string>
+    <string name="main_menu_onscreen_input_setup">On-Screen Input</string>
+    <string name="main_menu_controller_setup">Controller</string>
+    <string name="main_menu_video_setup">Video</string>
+    <string name="main_menu_audio_setup">Audio</string>
+    <string name="main_menu_general_setup">General</string>
+<!---->
     <string name="load_game_from_file">Load From File</string>
-    <string name="load_game_from_file_explanation">You can download ROMs of Virtual Boy games, and load them here to play them.\nYou can find free ROMs from Planet Virtual Boy, at https://virtual-boy.com/homebrew/.</string>
+    <string name="load_game_from_file_explanation">Play free ROMs from Planet Virtual Boy, https://virtual-boy.com/homebrew/.</string>
     <string name="load_game_from_file_explanation_button" translatable="false">OK</string>
     <string name="load_game_recent_games">Recent Games</string>
     <string name="load_game_no_recent_games">You haven\'t played any games yet. Try one out!</string>
     <string name="load_game_bundled_games">Bundled Games</string>
-    <string name="load_game_no_bundled_games">No Bundled Games</string>
-    <string name="load_game_created_by" translatable="false">Created by %1$s</string>
+    <string name="load_game_no_bundled_games">Nothing</string>
+    <string name="load_game_created_by">%1$s</string>
     <string name="game_menu_resume_game">Resume Game</string>
     <string name="game_menu_reset_game">Reset</string>
     <string name="game_menu_auto_save">Auto-Save</string>
     <string name="game_menu_save_state">Save State</string>
     <string name="game_menu_load_state">Load State</string>
     <string name="game_menu_state_slot">State Slot</string>
-    <string name="game_menu_state_slot_name" translatable="false">Slot %1$s</string>
+    <string name="game_menu_state_slot_name">%1$s</string>
     <string name="game_menu_state_slot_empty">Empty</string>
-    <string name="game_menu_state_slot_saved" translatable="false">Saved: %1$s</string>
+    <string name="game_menu_state_slot_saved">%1$s</string>
     <string name="game_menu_close_game">Close Game</string>
-    <string name="sustained_performance_mode">Sustained Performance Mode</string>
-    <string name="sustained_performance_mode_summary" translatable="false">May run more slowly. Attempts to avoid thermal throttling by reducing cpu speed</string>
-    <string name="onscreen_input_menu_on">Use Virtual Gamepad</string>
-    <string name="onscreen_input_menu_toggle_controls">Put Trigger Buttons in Toggle Mode</string>
-    <string name="onscreen_input_menu_haptic_feedback">Enable Haptic Feedback</string>
+    <string name="sustained_performance_mode">Sustained Performance</string>
+    <string name="sustained_performance_mode_summary" translatable="false">Reduce CPU speed (run slowly) to avoid thermal throttling</string>
+    <string name="onscreen_input_menu_on">Virtual Gamepad</string>
+    <string name="onscreen_input_menu_toggle_controls">Toggle Trigger Buttons</string>
+    <string name="onscreen_input_menu_haptic_feedback">Haptic Feedback</string>
     <string name="onscreen_input_menu_parallax">Parallax</string>
     <string name="onscreen_input_menu_show_bounds">Show Control Bounds</string>
     <string name="onscreen_input_menu_preview">Preview</string>
@@ -38,7 +40,7 @@
     <string name="controller_menu_manage">Manage Controllers</string>
     <string name="controller_menu_automap_new_controller">Auto-Map New Controller</string>
     <string name="controller_menu_choose_controller">Choose Controller to Map</string>
-    <string name="controller_menu_no_controllers_detected">No controllers detected…</string>
+    <string name="controller_menu_no_controllers_detected">Nothing detected…</string>
     <string name="controller_menu_new_controller">New Controller</string>
     <string name="controller_menu_rename_controller">Rename Controller</string>
     <string name="controller_menu_delete_controller">Delete Controller</string>
@@ -48,7 +50,7 @@
     <string name="controller_menu_rename">Rename</string>
     <string name="controller_menu_choose_rename">Choose controller to rename…</string>
     <string name="controller_menu_choose_delete">Choose controller to delete…</string>
-    <string name="controller_menu_default_name">Controller %1$d</string>
+    <string name="controller_menu_default_name">%1$d</string>
     <string name="input_menu_dpad_left">Left D-Pad</string>
     <string name="input_menu_dpad_right">Right D-Pad</string>
     <string name="input_menu_button_left">Left</string>
@@ -62,23 +64,23 @@
     <string name="input_menu_button_start">Start</string>
     <string name="input_menu_button_select">Select</string>
     <string name="input_menu_unmapped">Unmapped</string>
-    <string name="input_menu_put_mapping">Press any control to map it to this input. Long press to map multiple controls.</string>
+    <string name="input_menu_put_mapping">Press any control to map it to this input. Hold to map multiple controls.</string>
     <string name="input_menu_add_mapping">Press any control to add another mapping for this input.</string>
     <string name="video_menu_screen_zoom_percent">Screen Zoom (percent)</string>
     <string name="video_menu_horizontal_offset">Horizontal Offset</string>
     <string name="video_menu_vertical_offset">Vertical Offset</string>
     <string name="video_menu_mode">Display Mode</string>
     <string name="video_mode_anaglyph_summary">Anaglyph (two-color)</string>
-    <string name="video_mode_anaglyph_description">Works with most pairs of 3D glasses</string>
+    <string name="video_mode_anaglyph_description">Most pairs of 3D glasses</string>
     <string name="video_mode_cardboard_summary">Google Cardboard</string>
-    <string name="video_mode_cardboard_description">Works with Google Cardboard or Daydream</string>
+    <string name="video_mode_cardboard_description">Google Cardboard or Daydream</string>
     <string name="video_mode_mono_left_summary">Left eye only</string>
     <string name="video_mode_mono_right_summary">Right eye only</string>
-    <string name="video_mode_mono_description">No equipment needed, but no 3D effects</string>
+    <string name="video_mode_mono_description">No equipment and 3D effects</string>
     <string name="video_mode_stereo_summary">Side-by-side</string>
-    <string name="video_mode_stereo_description">Works with 3D TVs</string>
+    <string name="video_mode_stereo_description">3D TV</string>
     <string name="video_mode_leia_summary">LitByLeia</string>
-    <string name="video_mode_leia_description">Works with Lume Pad &amp; RED Hydrogen One</string>
+    <string name="video_mode_leia_description">Lume Pad and RED Hydrogen One</string>
     <string name="video_menu_aspect_ratio">Aspect Ratio</string>
     <string name="aspect_ratio_auto">Auto</string>
     <string name="aspect_ratio_stretch">Stretch to Fit</string>
@@ -94,12 +96,12 @@
     <string name="video_menu_preview">Preview</string>
     <string name="audio_menu_volume">Volume</string>
     <string name="audio_menu_buffer_size">Buffer Size (in frames)</string>
-    <string name="audio_menu_buffer_size_description">Lowering this will reduce audio delay, but may cause crackling sounds.</string>
-    <string name="application_crashed">Sorry, the application crashed. A report will be sent to the developer.</string>
+    <string name="audio_menu_buffer_size_description">Lowering to reduce audio delay, but may cause crackling sounds.</string>
+    <string name="application_crashed">Crashed! Report to developer.</string>
     <string name="error_file_not_found">That file could not be found. Maybe it was moved?</string>
-    <string name="error_not_power_of_two">That\'s not a Virtual Boy game! The file size should be a power of two.</string>
-    <string name="error_too_large">That\'s not a Virtual Boy game! They can only be up to 16Mb.</string>
-    <string name="error_zip">Nothing in that ZIP file looked like a Virtual Boy game…</string>
+    <string name="error_not_power_of_two">Virtual boy file size should be a power of 2.</string>
+    <string name="error_too_large">Virtual Boy ROMs can only be up to 16Mb.</string>
+    <string name="error_zip">No vb, vboy, bin in ZIP</string>
     <string name="toast_state_saved">Saved state</string>
     <string name="toast_state_loaded">Loaded state</string>
 </resources>

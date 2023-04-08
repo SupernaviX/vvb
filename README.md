@@ -52,6 +52,6 @@ Several features are not implemented:
 
 ## Credits
 - Guy Perfect for writing the extremely helpful [Virtual Boy Sacred Tech Scroll](https://virtual-boy.com/documents/virtual-boy-sacred-tech-scroll)
-- [Pi Lanningham](https://github.com/Quantumplation) and [Robert Kellett](https://github.com/Splagoon) for rubber ducking
-- [JakeDowns](https://github.com/jakedowns) for adding support for Leia 3D devices
-- [AngelofMe](https://github.com/AngelofMe) and [soundsnow](https://github.com/soundsnow) for the Chinese, Dutch, Finnish, French, German, Greek, Hungarian, Indonesian, Italian, Japanese, Korean, Lithuanian, Polish, Portuguese, Russian, Spanish, Swedish, Turkish translations
+- Rubber ducking - [Pi Lanningham](https://github.com/Quantumplation) and [Robert Kellett](https://github.com/Splagoon)
+- [3D mobile phones](https://en.m.wikipedia.org/wiki/List_of_3D-enabled_mobile_phones): [Leia](https://en.m.wikipedia.org/wiki/Leia_(company)) Lume Pad & [RED Hydrogen One](https://en.m.wikipedia.org/wiki/Red_Hydrogen_One) - [JakeDowns](https://github.com/jakedowns)
+- Translations(vvb/app/src/main/res/values-lang) - [AngelofMe](https://github.com/AngelofMe) and [soundsnow](https://github.com/soundsnow)
