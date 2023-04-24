@@ -9,8 +9,8 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.simongellis.vvb.emulator.*
-import com.leia.android.lights.LeiaSDK
 import com.simongellis.vvb.R
+import com.simongellis.vvb.leia.LeiaAdapter
 
 class GamePreferences(context: Context) {
     val videoMode: VideoMode
@@ -74,6 +74,9 @@ class GamePreferences(context: Context) {
     val stereoSettings
         get() = StereoRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color)
 
+    val cnsdkSettings
+        get() = CNSDKRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color, colorBG)
+
     val leiaSettings
         get() = LeiaRenderer.Settings(screenZoom, aspectRatio.ordinal, verticalOffset, color, colorBG)
 
@@ -82,11 +85,12 @@ class GamePreferences(context: Context) {
     init {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        val supportsLeia = LeiaAdapter.instance(context).leiaVersion != null
 
-        val displayManager = LeiaSDK.getDisplayManager(context)
         var defaultMode = VideoMode.ANAGLYPH.name
         var defaultScreenZoom = 100
-        if(displayManager !== null){
+
+        if (supportsLeia) {
             defaultMode = VideoMode.LEIA.name
             defaultScreenZoom = 65
         }
@@ -102,7 +106,7 @@ class GamePreferences(context: Context) {
         colorRight = prefs.getInt("video_color_right", Color.BLUE)
 
         var defaultBGColor = Color.BLACK
-        if(displayManager !== null){
+        if (supportsLeia) {
             defaultBGColor = ContextCompat.getColor(context, R.color.leia_grey)
         }
         colorBG = prefs.getInt("video_color_bg", defaultBGColor)

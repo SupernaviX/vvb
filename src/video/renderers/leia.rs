@@ -28,19 +28,12 @@ varying vec2 v_TexCoord;
 
 void main()
 {
-    //  + alignment_offset
     float view_id = mod(floor(gl_FragCoord.x), 4.0);
     if (view_id < 0.5) { gl_FragColor = texture2D(u_Textures[0], v_TexCoord); }
     else if (view_id < 1.5) { gl_FragColor = texture2D(u_Textures[0], v_TexCoord); }
     else if (view_id < 2.5) { gl_FragColor = texture2D(u_Textures[1], v_TexCoord); }
     else { gl_FragColor = texture2D(u_Textures[1], v_TexCoord); }
     gl_FragColor = mix(u_Colors[1], u_Colors[0], gl_FragColor.g);
-
-    // // scanline
-    // vec2 uv = gl_FragCoord.xy / vec2(384.0,224.0);
-    // float scanline 	= clamp( 0.95 + 0.05 * cos( 3.14 * ( uv.y + 0.008 ) * 240.0 * 1.0 ), 0.0, 1.0 );
-    // float grille 	= 0.85 + 0.15 * clamp( 1.5 * cos( 3.14 * uv.x * 640.0 * 1.0 ), 0.0, 1.0 );
-    // gl_FragColor *= scanline * grille * 1.2;
 }
 ";
 
