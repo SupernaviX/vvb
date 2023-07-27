@@ -19,6 +19,17 @@ mod sys {
     }
 
     #[repr(C)]
+    pub enum CardboardSupportedOpenGlEsTextureType {
+        kGlTexture2D = 0,
+        kGlTextureExternalOes = 1,
+    }
+
+    #[repr(C)]
+    pub struct CardboardOpenGlEsDistortionRendererConfig {
+        pub texture_type: CardboardSupportedOpenGlEsTextureType,
+    }
+
+    #[repr(C)]
     pub struct CardboardEyeTextureDescription {
         pub texture: c_ulonglong,
         pub left_u: c_float,
@@ -64,12 +75,14 @@ extern "C" {
     #[link_name = "CardboardLensDistortion_getDistortionMesh"]
     pub fn CardboardLensDistortion_getDistortionMesh(
         lens_distortion: *mut sys::CardboardLensDistortion,
-        eye: sys::CardboardEye,
-        mesh: *mut sys::CardboardMesh,
+        eye: CardboardEye,
+        mesh: *mut CardboardMesh,
     );
 
     #[link_name = "CardboardOpenGlEs2DistortionRenderer_create"]
-    pub fn CardboardOpenGlEs2DistortionRenderer_create() -> *mut sys::CardboardDistortionRenderer;
+    pub fn CardboardOpenGlEs2DistortionRenderer_create(
+        config: *const sys::CardboardOpenGlEsDistortionRendererConfig,
+    ) -> *mut sys::CardboardDistortionRenderer;
     #[link_name = "CardboardDistortionRenderer_destroy"]
     pub fn CardboardDistortionRenderer_destroy(renderer: *mut sys::CardboardDistortionRenderer);
     #[link_name = "CardboardDistortionRenderer_renderEyeToDisplay"]
@@ -158,7 +171,12 @@ pub struct DistortionRenderer(*mut sys::CardboardDistortionRenderer);
 impl DistortionRenderer {
     pub fn create() -> DistortionRenderer {
         #[cfg(target_os = "android")]
-        let raw = unsafe { CardboardOpenGlEs2DistortionRenderer_create() };
+        let raw = unsafe {
+            let config = sys::CardboardOpenGlEsDistortionRendererConfig {
+                texture_type: sys::CardboardSupportedOpenGlEsTextureType::kGlTexture2D,
+            };
+            CardboardOpenGlEs2DistortionRenderer_create(&config)
+        };
         #[cfg(not(target_os = "android"))]
         let raw = std::ptr::null_mut();
         DistortionRenderer(raw)

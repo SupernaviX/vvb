@@ -1,4 +1,3 @@
-#![feature(const_default_impls)]
 #![feature(const_trait_impl)]
 #![allow(clippy::missing_safety_doc)] // because auto-generated code
 #![allow(clippy::unnecessary_wraps)] // JNI interop is easier if everything returns Result

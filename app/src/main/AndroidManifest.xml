@@ -7,7 +7,8 @@
         android:required="true" />
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <uses-permission
         android:name="android.permission.READ_PHONE_STATE"
         tools:node="remove" />
@@ -15,7 +16,6 @@
     <application
         android:name=".VvbApplication"
         android:allowBackup="true"
-        android:extractNativeLibs="true"
         android:fullBackupContent="@xml/backup"
         android:icon="@mipmap/ic_launcher"
         android:keepScreenOn="true"

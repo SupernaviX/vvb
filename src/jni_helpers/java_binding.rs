@@ -33,8 +33,8 @@ pub type JavaGetResult<'a, T> = Result<MutexGuard<'a, T>>;
 impl<T> JavaBinding<T> {
     pub const fn new() -> Self {
         Self {
-            field: Default::default(),
-            _marker: Default::default(),
+            field: AtomicPtr::new(ptr::null_mut()),
+            _marker: PhantomData,
         }
     }
     pub fn init_value(&self, env: &mut JNIEnv, obj: JObject, value: T) -> Result<()> {
@@ -55,7 +55,7 @@ impl<T> JavaBinding<T> {
 
     pub fn drop_value(&self, env: &mut JNIEnv, obj: JObject) -> Result<()> {
         let mutex_ptr = self.get_mutex_ptr(env, &obj)?;
-        let null_ptr = ptr::null_mut() as *mut Mutex<T>;
+        let null_ptr: *mut Mutex<T> = ptr::null_mut();
         env.set_field_unchecked(obj, self.get_field()?, (null_ptr as jlong).into())?;
 
         // safe because we already null checked
