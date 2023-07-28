@@ -21,6 +21,8 @@ const T_IS_ZERO: u8 = 0x02;
 const T_ENABLED: u8 = 0x01;
 
 // SCR bits
+const S_SW_INIT: u8 = 0x20;
+const S_SW_READ: u8 = 0x10;
 const S_HW_READ: u8 = 0x04;
 const S_HW_STAT: u8 = 0x02;
 const S_HW_ABORT: u8 = 0x01;
@@ -35,6 +37,7 @@ pub struct HardwareState {
     reload_value: u16,
     zero_flag: bool,
     interrupt_requested: bool,
+    software_read_counter: Option<u8>,
 }
 impl Default for HardwareState {
     fn default() -> Self {
@@ -45,6 +48,7 @@ impl Default for HardwareState {
             reload_value: 0,
             zero_flag: false,
             interrupt_requested: false,
+            software_read_counter: None,
         }
     }
 }
@@ -56,6 +60,7 @@ pub struct Hardware {
     reload_value: u16,
     zero_flag: bool,
     interrupt_requested: bool,
+    software_read_counter: Option<u8>,
     memory: Rc<RefCell<Memory>>,
     controller_state: Option<Arc<AtomicU16>>,
 }
@@ -69,6 +74,7 @@ impl Hardware {
             reload_value: state.reload_value,
             zero_flag: state.zero_flag,
             interrupt_requested: state.interrupt_requested,
+            software_read_counter: state.software_read_counter,
             memory,
             controller_state: None,
         }
@@ -90,6 +96,7 @@ impl Hardware {
             reload_value: self.reload_value,
             zero_flag: self.zero_flag,
             interrupt_requested: self.interrupt_requested,
+            software_read_counter: self.software_read_counter,
         }
     }
 
@@ -100,6 +107,7 @@ impl Hardware {
         self.reload_value = state.reload_value;
         self.zero_flag = state.zero_flag;
         self.interrupt_requested = state.interrupt_requested;
+        self.software_read_counter = state.software_read_counter;
     }
 
     pub fn claim_controller_state(&mut self) -> Arc<AtomicU16> {
@@ -167,6 +175,8 @@ impl Hardware {
         let mut memory = self.memory.borrow_mut();
         let value = memory.read_byte(SCR);
         let mut new_value = value | S_HW_READ;
+
+        // hardware reads
         if value & S_HW_ABORT != 0 {
             // hardware read was cancelled
             self.next_controller_read = u64::MAX;
@@ -177,6 +187,25 @@ impl Hardware {
                 .next_controller_read
                 .min(self.cycle + HARDWARE_READ_CYCLES);
             new_value |= S_HW_STAT;
+        }
+
+        // software reads
+        if value & S_SW_INIT != 0 {
+            // software read has begun
+            self.software_read_counter = Some(31);
+        } else if let Some(count) = self.software_read_counter {
+            let expected_read_bit = if count & 1 == 1 { S_SW_READ } else { 0 };
+            let actual_read_bit = value & S_SW_READ;
+            if expected_read_bit == actual_read_bit {
+                // caller has toggled a bit
+                if count == 0 {
+                    // read complete
+                    self.read_controller(&mut memory);
+                    self.software_read_counter = None;
+                } else {
+                    self.software_read_counter = Some(count - 1);
+                }
+            }
         }
         memory.write_byte(SCR, new_value);
     }
@@ -210,7 +239,13 @@ impl Hardware {
         self.correct_tcr();
         if self.cycle >= self.next_controller_read {
             // hardware read completed
-            self.read_controller();
+            let mut memory = self.memory.borrow_mut();
+            self.read_controller(&mut memory);
+
+            // Mark in SCR that we've finished reading
+            let scr = memory.read_byte(SCR);
+            memory.write_byte(SCR, scr & !S_HW_STAT);
+
             self.next_controller_read = u64::MAX;
         }
     }
@@ -257,28 +292,23 @@ impl Hardware {
         memory.write_byte(TCR, tcr);
     }
 
-    fn read_controller(&self) {
+    fn read_controller(&self, memory: &mut Memory) {
         let input_state = match self.controller_state.as_ref() {
             Some(state) => state.load(Ordering::Relaxed),
             None => 0x0000,
         };
         let sdlr = input_state & 0xff;
         let sdhr = (input_state >> 8) & 0xff;
-        let mut memory = self.memory.borrow_mut();
         memory.write_halfword(SDLR, sdlr);
         memory.write_halfword(SDHR, sdhr);
-
-        // Mark in SCR that we've finished reading
-        let scr = memory.read_byte(SCR);
-        memory.write_byte(SCR, scr & !S_HW_STAT);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::emulator::hardware::{
-        Hardware, HARDWARE_READ_CYCLES, SCR, SDHR, SDLR, S_HW_ABORT, S_HW_READ, S_HW_STAT, TCR,
-        THR, TLR, T_CLEAR_ZERO, T_ENABLED, T_INTERRUPT, T_IS_ZERO,
+        Hardware, HARDWARE_READ_CYCLES, SCR, SDHR, SDLR, S_HW_ABORT, S_HW_READ, S_HW_STAT,
+        S_SW_INIT, S_SW_READ, TCR, THR, TLR, T_CLEAR_ZERO, T_ENABLED, T_INTERRUPT, T_IS_ZERO,
     };
     use crate::emulator::memory::Memory;
     use std::cell::RefCell;
@@ -499,5 +529,27 @@ mod tests {
         assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
         assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
         assert_eq!(memory.borrow().read_byte(SCR), S_HW_READ | S_HW_ABORT);
+    }
+
+    #[test]
+    fn performs_software_read() {
+        let (mut hardware, memory) = get_hardware();
+
+        // "start" pushing a button on the controller
+        let state = hardware.claim_controller_state();
+        state.store(0x1002, Ordering::Relaxed);
+
+        // Begin software read
+        set_scr(&mut hardware, &memory, S_SW_INIT);
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x00);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x00);
+
+        for _ in 0..16 {
+            set_scr(&mut hardware, &memory, S_SW_READ); // set this bit
+            set_scr(&mut hardware, &memory, 0); // clear this bit
+        }
+
+        assert_eq!(memory.borrow().read_byte(SDHR), 0x10);
+        assert_eq!(memory.borrow().read_byte(SDLR), 0x02);
     }
 }

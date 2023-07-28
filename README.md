@@ -44,7 +44,6 @@ cargo test
 ## Known Issues
 
 Several features are not implemented:
- - Software Game Pad reads (every game I tested against used hardware reads)
  - Some VIP interrupts (TIMEERR, SBHIT)
  - Game Pad and Game Pak interrupts
  - Game Pak expansions and the link cable
