@@ -57,13 +57,13 @@ class AutoMapDialog : DialogFragment(), InputManager.InputDeviceListener {
     }
 
     private fun onDeviceChosen(deviceId: Int) {
-        val device = _inputManager.getInputDevice(deviceId)
+        val device = _inputManager.getInputDevice(deviceId) ?: return
         parentViewModel.performAutoMap(device)
         dismiss()
     }
 
     override fun onInputDeviceAdded(deviceId: Int) {
-        val device = _inputManager.getInputDevice(deviceId)
+        val device = _inputManager.getInputDevice(deviceId) ?: return
         if (parentViewModel.isMappable(device)) {
             _adapter.addDevice(device)
         }
@@ -75,7 +75,7 @@ class AutoMapDialog : DialogFragment(), InputManager.InputDeviceListener {
 
     override fun onInputDeviceChanged(deviceId: Int) {
         val device = _inputManager.getInputDevice(deviceId)
-        if (parentViewModel.isMappable(device)) {
+        if (device != null && parentViewModel.isMappable(device)) {
             _adapter.addDevice(device)
         } else {
             _adapter.removeDevice(deviceId)

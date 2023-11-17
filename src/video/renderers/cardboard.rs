@@ -114,7 +114,7 @@ pub mod jni {
 
     static CARDBOARD_BINDING: JavaBinding<CardboardRenderer> = JavaBinding::new();
 
-    pub fn get_settings<'a>(env: &mut JNIEnv<'a>, this: JObject<'a>) -> Result<Settings> {
+    fn get_settings<'a>(env: &mut JNIEnv<'a>, this: JObject<'a>) -> Result<Settings> {
         let screen_zoom = env.get_percent(&this, "screenZoom")?;
         let aspect_ratio = env.get_int(&this, "aspectRatio")?.try_into()?;
         let vertical_offset = env.get_percent(&this, "verticalOffset")?;

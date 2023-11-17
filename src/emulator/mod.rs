@@ -259,7 +259,6 @@ pub mod jni {
     use jni::sys::jint;
     use jni::JNIEnv;
     use log::info;
-    use std::convert::TryInto;
 
     static EMULATOR_BINDING: JavaBinding<Emulator> = JavaBinding::new();
 
@@ -326,7 +325,7 @@ pub mod jni {
     jni_func!(Emulator_nativeSaveState, save_state, JString);
     fn save_state(env: &mut JNIEnv, this: JObject, filename: JString) -> Result<()> {
         info!("Saving...");
-        let filename: String = env.get_string(&filename)?.try_into()?;
+        let filename: String = env.get_string(&filename)?.into();
         let this = get_emulator(env, this)?;
         this.save_state(&filename)?;
         info!("Saved!");
@@ -336,7 +335,7 @@ pub mod jni {
     jni_func!(Emulator_nativeLoadState, load_state, JString);
     fn load_state(env: &mut JNIEnv, this: JObject, filename: JString) -> Result<()> {
         info!("Loading...");
-        let filename: String = env.get_string(&filename)?.try_into()?;
+        let filename: String = env.get_string(&filename)?.into();
         let mut this = get_emulator(env, this)?;
         this.load_state(&filename)?;
         info!("Loaded!");
