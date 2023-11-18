@@ -37,4 +37,9 @@
         app:title="@string/main_menu_general_setup"
         app:fragment="com.simongellis.vvb.menu.GeneralMenuFragment"
         tools:context=".menu.GeneralMenuFragment"/>
+    <Preference
+        app:key="about"
+        app:title="@string/main_menu_about"
+        app:fragment="com.simongellis.vvb.menu.AboutMenuFragment"
+        tools:context=".menu.AboutMenuFragment" />
 </PreferenceScreen>
