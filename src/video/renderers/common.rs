@@ -1,4 +1,5 @@
 use crate::emulator::video::{Eye, FrameBufferConsumers};
+use crate::video::gl::utils::clear_errors;
 use anyhow::Result;
 
 pub trait RenderLogic {
@@ -21,6 +22,7 @@ impl<TLogic: RenderLogic> Renderer<TLogic> {
     }
 
     pub fn on_surface_created(&mut self) -> Result<()> {
+        clear_errors();
         self.logic.init()
     }
 

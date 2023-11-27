@@ -96,7 +96,13 @@ impl Program {
     pub fn init(&mut self) -> Result<()> {
         unsafe {
             self.id = gl::CreateProgram();
-            check_error("create a program")?;
+            if self.id == 0 {
+                let error = gl::GetError();
+                return Err(anyhow::anyhow!(
+                    "Could not create OpenGL program (error code was 0x{:04X})",
+                    error
+                ));
+            }
 
             let vertex_shader = make_shader(gl::VERTEX_SHADER, self.vertex_shader)?;
             gl::AttachShader(self.id, vertex_shader);

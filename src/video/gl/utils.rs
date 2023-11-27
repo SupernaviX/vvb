@@ -2,6 +2,14 @@ use super::types::GLvoid;
 use super::{GetError, NO_ERROR};
 use anyhow::Result;
 
+pub fn clear_errors() {
+    let mut error = unsafe { GetError() };
+    while error != NO_ERROR {
+        log::warn!("Ignoring GL error 0x{:04x}", error);
+        error = unsafe { GetError() };
+    }
+}
+
 pub fn check_error(action: &str) -> Result<()> {
     let error = unsafe { GetError() };
     match error {
