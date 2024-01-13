@@ -1,2 +1,2 @@
 configurations.maybeCreate("default")
-artifacts.add("default", file('cnsdk.aar'))
+artifacts.add("default", file('sdk-faceTrackingService-0.7.28.aar'))
