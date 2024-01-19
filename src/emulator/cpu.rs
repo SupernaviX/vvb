@@ -1199,9 +1199,7 @@ impl<'a> CpuProcess<'a> {
 
     fn mpyhw(&mut self, instr: u16) {
         let (reg2, reg1) = self.parse_format_i_opcode(instr);
-        let lhs = (self.registers[reg2] as i32)
-            .wrapping_shl(15)
-            .wrapping_shr(15);
+        let lhs = self.registers[reg2] as i32;
         let rhs = (self.registers[reg1] as i32)
             .wrapping_shl(15)
             .wrapping_shr(15);
@@ -2248,6 +2246,18 @@ mod tests {
         ]);
         cpu.run(11).unwrap();
         assert_eq!(cpu.registers[10] as i32, -54);
+        assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
+    }
+
+    #[test]
+    fn mpyhw_preserves_upper_bits_of_r2() {
+        let (mut cpu, _memory) = rom(vec![
+            movhi(10, 0, 3),
+            movea(11, 0, 2),
+            mpyhw(10, 11),
+        ]);
+        cpu.run(11).unwrap();
+        assert_eq!(cpu.registers[10] as i32, 0x00060000);
         assert_eq!(cpu.sys_registers[PSW] & 0xf, 0);
     }
 
