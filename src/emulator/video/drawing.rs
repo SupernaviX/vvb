@@ -511,7 +511,7 @@ impl<'a> Background<'a> {
                         (x - self.src_parallax_x + offset, y)
                     }
                     Eye::Right => {
-                        let offset = self.memory.read_halfword(address + 2) as i16;
+                        let offset = self.memory.read_halfword(address | 2) as i16;
                         (x + self.src_parallax_x + offset, y)
                     }
                 }
