@@ -5,5 +5,5 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class ControllerNameViewModel(savedStateHandle: SavedStateHandle): ViewModel() {
-    val name = MutableStateFlow(savedStateHandle.get("initialValue") ?: "")
+    val name = MutableStateFlow(savedStateHandle["initialValue"] ?: "")
 }
