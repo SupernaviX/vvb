@@ -1,13 +1,10 @@
 use crate::emulator::memory::Memory;
 use log::debug;
-use ringbuf::HeapRb;
+use ringbuf::traits::{Consumer, Producer, Split};
+use ringbuf::{HeapCons, HeapProd, HeapRb};
 use serde_derive::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
-
-type Producer<T> = ringbuf::Producer<T, Arc<HeapRb<T>>>;
-type Consumer<T> = ringbuf::Consumer<T, Arc<HeapRb<T>>>;
 
 const CPU_CYCLES_PER_FRAME: u64 = 480;
 const FRAMES_PER_SECOND: f32 = 20_000_000. / (CPU_CYCLES_PER_FRAME as f32);
@@ -452,7 +449,7 @@ pub struct AudioController {
     mod_data: [i16; 32],
     channels: [Channel; 6],
     memory: Rc<RefCell<Memory>>,
-    buffer: Option<Producer<(f32, f32)>>,
+    buffer: Option<HeapProd<(f32, f32)>>,
 }
 
 impl AudioController {
@@ -753,7 +750,7 @@ impl AudioController {
 }
 
 pub struct AudioPlayer {
-    buffer: Consumer<(f32, f32)>,
+    buffer: HeapCons<(f32, f32)>,
     prev_value: (f32, f32),
     volume: f32,
 }

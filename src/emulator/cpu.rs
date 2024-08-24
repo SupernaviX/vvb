@@ -135,7 +135,7 @@ impl<THandler: EventHandler> Cpu<THandler> {
     }
 
     pub fn run(&mut self, target_cycle: u64) -> Result<CpuProcessingResult> {
-        let mut event = None;
+        let mut event;
         while !self.halted {
             let mut process = CpuProcess {
                 pc: self.pc,
@@ -175,10 +175,7 @@ impl<THandler: EventHandler> Cpu<THandler> {
         // won't happen until at least target_cycle.
         self.cycle = self.cycle.max(target_cycle);
 
-        Ok(CpuProcessingResult {
-            cycle: self.cycle,
-            event,
-        })
+        Ok(CpuProcessingResult { cycle: self.cycle })
     }
     pub fn raise_exception(&mut self, exception: Exception) {
         let mut psw = self.sys_registers[PSW];
@@ -255,7 +252,6 @@ impl<THandler: EventHandler> Cpu<THandler> {
 
 pub struct CpuProcessingResult {
     pub cycle: u64,
-    pub event: Option<Event>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -1318,7 +1314,7 @@ mod tests {
     use crate::emulator::cpu::{Cpu, PSW, CARRY_FLAG, SIGN_FLAG, OVERFLOW_FLAG, ZERO_FLAG, Exception, EX_PENDING_FLAG, INTERRUPT_DISABLE_FLAG, EIPC, EIPSW, NMI_PENDING_FLAG, EventHandler, Event, ECR, FEPC, FEPSW, FLOAT_ZERO_DIV_FLAG, FLOAT_INVALID_FLAG, FLOAT_RESERVED_OP_FLAG, FLOAT_OVERFLOW_FLAG};
     use crate::emulator::memory::Memory;
     use anyhow::Result;
-    use std::cell::{RefCell};
+    use std::cell::RefCell;
     use std::rc::Rc;
 
     fn _op_1(opcode: u8, r2: u8, r1: u8) -> Vec<u8> {

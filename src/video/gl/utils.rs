@@ -30,15 +30,10 @@ pub fn temp_array<T: Copy + Default, F: FnOnce(*mut T)>(cb: F) -> T {
 
 pub trait AsVoidptr {
     fn as_voidptr(&self) -> *const GLvoid;
-    fn as_mut_voidptr(&mut self) -> *mut GLvoid;
 }
 
 impl<T> AsVoidptr for [T] {
     fn as_voidptr(&self) -> *const GLvoid {
         self.as_ptr() as *const GLvoid
-    }
-
-    fn as_mut_voidptr(&mut self) -> *mut GLvoid {
-        self.as_mut_ptr() as *mut GLvoid
     }
 }
