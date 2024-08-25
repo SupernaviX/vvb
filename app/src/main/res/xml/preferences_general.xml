@@ -6,10 +6,10 @@
         app:title="@string/general_menu_sustained_performance_mode"
         app:summary="@string/general_menu_sustained_performance_mode_summary"
         app:defaultValue="false" />
-    <com.simongellis.vvb.menu.DetailedListPreference
-        app:key="data_storage_location"
-        app:title="@string/general_menu_data_storage_location" />
-    <com.simongellis.vvb.menu.FolderPreference
-        app:key="data_storage_external_directory"
-        app:title="@string/general_menu_data_storage_external_directory" />
+    <Preference
+        app:key="export_data"
+        app:title="@string/general_menu_export_data" />
+    <Preference
+        app:key="import_data"
+        app:title="@string/general_menu_import_data" />
 </PreferenceScreen>

@@ -29,12 +29,8 @@
     <string name="game_menu_close_game">Close Game</string>
     <string name="general_menu_sustained_performance_mode">Sustained Performance Mode</string>
     <string name="general_menu_sustained_performance_mode_summary">May run more slowly. Attempts to avoid thermal throttling by reducing cpu speed</string>
-    <string name="general_menu_data_storage_location">Game Data Storage Location</string>
-    <string name="data_storage_location_internal_summary">Internal</string>
-    <string name="data_storage_location_internal_description">Stored in scoped storage on your phone. Automatically included in backups.</string>
-    <string name="data_storage_location_external_summary">External</string>
-    <string name="data_storage_location_external_description">Stored in a folder of your choice.</string>
-    <string name="general_menu_data_storage_external_directory">Game Data Directory</string>
+    <string name="general_menu_export_data">Export Game Data</string>
+    <string name="general_menu_import_data">Import Game Data</string>
     <string name="onscreen_input_menu_on">Use Virtual Gamepad</string>
     <string name="onscreen_input_menu_toggle_controls">Put Trigger Buttons in Toggle Mode</string>
     <string name="onscreen_input_menu_haptic_feedback">Enable Haptic Feedback</string>

@@ -7,13 +7,16 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import com.nononsenseapps.filepicker.FilePickerActivity
 
-class FilePicker(fragment: Fragment, onFileChosen: (uri: Uri?) -> Unit) {
-    private val launcherFilePicker = fragment.registerForActivityResult(OpenFilePicker, onFileChosen)
-    private val launcherStorageFramework = fragment.registerForActivityResult(OpenPersistentDocument) { uri ->
+class FilePicker(fragment: Fragment, mode: Mode, onFileChosen: (uri: Uri?) -> Unit) {
+    sealed interface Mode {
+        object Read: Mode
+        class Write(val title: String, val mimeType: String): Mode
+    }
+    private val launcherFilePicker = fragment.registerForActivityResult(filePickerContract(mode), onFileChosen)
+    private val launcherReadStorageFramework = fragment.registerForActivityResult(storageFrameworkContract(mode)) { uri ->
         uri?.also {
             if (it.scheme == "content") {
                 fragment.requireContext().contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -26,7 +29,7 @@ class FilePicker(fragment: Fragment, onFileChosen: (uri: Uri?) -> Unit) {
         if (isFilePickerSupported()) {
             launcherFilePicker.launch(Unit)
         } else {
-            launcherStorageFramework.launch(arrayOf("*/*"))
+            launcherReadStorageFramework.launch(Unit)
         }
     }
 
@@ -45,19 +48,66 @@ class FilePicker(fragment: Fragment, onFileChosen: (uri: Uri?) -> Unit) {
             }
         }
 
-        private object OpenPersistentDocument : ActivityResultContracts.OpenDocument() {
-            override fun createIntent(context: Context, input: Array<String>): Intent {
-                return super.createIntent(context, input)
-                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        private fun storageFrameworkContract(mode: Mode): ActivityResultContract<Unit, Uri?> {
+            return when (mode) {
+                is Mode.Read -> ReadStorageFramework
+                is Mode.Write -> WriteStorageFramework(mode.title, mode.mimeType)
             }
         }
 
-        private object OpenFilePicker : ActivityResultContract<Unit, Uri?>() {
+        private fun filePickerContract(mode: Mode): ActivityResultContract<Unit, Uri?> {
+            return when (mode) {
+                is Mode.Read -> ReadFilePicker
+                is Mode.Write -> WriteFilePicker
+            }
+        }
+
+        private object ReadStorageFramework : ActivityResultContract<Unit, Uri?>() {
+            override fun createIntent(context: Context, input: Unit): Intent {
+                return Intent(Intent.ACTION_OPEN_DOCUMENT)
+                    .setType("*/*")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }
+
+            override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+                return intent.takeIf { resultCode == Activity.RESULT_OK }?.data
+            }
+        }
+
+        private object ReadFilePicker : ActivityResultContract<Unit, Uri?>() {
             override fun createIntent(context: Context, input: Unit): Intent {
                 return Intent(context, FilePickerActivity::class.java)
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }
+
+            override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+                return intent.takeIf { resultCode == Activity.RESULT_OK }?.data
+            }
+        }
+
+        private class WriteStorageFramework(private val title: String, private val mimeType: String) : ActivityResultContract<Unit, Uri?>() {
+            override fun createIntent(context: Context, input: Unit): Intent {
+                return Intent(Intent.ACTION_CREATE_DOCUMENT)
+                    .setType(mimeType)
+                    .putExtra(Intent.EXTRA_TITLE, title)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+            }
+
+            override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+                return intent.takeIf { resultCode == Activity.RESULT_OK }?.data
+            }
+        }
+
+        private object WriteFilePicker : ActivityResultContract<Unit, Uri?>() {
+            override fun createIntent(context: Context, input: Unit): Intent {
+                return Intent(context, FilePickerActivity::class.java)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    .addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+                    .putExtra(FilePickerActivity.EXTRA_MODE, FilePickerActivity.MODE_NEW_FILE)
+                    .putExtra(FilePickerActivity.EXTRA_ALLOW_EXISTING_FILE, true)
             }
 
             override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
