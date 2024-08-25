@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simongellis.vvb.R
+import com.simongellis.vvb.data.ExternalDataSync
 
 class GeneralMenuFragment: PreferenceFragmentCompat() {
     private val exportFolderPicker = FilePicker(this, FilePicker.Mode.Write("vvb.zip", "application/zip"), ::exportData)
@@ -30,10 +31,23 @@ class GeneralMenuFragment: PreferenceFragmentCompat() {
     }
 
     private fun exportData(uri: Uri?) {
-        Toast.makeText(context, "Export to ${uri?.path}", Toast.LENGTH_LONG).show()
+        uri?.also {
+            val sync = ExternalDataSync(requireContext())
+            requireContext().contentResolver.openOutputStream(it)?.use(sync::export)
+
+            Toast.makeText(context, "Exported to ${it.path}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun importData(uri: Uri?) {
-        Toast.makeText(context, "Import from ${uri?.path}", Toast.LENGTH_LONG).show()
+        uri?.also {
+            val sync = ExternalDataSync(requireContext())
+            val result = requireContext().contentResolver.openInputStream(it)?.use(sync::import)
+            if (result?.isFailure == true) {
+                Toast.makeText(context, "${result.exceptionOrNull()}", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(context, "Imported to ${it.path}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 }
