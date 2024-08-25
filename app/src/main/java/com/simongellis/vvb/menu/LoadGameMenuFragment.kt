@@ -53,7 +53,7 @@ class LoadGameMenuFragment : Fragment() {
 
         val prefs = PreferenceManager.getDefaultSharedPreferences(requireContext())
 
-        val fileLoader = GameFilePicker(this, ::loadGame)
+        val fileLoader = FilePicker(this, FilePicker.Mode.Read, ::loadGame)
         _loadGame = LoadFromFileAdapter {
             if (prefs.contains("seen_load_game_explanation")) {
                 fileLoader.open()

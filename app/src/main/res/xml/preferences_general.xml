@@ -3,7 +3,13 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
     <SwitchPreferenceCompat
         app:key="sustained_performance_mode_on"
-        app:title="@string/sustained_performance_mode"
-        app:summary="@string/sustained_performance_mode_summary"
+        app:title="@string/general_menu_sustained_performance_mode"
+        app:summary="@string/general_menu_sustained_performance_mode_summary"
         app:defaultValue="false" />
+    <Preference
+        app:key="export_data"
+        app:title="@string/general_menu_export_data" />
+    <Preference
+        app:key="import_data"
+        app:title="@string/general_menu_import_data" />
 </PreferenceScreen>
