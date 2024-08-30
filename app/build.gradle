@@ -62,8 +62,8 @@ android {
         applicationId "com.simongellis.vvb"
         minSdkVersion 21
         targetSdkVersion 34
-        versionCode 45
-        versionName "1.17.0"
+        versionCode 46
+        versionName "1.17.1"
 
         buildConfigField("String", "ACRA_URI", generatedString("https://vvb-notifications.simongellis.com/report"))
 
