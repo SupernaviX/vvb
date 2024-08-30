@@ -30,7 +30,7 @@ interface LeiaAdapter {
         }
 
         private fun getImplementation(context: Context): Class<out LeiaAdapter> {
-            @Suppress("DEPRECATION") val metadata = context.packageManager.getApplicationInfo(
+            val metadata = context.packageManager.getApplicationInfo(
                 context.packageName, PackageManager.GET_META_DATA
             ).metaData
             val name = metadata.getString("com.simongellis.vvb.leia.LeiaAdapter")

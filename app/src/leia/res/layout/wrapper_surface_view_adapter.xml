@@ -6,4 +6,8 @@
         android:id="@+id/inner_surface_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
+    <com.simongellis.vvb.game.GLSurfaceViewAdapter
+        android:tag="surface_view_2d"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 </LinearLayout>

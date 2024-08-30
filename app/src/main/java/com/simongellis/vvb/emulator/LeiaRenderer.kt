@@ -31,6 +31,9 @@ class LeiaRenderer(emulator: Emulator, settings: Settings) : Renderer {
         nativeOnDrawFrame()
     }
 
+    override val isLeia: Boolean
+        get() = true
+
     override fun onModeChanged(enable3d: Boolean) {
         if (_pointer != 0L) { // leia listener fires after this has "died"
             nativeOnModeChanged(enable3d)

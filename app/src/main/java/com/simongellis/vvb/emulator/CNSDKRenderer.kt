@@ -31,6 +31,9 @@ class CNSDKRenderer(emulator: Emulator, settings: Settings): Renderer {
         nativeOnDrawFrame()
     }
 
+    override val isLeia: Boolean
+        get() = true
+
     class Settings(
         val screenZoom: Float,
         val aspectRatio: Int,

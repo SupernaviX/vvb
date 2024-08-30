@@ -68,7 +68,7 @@ class GameView(context: Context) : ConstraintLayout(context), LeiaAdapter.Backli
         setBackgroundColor(Color.BLACK)
 
         _leiaAdapter.registerBacklightListener(this@GameView)
-        checkShouldToggle3D(true)
+        checkShouldToggle3D(_preferences.isLeia)
     }
 
     fun onPause() {
@@ -79,7 +79,7 @@ class GameView(context: Context) : ConstraintLayout(context), LeiaAdapter.Backli
     fun onResume() {
         _binding.surfaceView.onResume()
         _renderer.onResume()
-        checkShouldToggle3D(true)
+        checkShouldToggle3D(_preferences.isLeia)
     }
 
     override fun onDetachedFromWindow() {

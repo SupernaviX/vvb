@@ -7,4 +7,6 @@ interface Renderer {
     fun destroy()
     fun onResume() {}
     fun onModeChanged(enable3d: Boolean) {}
+    val isLeia
+        get() = false
 }
