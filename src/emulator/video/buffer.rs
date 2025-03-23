@@ -18,18 +18,18 @@ where
 
 type BufferData = Box<[u8; FRAME_SIZE]>;
 struct Buffer {
-    gen: AtomicUsize,
+    generation: AtomicUsize,
     data: Mutex<BufferData>,
 }
 impl Buffer {
-    fn new(gen: usize) -> Self {
+    fn new(generation: usize) -> Self {
         let data = {
             let allocated = vec![0u8; FRAME_SIZE].into_boxed_slice();
             let pointer = Box::into_raw(allocated) as *mut [u8; FRAME_SIZE];
             Mutex::new(unsafe { Box::from_raw(pointer) })
         };
         Self {
-            gen: AtomicUsize::new(gen),
+            generation: AtomicUsize::new(generation),
             data,
         }
     }
@@ -38,13 +38,13 @@ impl Buffer {
 struct Buffers([Buffer; 3]);
 impl Buffers {
     fn generations(&self) -> impl Iterator<Item = usize> + '_ {
-        self.0.iter().map(|b| b.gen.load(Ordering::Acquire))
+        self.0.iter().map(|b| b.generation.load(Ordering::Acquire))
     }
     fn newest(&self) -> (&Buffer, usize) {
         self.0
             .iter()
-            .map(|b| (b, b.gen.load(Ordering::Acquire)))
-            .max_by_key(|(_, gen)| *gen)
+            .map(|b| (b, b.generation.load(Ordering::Acquire)))
+            .max_by_key(|(_, g)| *g)
             .unwrap()
     }
 }
@@ -85,7 +85,7 @@ impl SharedBuffer {
     {
         let mut sorted_indices_and_gens: [_; 3] =
             collect_to_array(self.buffers.generations().enumerate());
-        sorted_indices_and_gens.sort_by_key(|(_, gen)| *gen);
+        sorted_indices_and_gens.sort_by_key(|(_, g)| *g);
         let min_index = sorted_indices_and_gens[0].0;
         let mid_index = sorted_indices_and_gens[1].0;
         let new_generation = sorted_indices_and_gens[2].1 + 1;
@@ -106,7 +106,7 @@ impl SharedBuffer {
         };
 
         producer(&mut guard);
-        buffer.gen.store(new_generation, Ordering::Release);
+        buffer.generation.store(new_generation, Ordering::Release);
     }
 
     pub fn consumer(&self) -> SharedBufferConsumer {
@@ -130,7 +130,7 @@ impl SharedBufferConsumer {
         if self.last_generation < generation {
             let guard = buffer.data.lock().expect("Buffer lock was poisoned!");
             consumer(&guard);
-            self.last_generation = buffer.gen.load(Ordering::SeqCst);
+            self.last_generation = buffer.generation.load(Ordering::SeqCst);
         }
     }
 }

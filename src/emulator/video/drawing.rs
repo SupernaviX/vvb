@@ -448,8 +448,8 @@ struct Background<'a> {
     pub src_y: i16,
     pub param_base: usize,
 }
-impl<'a> Background<'a> {
-    pub fn parse(memory: &'a Memory, address: usize) -> Background {
+impl Background<'_> {
+    pub fn parse(memory: &Memory, address: usize) -> Background {
         let header = memory.read_halfword(address);
         let bgm = (header & BGM) >> 12;
         let mode = match bgm {

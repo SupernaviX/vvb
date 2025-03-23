@@ -5,7 +5,8 @@
     <EditText
         android:id="@+id/input"
         android:inputType="text"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
+        android:maxWidth="488dp"
         android:layout_height="@dimen/text_box_height"
         android:layout_marginStart="@dimen/text_box_margin"
         android:layout_marginEnd="@dimen/text_box_margin"

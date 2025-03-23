@@ -35,7 +35,7 @@ repositories {
 }
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
@@ -61,7 +61,7 @@ android {
     defaultConfig {
         applicationId "com.simongellis.vvb"
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
         versionCode 46
         versionName "1.17.1"
 
@@ -111,7 +111,7 @@ android {
         }
     }
 
-    ndkVersion = "26.1.10909125"
+    ndkVersion = "28.0.13004108"
     namespace 'com.simongellis.vvb'
     androidResources {
         noCompress = ['vb']
@@ -121,11 +121,11 @@ android {
 apply plugin: 'org.mozilla.rust-android-gradle.rust-android'
 
 // The cardboard SDK stores libraries in target-specific folders,
-// so grab the right library for the toolchain we're compiling now
-def includeCardboardSdk(spec, toolchain) {
+// so grab the right library for the toolchain we're compiling now.
+// Return additional rustflags to link against it
+def includeCardboardSdk(toolchain) {
     def folder = toolchain.folder - ~/^android\//
     def cardboardSdkLocation = "$project.rootDir/app/libraries/jni/$folder"
-    spec.environment("RUSTFLAGS", "-L $cardboardSdkLocation -l android")
 
     // Copy the right SDK into the project as well
     copy {
@@ -133,6 +133,44 @@ def includeCardboardSdk(spec, toolchain) {
         into "${project.layout.buildDirectory.asFile.get()}/rustJniLibs/$toolchain.folder"
         include "lib*.so"
     }
+
+    return "-L $cardboardSdkLocation -l android"
+}
+
+// Newer NDK versions don't expose their runtimes in ways convenient to rust,
+// so we need to copy libraries from its toolchains int othe right place.
+// Return additional rustflags to link against this
+def linkAgainstToolchain(toolchain) {
+    var toolchainDir = new File(android.ndkDirectory, "toolchains/llvm/prebuilt").listFiles().first()
+
+    // We need libc++_shared.so at runtime
+    copy {
+        from "${toolchainDir.path}/sysroot/usr/lib/${toolchain.compilerTriple}"
+        into "${project.layout.buildDirectory.asFile.get()}/rustJniLibs/$toolchain.folder"
+        include("libc++_shared.so")
+    }
+
+    // We need clang's runtime lib at compile time.
+    var clangLibsDir = new File(toolchainDir, "lib/clang").listFiles().last()
+    var ndkLibsDir = "${clangLibsDir}/lib/linux"
+    var rtLib
+    switch (toolchain.platform) {
+        case "arm":
+            rtLib = "clang_rt.builtins-arm-android"
+            break
+        case "arm64":
+            rtLib = "clang_rt.builtins-aarch64-android"
+            break
+        case "x86":
+            rtLib = "clang_rt.builtins-i686-android"
+            break
+        case "x86_64":
+            rtLib = "clang_rt.builtins-x86_64-android"
+            break
+        default:
+            throw new Exception("Unrecognized platform ${toolchain.platform}")
+    }
+    return "-L ${ndkLibsDir} -l ${rtLib} -l c++_shared"
 }
 
 cargo {
@@ -143,7 +181,8 @@ cargo {
     prebuiltToolchains = true
     rustupChannel = 'nightly'
     exec { spec, target ->
-        includeCardboardSdk(spec, target)
+        var rustflags = [includeCardboardSdk(target), linkAgainstToolchain(target)].join(" ")
+        spec.environment("RUSTFLAGS", rustflags)
     }
 }
 
@@ -188,17 +227,17 @@ dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation project(':cardboard-sdk')
     leiaImplementation project(":leia-cnsdk")
-    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.core:core-ktx:1.15.0'
     implementation 'androidx.appcompat:appcompat:1.7.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation "androidx.preference:preference-ktx:1.2.1"
-    implementation "androidx.recyclerview:recyclerview:1.3.2"
+    implementation "androidx.recyclerview:recyclerview:1.4.0"
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 
     // lifecycle things
-    def lifecycleVersion = '2.8.4'
+    def lifecycleVersion = '2.8.7'
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycleVersion"

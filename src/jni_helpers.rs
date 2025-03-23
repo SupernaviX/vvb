@@ -79,7 +79,7 @@ macro_rules! jni_func {
     };
     (name $name:ident func $func:ident params ($($pname:ident: $ptype:ty),*)) => {
         paste::paste! {
-            #[no_mangle]
+            #[unsafe(no_mangle)]
             pub unsafe extern "C" fn [<Java_com_simongellis_vvb_emulator_ $name>]<'a>(mut env: JNIEnv<'a>, this: JObject<'a> $(, $pname: $ptype)*) {
                 let result = $func(&mut env, this $(, $pname)*);
                 $crate::jni_helpers::to_java_exception(&mut env, result);

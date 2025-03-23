@@ -5,35 +5,37 @@ use anyhow::Result;
 use log::error;
 
 unsafe fn init_gl_texture(id: GLuint, size: (i32, i32)) -> Result<()> {
-    gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
-    check_error("generate a texture")?;
-    gl::BindTexture(gl::TEXTURE_2D, id);
-    gl::TexImage2D(
-        gl::TEXTURE_2D,
-        0,
-        gl::LUMINANCE as GLint,
-        size.0 as GLsizei,
-        size.1 as GLsizei,
-        0,
-        gl::LUMINANCE,
-        gl::UNSIGNED_BYTE,
-        std::ptr::null(),
-    );
-    check_error("load a texture")?;
+    unsafe {
+        gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
+        check_error("generate a texture")?;
+        gl::BindTexture(gl::TEXTURE_2D, id);
+        gl::TexImage2D(
+            gl::TEXTURE_2D,
+            0,
+            gl::LUMINANCE as GLint,
+            size.0 as GLsizei,
+            size.1 as GLsizei,
+            0,
+            gl::LUMINANCE,
+            gl::UNSIGNED_BYTE,
+            std::ptr::null(),
+        );
+        check_error("load a texture")?;
 
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
-    gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint);
-    gl::TexParameteri(
-        gl::TEXTURE_2D,
-        gl::TEXTURE_WRAP_S,
-        gl::CLAMP_TO_EDGE as GLint,
-    );
-    gl::TexParameteri(
-        gl::TEXTURE_2D,
-        gl::TEXTURE_WRAP_T,
-        gl::CLAMP_TO_EDGE as GLint,
-    );
-    Ok(())
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as GLint);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as GLint);
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_S,
+            gl::CLAMP_TO_EDGE as GLint,
+        );
+        gl::TexParameteri(
+            gl::TEXTURE_2D,
+            gl::TEXTURE_WRAP_T,
+            gl::CLAMP_TO_EDGE as GLint,
+        );
+        Ok(())
+    }
 }
 
 pub struct Textures {

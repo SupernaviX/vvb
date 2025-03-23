@@ -53,30 +53,33 @@ pub fn make_shader(type_: GLenum, source: &str) -> Result<GLuint> {
 }
 
 unsafe fn check_shader(type_: GLenum, shader_id: GLuint) -> Result<()> {
-    let status = temp_array(|ptr| gl::GetShaderiv(shader_id, gl::COMPILE_STATUS, ptr)) as GLboolean;
-    check_error("checking compile status of a shader")?;
-    if status == GL_TRUE {
-        return Ok(());
-    }
+    unsafe {
+        let status =
+            temp_array(|ptr| gl::GetShaderiv(shader_id, gl::COMPILE_STATUS, ptr)) as GLboolean;
+        check_error("checking compile status of a shader")?;
+        if status == GL_TRUE {
+            return Ok(());
+        }
 
-    let length = temp_array(|ptr| {
-        gl::GetShaderiv(shader_id, gl::INFO_LOG_LENGTH, ptr);
-    });
-    check_error("finding info log length for a shader")?;
-    if length < 0 {
-        return Err(anyhow::anyhow!("Invalid shader info log length"));
-    }
-    let mut buf = vec![0; length as usize];
-    let buf_ptr = buf.as_mut_ptr() as *mut GLchar;
-    gl::GetShaderInfoLog(shader_id, length, std::ptr::null_mut(), buf_ptr);
-    let cstr = CStr::from_bytes_with_nul(buf.as_slice())?;
+        let length = temp_array(|ptr| {
+            gl::GetShaderiv(shader_id, gl::INFO_LOG_LENGTH, ptr);
+        });
+        check_error("finding info log length for a shader")?;
+        if length < 0 {
+            return Err(anyhow::anyhow!("Invalid shader info log length"));
+        }
+        let mut buf = vec![0; length as usize];
+        let buf_ptr = buf.as_mut_ptr() as *mut GLchar;
+        gl::GetShaderInfoLog(shader_id, length, std::ptr::null_mut(), buf_ptr);
+        let cstr = CStr::from_bytes_with_nul(buf.as_slice())?;
 
-    let log = cstr.to_str()?;
-    Err(anyhow::anyhow!(
-        "Error compiling shader type {:04X}! <{}>",
-        type_,
-        log.trim()
-    ))
+        let log = cstr.to_str()?;
+        Err(anyhow::anyhow!(
+            "Error compiling shader type {:04X}! <{}>",
+            type_,
+            log.trim()
+        ))
+    }
 }
 
 pub struct Program {
