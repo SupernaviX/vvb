@@ -23,7 +23,7 @@
     <string name="controller_menu_manage">컨트롤러 관리</string>
     <string name="controller_menu_automap_new_controller">새 컨트롤러 자동 매핑</string>
     <string name="controller_menu_choose_controller">매핑할 컨트롤러 선택</string>
-    <string name="controller_menu_no_controllers_detected">컨트롤러가 감지되지 않았습니다...</string>
+    <string name="controller_menu_no_controllers_detected">컨트롤러가 감지되지 않았습니다…</string>
     <string name="controller_menu_new_controller">새 컨트롤러</string>
     <string name="controller_menu_rename_controller">컨트롤러 이름 변경</string>
     <string name="controller_menu_delete_controller">컨트롤러 삭제</string>
@@ -31,8 +31,8 @@
     <string name="controller_menu_create">만들기</string>
     <string name="controller_menu_cancel">취소</string>
     <string name="controller_menu_rename">이름 변경</string>
-    <string name="controller_menu_choose_rename">이름을 바꿀 컨트롤러 선택...</string>
-    <string name="controller_menu_choose_delete">삭제할 컨트롤러 선택...</string>
+    <string name="controller_menu_choose_rename">이름을 바꿀 컨트롤러 선택…</string>
+    <string name="controller_menu_choose_delete">삭제할 컨트롤러 선택…</string>
     <string name="input_menu_unmapped">매핑되지 않음</string>
     <string name="input_menu_put_mapping">이 입력에 매핑하려면 아무 컨트롤이나 누르십시오. 여러 컨트롤을 매핑하려면 길게 누르세요.</string>
     <string name="input_menu_add_mapping">이 입력에 대한 다른 매핑을 추가하려면 아무 컨트롤이나 누르십시오.</string>
@@ -63,7 +63,7 @@
     <string name="error_file_not_found">해당 파일을 찾을 수 없습니다. 이동한 것 아닐까요?</string>
     <string name="error_not_power_of_two">그건 Virtual Boy 게임이 아닙니다! 파일 크기는 2의 거듭제곱이어야 합니다.</string>
     <string name="error_too_large">저건 Virtual Boy 게임이 아닙니다! 최대 16Mb까지만 가능합니다.</string>
-    <string name="error_zip">그 ZIP 파일에는 Virtual Boy 게임처럼 보이는 것이 없습니다...</string>
+    <string name="error_zip">그 ZIP 파일에는 Virtual Boy 게임처럼 보이는 것이 없습니다…</string>
     <string name="toast_state_saved">상태 저장됨</string>
     <string name="toast_state_loaded">상태 불러옴</string>
 </resources>

@@ -22,15 +22,15 @@
     <string name="controller_menu_manage">Controllers beheren</string>
     <string name="controller_menu_automap_new_controller">Nieuwe controller automatisch toewijzen</string>
     <string name="controller_menu_choose_controller">Kies Controller om toe te wijzen</string>
-    <string name="controller_menu_no_controllers_detected">Geen controllers gedetecteerd...</string>
+    <string name="controller_menu_no_controllers_detected">Geen controllers gedetecteerd…</string>
     <string name="controller_menu_new_controller">Nieuwe controller</string>
     <string name="controller_menu_delete_controller">Controller verwijderen</string>
     <string name="controller_menu_name">Controllernaam?</string>
     <string name="controller_menu_create">Maken</string>
     <string name="controller_menu_cancel">Annuleren</string>
     <string name="controller_menu_rename">Naam wijzigen</string>
-    <string name="controller_menu_choose_rename">Kies de controller om de naam te wijzigen...</string>
-    <string name="controller_menu_choose_delete">Kies de controller om te verwijderen...</string>
+    <string name="controller_menu_choose_rename">Kies de controller om de naam te wijzigen…</string>
+    <string name="controller_menu_choose_delete">Kies de controller om te verwijderen…</string>
     <string name="input_menu_unmapped">Niet toegewezen</string>
     <string name="input_menu_put_mapping">Druk op een willekeurige knop om deze aan deze ingang toe te wijzen. Lang indrukken om meerdere bedieningselementen toe te wijzen.</string>
     <string name="input_menu_add_mapping">Druk op een willekeurige knop om een andere toewijzing voor deze invoer toe te voegen.</string>
@@ -60,7 +60,7 @@
     <string name="error_file_not_found">Dat bestand kon niet worden gevonden. Misschien is het verplaatst?</string>
     <string name="error_not_power_of_two">Dat is geen Virtual Boy-spel! De bestandsgrootte moet een macht van twee zijn.</string>
     <string name="error_too_large">Dat is geen Virtual Boy-spel! Ze kunnen maximaal 16Mb zijn.</string>
-    <string name="error_zip">Niets in dat ZIP-bestand leek op een Virtual Boy-spel...</string>
+    <string name="error_zip">Niets in dat ZIP-bestand leek op een Virtual Boy-spel…</string>
     <string name="toast_state_saved">Savestate opgeslagen</string>
     <string name="toast_state_loaded">Savestate geladen</string>
 </resources>

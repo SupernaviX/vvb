@@ -33,7 +33,7 @@ class ControllerInputViewModel(application: Application, savedStateHandle: Saved
     val controller = _controllerRepo.getLiveController(_id)
     private val _controllerMappings = controller.map { it.mappings }
 
-    val inputSummaries = Input.values().associate { it to getInputSummary(it) }
+    val inputSummaries = Input.values().associateWith { getInputSummary(it) }
 
     fun startBinding(input: Input, multiple: Boolean) {
         _binding.value = BindingInfo(input, multiple)

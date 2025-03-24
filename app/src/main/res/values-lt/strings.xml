@@ -23,7 +23,7 @@
     <string name="controller_menu_manage">Tvarkyti valdiklius</string>
     <string name="controller_menu_automap_new_controller">Automatiškai susieti naują valdiklį</string>
     <string name="controller_menu_choose_controller">Pasirinkite valdiklį, kurį norite susieti</string>
-    <string name="controller_menu_no_controllers_detected">Neaptikta jokių valdiklių...</string>
+    <string name="controller_menu_no_controllers_detected">Neaptikta jokių valdiklių…</string>
     <string name="controller_menu_new_controller">Naujas valdiklis</string>
     <string name="controller_menu_rename_controller">Pervardyti valdiklį</string>
     <string name="controller_menu_delete_controller">Ištrinti valdiklį</string>
@@ -31,8 +31,8 @@
     <string name="controller_menu_create">Sukurti</string>
     <string name="controller_menu_cancel">Atšaukti</string>
     <string name="controller_menu_rename">Pervardyti</string>
-    <string name="controller_menu_choose_rename">Pasirinkite valdiklį, kurį norite pervardyti...</string>
-    <string name="controller_menu_choose_delete">Pasirinkite valdiklį, kurį norite ištrinti...</string>
+    <string name="controller_menu_choose_rename">Pasirinkite valdiklį, kurį norite pervardyti…</string>
+    <string name="controller_menu_choose_delete">Pasirinkite valdiklį, kurį norite ištrinti…</string>
     <string name="input_menu_unmapped">Nepriskirtas</string>
     <string name="input_menu_put_mapping">Paspauskite bet kurį valdiklį, kad susietumėte jį su šia įvestimi. Ilgai paspauskite, kad susietumėte kelis valdiklius.</string>
     <string name="input_menu_add_mapping">Paspauskite bet kurį valdiklį, kad pridėtumėte kitą šios įvesties susiejimą.</string>
@@ -62,7 +62,7 @@
     <string name="error_file_not_found">To failo rasti nepavyko. Galbūt jis buvo perkeltas?</string>
     <string name="error_not_power_of_two">Tai ne Virtual Boy žaidimas! Failo dydis turi būti dviejų laipsniai.</string>
     <string name="error_too_large">Tai ne Virtual Boy žaidimas! Jie gali būti tik iki 16Mb.</string>
-    <string name="error_zip">Niekas tame ZIP faile neatrodė kaip Virtual Boy žaidimo...</string>
+    <string name="error_zip">Niekas tame ZIP faile neatrodė kaip Virtual Boy žaidimo…</string>
     <string name="toast_state_saved">Statusas išsaugotas</string>
     <string name="toast_state_loaded">Statusas pakrautas</string>
 </resources>

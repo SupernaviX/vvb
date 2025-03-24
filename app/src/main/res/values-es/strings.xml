@@ -23,7 +23,7 @@
     <string name="controller_menu_manage">Administrar controladores</string>
     <string name="controller_menu_automap_new_controller">Asignación automática de nuevo controlador</string>
     <string name="controller_menu_choose_controller">Elegir controlador para asignar</string>
-    <string name="controller_menu_no_controllers_detected">No se detectaron controladores...</string>
+    <string name="controller_menu_no_controllers_detected">No se detectaron controladores…</string>
     <string name="controller_menu_new_controller">Nuevo controlador</string>
     <string name="controller_menu_rename_controller">Renombrar controlador</string>
     <string name="controller_menu_delete_controller">Eliminar controlador</string>
@@ -31,8 +31,8 @@
     <string name="controller_menu_create">Crear</string>
     <string name="controller_menu_cancel">Cancelar</string>
     <string name="controller_menu_rename">Renombrar</string>
-    <string name="controller_menu_choose_rename">Elegir controlador para renombrar...</string>
-    <string name="controller_menu_choose_delete">Elegir controlador para borrar...</string>
+    <string name="controller_menu_choose_rename">Elegir controlador para renombrar…</string>
+    <string name="controller_menu_choose_delete">Elegir controlador para borrar…</string>
     <string name="input_menu_unmapped">Sin mapear</string>
     <string name="input_menu_put_mapping">Presione cualquier control para asignarlo a esta entrada. Mantenga presionado para mapear múltiples controles.</string>
     <string name="input_menu_add_mapping">Presione cualquier control para agregar otra asignación para esta entrada.</string>
@@ -62,7 +62,7 @@
     <string name="error_file_not_found">No se pudo encontrar ese archivo. ¿Quizás se movió?</string>
     <string name="error_not_power_of_two">¡Eso no es un juego de Virtual Boy! El tamaño del archivo debe ser una potencia de dos.</string>
     <string name="error_too_large">¡Eso no es un juego de Virtual Boy! Solo pueden ser de hasta 16Mb.</string>
-    <string name="error_zip">Nada en ese archivo ZIP parecía un juego de Virtual Boy...</string>
+    <string name="error_zip">Nada en ese archivo ZIP parecía un juego de Virtual Boy…</string>
     <string name="toast_state_saved">Estado guardado</string>
     <string name="toast_state_loaded">Estado cargado</string>
 </resources>

@@ -22,8 +22,7 @@ class InputBindingMapper(scope: CoroutineScope, context: Context): InputManager.
     class DeviceBindings(mappings: List<Mapping>) {
         val keyBindings = mappings
             .filterIsInstance<KeyMapping>()
-            .map { it.keyCode to it.input }
-            .toMap()
+            .associate { it.keyCode to it.input }
         val axisBindings = mappings
             .filterIsInstance<AxisMapping>()
             .map { AxisBinding(it.axis, it.isNegative, it.input) }

@@ -16,6 +16,7 @@ import com.kizitonwose.colorpreferencecompat.ColorPreferenceCompat
 import com.simongellis.vvb.leia.LeiaAdapter
 import yuku.ambilwarna.AmbilWarnaDialog
 import yuku.ambilwarna.AmbilWarnaDialog.OnAmbilWarnaListener
+import androidx.core.content.edit
 
 
 class VideoMenuFragment : PreferenceFragmentCompat() {
@@ -139,9 +140,9 @@ class VideoMenuFragment : PreferenceFragmentCompat() {
                         }
 
                         override fun onOk(dialog: AmbilWarnaDialog, color: Int) {
-                            val editor = _sharedPreferences.edit()
-                            editor.putInt(Prefs.COLOR.prefName, color)
-                            editor.apply()
+                            _sharedPreferences.edit {
+                                putInt(Prefs.COLOR.prefName, color)
+                            }
                         }
                     })
                 _customColorPicker.show()
@@ -160,9 +161,9 @@ class VideoMenuFragment : PreferenceFragmentCompat() {
                         }
 
                         override fun onOk(dialog: AmbilWarnaDialog, color: Int) {
-                            val editor = _sharedPreferences.edit()
-                            editor.putInt(Prefs.COLOR_BG.prefName, color)
-                            editor.apply()
+                            _sharedPreferences.edit {
+                                putInt(Prefs.COLOR_BG.prefName, color)
+                            }
                         }
                     })
                 _customColorPicker.show()

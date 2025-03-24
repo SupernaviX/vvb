@@ -18,6 +18,7 @@ import org.acra.data.StringFormat
 import org.acra.ktx.initAcra
 import java.io.File
 import java.util.*
+import androidx.core.net.toUri
 
 class VvbApplication : Application() {
     override fun attachBaseContext(base: Context?) {
@@ -172,7 +173,7 @@ class VvbApplication : Application() {
         rawRecentGames.forEach {
             val (rawLastPlayed, rawUri) = it.split("::")
             val lastPlayed = Date(rawLastPlayed.toLong())
-            val uri = Uri.parse(rawUri)
+            val uri = rawUri.toUri()
             val id = computeOriginalFormatId(uri)
             val game = GameData(id, uri, lastPlayed, 0, true)
             dao.put(game)

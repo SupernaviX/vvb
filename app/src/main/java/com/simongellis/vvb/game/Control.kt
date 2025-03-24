@@ -2,7 +2,6 @@ package com.simongellis.vvb.game
 
 import android.content.Context
 import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.AttributeSet
@@ -10,6 +9,8 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 import com.simongellis.vvb.emulator.Controller
 import kotlin.math.roundToInt
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.drawable.toDrawable
 
 abstract class Control: View {
     private var _leftColor: Int = Color.RED
@@ -24,7 +25,6 @@ abstract class Control: View {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
-    @Suppress("unused")
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) : super(context, attrs, defStyleAttr, defStyleRes)
 
     open fun setPreferences(preferences: GamePreferences) {
@@ -82,10 +82,10 @@ abstract class Control: View {
             return
         }
         val naturalWidth = width - parallax.roundToInt()
-        val source = Bitmap.createBitmap(naturalWidth, height, Bitmap.Config.ARGB_8888)
+        val source = createBitmap(naturalWidth, height)
         drawGrayscale(Canvas(source), naturalWidth, height)
 
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height)
         val canvas = Canvas(bitmap)
 
         val paint = Paint()
@@ -96,7 +96,7 @@ abstract class Control: View {
         paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.LIGHTEN)
         canvas.drawBitmap(source, parallax, 0f, paint)
 
-        _drawable = BitmapDrawable(resources, bitmap)
+        _drawable = bitmap.toDrawable(resources)
         invalidate()
     }
 }

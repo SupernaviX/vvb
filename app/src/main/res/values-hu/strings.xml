@@ -23,7 +23,7 @@
     <string name="controller_menu_manage">Vezérlők kezelése</string>
     <string name="controller_menu_automap_new_controller">Új vezérlő automatikus hozzárendelése</string>
     <string name="controller_menu_choose_controller">Válassza ki a leképezendő vezérlőt</string>
-    <string name="controller_menu_no_controllers_detected">Nincsenek vezérlők...</string>
+    <string name="controller_menu_no_controllers_detected">Nincsenek vezérlők…</string>
     <string name="controller_menu_new_controller">Új vezérlő</string>
     <string name="controller_menu_rename_controller">Vezérlő átnevezése</string>
     <string name="controller_menu_delete_controller">Vezérlő törlése</string>

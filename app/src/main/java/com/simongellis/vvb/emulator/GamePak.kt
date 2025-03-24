@@ -32,7 +32,7 @@ class GamePak(val rom: ByteArray, val hash: String, private val gameDataDir: Fil
     }
 
     companion object {
-        const val sramSize = 8 * 1024
-        private val emptySram = ByteArray(sramSize)
+        const val SRAM_SIZE = 8 * 1024
+        private val emptySram = ByteArray(SRAM_SIZE)
     }
 }

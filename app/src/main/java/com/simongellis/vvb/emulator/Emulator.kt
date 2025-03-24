@@ -13,7 +13,7 @@ class Emulator {
     private var _gamePak: GamePak? = null
     private var _autoSaveEnabled = false
 
-    private val _sramBuffer = ByteBuffer.allocateDirect(GamePak.sramSize)
+    private val _sramBuffer = ByteBuffer.allocateDirect(GamePak.SRAM_SIZE)
 
     init {
         nativeConstructor()

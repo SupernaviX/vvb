@@ -23,7 +23,7 @@
     <string name="controller_menu_manage">管理控制器</string>
     <string name="controller_menu_automap_new_controller">自動映射新控制器</string>
     <string name="controller_menu_choose_controller">選擇映射控制器</string>
-    <string name="controller_menu_no_controllers_detected">未檢測到控制器...</string>
+    <string name="controller_menu_no_controllers_detected">未檢測到控制器…</string>
     <string name="controller_menu_new_controller">新控制器</string>
     <string name="controller_menu_rename_controller">再名控制器</string>
     <string name="controller_menu_delete_controller">刪除控制器</string>
@@ -31,8 +31,8 @@
     <string name="controller_menu_create">創建</string>
     <string name="controller_menu_cancel">取消</string>
     <string name="controller_menu_rename">再名</string>
-    <string name="controller_menu_choose_rename">選擇再名控制器...</string>
-    <string name="controller_menu_choose_delete">選擇刪除控制器...</string>
+    <string name="controller_menu_choose_rename">選擇再名控制器…</string>
+    <string name="controller_menu_choose_delete">選擇刪除控制器…</string>
     <string name="input_menu_unmapped">未映射</string>
     <string name="input_menu_put_mapping">按任意控件將其映射至此輸入。長按映射多控件。</string>
     <string name="input_menu_add_mapping">按任意控件為此輸入添加另映射。</string>

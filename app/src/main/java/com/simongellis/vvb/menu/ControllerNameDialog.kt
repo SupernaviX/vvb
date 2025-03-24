@@ -3,7 +3,6 @@ package com.simongellis.vvb.menu
 import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.widget.addTextChangedListener
@@ -22,7 +21,6 @@ class ControllerNameDialog: DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val context = requireContext()
-        val layoutInflater = LayoutInflater.from(context)
         val view = TextBoxBinding.inflate(layoutInflater)
         val input = view.input.apply {
             addTextChangedListener {

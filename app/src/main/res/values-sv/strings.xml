@@ -22,7 +22,7 @@
     <string name="controller_menu_manage">Hantera kontroller</string>
     <string name="controller_menu_automap_new_controller">Karta ny styrenhet automatiskt</string>
     <string name="controller_menu_choose_controller">Välj styrenhet att mappa</string>
-    <string name="controller_menu_no_controllers_detected">Inga kontroller upptäckta...</string>
+    <string name="controller_menu_no_controllers_detected">Inga kontroller upptäckta…</string>
     <string name="controller_menu_new_controller">Ny styrenhet</string>
     <string name="controller_menu_rename_controller">Byt namn på styrenhet</string>
     <string name="controller_menu_delete_controller">Ta bort styrenhet</string>
@@ -30,8 +30,8 @@
     <string name="controller_menu_create">Skapa</string>
     <string name="controller_menu_cancel">Avbryt</string>
     <string name="controller_menu_rename">Byt namn</string>
-    <string name="controller_menu_choose_rename">Välj kontroller att byta namn på...</string>
-    <string name="controller_menu_choose_delete">Välj kontroller att ta bort...</string>
+    <string name="controller_menu_choose_rename">Välj kontroller att byta namn på…</string>
+    <string name="controller_menu_choose_delete">Välj kontroller att ta bort…</string>
     <string name="input_menu_unmapped">Ej mappad</string>
     <string name="input_menu_put_mapping">Tryck på valfri kontroll för att mappa den till denna ingång. Tryck länge för att mappa flera kontroller.</string>
     <string name="input_menu_add_mapping">Tryck på valfri kontroll för att lägga till ytterligare en mappning för denna ingång.</string>
@@ -62,7 +62,7 @@
     <string name="error_file_not_found">Den filen kunde inte hittas. Den kanske har flyttats?</string>
     <string name="error_not_power_of_two">Det är inte ett Virtual Boy-spel! Filstorleken ska vara en potens av två.</string>
     <string name="error_too_large">Det är inte ett Virtual Boy-spel! De kan bara vara upp till 16Mb.</string>
-    <string name="error_zip">Ingenting i den ZIP-filen såg ut som ett Virtual Boy-spel...</string>
+    <string name="error_zip">Ingenting i den ZIP-filen såg ut som ett Virtual Boy-spel…</string>
     <string name="toast_state_saved">State sparat</string>
     <string name="toast_state_loaded">State laddat</string>
 </resources>
