@@ -54,7 +54,6 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun hideSystemUI() {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowCompat.getInsetsController(window, window.decorView).apply {
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             hide(WindowInsetsCompat.Type.systemBars())
@@ -62,7 +61,6 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun showSystemUI() {
-        WindowCompat.setDecorFitsSystemWindows(window, true)
         WindowCompat.getInsetsController(window, window.decorView).apply {
             show(WindowInsetsCompat.Type.systemBars())
         }
