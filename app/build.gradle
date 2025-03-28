@@ -145,7 +145,7 @@ def linkAgainstToolchain(toolchain) {
 
     // We need libc++_shared.so at runtime
     copy {
-        from "${toolchainDir.path}/sysroot/usr/lib/${toolchain.compilerTriple}"
+        from "${toolchainDir.path}/sysroot/usr/lib/${toolchain.binutilsTriple}"
         into "${project.layout.buildDirectory.asFile.get()}/rustJniLibs/$toolchain.folder"
         include("libc++_shared.so")
     }
